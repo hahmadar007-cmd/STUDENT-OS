@@ -1,0 +1,722 @@
+'use client';
+
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+
+/* =============================================================================
+   FOUZAR GLOBAL STATE ENGINE — Phase 2
+   Central nervous system for theme chassis, spatial modes, identity graph,
+   and Deep Flow shield orchestration. All workspace surfaces consume this
+   context rather than managing local UI state in isolation.
+   ============================================================================= */
+
+/** Visual chassis: Onyx (tactical matte) or Greenhouse (airy glass). */
+export type FouzarMode = 'onyx' | 'greenhouse';
+
+/** Spatial operating mode governing progressive disclosure intensity. */
+export type FouzarSpace = 'planning' | 'study' | 'focus';
+
+/** Real-time presence signal broadcast to the social graph. */
+export type FouzarPresence = 'offline' | 'online' | 'flow';
+
+/**
+ * Authenticated user profile with Fouzar identity primitives.
+ * `fouzarId` is the shareable connection string (e.g. FOUZAR-78X2).
+ * `handle` is the human-chosen username slug.
+ */
+export interface FouzarUserProfile {
+  id: string;
+  email: string;
+  name: string;
+  handle: string;
+  fouzarId: string;
+  universityId?: string | null;
+  avatarInitials: string;
+  isFocusing: boolean;
+  presence: FouzarPresence;
+}
+
+/**
+ * Lightweight friend node for the Instagram/WhatsApp-style connection rail.
+ * Resolved by handle or fouzarId search.
+ */
+export interface FouzarFriendProfile {
+  id: string;
+  name: string;
+  handle: string;
+  fouzarId: string;
+  avatarInitials: string;
+  presence: FouzarPresence;
+  activeGroup?: string;
+  focusDurationLabel?: string;
+}
+
+/**
+ * Personal LMS Hub document entry (Pillar 4).
+ * Metadata catalog — files stay in-browser via IndexedDB reference or local path label.
+ */
+export interface LmsRepositoryItem {
+  id: string;
+  fileName: string;
+  courseCode: string;
+  category: 'syllabus' | 'lab' | 'lecture' | 'exam' | 'other';
+  uploadedAt: string;
+  sizeLabel: string;
+  /** IndexedDB blob reference — required to open files in the viewer */
+  storageId?: string;
+  mimeType?: string;
+  folderId?: string | null; // Associated folder/subfolder ID
+}
+
+/** Emergency bypass window for the OS-level distraction shield (minutes). */
+export type BypassDurationMinutes = 5 | 10;
+
+export interface FouzarFolder {
+  id: string;
+  name: string;
+  code: string;
+  parentFolderId: string | null;
+}
+
+export interface FouzarBypassState {
+  isActive: boolean;
+  activatedAt: string | null;
+  expiresAt: string | null;
+  durationMinutes: BypassDurationMinutes | null;
+}
+
+export interface FouzarContextValue {
+  /* --- Visual chassis --- */
+  mode: FouzarMode;
+  setMode: (mode: FouzarMode) => void;
+  toggleMode: () => void;
+
+  /* --- Spatial engine --- */
+  space: FouzarSpace;
+  setSpace: (space: FouzarSpace) => void;
+
+  /* --- Deep Flow shield --- */
+  isFlowActive: boolean;
+  setIsFlowActive: (active: boolean) => void;
+  armDeepFlow: () => void;
+  disarmDeepFlow: () => void;
+  bypass: FouzarBypassState;
+  activateBypass: (durationMinutes?: BypassDurationMinutes) => void;
+  clearBypass: () => void;
+
+  /* --- Identity & session --- */
+  user: FouzarUserProfile | null;
+  isAuthenticated: boolean;
+  setUser: (profile: FouzarUserProfile | null) => void;
+  logout: () => void;
+
+  /* --- Social graph --- */
+  friends: FouzarFriendProfile[];
+  addFriend: (friend: FouzarFriendProfile) => void;
+  removeFriend: (friendId: string) => void;
+  updateFriendPresence: (
+    friendId: string,
+    patch: Partial<Pick<FouzarFriendProfile, 'presence' | 'activeGroup' | 'focusDurationLabel'>>,
+  ) => void;
+  findFriendByIdentifier: (identifier: string) => FouzarFriendProfile | undefined;
+  createGroupNode: (friendIds: string[], roomName?: string) => string;
+
+  /* --- Personal LMS Hub (Pillar 4) --- */
+  repository: LmsRepositoryItem[];
+  addRepositoryItem: (item: Omit<LmsRepositoryItem, 'id' | 'uploadedAt'>) => void;
+  removeRepositoryItem: (id: string) => void;
+
+  /* --- AI workspace --- */
+  isOrbOpen: boolean;
+  setIsOrbOpen: (open: boolean) => void;
+  aiModel: string;
+  setAiModel: (model: string) => void;
+
+  /* --- Folders/Subjects --- */
+  folders: FouzarFolder[];
+  activeFolderId: string;
+  setActiveFolderId: (id: string) => void;
+  addFolder: (name: string, code: string, parentFolderId?: string | null) => void;
+  deleteFolder: (id: string) => void;
+  currentFolderId: string | null;
+  setCurrentFolderId: (id: string | null) => void;
+}
+
+const FouzarContext = createContext<FouzarContextValue | undefined>(undefined);
+
+const STORAGE_KEYS = {
+  theme: 'fouzar-theme',
+  space: 'fouzar-space',
+  user: 'user',
+  friends: 'fouzar-friends',
+  repository: 'fouzar-repository',
+  aiModel: 'fouzar-ai-model',
+  folders: 'fouzar-folders',
+  activeFolderId: 'fouzar-active-folder-id',
+} as const;
+
+const BYPASS_DURATIONS: BypassDurationMinutes[] = [5, 10];
+
+const FOUZAR_ID_CHARSET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+/**
+ * Generates a collision-resistant Fouzar connection identifier.
+ * Format: FOUZAR-XXXX (4 alphanumeric chars, no ambiguous 0/O/1/I).
+ */
+export function generateFouzarId(): string {
+  let suffix = '';
+  for (let i = 0; i < 4; i++) {
+    suffix += FOUZAR_ID_CHARSET[Math.floor(Math.random() * FOUZAR_ID_CHARSET.length)];
+  }
+  return `FOUZAR-${suffix}`;
+}
+
+/** Derives a URL-safe handle from a display name. */
+export function deriveHandle(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_|_$/g, '')
+    .slice(0, 24) || 'fouzar_user';
+}
+
+/** Builds avatar initials from a full name (max 2 chars). */
+export function deriveInitials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+/**
+ * Normalizes persisted API user payloads into Fouzar profile shape.
+ * Backfills handle/fouzarId for legacy sessions stored before Phase 2.
+ */
+export function normalizeUserProfile(raw: Record<string, unknown>): FouzarUserProfile {
+  const name = String(raw.name ?? 'Fouzar User');
+  const id = String(raw.id ?? '');
+  const email = String(raw.email ?? '');
+
+  return {
+    id,
+    email,
+    name,
+    handle: String(raw.handle ?? deriveHandle(name)),
+    fouzarId: String(raw.fouzarId ?? generateFouzarId()),
+    universityId: (raw.universityId as string | null | undefined) ?? null,
+    avatarInitials: String(raw.avatarInitials ?? deriveInitials(name)),
+    isFocusing: Boolean(raw.isFocusing),
+    presence: (raw.presence as FouzarPresence) ?? 'online',
+  };
+}
+
+const INITIAL_BYPASS: FouzarBypassState = {
+  isActive: false,
+  activatedAt: null,
+  expiresAt: null,
+  durationMinutes: null,
+};
+
+/** Seeds the social rail with demo peers until the network API is wired. */
+const SEED_FRIENDS: FouzarFriendProfile[] = [
+  {
+    id: 'usr-2',
+    name: 'Elena Reyes',
+    handle: 'elena_reyes',
+    fouzarId: 'FOUZAR-K7M2',
+    avatarInitials: 'ER',
+    presence: 'flow',
+    activeGroup: 'CS-229',
+    focusDurationLabel: '14 mins',
+  },
+  {
+    id: 'usr-3',
+    name: 'Kai Tanaka',
+    handle: 'kai_tanaka',
+    fouzarId: 'FOUZAR-P4N8',
+    avatarInitials: 'KT',
+    presence: 'online',
+    activeGroup: 'CS-109',
+  },
+  {
+    id: 'usr-4',
+    name: 'Devon Vale',
+    handle: 'devon_vale',
+    fouzarId: 'FOUZAR-R2X5',
+    avatarInitials: 'DV',
+    presence: 'offline',
+  },
+];
+
+const SEED_FOLDERS: FouzarFolder[] = [
+  { id: 'all', name: 'All Subjects', code: 'ALL', parentFolderId: null },
+  { id: 'cn', name: 'Computer Networks', code: 'CN', parentFolderId: null },
+  { id: 'cn-lab', name: 'CN Lab', code: 'CN-LAB', parentFolderId: null },
+  { id: 'cn-lectures', name: 'Lectures', code: 'CN', parentFolderId: 'cn' },
+  { id: 'cn-labs', name: 'Labs', code: 'CN', parentFolderId: 'cn' },
+  { id: 'cn-lab-assignments', name: 'Assignments', code: 'CN-LAB', parentFolderId: 'cn-lab' },
+];
+
+/**
+ * Applies theme + spatial attributes to <html> for CSS variable switching
+ * and Deep Flow progressive disclosure.
+ */
+function syncDocumentAttributes(
+  mode: FouzarMode,
+  space: FouzarSpace,
+  isFlowActive: boolean,
+): void {
+  const root = document.documentElement;
+  root.setAttribute('data-theme', mode);
+  root.setAttribute('data-space', space);
+  root.setAttribute('data-flow', isFlowActive ? 'active' : 'idle');
+}
+
+/**
+ * FouzarProvider — mount once at the app root (see app/layout.tsx).
+ * Owns all cross-surface state: theme, spatial mode, auth, social graph,
+ * and distraction shield bypass windows.
+ */
+export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [mode, setModeState] = useState<FouzarMode>('onyx');
+  const [space, setSpaceState] = useState<FouzarSpace>('planning');
+  const [isFlowActive, setIsFlowActive] = useState(false);
+  const [isOrbOpen, setIsOrbOpen] = useState(false);
+  const [aiModel, setAiModelState] = useState('gemini-1.5-pro');
+  const [user, setUserState] = useState<FouzarUserProfile | null>(null);
+  const [friends, setFriends] = useState<FouzarFriendProfile[]>(SEED_FRIENDS);
+  const [repository, setRepository] = useState<LmsRepositoryItem[]>([]);
+  const [bypass, setBypass] = useState<FouzarBypassState>(INITIAL_BYPASS);
+
+  /* --- Folders/Subjects --- */
+  const [folders, setFolders] = useState<FouzarFolder[]>(SEED_FOLDERS);
+  const [activeFolderId, setActiveFolderIdState] = useState<string>('all');
+  const [currentFolderId, setCurrentFolderIdState] = useState<string | null>(null);
+
+  const setActiveFolderId = useCallback((id: string) => {
+    setActiveFolderIdState(id);
+    setCurrentFolderIdState(id === 'all' ? null : id);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEYS.activeFolderId, id);
+    }
+  }, []);
+
+  const setCurrentFolderId = useCallback((id: string | null) => {
+    setCurrentFolderIdState(id);
+  }, []);
+
+  const addFolder = useCallback((name: string, code: string, parentFolderId: string | null = null) => {
+    const newFolder: FouzarFolder = {
+      id: `folder-${Date.now()}`,
+      name,
+      code: code.toUpperCase(),
+      parentFolderId,
+    };
+    setFolders((prev) => {
+      const next = [...prev, newFolder];
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEYS.folders, JSON.stringify(next));
+      }
+      return next;
+    });
+  }, []);
+
+  const deleteFolder = useCallback((id: string) => {
+    if (id === 'all') return;
+    setFolders((prev) => {
+      const getSubFolderIds = (folderId: string, folderList: FouzarFolder[]): string[] => {
+        const directSubs = folderList.filter(f => f.parentFolderId === folderId).map(f => f.id);
+        return [folderId, ...directSubs.flatMap(subId => getSubFolderIds(subId, folderList))];
+      };
+      
+      const idsToRemove = getSubFolderIds(id, prev);
+      const next = prev.filter((f) => !idsToRemove.includes(f.id));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEYS.folders, JSON.stringify(next));
+      }
+      return next;
+    });
+    setActiveFolderIdState((prev) => (prev === id ? 'all' : prev));
+    setCurrentFolderIdState((prev) => (prev === id ? null : prev));
+  }, []);
+
+  const bypassTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /* --- Theme --- */
+  const setMode = useCallback((next: FouzarMode) => {
+    setModeState(next);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEYS.theme, next);
+    }
+  }, []);
+
+  const toggleMode = useCallback(() => {
+    setMode(mode === 'onyx' ? 'greenhouse' : 'onyx');
+  }, [mode, setMode]);
+
+  /* --- Spatial --- */
+  const setSpace = useCallback((next: FouzarSpace) => {
+    setSpaceState(next);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEYS.space, next);
+    }
+  }, []);
+
+  /* --- Deep Flow --- */
+  const armDeepFlow = useCallback(() => {
+    setIsFlowActive(true);
+    setSpace('focus');
+  }, [setSpace]);
+
+  const disarmDeepFlow = useCallback(() => {
+    setIsFlowActive(false);
+    setSpace('planning');
+    setUserState((prev) =>
+      prev ? { ...prev, isFocusing: false, presence: 'online' } : prev,
+    );
+  }, [setSpace]);
+
+  const clearBypass = useCallback(() => {
+    if (bypassTimerRef.current) {
+      clearTimeout(bypassTimerRef.current);
+      bypassTimerRef.current = null;
+    }
+    setBypass(INITIAL_BYPASS);
+  }, []);
+
+  /**
+   * Opens the emergency relief valve. Shield drops for 5 or 10 minutes
+   * while accountability tracking persists via activatedAt timestamp.
+   */
+  const activateBypass = useCallback(
+    (durationMinutes: BypassDurationMinutes = 5) => {
+      const safeDuration = BYPASS_DURATIONS.includes(durationMinutes) ? durationMinutes : 5;
+      const now = new Date();
+      const expires = new Date(now.getTime() + safeDuration * 60_000);
+
+      if (bypassTimerRef.current) clearTimeout(bypassTimerRef.current);
+
+      setBypass({
+        isActive: true,
+        activatedAt: now.toISOString(),
+        expiresAt: expires.toISOString(),
+        durationMinutes: safeDuration,
+      });
+
+      bypassTimerRef.current = setTimeout(() => {
+        setBypass(INITIAL_BYPASS);
+        bypassTimerRef.current = null;
+      }, safeDuration * 60_000);
+    },
+    [],
+  );
+
+  /* --- Identity --- */
+  const setUser = useCallback((profile: FouzarUserProfile | null) => {
+    setUserState(profile);
+    if (typeof window === 'undefined') return;
+    if (profile) {
+      localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(profile));
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.user);
+    }
+  }, []);
+
+  const logout = useCallback(() => {
+    setUser(null);
+    disarmDeepFlow();
+    clearBypass();
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    }
+  }, [setUser, disarmDeepFlow, clearBypass]);
+
+  /* --- Social graph --- */
+  const addFriend = useCallback((friend: FouzarFriendProfile) => {
+    setFriends((prev) => {
+      if (prev.some((f) => f.id === friend.id || f.fouzarId === friend.fouzarId)) {
+        return prev;
+      }
+      const next = [...prev, friend];
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEYS.friends, JSON.stringify(next));
+      }
+      return next;
+    });
+  }, []);
+
+  const removeFriend = useCallback((friendId: string) => {
+    setFriends((prev) => {
+      const next = prev.filter((f) => f.id !== friendId);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEYS.friends, JSON.stringify(next));
+      }
+      return next;
+    });
+  }, []);
+
+  const updateFriendPresence = useCallback(
+    (
+      friendId: string,
+      patch: Partial<Pick<FouzarFriendProfile, 'presence' | 'activeGroup' | 'focusDurationLabel'>>,
+    ) => {
+      setFriends((prev) =>
+        prev.map((friend) => (friend.id === friendId ? { ...friend, ...patch } : friend)),
+      );
+    },
+    [],
+  );
+
+  const findFriendByIdentifier = useCallback(
+    (identifier: string) => {
+      const query = identifier.trim().toLowerCase();
+      return friends.find(
+        (f) =>
+          f.fouzarId.toLowerCase() === query ||
+          f.handle.toLowerCase() === query ||
+          f.id === identifier,
+      );
+    },
+    [friends],
+  );
+
+  /**
+   * Spins up an instant group node ID for synced study rooms.
+   * Returns the generated room slug for navigation to /room/[id].
+   */
+  const createGroupNode = useCallback((friendIds: string[], roomName?: string) => {
+    const suffix = Math.random().toString(36).slice(2, 6);
+    const roomId = `node-${suffix}`;
+    if (typeof window !== 'undefined' && roomName) {
+      sessionStorage.setItem(`fouzar-room-name-${roomId}`, roomName);
+      sessionStorage.setItem(`fouzar-room-members-${roomId}`, JSON.stringify(friendIds));
+    }
+    return roomId;
+  }, []);
+
+  const addRepositoryItem = useCallback(
+    (item: Omit<LmsRepositoryItem, 'id' | 'uploadedAt'>) => {
+      const entry: LmsRepositoryItem = {
+        ...item,
+        id: `doc-${Date.now()}`,
+        uploadedAt: new Date().toISOString(),
+      };
+      setRepository((prev) => {
+        const next = [entry, ...prev];
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(STORAGE_KEYS.repository, JSON.stringify(next));
+        }
+        return next;
+      });
+    },
+    [],
+  );
+
+  const removeRepositoryItem = useCallback((id: string) => {
+    setRepository((prev) => {
+      const removed = prev.find((doc) => doc.id === id);
+      if (removed?.storageId && typeof window !== 'undefined') {
+        import('./documentStore').then(({ deleteDocument }) => deleteDocument(removed.storageId!));
+      }
+      const next = prev.filter((doc) => doc.id !== id);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEYS.repository, JSON.stringify(next));
+      }
+      return next;
+    });
+  }, []);
+
+  const setAiModel = useCallback((model: string) => {
+    setAiModelState(model);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEYS.aiModel, model);
+    }
+  }, []);
+
+  /* --- Hydrate persisted state on mount --- */
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const savedTheme = localStorage.getItem(STORAGE_KEYS.theme) as FouzarMode | null;
+    const savedSpace = localStorage.getItem(STORAGE_KEYS.space) as FouzarSpace | null;
+    const savedAiModel = localStorage.getItem(STORAGE_KEYS.aiModel);
+    const savedUser = localStorage.getItem(STORAGE_KEYS.user);
+    const savedFriends = localStorage.getItem(STORAGE_KEYS.friends);
+    const savedRepository = localStorage.getItem(STORAGE_KEYS.repository);
+    const savedFolders = localStorage.getItem(STORAGE_KEYS.folders);
+    const savedActiveFolder = localStorage.getItem(STORAGE_KEYS.activeFolderId);
+
+    if (savedTheme === 'onyx' || savedTheme === 'greenhouse') {
+      setModeState(savedTheme);
+    }
+    if (savedSpace === 'planning' || savedSpace === 'study' || savedSpace === 'focus') {
+      setSpaceState(savedSpace);
+    }
+    if (savedAiModel) setAiModelState(savedAiModel);
+
+    if (savedUser) {
+      try {
+        setUserState(normalizeUserProfile(JSON.parse(savedUser)));
+      } catch {
+        localStorage.removeItem(STORAGE_KEYS.user);
+      }
+    }
+
+    if (savedFriends) {
+      try {
+        const parsed = JSON.parse(savedFriends) as FouzarFriendProfile[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setFriends(parsed);
+        }
+      } catch {
+        localStorage.removeItem(STORAGE_KEYS.friends);
+      }
+    }
+
+    if (savedRepository) {
+      try {
+        const parsed = JSON.parse(savedRepository) as LmsRepositoryItem[];
+        if (Array.isArray(parsed)) setRepository(parsed);
+      } catch {
+        localStorage.removeItem(STORAGE_KEYS.repository);
+      }
+    }
+
+    if (savedFolders) {
+      try {
+        const parsed = JSON.parse(savedFolders);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setFolders(parsed);
+        }
+      } catch (e) {}
+    }
+    if (savedActiveFolder) {
+      setActiveFolderIdState(savedActiveFolder);
+    }
+  }, []);
+
+  /* --- Sync flow state → spatial mode + user presence --- */
+  useEffect(() => {
+    if (isFlowActive) {
+      setSpaceState('focus');
+      setUserState((prev) =>
+        prev ? { ...prev, isFocusing: true, presence: 'flow' } : prev,
+      );
+    }
+  }, [isFlowActive]);
+
+  /* --- Mirror state to <html> data attributes for CSS chassis --- */
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    syncDocumentAttributes(mode, space, isFlowActive);
+  }, [mode, space, isFlowActive]);
+
+  /* --- Cleanup bypass timer on unmount --- */
+  useEffect(() => {
+    return () => {
+      if (bypassTimerRef.current) clearTimeout(bypassTimerRef.current);
+    };
+  }, []);
+
+  const value = useMemo<FouzarContextValue>(
+    () => ({
+      mode,
+      setMode,
+      toggleMode,
+      space,
+      setSpace,
+      isFlowActive,
+      setIsFlowActive,
+      armDeepFlow,
+      disarmDeepFlow,
+      bypass,
+      activateBypass,
+      clearBypass,
+      user,
+      isAuthenticated: user !== null,
+      setUser,
+      logout,
+      friends,
+      addFriend,
+      removeFriend,
+      updateFriendPresence,
+      findFriendByIdentifier,
+      createGroupNode,
+      repository,
+      addRepositoryItem,
+      removeRepositoryItem,
+      isOrbOpen,
+      setIsOrbOpen,
+      aiModel,
+      setAiModel,
+      folders,
+      activeFolderId,
+      setActiveFolderId,
+      addFolder,
+      deleteFolder,
+      currentFolderId,
+      setCurrentFolderId,
+    }),
+    [
+      mode,
+      setMode,
+      toggleMode,
+      space,
+      setSpace,
+      isFlowActive,
+      armDeepFlow,
+      disarmDeepFlow,
+      bypass,
+      activateBypass,
+      clearBypass,
+      user,
+      setUser,
+      logout,
+      friends,
+      addFriend,
+      removeFriend,
+      updateFriendPresence,
+      findFriendByIdentifier,
+      createGroupNode,
+      repository,
+      addRepositoryItem,
+      removeRepositoryItem,
+      isOrbOpen,
+      aiModel,
+      setAiModel,
+      folders,
+      activeFolderId,
+      setActiveFolderId,
+      addFolder,
+      deleteFolder,
+      currentFolderId,
+      setCurrentFolderId,
+    ],
+  );
+
+  return <FouzarContext.Provider value={value}>{children}</FouzarContext.Provider>;
+};
+
+/**
+ * Primary hook for consuming Fouzar global state.
+ * Must be called within a <FouzarProvider> tree.
+ */
+export const useFouzar = (): FouzarContextValue => {
+  const context = useContext(FouzarContext);
+  if (!context) {
+    throw new Error('useFouzar must be used within a FouzarProvider');
+  }
+  return context;
+};

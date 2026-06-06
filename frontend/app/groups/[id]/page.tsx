@@ -1,0 +1,347 @@
+'use client';
+
+import React, { useState, useEffect, useRef } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  Users, 
+  Flame,
+  MessageSquare,
+  Moon,
+  Leaf,
+  ArrowLeft
+} from 'lucide-react';
+import { useFouzar } from '../../../lib/FouzarContext';
+import { ChatPanel } from '../../../components/chat/ChatPanel';
+import { AiOrb } from '../../../components/ai/AiOrb';
+import { FocusFrame } from '../../../components/focus/FocusFrame';
+import { getSocket } from '../../../lib/socket';
+import { FouzarLogo } from '../../../components/logo/FouzarLogo';
+
+interface SlideData {
+  id: string;
+  title: string;
+  topic: string;
+  bullets: string[];
+}
+
+export default function StudyGroupRoom() {
+  const { mode, setMode, isFlowActive, setIsFlowActive } = useFouzar();
+  const router = useRouter();
+  const params = useParams();
+  const groupId = params.id as string;
+
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [isLeader, setIsLeader] = useState(true);
+  const [syncSlides, setSyncSlides] = useState(true);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [memberCount, setMemberCount] = useState(4);
+  const socketRef = useRef<any>(null);
+
+  const slides: SlideData[] = [
+    {
+      id: '1',
+      title: 'Course Overview & Setup',
+      topic: 'Introduction to Machine Learning',
+      bullets: [
+        'Course logistics, grading policies, and prerequisites.',
+        'Core paradigm: fitting functions to data rather than manual rules.',
+        'Setup environment: Python 3.10+, NumPy, and PyTorch.',
+      ],
+    },
+    {
+      id: '2',
+      title: 'Supervised vs Unsupervised Learning',
+      topic: 'Core Machine Learning Paradigms',
+      bullets: [
+        'Supervised learning: datasets contain inputs (x) and correct outputs (y).',
+        'Unsupervised learning: datasets contain inputs only; looking for hidden clusters.',
+        'Reinforcement learning: agent acts in environment to maximize reward.',
+      ],
+    },
+    {
+      id: '3',
+      title: 'Deep Neural Networks Foundations',
+      topic: 'Neural Network Architectures',
+      bullets: [
+        'Structure: Input layer, multiple Hidden layers, and an Output layer.',
+        'Neurons: Compute weighted sum of inputs and apply non-linear activations.',
+        'Common activation functions: ReLU, Sigmoid, and Tanh.',
+      ],
+    },
+    {
+      id: '4',
+      title: 'Gradient Descent & Backpropagation',
+      topic: 'Mathematical Training & Optimization',
+      bullets: [
+        'Loss function: measures average error between predicted and target values.',
+        'Gradient descent: update weights in the direction of steepest loss descent.',
+        'Backpropagation: use Chain Rule of Calculus to compute local derivatives.',
+      ],
+    },
+    {
+      id: '5',
+      title: 'Loss Functions & Cross Entropy',
+      topic: 'Optimization Target Formulations',
+      bullets: [
+        'Mean Squared Error (MSE): used for regression tasks.',
+        'Binary Cross Entropy: used for two-class categorization.',
+        'Categorical Cross Entropy: used for multi-class classification.',
+      ],
+    },
+  ];
+
+  useEffect(() => {
+    const socket = getSocket();
+    socketRef.current = socket;
+
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    socket.emit('joinGroup', { groupId });
+
+    socket.on('slideUpdated', (data: { slideId: string }) => {
+      if (syncSlides) {
+        const slideIndex = slides.findIndex((s) => s.id === data.slideId);
+        if (slideIndex !== -1) {
+          setCurrentSlideIndex(slideIndex);
+        }
+      }
+    });
+
+    return () => {
+      socket.off('slideUpdated');
+    };
+  }, [groupId, syncSlides]);
+
+  const handleSlideChange = (direction: 'next' | 'prev') => {
+    let nextIndex = currentSlideIndex;
+    if (direction === 'next' && currentSlideIndex < slides.length - 1) {
+      nextIndex = currentSlideIndex + 1;
+    } else if (direction === 'prev' && currentSlideIndex > 0) {
+      nextIndex = currentSlideIndex - 1;
+    }
+
+    if (nextIndex !== currentSlideIndex) {
+      setCurrentSlideIndex(nextIndex);
+
+      if (syncSlides && isLeader && socketRef.current) {
+        socketRef.current.emit('syncSlide', {
+          groupId,
+          slideId: slides[nextIndex].id,
+        });
+      }
+    }
+  };
+
+  const toggleSync = () => {
+    setSyncSlides((prev) => {
+      const nextSync = !prev;
+      if (nextSync && isLeader && socketRef.current) {
+        socketRef.current.emit('syncSlide', {
+          groupId,
+          slideId: slides[currentSlideIndex].id,
+        });
+      }
+      return nextSync;
+    });
+  };
+
+  const activeSlide = slides[currentSlideIndex];
+
+  return (
+    <div className="min-h-screen bg-fouzar-bg text-fouzar-text-primary flex flex-col relative overflow-hidden select-none transition-colors duration-300">
+      
+      {/* Background Ambience light */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <div 
+          className="absolute -top-40 -left-40 w-96 h-96 rounded-full blur-[120px]"
+          style={{
+            background: mode === 'greenhouse' 
+              ? 'radial-gradient(circle, rgba(234, 230, 223, 0.5) 0%, transparent 70%)'
+              : 'radial-gradient(circle, rgba(124, 92, 252, 0.08) 0%, transparent 70%)'
+          }}
+        />
+      </div>
+
+      {/* Header bar */}
+      <header className={`w-full h-14 bg-fouzar-surface/40 backdrop-blur-md border-b border-fouzar-border/30 px-6 flex items-center justify-between z-20 shrink-0 transition-all duration-500 ${isFlowActive ? 'deep-flow-blur' : ''}`}>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => router.push('/dashboard')}
+            className="p-1 hover:bg-white/5 rounded-[4px] text-fouzar-text-secondary hover:text-fouzar-text-primary cursor-pointer flex items-center gap-1 text-[9px] uppercase tracking-wider font-sans"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Back
+          </button>
+          <span className="w-[1.5px] h-3 bg-fouzar-border/30" />
+          <span className="font-sans font-light text-[10px] uppercase tracking-[0.2em] text-fouzar-text-primary">
+            {groupId === 'group-1' ? 'CS-229 Study room' : 'CS-109 Study Desk'}
+          </span>
+          <span className="w-[1.5px] h-3 bg-fouzar-border/30" />
+          <div className="flex items-center gap-1.5 text-[9px] text-fouzar-text-secondary uppercase">
+            <Users className="w-3 h-3 text-fouzar-accent animate-pulse" />
+            <span>{memberCount} PEERS ACTIVE</span>
+          </div>
+        </div>
+
+        {/* Sync / Actions controls */}
+        <div className="flex items-center gap-3">
+          
+          {/* Sync Switcher */}
+          <div className="flex items-center gap-2 bg-fouzar-surface/60 px-3 py-1 rounded-[4px] border border-fouzar-border/30">
+            <span className="text-[9px] font-mono uppercase text-fouzar-text-secondary">Sync</span>
+            <button
+              onClick={toggleSync}
+              className={`relative inline-flex h-3.5 w-7 shrink-0 cursor-pointer rounded-full border border-transparent transition-colors duration-150 ease-in-out focus:outline-none ${
+                syncSlides ? 'bg-fouzar-accent' : 'bg-white/10'
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-fouzar-bg shadow transition duration-150 ease-in-out ${
+                  syncSlides ? 'translate-x-3.5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Role selector */}
+          <button
+            onClick={() => setIsLeader(!isLeader)}
+            className="px-3 py-1 border border-fouzar-border/30 hover:border-fouzar-accent rounded-[4px] text-[8px] font-mono text-fouzar-text-secondary hover:text-fouzar-text-primary transition-colors cursor-pointer"
+          >
+            {isLeader ? 'LEADER' : 'VIEWER'}
+          </button>
+
+          {/* Toggle Chat (Progressive Disclosure) */}
+          <button
+            onClick={() => setIsChatOpen(!isChatOpen)}
+            className={`p-2 border rounded-[4px] cursor-pointer transition-colors ${
+              isChatOpen 
+                ? 'bg-fouzar-accent/10 border-fouzar-accent text-fouzar-accent' 
+                : 'border-fouzar-border/30 text-fouzar-text-secondary hover:text-fouzar-text-primary hover:border-fouzar-border'
+            }`}
+            title="Toggle Group Logs"
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+          </button>
+
+          {/* Start Deep Flow */}
+          <button
+            onClick={() => setIsFlowActive(true)}
+            className="px-3.5 py-1 bg-fouzar-accent hover:opacity-95 text-fouzar-bg text-[8px] font-mono uppercase tracking-widest rounded-[4px] cursor-pointer flex items-center gap-1.5 shadow-[0_0_10px_var(--fouzar-accent-glow)]"
+          >
+            <Flame className="w-3.5 h-3.5 text-fouzar-bg fill-fouzar-bg" />
+            FLOW
+          </button>
+
+          {/* Mode toggle */}
+          <button
+            onClick={() => setMode(mode === 'onyx' ? 'greenhouse' : 'onyx')}
+            className="p-1.5 bg-fouzar-surface/40 border border-fouzar-border/30 rounded-[4px] text-fouzar-text-secondary hover:text-fouzar-text-primary cursor-pointer"
+          >
+            {mode === 'onyx' ? <Leaf className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+          </button>
+        </div>
+      </header>
+
+      {/* Main Study space body */}
+      <div className="flex-1 flex p-6 gap-6 overflow-hidden z-10 max-h-[calc(100vh-56px)]">
+        
+        {/* Left slide canvas (grows if chat is closed) */}
+        <div className={`flex flex-col justify-between h-full transition-all duration-500 ease-out ${
+          isChatOpen ? 'w-[65%]' : 'w-full'
+        } ${isFlowActive ? 'deep-flow-blur' : ''}`}>
+          
+          <div className="flex-1 flex flex-col justify-between p-8 bg-fouzar-surface/40 backdrop-blur-md border border-fouzar-border/60 rounded-[8px] relative overflow-hidden shadow-2xl">
+            {/* Slide Header */}
+            <div className="flex justify-between items-start text-[8px] font-mono border-b border-fouzar-border/30 pb-3">
+              <span className="text-fouzar-accent uppercase tracking-widest">{activeSlide.topic}</span>
+              <span className="text-fouzar-text-secondary uppercase">PAGE {currentSlideIndex + 1} OF {slides.length}</span>
+            </div>
+
+            {/* Slide Body */}
+            <div className="my-auto py-8">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeSlide.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.25 }}
+                  className="space-y-6 max-w-xl mx-auto"
+                >
+                  <h2 className="font-sans text-2xl font-light text-fouzar-text-primary tracking-wide leading-snug text-glow-accent">
+                    {activeSlide.title}
+                  </h2>
+                  <ul className="space-y-4">
+                    {activeSlide.bullets.map((bullet, idx) => (
+                      <li key={idx} className="text-fouzar-text-secondary text-[11px] flex items-start gap-3 leading-relaxed">
+                        <span className="w-1 h-1 bg-fouzar-accent shrink-0 mt-2 rounded-full" />
+                        <span>{bullet}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {/* Slide navigations */}
+            <div className="flex items-center justify-between border-t border-fouzar-border/30 pt-4">
+              <button
+                disabled={currentSlideIndex === 0}
+                onClick={() => handleSlideChange('prev')}
+                className="flex items-center gap-1 text-[9px] font-mono uppercase tracking-wider text-fouzar-text-secondary hover:text-fouzar-text-primary disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" /> Previous
+              </button>
+
+              <div className="flex gap-1.5">
+                {slides.map((s, idx) => (
+                  <div
+                    key={s.id}
+                    className={`w-1.5 h-1.5 rounded-full transition-all ${
+                      idx === currentSlideIndex ? 'bg-fouzar-accent w-3' : 'bg-fouzar-border/40'
+                    }`}
+                  />
+                ))}
+              </div>
+
+              <button
+                disabled={currentSlideIndex === slides.length - 1}
+                onClick={() => handleSlideChange('next')}
+                className="flex items-center gap-1 text-[9px] font-mono uppercase tracking-wider text-fouzar-text-secondary hover:text-fouzar-text-primary disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+              >
+                Next <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Right chat panel (slides in conditionally) */}
+        <AnimatePresence>
+          {isChatOpen && (
+            <motion.div
+              initial={{ opacity: 0, x: 200, width: 0 }}
+              animate={{ opacity: 1, x: 0, width: '35%' }}
+              exit={{ opacity: 0, x: 200, width: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className={`h-full flex flex-col shrink-0 ${isFlowActive ? 'deep-flow-blur' : ''}`}
+            >
+              <ChatPanel groupId={groupId} currentSlideId={activeSlide.id} userId="user-1" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Floating AI companion Orb */}
+      <AiOrb />
+      
+      {/* Deep flow spatial takeover */}
+      <FocusFrame />
+
+    </div>
+  );
+}

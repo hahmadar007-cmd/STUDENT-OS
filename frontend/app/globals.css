@@ -1,0 +1,352 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@500;700;800&display=swap');
+@import "tailwindcss";
+
+/* =============================================================================
+   FOUZAR DESIGN SYSTEM — Phase 1
+   Dual-theme chassis: Onyx (tactical matte) & Greenhouse (airy glassmorphism).
+   Theme is switched via [data-theme] on <html>. Spatial state via [data-space]
+   and [data-flow] for Deep Flow progressive disclosure.
+   ============================================================================= */
+
+/* -------------------------------------------------------------------------- */
+/* Shared foundation tokens (typography rhythm, motion, geometry)             */
+/* -------------------------------------------------------------------------- */
+:root {
+  --fouzar-font-sans: var(--font-sans), 'Inter', system-ui, sans-serif;
+  --fouzar-font-display: var(--font-serif), 'Space Grotesk', sans-serif;
+  --fouzar-font-mono: var(--font-mono), 'JetBrains Mono', monospace;
+
+  --fouzar-radius-sm: 4px;
+  --fouzar-radius-md: 6px;
+  --fouzar-radius-lg: 12px;
+  --fouzar-radius-xl: 20px;
+  --fouzar-radius-full: 9999px;
+
+  --fouzar-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --fouzar-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --fouzar-duration-fast: 150ms;
+  --fouzar-duration-base: 200ms;
+  --fouzar-duration-slow: 420ms;
+  --fouzar-duration-flow: 680ms;
+
+  --fouzar-blur-glass: 40px;
+  --fouzar-blur-flow: 24px;
+
+  /* Legacy Fasca aliases — keeps existing components stable during migration */
+  --fasca-bg: var(--fouzar-bg);
+  --fasca-surface-1: var(--fouzar-surface);
+  --fasca-surface-2: var(--fouzar-card);
+  --fasca-surface-3: var(--fouzar-elevated);
+  --fasca-accent: var(--fouzar-accent-primary);
+  --fasca-cyan: var(--fouzar-accent-ice);
+  --fasca-crimson: var(--fouzar-accent-signal);
+  --fasca-text-primary: var(--fouzar-text-primary);
+  --fasca-text-secondary: var(--fouzar-text-secondary);
+  --fasca-border: var(--fouzar-border-subtle);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Fouzar Onyx — tactical matte-charcoal, LED amber/ice accents               */
+/* Inspired by hardware-console clarity; no heavy outlines, soft depth.      */
+/* -------------------------------------------------------------------------- */
+:root,
+[data-theme='onyx'] {
+  --fouzar-bg: #0d0d12;
+  --fouzar-bg-elevated: #111118;
+  --fouzar-surface: #14141c;
+  --fouzar-card: #181822;
+  --fouzar-elevated: #1e1e2a;
+  --fouzar-overlay: rgba(13, 13, 18, 0.82);
+
+  --fouzar-text-primary: #f2f2fa;
+  --fouzar-text-secondary: #6e6e8c;
+  --fouzar-text-tertiary: #4a4a62;
+  --fouzar-text-inverse: #0d0d12;
+
+  --fouzar-border-subtle: rgba(255, 255, 255, 0.06);
+  --fouzar-border-strong: rgba(255, 255, 255, 0.12);
+  --fouzar-divider: rgba(255, 255, 255, 0.04);
+
+  --fouzar-accent-primary: #7c5cfc;
+  --fouzar-accent-amber: #f5a623;
+  --fouzar-accent-ice: #5ce1ff;
+  --fouzar-accent-signal: #ff2d55;
+  --fouzar-accent-success: #3dd68c;
+
+  --fouzar-glow-primary: 0 0 24px rgba(124, 92, 252, 0.18);
+  --fouzar-glow-amber: 0 0 18px rgba(245, 166, 35, 0.22);
+  --fouzar-glow-ice: 0 0 18px rgba(92, 225, 255, 0.2);
+  --fouzar-glow-signal: 0 0 20px rgba(255, 45, 85, 0.24);
+
+  --fouzar-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.32);
+  --fouzar-shadow-md: 0 8px 32px rgba(0, 0, 0, 0.42);
+  --fouzar-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.55);
+  --fouzar-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+  --fouzar-surface-glass: rgba(20, 20, 28, 0.72);
+  --fouzar-backdrop: blur(16px);
+
+  --fouzar-grid-dot: rgba(255, 255, 255, 0.03);
+  --fouzar-focus-ring: 0 0 0 2px rgba(124, 92, 252, 0.45);
+
+  --fouzar-chrome-opacity: 1;
+  --fouzar-chrome-blur: 0px;
+  --fouzar-canvas-scale: 1;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Fouzar Greenhouse — soft glassmorphism, organic light, rounded geometry    */
+/* Deep translucent layers with massive backdrop blur. No harsh borders.     */
+/* -------------------------------------------------------------------------- */
+[data-theme='greenhouse'] {
+  --fouzar-bg: #0a1018;
+  --fouzar-bg-elevated: rgba(255, 255, 255, 0.03);
+  --fouzar-surface: rgba(255, 255, 255, 0.04);
+  --fouzar-card: rgba(255, 255, 255, 0.06);
+  --fouzar-elevated: rgba(255, 255, 255, 0.09);
+  --fouzar-overlay: rgba(8, 14, 22, 0.55);
+
+  --fouzar-text-primary: #f8fbff;
+  --fouzar-text-secondary: rgba(248, 251, 255, 0.58);
+  --fouzar-text-tertiary: rgba(248, 251, 255, 0.36);
+  --fouzar-text-inverse: #0a1018;
+
+  --fouzar-border-subtle: rgba(255, 255, 255, 0.08);
+  --fouzar-border-strong: rgba(255, 255, 255, 0.16);
+  --fouzar-divider: rgba(255, 255, 255, 0.05);
+
+  --fouzar-accent-primary: #6ee7b7;
+  --fouzar-accent-amber: #fcd34d;
+  --fouzar-accent-ice: #7dd3fc;
+  --fouzar-accent-signal: #fb7185;
+  --fouzar-accent-success: #4ade80;
+
+  --fouzar-glow-primary: 0 0 40px rgba(110, 231, 183, 0.14);
+  --fouzar-glow-amber: 0 0 32px rgba(252, 211, 77, 0.16);
+  --fouzar-glow-ice: 0 0 36px rgba(125, 211, 252, 0.18);
+  --fouzar-glow-signal: 0 0 28px rgba(251, 113, 133, 0.2);
+
+  --fouzar-shadow-sm: 0 4px 24px rgba(0, 0, 0, 0.18);
+  --fouzar-shadow-md: 0 12px 48px rgba(0, 0, 0, 0.24);
+  --fouzar-shadow-lg: 0 24px 80px rgba(0, 0, 0, 0.32);
+  --fouzar-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+
+  --fouzar-surface-glass: rgba(255, 255, 255, 0.06);
+  --fouzar-backdrop: blur(40px);
+
+  --fouzar-grid-dot: rgba(255, 255, 255, 0.06);
+  --fouzar-focus-ring: 0 0 0 2px rgba(110, 231, 183, 0.4);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Spatial states — planning / study / focus progressive disclosure           */
+/* -------------------------------------------------------------------------- */
+[data-space='planning'] {
+  --fouzar-chrome-opacity: 1;
+  --fouzar-chrome-blur: 0px;
+  --fouzar-canvas-scale: 1;
+}
+
+[data-space='study'] {
+  --fouzar-chrome-opacity: 0.92;
+  --fouzar-chrome-blur: 2px;
+  --fouzar-canvas-scale: 1.01;
+}
+
+[data-space='focus'],
+[data-flow='active'] {
+  --fouzar-chrome-opacity: 0.18;
+  --fouzar-chrome-blur: var(--fouzar-blur-flow);
+  --fouzar-canvas-scale: 1.02;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Tailwind v4 theme bridge                                                   */
+/* -------------------------------------------------------------------------- */
+@theme {
+  --color-fouzar-bg: var(--fouzar-bg);
+  --color-fouzar-bg-elevated: var(--fouzar-bg-elevated);
+  --color-fouzar-surface: var(--fouzar-surface);
+  --color-fouzar-card: var(--fouzar-card);
+  --color-fouzar-elevated: var(--fouzar-elevated);
+  --color-fouzar-text-primary: var(--fouzar-text-primary);
+  --color-fouzar-text-secondary: var(--fouzar-text-secondary);
+  --color-fouzar-text-tertiary: var(--fouzar-text-tertiary);
+  --color-fouzar-border: var(--fouzar-border-subtle);
+  --color-fouzar-accent: var(--fouzar-accent-primary);
+  --color-fouzar-amber: var(--fouzar-accent-amber);
+  --color-fouzar-ice: var(--fouzar-accent-ice);
+  --color-fouzar-signal: var(--fouzar-accent-signal);
+
+  --color-fasca-bg: var(--fasca-bg);
+  --color-fasca-surface-1: var(--fasca-surface-1);
+  --color-fasca-surface-2: var(--fasca-surface-2);
+  --color-fasca-surface-3: var(--fasca-surface-3);
+  --color-fasca-accent: var(--fasca-accent);
+  --color-fasca-cyan: var(--fasca-cyan);
+  --color-fasca-crimson: var(--fasca-crimson);
+  --color-fasca-text-primary: var(--fasca-text-primary);
+  --color-fasca-text-secondary: var(--fasca-text-secondary);
+  --color-fasca-border: var(--fasca-border);
+
+  --font-serif: var(--fouzar-font-display);
+  --font-sans: var(--fouzar-font-sans);
+  --font-mono: var(--fouzar-font-mono);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Base document                                                              */
+/* -------------------------------------------------------------------------- */
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--fouzar-bg);
+  color: var(--fouzar-text-primary);
+  font-family: var(--fouzar-font-sans);
+  line-height: 1.55;
+  letter-spacing: -0.01em;
+  transition:
+    background-color var(--fouzar-duration-base) var(--fouzar-ease-out),
+    color var(--fouzar-duration-base) var(--fouzar-ease-out);
+}
+
+/* Ambient canvas backdrop — theme-aware dot grid */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: radial-gradient(var(--fouzar-grid-dot) 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: 0.7;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Surface primitives                                                         */
+/* -------------------------------------------------------------------------- */
+.fouzar-surface {
+  background: var(--fouzar-surface);
+  box-shadow: var(--fouzar-shadow-sm), var(--fouzar-shadow-inset);
+  border: 1px solid var(--fouzar-border-subtle);
+  border-radius: var(--fouzar-radius-md);
+}
+
+.fouzar-card {
+  background: var(--fouzar-card);
+  box-shadow: var(--fouzar-shadow-md);
+  border: 1px solid var(--fouzar-border-subtle);
+  border-radius: var(--fouzar-radius-md);
+}
+
+[data-theme='greenhouse'] .fouzar-glass {
+  background: var(--fouzar-surface-glass);
+  backdrop-filter: blur(var(--fouzar-blur-glass));
+  -webkit-backdrop-filter: blur(var(--fouzar-blur-glass));
+  border: 1px solid var(--fouzar-border-subtle);
+  box-shadow: var(--fouzar-shadow-lg), var(--fouzar-glow-primary);
+  border-radius: var(--fouzar-radius-lg);
+}
+
+[data-theme='onyx'] .fouzar-glass {
+  background: var(--fouzar-surface-glass);
+  backdrop-filter: blur(var(--fouzar-backdrop));
+  -webkit-backdrop-filter: blur(var(--fouzar-backdrop));
+  border: 1px solid var(--fouzar-border-subtle);
+  box-shadow: var(--fouzar-shadow-md);
+  border-radius: var(--fouzar-radius-md);
+}
+
+/* LED accent utilities — Onyx hardware tone */
+.fouzar-led-amber {
+  color: var(--fouzar-accent-amber);
+  text-shadow: var(--fouzar-glow-amber);
+}
+
+.fouzar-led-ice {
+  color: var(--fouzar-accent-ice);
+  text-shadow: var(--fouzar-glow-ice);
+}
+
+.fouzar-led-signal {
+  color: var(--fouzar-accent-signal);
+  text-shadow: var(--fouzar-glow-signal);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Deep Flow chrome — progressive disclosure layer                            */
+/* Sidebars/rails/chat fade and blur when flow is armed.                      */
+/* -------------------------------------------------------------------------- */
+.fouzar-chrome {
+  opacity: var(--fouzar-chrome-opacity);
+  filter: blur(var(--fouzar-chrome-blur));
+  pointer-events: var(--fouzar-chrome-opacity, 1);
+  transition:
+    opacity var(--fouzar-duration-flow) var(--fouzar-ease-out),
+    filter var(--fouzar-duration-flow) var(--fouzar-ease-out),
+    transform var(--fouzar-duration-flow) var(--fouzar-ease-out);
+}
+
+[data-flow='active'] .fouzar-chrome {
+  pointer-events: none;
+}
+
+.fouzar-canvas {
+  transform: scale(var(--fouzar-canvas-scale));
+  transition: transform var(--fouzar-duration-flow) var(--fouzar-ease-out);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Scrollbars — ultra-thin, theme-aware                                     */
+/* -------------------------------------------------------------------------- */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--fouzar-border-strong);
+  border-radius: var(--fouzar-radius-full);
+  transition: background var(--fouzar-duration-base) var(--fouzar-ease-out);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--fouzar-accent-primary);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Interactive baseline                                                       */
+/* -------------------------------------------------------------------------- */
+a,
+button,
+input,
+select,
+textarea {
+  transition:
+    color var(--fouzar-duration-fast) var(--fouzar-ease-out),
+    background-color var(--fouzar-duration-fast) var(--fouzar-ease-out),
+    border-color var(--fouzar-duration-fast) var(--fouzar-ease-out),
+    box-shadow var(--fouzar-duration-fast) var(--fouzar-ease-out),
+    opacity var(--fouzar-duration-fast) var(--fouzar-ease-out),
+    transform var(--fouzar-duration-fast) var(--fouzar-ease-out);
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--fouzar-focus-ring);
+}
+
+.text-glow-accent {
+  text-shadow: var(--fouzar-glow-primary);
+}
+
+.glow-panel {
+  box-shadow: var(--fouzar-glow-primary);
+}
