@@ -19,6 +19,7 @@ import React, {
 
 /** Visual chassis: Onyx (tactical matte) or Greenhouse (airy glass). */
 export type FouzarMode = 'onyx' | 'greenhouse';
+export type FouzarAccent = 'violet' | 'emerald' | 'ice' | 'amber' | 'signal';
 
 /** Spatial operating mode governing progressive disclosure intensity. */
 export type FouzarSpace = 'planning' | 'study' | 'focus';
@@ -97,6 +98,8 @@ export interface FouzarContextValue {
   mode: FouzarMode;
   setMode: (mode: FouzarMode) => void;
   toggleMode: () => void;
+  accentColor: FouzarAccent;
+  setAccentColor: (accent: FouzarAccent) => void;
 
   /* --- Spatial engine --- */
   space: FouzarSpace;
@@ -160,6 +163,7 @@ const STORAGE_KEYS = {
   aiModel: 'fouzar-ai-model',
   folders: 'fouzar-folders',
   activeFolderId: 'fouzar-active-folder-id',
+  accentColor: 'fouzar-accent-color',
 } as const;
 
 const BYPASS_DURATIONS: BypassDurationMinutes[] = [5, 10];
@@ -276,11 +280,13 @@ function syncDocumentAttributes(
   mode: FouzarMode,
   space: FouzarSpace,
   isFlowActive: boolean,
+  accentColor: FouzarAccent,
 ): void {
   const root = document.documentElement;
   root.setAttribute('data-theme', mode);
   root.setAttribute('data-space', space);
   root.setAttribute('data-flow', isFlowActive ? 'active' : 'idle');
+  root.setAttribute('data-accent', accentColor);
 }
 
 /**
@@ -298,6 +304,14 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [friends, setFriends] = useState<FouzarFriendProfile[]>(SEED_FRIENDS);
   const [repository, setRepository] = useState<LmsRepositoryItem[]>([]);
   const [bypass, setBypass] = useState<FouzarBypassState>(INITIAL_BYPASS);
+  const [accentColor, setAccentColorState] = useState<FouzarAccent>('violet');
+
+  const setAccentColor = useCallback((next: FouzarAccent) => {
+    setAccentColorState(next);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEYS.accentColor, next);
+    }
+  }, []);
 
   /* --- Folders/Subjects --- */
   const [folders, setFolders] = useState<FouzarFolder[]>(SEED_FOLDERS);
@@ -557,6 +571,7 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const savedRepository = localStorage.getItem(STORAGE_KEYS.repository);
     const savedFolders = localStorage.getItem(STORAGE_KEYS.folders);
     const savedActiveFolder = localStorage.getItem(STORAGE_KEYS.activeFolderId);
+    const savedAccentColor = localStorage.getItem(STORAGE_KEYS.accentColor) as FouzarAccent | null;
 
     if (savedTheme === 'onyx' || savedTheme === 'greenhouse') {
       setModeState(savedTheme);
@@ -565,6 +580,9 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setSpaceState(savedSpace);
     }
     if (savedAiModel) setAiModelState(savedAiModel);
+    if (savedAccentColor === 'violet' || savedAccentColor === 'emerald' || savedAccentColor === 'ice' || savedAccentColor === 'amber' || savedAccentColor === 'signal') {
+      setAccentColorState(savedAccentColor);
+    }
 
     if (savedUser) {
       try {
@@ -620,8 +638,8 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   /* --- Mirror state to <html> data attributes for CSS chassis --- */
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    syncDocumentAttributes(mode, space, isFlowActive);
-  }, [mode, space, isFlowActive]);
+    syncDocumentAttributes(mode, space, isFlowActive, accentColor);
+  }, [mode, space, isFlowActive, accentColor]);
 
   /* --- Cleanup bypass timer on unmount --- */
   useEffect(() => {
@@ -668,6 +686,8 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       deleteFolder,
       currentFolderId,
       setCurrentFolderId,
+      accentColor,
+      setAccentColor,
     }),
     [
       mode,
@@ -703,6 +723,8 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       deleteFolder,
       currentFolderId,
       setCurrentFolderId,
+      accentColor,
+      setAccentColor,
     ],
   );
 

@@ -48,6 +48,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
   const [addFolderError, setAddFolderError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
   // Helper to determine if a folder is a descendant of another folder
   const isDescendant = (childId: string | null, parentId: string | null): boolean => {
@@ -364,9 +365,15 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       </div>
 
       {/* Directory Contents */}
-      <div className="flex-1 overflow-y-auto scrollbar-none space-y-1.5 pr-0.5">
+      <div 
+        onClick={() => setSelectedItemId(null)}
+        className="flex-1 overflow-y-auto scrollbar-none space-y-1.5 pr-0.5"
+      >
         {displayedFolders.length === 0 && displayedFiles.length === 0 ? (
-          <div className="py-12 text-center border border-dashed border-fouzar-border rounded-[var(--fouzar-radius-lg)] bg-fouzar-elevated/10 flex flex-col items-center justify-center">
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="py-12 text-center border border-dashed border-fouzar-border rounded-[var(--fouzar-radius-lg)] bg-fouzar-elevated/10 flex flex-col items-center justify-center"
+          >
             <Folder className="w-8 h-8 text-fouzar-text-tertiary mb-2" />
             <p className="font-mono text-[8.5px] text-fouzar-text-secondary uppercase">
               {searchQuery ? 'No matching items' : 'Folder is empty'}
@@ -395,11 +402,24 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
                     initial={{ opacity: 0, scale: 0.98 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.98 }}
-                    className="group flex items-center justify-between p-2.5 bg-fouzar-elevated/20 border border-fouzar-border/60 rounded-[var(--fouzar-radius-md)] hover:border-fouzar-accent/40 transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                    className={`group flex items-center justify-between p-2.5 bg-fouzar-elevated/20 border rounded-[var(--fouzar-radius-md)] transition-colors ${
+                      selectedItemId === folder.id
+                        ? 'border-fouzar-accent shadow-[0_0_10px_rgba(124,92,252,0.15)] bg-fouzar-accent/5'
+                        : 'border-fouzar-border/60 hover:border-fouzar-accent/40'
+                    }`}
                   >
                     <button
                       type="button"
-                      onClick={() => setCurrentFolderId(folder.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedItemId(folder.id);
+                      }}
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentFolderId(folder.id);
+                        setSelectedItemId(null);
+                      }}
                       className="flex items-center gap-2.5 flex-1 min-w-0 text-left cursor-pointer"
                     >
                       <Folder className="w-4 h-4 text-fouzar-accent shrink-0" />
@@ -435,7 +455,10 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
 
                     <button
                       type="button"
-                      onClick={() => deleteFolder(folder.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteFolder(folder.id);
+                      }}
                       className="opacity-0 group-hover:opacity-100 p-1 text-fouzar-text-tertiary hover:text-fouzar-signal transition-all cursor-pointer"
                       title="Delete Folder"
                     >
@@ -455,11 +478,24 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
                   initial={{ opacity: 0, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.98 }}
-                  className="group flex items-center justify-between p-2.5 bg-fouzar-elevated/30 border border-fouzar-border rounded-[var(--fouzar-radius-md)] hover:border-fouzar-accent/40 transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                  className={`group flex items-center justify-between p-2.5 bg-fouzar-elevated/30 border rounded-[var(--fouzar-radius-md)] transition-colors ${
+                    selectedItemId === doc.id
+                      ? 'border-fouzar-accent shadow-[0_0_10px_rgba(124,92,252,0.15)] bg-fouzar-accent/5'
+                      : 'border-fouzar-border hover:border-fouzar-accent/40'
+                  }`}
                 >
                   <button
                     type="button"
-                    onClick={() => onOpenFile?.(doc)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedItemId(doc.id);
+                    }}
+                    onDoubleClick={(e) => {
+                      e.stopPropagation();
+                      onOpenFile?.(doc);
+                      setSelectedItemId(null);
+                    }}
                     className="flex items-center gap-2.5 flex-1 min-w-0 text-left cursor-pointer"
                   >
                     {getFileIcon(doc.fileName)}
@@ -473,7 +509,10 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
 
                   <button
                     type="button"
-                    onClick={() => removeRepositoryItem(doc.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeRepositoryItem(doc.id);
+                    }}
                     className="opacity-0 group-hover:opacity-100 p-1 text-fouzar-text-tertiary hover:text-fouzar-signal transition-all cursor-pointer"
                     title="Delete File"
                   >

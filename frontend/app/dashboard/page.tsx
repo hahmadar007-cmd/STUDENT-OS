@@ -69,6 +69,7 @@ export default function DashboardPage() {
   const [secondsLeft, setSecondsLeft] = useState(25 * 60);
   const [isLmsOpen, setIsLmsOpen] = useState(false);
   const [isShieldOpen, setIsShieldOpen] = useState(false);
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const router = useRouter();
@@ -375,7 +376,10 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen w-screen bg-[#0a0a0f] text-[#f0f0ff] flex flex-col md:flex-row overflow-hidden relative select-none font-sans">
+    <div 
+      onClick={() => setSelectedCardId(null)}
+      className="min-h-screen w-screen bg-[#0a0a0f] text-[#f0f0ff] flex flex-col md:flex-row overflow-hidden relative select-none font-sans"
+    >
       
       {/* ========================================================================= */}
       {/* 1. LEFT SIDEBAR: Icon-only, expands on hover (MD and up)                  */}
@@ -390,7 +394,7 @@ export default function DashboardPage() {
         <div className="flex flex-col gap-6">
           {/* Logo Brand top */}
           <div className="px-3.5 flex items-center justify-start overflow-hidden">
-            <FascaLogo showWordmark={isSidebarHovered} size={24} />
+            <FascaLogo showWordmark={isSidebarHovered} size={24} linkTo="/dashboard" />
           </div>
 
           <div className="w-full h-[1px] bg-[#2a2a3a]/40" />
@@ -570,8 +574,14 @@ export default function DashboardPage() {
               Personal Space
             </span>
             <FascaCard
-              className="p-4 flex flex-col justify-between min-h-[120px] hover:border-[#7c5cfc]/80 cursor-pointer border-[#7c5cfc]/30 bg-[#7c5cfc]/5"
-              onClick={() => router.push('/sanctuary')}
+              className={`p-4 flex flex-col justify-between min-h-[120px] cursor-pointer bg-[#7c5cfc]/5 transition-all duration-150 ${
+                selectedCardId === 'sanctuary' ? 'border-[#7c5cfc] shadow-[0_0_12px_rgba(124,92,252,0.2)]' : 'border-[#7c5cfc]/30 hover:border-[#7c5cfc]/80'
+              }`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedCardId('sanctuary');
+              }}
+              onDoubleClick={() => router.push('/sanctuary')}
             >
               <div>
                 <span className="text-[8.5px] font-mono text-[#7c5cfc] uppercase tracking-wider block">
@@ -604,7 +614,7 @@ export default function DashboardPage() {
             </div>
 
             {loadingNodes ? (
-              <div className="space-y-3">
+              <div className="max-h-64 overflow-y-auto space-y-3 pr-1 scrollbar-none">
                 {[1, 2].map((i) => (
                   <div key={i} className="h-32 bg-[#16161f] border border-[#2a2a3a] animate-pulse rounded-[6px] p-4 flex flex-col justify-between">
                     <div className="h-3 bg-[#1e1e2a] w-1/4 rounded-[2px]" />
@@ -620,22 +630,35 @@ export default function DashboardPage() {
                 <span className="text-[7.5px] font-mono text-[#6b6b8a] mt-1.5 uppercase">NO ACTIVE STUDY NODES DETECTED</span>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="max-h-64 overflow-y-auto space-y-3 pr-1 scrollbar-none">
                 {gardenNodes.map((node) => (
-                  <FascaCard key={node.id} className="p-4 flex flex-col justify-between h-32 hover:border-[#7c5cfc]/60">
+                  <FascaCard 
+                    key={node.id} 
+                    className={`p-4 flex flex-col justify-between h-32 cursor-pointer transition-all duration-150 ease-out select-none ${
+                      selectedCardId === node.id ? 'border-[#7c5cfc] shadow-[0_0_12px_rgba(124,92,252,0.2)]' : 'border-[#2a2a3a] hover:border-[#7c5cfc]/60'
+                    }`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedCardId(node.id);
+                    }}
+                    onDoubleClick={() => router.push(`/room/${node.id}`)}
+                  >
                     <div>
                       <span className="text-[8.5px] font-mono text-[#7c5cfc] uppercase tracking-wider block">
                         {node.course}
                       </span>
-                      <h3 className="text-xs font-bold text-[#f0f0ff] mt-1">
+                      <h3 className="text-xs font-bold text-[#f0f0ff] mt-1" title={node.roomName}>
                         {node.roomName}
                       </h3>
-                      <p className="text-[9px] text-[#6b6b8a] font-mono mt-1">
+                      <p className="text-[9px] text-[#6b6b8a] font-mono mt-1" title={node.currentSlide}>
                         {node.currentSlide}
                       </p>
                     </div>
                     <button
-                      onClick={() => router.push(`/room/${node.id}`)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/room/${node.id}`);
+                      }}
                       className="text-[8.5px] font-mono uppercase tracking-widest text-[#7c5cfc] hover:text-[#f0f0ff] flex items-center gap-1 transition-colors self-end mt-2 cursor-pointer"
                     >
                       Join Circle <ArrowRight className="w-3 h-3" />

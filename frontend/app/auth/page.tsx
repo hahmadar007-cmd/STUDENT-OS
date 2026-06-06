@@ -107,6 +107,19 @@ const NodeCanvas: React.FC = () => {
 
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+      if (tabParam === 'register') {
+        setActiveTab('register');
+      } else if (tabParam === 'login') {
+        setActiveTab('login');
+      }
+    }
+  }, []);
+
   
   // Form values
   const [email, setEmail] = useState('');
@@ -431,9 +444,43 @@ export default function AuthPage() {
 
       </div>
 
-      {/* 2. RIGHT 60%: Abstract slowly-animated visualization of dark network nodes connecting */}
-      <div className="hidden lg:block lg:w-[60%] h-full relative bg-[#0a0a0f]">
-        <NodeCanvas />
+      {/* 2. RIGHT 60%: Beautiful Cyan Graphic with Node Canvas overlay */}
+      <div className="hidden lg:block lg:w-[60%] h-full relative bg-[#0a0a0f] overflow-hidden">
+        {/* The Graphic background with scale transition */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center transition-transform duration-10000 hover:scale-105"
+          style={{
+            backgroundImage: "url('/graduation-hats.png')",
+          }}
+        />
+        {/* Radial & Linear dark overlays to make it blend into the left dark panel */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0f] via-[#0a0a0f]/40 to-transparent z-10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-transparent to-[#0a0a0f]/50 z-10" />
+        
+        {/* Animated Network nodes overlay on top of the image */}
+        <div className="absolute inset-0 z-20 mix-blend-screen opacity-65">
+          <NodeCanvas />
+        </div>
+
+        {/* Feature overlay cards/texts */}
+        <div className="absolute bottom-12 left-12 right-12 z-30 flex flex-col gap-4 max-w-lg">
+          <motion.div
+            initial={{ opacity: 0, y: 25 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.8 }}
+            className="p-6 bg-[#111118]/80 border border-[#7c5cfc]/30 backdrop-blur-md"
+          >
+            <span className="text-[8px] font-mono uppercase tracking-[0.25em] text-[#7c5cfc] block mb-2">
+              STUDENT OS ENVIRONMENT
+            </span>
+            <h2 className="font-serif text-2xl font-bold text-[#f0f0ff] mb-2 leading-tight">
+              Unlock your academic potential.
+            </h2>
+            <p className="text-[9px] font-mono text-[#6b6b8a] uppercase tracking-wider leading-relaxed">
+              Connect with peers, access powerful AI study companions, and experience next-level productivity in real time.
+            </p>
+          </motion.div>
+        </div>
       </div>
 
     </div>

@@ -350,3 +350,37 @@ textarea {
 .glow-panel {
   box-shadow: var(--fouzar-glow-primary);
 }
+
+/* -------------------------------------------------------------------------- */
+/* Fouzar Dynamic Accent Customization                                        */
+/* -------------------------------------------------------------------------- */
+[data-accent='violet'] {
+  --fouzar-accent-primary: #7c5cfc;
+  --fouzar-glow-primary: 0 0 24px rgba(124, 92, 252, 0.18);
+  --fouzar-focus-ring: 0 0 0 2px rgba(124, 92, 252, 0.45);
+}
+
+[data-accent='emerald'] {
+  --fouzar-accent-primary: #3dd68c;
+  --fouzar-glow-primary: 0 0 24px rgba(61, 214, 140, 0.22);
+  --fouzar-focus-ring: 0 0 0 2px rgba(61, 214, 140, 0.45);
+}
+
+[data-accent='ice'] {
+  --fouzar-accent-primary: #5ce1ff;
+  --fouzar-glow-primary: 0 0 24px rgba(92, 225, 255, 0.2);
+  --fouzar-focus-ring: 0 0 0 2px rgba(92, 225, 255, 0.45);
+}
+
+[data-accent='amber'] {
+  --fouzar-accent-primary: #f5a623;
+  --fouzar-glow-primary: 0 0 24px rgba(245, 166, 35, 0.22);
+  --fouzar-focus-ring: 0 0 0 2px rgba(245, 166, 35, 0.45);
+}
+
+[data-accent='signal'] {
+  --fouzar-accent-primary: #ff2d55;
+  --fouzar-glow-primary: 0 0 24px rgba(255, 45, 85, 0.24);
+  --fouzar-focus-ring: 0 0 0 2px rgba(255, 45, 85, 0.45);
+}
+
