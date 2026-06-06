@@ -200,6 +200,17 @@ export default function StudyRoomPage() {
     };
   }, [roomId]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setActiveDoc(null);
+        setShowAiModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Hook up typed listeners from lib/socket.ts
   useOnMessage((message: any) => {
     const isUser = message.sender?.id === 'usr-1' || message.sender?.name?.includes('You') || message.senderName?.includes('You') || message.senderName === 'Alex (You)';

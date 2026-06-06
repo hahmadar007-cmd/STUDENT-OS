@@ -23,6 +23,7 @@ import { getDeadlines } from '../../../lib/api';
 import { DocumentViewer } from '../../documents/DocumentViewer';
 import { FileExplorer } from '../../documents/FileExplorer';
 import type { LmsRepositoryItem } from '../../../lib/FouzarContext';
+import { IntegratedAiChat } from '../../ai/IntegratedAiChat';
 
 /** Remote peer directory for ID lookup until backend search ships. */
 const NETWORK_DIRECTORY: FouzarFriendProfile[] = [
@@ -70,6 +71,7 @@ interface SocialColumnProps {
   setChatInput?: (input: string) => void;
   handleSendChat?: (e: React.FormEvent) => void;
   chatEndRef?: React.RefObject<HTMLDivElement | null>;
+  currentSlide?: number;
 }
 
 /**
@@ -86,6 +88,7 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
   setChatInput,
   handleSendChat,
   chatEndRef,
+  currentSlide,
 }) => {
   const router = useRouter();
   const {
@@ -109,7 +112,7 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
   const [deadlines, setDeadlines] = useState<DeadlineItem[]>([]);
   const [loadingDeadlines, setLoadingDeadlines] = useState(false);
   const [lmsSource, setLmsSource] = useState<'live' | 'demo' | 'error'>('demo');
-  const [activeTab, setActiveTab] = useState<'circles' | 'chat' | 'lms' | 'repository'>('circles');
+  const [activeTab, setActiveTab] = useState<'circles' | 'chat' | 'ai' | 'lms' | 'repository'>('circles');
   const [localActiveDoc, setLocalActiveDoc] = useState<LmsRepositoryItem | null>(null);
   const [dbFriends, setDbFriends] = useState<any[]>([]);
 
@@ -274,6 +277,7 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
         {[
           { id: 'circles' as const, label: 'Circles' },
           { id: 'chat' as const, label: 'Chat' },
+          { id: 'ai' as const, label: 'AI' },
           { id: 'lms' as const, label: 'LMS Feed' },
           { id: 'repository' as const, label: 'Archive' },
         ].map((tab) => (
@@ -475,6 +479,24 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
                   <Send className="w-4 h-4" />
                 </button>
               </form>
+            </motion.div>
+          )}
+
+          {activeTab === 'ai' && (
+            <motion.div
+              key="ai"
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 8 }}
+              className="p-4 flex-1 flex flex-col overflow-hidden h-full min-h-[300px]"
+            >
+              <IntegratedAiChat
+                contextLabel={`Room · Slide ${currentSlide ?? 1}`}
+                slideId={currentSlide ? String(currentSlide) : null}
+                storageKey={`fouzar-room-ai-sidebar-${roomId}`}
+                compact={false}
+                placeholder="Ask AI about this slide, the course, or anything else..."
+              />
             </motion.div>
           )}
 

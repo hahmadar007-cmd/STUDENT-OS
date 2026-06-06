@@ -18,7 +18,8 @@ import {
   Radio,
   Loader2,
   Plug,
-  LogOut
+  LogOut,
+  Palette
 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '../../hooks/useAuth';
@@ -57,7 +58,7 @@ interface FriendRequest {
 export default function ProfilePage() {
   const router = useRouter();
   const { user, mutate, logout } = useAuth();
-  const { mode, aiModel, setAiModel } = useFouzar();
+  const { mode, setMode, aiModel, setAiModel, accentColor, setAccentColor } = useFouzar();
 
   // Profile Form State
   const [name, setName] = useState('');
@@ -266,13 +267,14 @@ export default function ProfilePage() {
       {/* Header */}
       <header className="border-b border-fouzar-border px-4 md:px-8 py-4 flex items-center justify-between shrink-0 bg-fouzar-surface/50 backdrop-blur-xl">
         <div className="flex items-center gap-4">
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-1.5 font-mono text-[8px] uppercase text-fouzar-text-secondary hover:text-fouzar-text-primary transition-colors"
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="flex items-center gap-1.5 font-mono text-[8px] uppercase text-fouzar-text-secondary hover:text-fouzar-text-primary transition-colors cursor-pointer"
           >
-            <ArrowLeft className="w-3.5 h-3.5" /> Dashboard
-          </Link>
-          <FascaLogo showWordmark size={22} />
+            <ArrowLeft className="w-3.5 h-3.5" /> Back
+          </button>
+          <FascaLogo showWordmark size={22} linkTo="/dashboard" />
           <span className="w-[1px] h-4 bg-fouzar-border" />
           <div className="flex items-center gap-2">
             <Settings className="w-4 h-4 text-fouzar-accent" />
@@ -454,6 +456,92 @@ export default function ProfilePage() {
                 </button>
               </div>
             </form>
+          </motion.div>
+
+          {/* Section: Workspace Customization */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.04 }}
+            className="p-6 bg-fouzar-surface border border-fouzar-border rounded-[var(--fouzar-radius-lg)] space-y-5"
+          >
+            <div className="flex items-center gap-2 border-b border-fouzar-border pb-3">
+              <Palette className="w-4 h-4 text-fouzar-accent" />
+              <h2 className="font-mono text-[9px] uppercase tracking-widest text-fouzar-text-secondary">
+                Workspace Customization
+              </h2>
+            </div>
+
+            {/* Chassis Switcher */}
+            <div className="space-y-2">
+              <label className="font-mono text-[7px] uppercase tracking-wider text-fouzar-text-secondary block">
+                Visual Chassis Theme
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { id: 'onyx' as const, name: 'Onyx Theme', desc: 'Tactical matte charcoal dark mode' },
+                  { id: 'greenhouse' as const, name: 'Greenhouse Theme', desc: 'Airy glassmorphism light/blue mode' },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setMode(item.id)}
+                    className={`flex flex-col items-start p-3 border text-left rounded-[var(--fouzar-radius-md)] transition-all cursor-pointer ${
+                      mode === item.id
+                        ? 'bg-fouzar-accent/10 border-fouzar-accent text-fouzar-accent'
+                        : 'bg-fouzar-elevated/30 border-fouzar-border hover:border-fouzar-text-tertiary text-fouzar-text-primary'
+                    }`}
+                  >
+                    <span className="font-mono text-[8.5px] uppercase tracking-wider font-bold">{item.name}</span>
+                    <span className="text-[7.5px] text-fouzar-text-secondary mt-1 font-sans font-light leading-snug">{item.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Accent Color Picker */}
+            <div className="space-y-2.5">
+              <label className="font-mono text-[7px] uppercase tracking-wider text-fouzar-text-secondary block">
+                Workspace Accent Color
+              </label>
+              <div className="grid grid-cols-5 gap-2.5">
+                {[
+                  { id: 'violet' as const, name: 'Violet', color: '#7c5cfc' },
+                  { id: 'emerald' as const, name: 'Emerald Green', color: '#3dd68c' },
+                  { id: 'ice' as const, name: 'Ice Blue', color: '#5ce1ff' },
+                  { id: 'amber' as const, name: 'Amber Gold', color: '#f5a623' },
+                  { id: 'signal' as const, name: 'Signal Crimson', color: '#ff2d55' },
+                ].map((accent) => {
+                  const isSelected = accentColor === accent.id;
+                  return (
+                    <button
+                      key={accent.id}
+                      type="button"
+                      onClick={() => setAccentColor(accent.id)}
+                      className={`flex flex-col items-center justify-center p-2.5 border rounded-[var(--fouzar-radius-md)] transition-all cursor-pointer relative ${
+                        isSelected
+                          ? 'bg-fouzar-accent/15 border-fouzar-accent'
+                          : 'bg-fouzar-elevated/30 border-fouzar-border hover:border-fouzar-text-tertiary'
+                      }`}
+                    >
+                      {/* Colored circle */}
+                      <span 
+                        className="w-5 h-5 rounded-full mb-1.5 shadow-[0_0_8px_rgba(255,255,255,0.05)] border border-white/10 shrink-0" 
+                        style={{ 
+                          backgroundColor: accent.color,
+                          boxShadow: isSelected ? `0 0 12px ${accent.color}80` : undefined
+                        }}
+                      />
+                      <span className={`font-mono text-[6.5px] uppercase tracking-wider font-semibold text-center truncate w-full ${
+                        isSelected ? 'text-fouzar-accent' : 'text-fouzar-text-secondary'
+                      }`}>
+                        {accent.name}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </motion.div>
 
           {/* Section 2: LMS Connection settings */}

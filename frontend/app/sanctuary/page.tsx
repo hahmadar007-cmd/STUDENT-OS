@@ -71,6 +71,7 @@ export default function PersonalSanctuaryPage() {
   const [uploading, setUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedSidebarDocId, setSelectedSidebarDocId] = useState<string | null>(null);
 
   const [bypassSecondsLeft, setBypassSecondsLeft] = useState(0);
 
@@ -86,6 +87,17 @@ export default function PersonalSanctuaryPage() {
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
   }, [bypass.isActive, bypass.expiresAt]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setActiveDoc(null);
+        setSelectedSidebarDocId(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const formatBypass = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -230,17 +242,21 @@ export default function PersonalSanctuaryPage() {
   }
 
   return (
-    <div className="h-screen bg-fouzar-bg text-fouzar-text-primary flex flex-col overflow-hidden pb-20 md:pb-0">
+    <div 
+      onClick={() => setSelectedSidebarDocId(null)}
+      className="h-screen bg-fouzar-bg text-fouzar-text-primary flex flex-col overflow-hidden pb-20 md:pb-0"
+    >
       {/* Header */}
       <header className="border-b border-fouzar-border px-4 md:px-8 py-4 flex items-center justify-between shrink-0 bg-fouzar-surface/50 backdrop-blur-xl">
         <div className="flex items-center gap-4">
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-1.5 font-mono text-[8px] uppercase text-fouzar-text-secondary hover:text-fouzar-text-primary"
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="flex items-center gap-1.5 font-mono text-[8px] uppercase text-fouzar-text-secondary hover:text-fouzar-text-primary cursor-pointer"
           >
-            <ArrowLeft className="w-3 h-3" /> Dashboard
-          </Link>
-          <FouzarLogo showWordmark size={22} />
+            <ArrowLeft className="w-3 h-3" /> Back
+          </button>
+          <FouzarLogo showWordmark size={22} linkTo="/dashboard" />
           <span className="w-[1px] h-4 bg-fouzar-border" />
           <div className="flex flex-col text-left">
             <span className="font-serif text-[11px] font-bold text-fouzar-text-primary leading-none">
@@ -350,23 +366,37 @@ export default function PersonalSanctuaryPage() {
               {filteredRepository.map((doc) => (
                 <div
                   key={doc.id}
-                  className="group flex items-center gap-2 p-2 bg-fouzar-elevated/30 border border-fouzar-border rounded-[var(--fouzar-radius-sm)] hover:border-fouzar-accent/40"
+                  onClick={(e) => e.stopPropagation()}
+                  className={`group flex items-center gap-2 p-2 bg-fouzar-elevated/30 border rounded-[var(--fouzar-radius-sm)] transition-colors ${
+                    selectedSidebarDocId === doc.id
+                      ? 'border-fouzar-accent bg-fouzar-accent/5'
+                      : 'border-fouzar-border hover:border-fouzar-accent/40'
+                  }`}
                 >
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedSidebarDocId(doc.id);
+                    }}
+                    onDoubleClick={(e) => {
+                      e.stopPropagation();
                       setActiveDoc(doc);
                       setCenterTab('slides');
+                      setSelectedSidebarDocId(null);
                     }}
-                    className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                    className="flex items-center gap-2 flex-1 min-w-0 text-left cursor-pointer"
                   >
                     <FileText className="w-3 h-3 text-fouzar-ice shrink-0" />
                     <span className="text-[8px] truncate">{doc.fileName}</span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => removeRepositoryItem(doc.id)}
-                    className="opacity-0 group-hover:opacity-100 text-fouzar-signal shrink-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeRepositoryItem(doc.id);
+                    }}
+                    className="opacity-0 group-hover:opacity-100 text-fouzar-signal shrink-0 cursor-pointer"
                   >
                     <Trash2 className="w-3 h-3" />
                   </button>

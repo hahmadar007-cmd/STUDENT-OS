@@ -1,11 +1,13 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 
 interface FascaLogoProps {
   size?: number;
   showWordmark?: boolean;
   className?: string;
+  linkTo?: string;
 }
 
 /**
@@ -16,8 +18,9 @@ export const FascaLogo: React.FC<FascaLogoProps> = ({
   size = 32,
   showWordmark = true,
   className = '',
+  linkTo,
 }) => {
-  return (
+  const content = (
     <div className={`inline-flex items-center gap-3 select-none ${className}`}>
       <svg
         width={size}
@@ -64,4 +67,14 @@ export const FascaLogo: React.FC<FascaLogoProps> = ({
       )}
     </div>
   );
+
+  if (linkTo) {
+    return (
+      <Link href={linkTo} className="group cursor-pointer">
+        {content}
+      </Link>
+    );
+  }
+
+  return content;
 };
