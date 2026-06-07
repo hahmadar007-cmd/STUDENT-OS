@@ -9,6 +9,7 @@ import {
   revokeObjectUrl,
   isViewableInBrowser,
 } from '../../lib/documentStore';
+import { useFouzar } from '../../lib/FouzarContext';
 import type { LmsRepositoryItem } from '../../lib/FouzarContext';
 
 interface DocumentViewerProps {
@@ -22,6 +23,7 @@ interface DocumentViewerProps {
  * PDFs and images render inline; other formats offer download.
  */
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClose, isInline = false }) => {
+  const { setActiveDocText } = useFouzar();
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
   const [textContent, setTextContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -44,9 +46,14 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
         url = createObjectUrl(stored.blob);
         setObjectUrl(url);
 
-        if (stored.mimeType.startsWith('text/') || document.fileName.endsWith('.md') || document.fileName.endsWith('.txt')) {
+        if (stored.mimeType.startsWith('text/') || document.fileName.endsWith('.md') || document.fileName.endsWith('.txt') || document.fileName.endsWith('.js') || document.fileName.endsWith('.ts') || document.fileName.endsWith('.tsx') || document.fileName.endsWith('.py') || document.fileName.endsWith('.json') || document.fileName.endsWith('.css') || document.fileName.endsWith('.html') || document.fileName.endsWith('.cpp') || document.fileName.endsWith('.java')) {
           const text = await stored.blob.text();
           setTextContent(text);
+          setActiveDocText(text);
+        } else if (stored.mimeType === 'application/pdf' || document.fileName.toLowerCase().endsWith('.pdf')) {
+          setActiveDocText(`[Study Material: PDF Document]\nName: ${document.fileName}\nCategory: ${document.category}\nCourse: ${document.courseCode}`);
+        } else {
+          setActiveDocText(`[Study Material: File]\nName: ${document.fileName}\nCategory: ${document.category}\nCourse: ${document.courseCode}\nType: ${stored.mimeType}`);
         }
       })
       .catch(() => setError('Failed to load document.'))
@@ -54,8 +61,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
 
     return () => {
       if (url) revokeObjectUrl(url);
+      setActiveDocText(null);
     };
-  }, [document]);
+  }, [document, setActiveDocText]);
 
   if (!document) return null;
 

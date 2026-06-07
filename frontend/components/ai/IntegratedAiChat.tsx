@@ -41,7 +41,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
   compact = false,
   placeholder = 'Ask about your material, deadlines, or concepts...',
 }) => {
-  const { aiModel, setAiModel } = useFouzar();
+  const { aiModel, setAiModel, activeDoc, activeDocText } = useFouzar();
   const [messages, setMessages] = useState<AiChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -70,6 +70,81 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
   const activeModelLabel =
     MODEL_OPTIONS.find((m) => m.id === aiModel)?.label ?? aiModel;
 
+  // Automatically trigger AI document summary/welcome message when a new document is opened
+  const lastOpenedDocIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!activeDoc) {
+      lastOpenedDocIdRef.current = null;
+      return;
+    }
+    
+    // Only trigger once per unique document open event
+    if (lastOpenedDocIdRef.current === activeDoc.id) return;
+    lastOpenedDocIdRef.current = activeDoc.id;
+
+    const autoAnalyze = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      // Add a system welcome message/acknowledgment from the assistant
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `sys-open-${Date.now()}`,
+          role: 'assistant',
+          content: `📂 **Opened: ${activeDoc.fileName}**\nAnalyzing study material...`,
+          model: 'System',
+        }
+      ]);
+
+      try {
+        let systemPrompt = `[System Action: Document Opened] The user has just opened the document "${activeDoc.fileName}" (Category: ${activeDoc.category}, Course: ${activeDoc.courseCode}).\n`;
+        if (activeDocText) {
+          systemPrompt += `Please inspect the following text content and provide a very brief (2-3 sentences max) welcoming study partner response. Acknowledge what this document is about and offer specific ways you can help them study it (e.g. summarize, explain formulas, generate code, or quiz them):\n\n${activeDocText.slice(0, 8000)}`;
+        } else {
+          systemPrompt += `Please provide a very brief (2 sentences max) welcoming study partner response acknowledging the opened file and asking what they would like to know about it.`;
+        }
+
+        const res = await askAi(systemPrompt, slideId, aiModel);
+        
+        // Remove the temporary "Analyzing..." system message and add the real AI welcome message
+        setMessages((prev) => {
+          const filtered = prev.filter(m => !m.id.startsWith('sys-open-'));
+          return [
+            ...filtered,
+            {
+              id: `ai-welcome-${Date.now()}`,
+              role: 'assistant',
+              content: res.text ?? `I see you opened ${activeDoc.fileName}. How can I help you study it?`,
+              model: res.model ?? activeModelLabel,
+            }
+          ];
+        });
+      } catch (err) {
+        console.error('Auto-analysis failed:', err);
+        setMessages((prev) => {
+          const filtered = prev.filter(m => !m.id.startsWith('sys-open-'));
+          return [
+            ...filtered,
+            {
+              id: `ai-welcome-${Date.now()}`,
+              role: 'assistant',
+              content: `📂 **Opened: ${activeDoc.fileName}**\nHow would you like to study this material? Ask me anything about it.`,
+              model: activeModelLabel,
+            }
+          ];
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // Small delay to make sure activeDocText has finished loading
+    const t = setTimeout(autoAnalyze, 600);
+    return () => clearTimeout(t);
+  }, [activeDoc, activeDocText, aiModel, slideId, activeModelLabel]);
+
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -87,7 +162,14 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
     setError(null);
 
     try {
-      const res = await askAi(userMsg.content, slideId, aiModel);
+      let finalPrompt = userMsg.content;
+      if (activeDoc && activeDocText) {
+        // Truncate document text to avoid overflow, though Gemini 2.5 supports large context
+        const truncatedText = activeDocText.length > 30000 ? activeDocText.slice(0, 30000) + "\n... [truncated for token safety]" : activeDocText;
+        finalPrompt = `[Study Material Context]\nDocument Name: ${activeDoc.fileName}\nCategory: ${activeDoc.category}\nCourse: ${activeDoc.courseCode}\n\n[Document Content/Metadata]:\n${truncatedText}\n\n[User Query]: ${userMsg.content}`;
+      }
+
+      const res = await askAi(finalPrompt, slideId, aiModel);
       setMessages((prev) => [
         ...prev,
         {
@@ -98,7 +180,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
         },
       ]);
     } catch {
-      setError('AI unreachable. Ensure the backend is running on port 3001.');
+      setError('AI unreachable. Ensure the backend is running.');
       setMessages((prev) => [
         ...prev,
         {

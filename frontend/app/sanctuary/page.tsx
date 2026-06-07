@@ -55,6 +55,8 @@ export default function PersonalSanctuaryPage() {
     activateBypass,
     clearBypass,
     mode,
+    activeDoc,
+    setActiveDoc,
   } = useFouzar();
 
   const [semester, setSemester] = useState('Spring 2026');
@@ -66,7 +68,6 @@ export default function PersonalSanctuaryPage() {
   >([]);
   const [lmsSource, setLmsSource] = useState<'live' | 'demo' | 'error'>('demo');
   const [lmsError, setLmsError] = useState<string | null>(null);
-  const [activeDoc, setActiveDoc] = useState<LmsRepositoryItem | null>(null);
   const [centerTab, setCenterTab] = useState<'notes' | 'slides'>('notes');
   const [uploading, setUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
