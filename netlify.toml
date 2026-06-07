@@ -9,3 +9,4 @@
 [build.environment]
   NEXT_PUBLIC_API_URL = "https://ammeeee-student-os.hf.space"
   NODE_VERSION = "20"
+  NPM_CONFIG_PRODUCTION = "false"
