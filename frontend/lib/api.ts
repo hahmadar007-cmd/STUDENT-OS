@@ -122,7 +122,9 @@ export const askAi = (
       const payload = JSON.parse(atob(token.split('.')[1]));
       userId = payload.sub || userId;
     }
-  } catch (e) {}
+  } catch {
+    console.warn('Failed to decode JWT for AI chat — using default user ID');
+  }
 
   return apiRequest('/ai/chat', 'POST', {
     userId,

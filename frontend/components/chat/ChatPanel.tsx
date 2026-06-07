@@ -30,6 +30,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
+  const [loadError, setLoadError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const socketRef = useRef<any>(null);
 
@@ -43,6 +44,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         }
       } catch (err) {
         console.error('Failed to load chat history', err);
+        setLoadError('Failed to load chat history');
       }
     };
     fetchChatHistory();
@@ -114,7 +116,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 
       {/* Messages (Discord Style Inline rendering) */}
       <div className="flex-1 overflow-y-auto space-y-4 pr-1 max-h-[380px] scrollbar-none">
-        {messages.length === 0 ? (
+        {loadError ? (
+          <div className="h-full flex flex-col items-center justify-center text-center text-red-400/80 p-8 select-none">
+            <span className="text-[10px] font-mono uppercase tracking-widest">{loadError}</span>
+          </div>
+        ) : messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center text-fouzar-text-secondary p-8 select-none">
             <span className="text-[10px] font-mono uppercase tracking-widest">No logs yet.</span>
             <span className="text-[9px] text-fouzar-text-secondary/60 mt-1">Start typing below to broadcast.</span>

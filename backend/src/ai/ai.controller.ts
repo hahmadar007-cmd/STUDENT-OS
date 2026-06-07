@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Headers, UseInterceptors, UploadedFile, Get, Query } from '@nestjs/common';
+import { Controller, Post, Body, Headers, UseInterceptors, UploadedFile, Get, Query, BadRequestException, Logger } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AiService } from './ai.service';
 import { DocumentProcessorService } from './document-processor.service';
@@ -6,6 +6,8 @@ import { VectorService } from './vector.service';
 
 @Controller('ai')
 export class AiController {
+  private readonly logger = new Logger(AiController.name);
+
   constructor(
     private readonly aiService: AiService,
     private readonly documentProcessorService: DocumentProcessorService,
@@ -49,7 +51,8 @@ export class AiController {
       try {
         chunks = typeof body.chunks === 'string' ? JSON.parse(body.chunks) : body.chunks;
       } catch (err) {
-        console.error('Failed to parse chunks from body:', err);
+        this.logger.error('Failed to parse chunks from body', err);
+        throw new BadRequestException('Invalid chunks format: could not parse JSON');
       }
     }
 

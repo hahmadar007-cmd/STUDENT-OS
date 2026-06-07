@@ -630,7 +630,9 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         if (Array.isArray(parsed) && parsed.length > 0) {
           setFolders(parsed);
         }
-      } catch (e) {}
+      } catch {
+        localStorage.removeItem(STORAGE_KEYS.folders);
+      }
     }
     if (savedActiveFolder) {
       setActiveFolderIdState(savedActiveFolder);

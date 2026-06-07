@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Headers, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Headers, UnauthorizedException, InternalServerErrorException, Logger } from '@nestjs/common';
 import { AppService } from './app.service';
 import { PrismaService } from './prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
@@ -7,6 +7,8 @@ import { encrypt, decrypt } from './utils/crypto';
 
 @Controller()
 export class AppController {
+  private readonly logger = new Logger(AppController.name);
+
   constructor(
     private readonly appService: AppService,
     private readonly prisma: PrismaService,
@@ -112,6 +114,8 @@ export class AppController {
       
       return user;
     } catch (e) {
+      if (e instanceof UnauthorizedException) throw e;
+      this.logger.error('Failed to fetch user profile', e);
       throw new UnauthorizedException('Invalid or expired token');
     }
   }
@@ -258,7 +262,9 @@ export class AppController {
 
       return allGroups;
     } catch (e) {
-      throw new UnauthorizedException('Authentication failed');
+      if (e instanceof UnauthorizedException) throw e;
+      this.logger.error('Failed to fetch groups', e);
+      throw new InternalServerErrorException('Failed to load groups');
     }
   }
 
@@ -290,7 +296,9 @@ export class AppController {
       });
       return { success: true, isFocusing: user.isFocusing };
     } catch (e) {
-      throw new UnauthorizedException('Authentication failed');
+      if (e instanceof UnauthorizedException) throw e;
+      this.logger.error('Failed to update focus state', e);
+      throw new InternalServerErrorException('Failed to update focus state');
     }
   }
 
@@ -328,7 +336,9 @@ export class AppController {
       });
       return { success: true, user };
     } catch (e) {
-      throw new UnauthorizedException('Authentication failed');
+      if (e instanceof UnauthorizedException) throw e;
+      this.logger.error('Failed to update profile', e);
+      throw new InternalServerErrorException('Failed to update profile');
     }
   }
 
@@ -347,7 +357,9 @@ export class AppController {
       this.appService.setBypass(userId, body.isBypassed, body.durationMinutes || 5);
       return { success: true, isBypassed: body.isBypassed };
     } catch (e) {
-      throw new UnauthorizedException('Authentication failed');
+      if (e instanceof UnauthorizedException) throw e;
+      this.logger.error('Failed to set bypass state', e);
+      throw new InternalServerErrorException('Failed to set bypass state');
     }
   }
 
@@ -383,7 +395,9 @@ export class AppController {
         deadlineCount: test.deadlines.length,
       };
     } catch (e) {
-      throw new UnauthorizedException('Authentication failed');
+      if (e instanceof UnauthorizedException) throw e;
+      this.logger.error('Failed to update LMS token', e);
+      throw new InternalServerErrorException('Failed to configure LMS connection');
     }
   }
 
@@ -476,7 +490,7 @@ export class AppController {
         deadlines: demoDeadlines,
       };
     } catch (e) {
-      console.warn('LMS deadlines fetch failed:', e);
+      this.logger.warn('LMS deadlines fetch failed', e);
       return {
         source: 'demo',
         connected: false,

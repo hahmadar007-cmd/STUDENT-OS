@@ -151,6 +151,7 @@ export default function DashboardPage() {
 
   const [gardenNodes, setGardenNodes] = useState<GardenNode[]>([]);
   const [loadingNodes, setLoadingNodes] = useState(true);
+  const [loadGroupsError, setLoadGroupsError] = useState<string | null>(null);
   const [hoveredPeerId, setHoveredPeerId] = useState<string | null>(null);
 
   const [peers, setPeers] = useState<StudyCirclePeer[]>([
@@ -173,6 +174,7 @@ export default function DashboardPage() {
       setGardenNodes(formattedNodes);
     } catch (err) {
       console.error('Failed to load groups:', err);
+      setLoadGroupsError('Failed to load study groups');
     } finally {
       setLoadingNodes(false);
     }
@@ -330,6 +332,7 @@ export default function DashboardPage() {
       }
     } catch (err) {
       console.error('Failed to trigger deep flow:', err);
+      setIsFlowActive(false);
     }
   };
 
@@ -622,6 +625,11 @@ export default function DashboardPage() {
                     <div className="h-4 bg-[#1e1e2a] w-16 self-end rounded-[2px]" />
                   </div>
                 ))}
+              </div>
+            ) : loadGroupsError ? (
+              <div className="w-full h-32 border border-dashed border-red-500/30 rounded-[6px] flex flex-col items-center justify-center p-4 text-center">
+                <Grid className="w-8 h-8 text-red-400/40 mb-2" />
+                <span className="text-[10px] font-mono text-red-400 uppercase tracking-wider">{loadGroupsError}</span>
               </div>
             ) : gardenNodes.length === 0 ? (
               <div className="w-full h-32 border border-dashed border-[#2a2a3a] rounded-[6px] flex flex-col items-center justify-center p-4 text-center">

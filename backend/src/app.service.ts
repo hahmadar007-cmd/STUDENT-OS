@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { PrismaService } from './prisma/prisma.service';
 import { exec } from 'child_process';
 import { promisify } from 'util';
@@ -7,6 +7,7 @@ const execAsync = promisify(exec);
 
 @Injectable()
 export class AppService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(AppService.name);
   private monitorInterval: NodeJS.Timeout | null = null;
   private isMonitoring = false;
   
@@ -32,10 +33,10 @@ export class AppService implements OnModuleInit, OnModuleDestroy {
     if (isBypassed) {
       const expiration = Date.now() + durationMinutes * 60 * 1000;
       this.bypassUsers.set(userId, expiration);
-      console.log(`Bypass enabled for user ${userId} until ${new Date(expiration).toLocaleTimeString()}`);
+      this.logger.log(`Bypass enabled for user ${userId} until ${new Date(expiration).toLocaleTimeString()}`);
     } else {
       this.bypassUsers.delete(userId);
-      console.log(`Bypass disabled for user ${userId}`);
+      this.logger.log(`Bypass disabled for user ${userId}`);
     }
   }
 
@@ -67,7 +68,7 @@ export class AppService implements OnModuleInit, OnModuleDestroy {
           await this.enforceProcessBlocking();
         }
       } catch (err) {
-        console.error('Process blocker monitor error:', err);
+        this.logger.error('Process blocker monitor error', err);
       }
     }, 4000); // Check every 4 seconds
   }
@@ -97,9 +98,9 @@ export class AppService implements OnModuleInit, OnModuleDestroy {
       try {
         // On Windows, taskkill kills the process. It will error out if not running, which is caught in catch
         await execAsync(`taskkill /F /IM "${app}"`);
-        console.log(`[OS App Locker] Blocked running distraction app: ${app}`);
-      } catch (e) {
-        // Suppress errors for processes that are not currently running
+        this.logger.log(`[OS App Locker] Blocked running distraction app: ${app}`);
+      } catch {
+        // Expected: process not running
       }
     }
   }

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Headers, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Headers, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { GroupsService } from './groups.service';
 import { JwtService } from '@nestjs/jwt';
 
@@ -9,21 +9,26 @@ export class GroupsController {
     private readonly jwtService: JwtService,
   ) {}
 
-  @Post()
-  async createGroup(
-    @Headers('authorization') authHeader: string,
-    @Body() body: { name: string; courseCode?: string },
-  ) {
+  private verifyToken(authHeader?: string): string {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       throw new UnauthorizedException('Missing token');
     }
     const token = authHeader.split(' ')[1];
     try {
       const decoded = this.jwtService.verify(token);
-      return this.groupsService.createGroup(body.name, decoded.sub, body.courseCode);
+      return decoded.sub;
     } catch {
-      throw new UnauthorizedException('Authentication failed');
+      throw new UnauthorizedException('Invalid or expired token');
     }
+  }
+
+  @Post()
+  async createGroup(
+    @Headers('authorization') authHeader: string,
+    @Body() body: { name: string; courseCode?: string },
+  ) {
+    const userId = this.verifyToken(authHeader);
+    return this.groupsService.createGroup(body.name, userId, body.courseCode);
   }
 
   @Get(':groupId/messages')
@@ -37,14 +42,16 @@ export class GroupsController {
     @Param('groupId') groupId: string,
     @Body() body: { connectionId: string },
   ) {
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Missing token');
-    }
-    const token = authHeader.split(' ')[1];
+    const userId = this.verifyToken(authHeader);
     try {
-      const decoded = this.jwtService.verify(token);
-      return this.groupsService.addGroupMember(groupId, body.connectionId, decoded.sub);
+      return await this.groupsService.addGroupMember(groupId, body.connectionId, userId);
     } catch (e) {
+      if (e instanceof Error) {
+        if (e.message.includes('not found')) {
+          throw new NotFoundException(e.message);
+        }
+        throw new BadRequestException(e.message);
+      }
       throw e;
     }
   }

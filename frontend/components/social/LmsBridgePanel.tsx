@@ -56,6 +56,7 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({
       }
     } catch (err) {
       console.error('Failed to fetch deadlines:', err);
+      setErrorMsg('Failed to load deadlines. Check your connection and try again.');
     } finally {
       setIsLoading(false);
     }

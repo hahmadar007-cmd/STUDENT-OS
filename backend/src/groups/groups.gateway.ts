@@ -7,12 +7,15 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
+import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 
 @WebSocketGateway({ cors: true })
 export class GroupsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+  private readonly logger = new Logger(GroupsGateway.name);
+
   @WebSocketServer()
   server!: Server;
 
@@ -25,27 +28,27 @@ export class GroupsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       const token = client.handshake.auth?.token || client.handshake.query?.token;
       if (!token) {
-        console.log(`Connection rejected: No token provided (client: ${client.id})`);
+        this.logger.warn(`Connection rejected: No token provided (client: ${client.id})`);
         client.disconnect(true);
         return;
       }
       const decoded = this.jwtService.verify(token);
       if (!decoded || !decoded.sub) {
-        console.log(`Connection rejected: Invalid token (client: ${client.id})`);
+        this.logger.warn(`Connection rejected: Invalid token (client: ${client.id})`);
         client.disconnect(true);
         return;
       }
       // Join user specific room for targeted signals
       await client.join(`user:${decoded.sub}`);
-      console.log(`Client authenticated: ${decoded.sub} (socket: ${client.id})`);
+      this.logger.log(`Client authenticated: ${decoded.sub} (socket: ${client.id})`);
     } catch (e: any) {
-      console.log(`Connection rejected: Auth error (client: ${client.id}):`, e.message);
+      this.logger.warn(`Connection rejected: Auth error (client: ${client.id}): ${e.message}`);
       client.disconnect(true);
     }
   }
 
   handleDisconnect(client: Socket) {
-    console.log(`Client disconnected: ${client.id}`);
+    this.logger.log(`Client disconnected: ${client.id}`);
   }
 
   @SubscribeMessage('joinGroup')
@@ -54,7 +57,7 @@ export class GroupsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { groupId: string },
   ) {
     client.join(data.groupId);
-    console.log(`Client ${client.id} joined group: ${data.groupId}`);
+    this.logger.log(`Client ${client.id} joined group: ${data.groupId}`);
   }
 
   @SubscribeMessage('sendMessage')
@@ -71,7 +74,7 @@ export class GroupsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         senderId = decoded.sub;
       }
     } catch (e) {
-      console.warn('JWT verify failed on sendMessage, attempting fallback', e);
+      this.logger.warn('JWT verify failed on sendMessage, attempting fallback', e);
     }
 
     if (!senderId) {
@@ -153,7 +156,7 @@ export class GroupsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         },
       });
     } catch (e) {
-      console.error('Failed to sync slide in DB', e);
+      this.logger.error('Failed to sync slide in DB', e);
     }
 
     this.server.to(data.groupId).emit('slideUpdated', { slideId: data.slideId });
@@ -174,7 +177,7 @@ export class GroupsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         userId = decoded.sub;
       }
     } catch (e) {
-      console.warn('JWT verify failed on updateFocusState');
+      this.logger.warn('JWT verify failed on updateFocusState', e);
     }
 
     if (!userId) {
@@ -227,7 +230,7 @@ export class GroupsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }
       }
     } catch (e: any) {
-      console.warn('Failed to parse token in sendSignal:', e.message);
+      this.logger.warn(`Failed to parse token in sendSignal: ${e.message}`);
     }
 
     if (senderId) {
@@ -237,7 +240,9 @@ export class GroupsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         senderName,
         targetUserId: data.targetUserId,
       });
-      console.log(`Signal sent from ${senderName} (${senderId}) to ${data.targetUserId}`);
+      this.logger.log(`Signal sent from ${senderName} (${senderId}) to ${data.targetUserId}`);
+    } else {
+      this.logger.warn(`Signal dropped: could not resolve sender identity for client ${client.id}`);
     }
   }
 }
