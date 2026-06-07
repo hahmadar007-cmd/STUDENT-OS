@@ -7,12 +7,14 @@ services:
     plan: free
     envVars:
       - key: DATABASE_URL
-        value: postgresql://postgres.mtuyjxzsrmpxdaxppnuy:tL3%40QEov1122@aws-1-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true
+        sync: false  # Set in Render dashboard — never commit credentials
       - key: DIRECT_URL
-        value: postgresql://postgres.mtuyjxzsrmpxdaxppnuy:tL3%40QEov1122@aws-1-ap-south-1.pooler.supabase.com:5432/postgres
+        sync: false
       - key: JWT_SECRET
-        value: super-secret-key-change-this-in-production
+        sync: false
       - key: JWT_EXPIRES_IN
         value: 7d
       - key: PORT
         value: 3001
+      - key: CORS_ORIGIN
+        sync: false

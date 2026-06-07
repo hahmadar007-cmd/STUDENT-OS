@@ -27,7 +27,19 @@ export class GroupsController {
   }
 
   @Get(':groupId/messages')
-  getMessages(@Param('groupId') groupId: string) {
+  getMessages(
+    @Headers('authorization') authHeader: string,
+    @Param('groupId') groupId: string,
+  ) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Missing token');
+    }
+    const token = authHeader.split(' ')[1];
+    try {
+      this.jwtService.verify(token);
+    } catch {
+      throw new UnauthorizedException('Authentication failed');
+    }
     return this.groupsService.getMessages(groupId);
   }
 

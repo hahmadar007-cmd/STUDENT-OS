@@ -29,12 +29,6 @@ export class AppController {
     }
   }
 
-  @Get('test/db')
-  async testDb() {
-    const count = await this.prisma.user.count();
-    return { status: 'Database connected!', userCount: count };
-  }
-
   @Get('users/me')
   async getMe(@Headers('authorization') authHeader?: string) {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {

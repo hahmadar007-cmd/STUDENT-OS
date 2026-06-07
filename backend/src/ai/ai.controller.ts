@@ -1,5 +1,6 @@
-import { Controller, Post, Body, Headers, UseInterceptors, UploadedFile, Get, Query } from '@nestjs/common';
+import { Controller, Post, Body, Headers, UseInterceptors, UploadedFile, Get, Query, UnauthorizedException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { JwtService } from '@nestjs/jwt';
 import { AiService } from './ai.service';
 import { DocumentProcessorService } from './document-processor.service';
 import { VectorService } from './vector.service';
@@ -10,10 +11,25 @@ export class AiController {
     private readonly aiService: AiService,
     private readonly documentProcessorService: DocumentProcessorService,
     private readonly vectorService: VectorService,
+    private readonly jwtService: JwtService,
   ) {}
+
+  private verifyAuth(authHeader?: string): string {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Missing token');
+    }
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded = this.jwtService.verify(token);
+      return decoded.sub;
+    } catch {
+      throw new UnauthorizedException('Authentication failed');
+    }
+  }
 
   @Post('chat')
   chat(
+    @Headers('authorization') authHeader: string,
     @Body() dto: {
       userId: string;
       prompt: string;
@@ -26,16 +42,19 @@ export class AiController {
     },
     @Headers() headers: Record<string, string>,
   ) {
+    this.verifyAuth(authHeader);
     return this.aiService.chat(dto, headers);
   }
 
   @Post('index-document')
   @UseInterceptors(FileInterceptor('file'))
   async indexDocument(
+    @Headers('authorization') authHeader: string,
     @Body() body: { courseId: string; documentId: string; chunks?: string },
     @UploadedFile() file: any,
     @Headers() headers: Record<string, string>,
   ) {
+    this.verifyAuth(authHeader);
     const geminiKey = headers['x-gemini-key'] || process.env.GEMINI_API_KEY || '';
     const { courseId, documentId } = body;
 

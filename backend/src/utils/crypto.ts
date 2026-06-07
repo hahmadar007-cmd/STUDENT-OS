@@ -1,7 +1,7 @@
 import * as crypto from 'crypto';
 
 const ALGORITHM = 'aes-256-cbc';
-const SECRET_KEY = process.env.JWT_SECRET || 'fasca-obsidian-secret-key-1337-change-in-prod';
+const SECRET_KEY = process.env.JWT_SECRET!;
 // Hash the secret to ensure it is exactly 32 bytes
 const ENCRYPTION_KEY = crypto.createHash('sha256').update(SECRET_KEY).digest();
 const IV_LENGTH = 16;
