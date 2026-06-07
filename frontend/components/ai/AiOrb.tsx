@@ -18,7 +18,7 @@ export const AiOrb: React.FC = () => {
     {
       role: 'assistant',
       content: 'Fouzar AI companion active. Adjust configuration in header settings. Ask anything.',
-      model: 'gemini-1.5-pro',
+      model: 'deepseek',
       responseTime: '22ms',
     },
   ]);
@@ -28,7 +28,7 @@ export const AiOrb: React.FC = () => {
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
   const models = [
-    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', provider: 'Google' },
+    { id: 'deepseek', name: 'DeepSeek Chat', provider: 'DeepSeek' },
     { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'Anthropic' },
     { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI' },
   ];
@@ -60,7 +60,9 @@ export const AiOrb: React.FC = () => {
     const startTime = Date.now();
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/ai/chat`, {
+      const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || (isLocal ? 'http://localhost:3001' : 'https://ammeeee-student-os.hf.space');
+      const response = await fetch(`${apiBase}/ai/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

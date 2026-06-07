@@ -63,7 +63,7 @@ export default function ProfilePage() {
   // Profile Form State
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [preferredModel, setPreferredModel] = useState('gemini-1.5-pro');
+  const [preferredModel, setPreferredModel] = useState('deepseek');
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileMessage, setProfileMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
@@ -449,7 +449,7 @@ export default function ProfilePage() {
                 </label>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { id: 'gemini-1.5-pro', name: 'Gemini Pro' },
+                    { id: 'deepseek', name: 'DeepSeek Chat' },
                     { id: 'claude-3-5-sonnet', name: 'Claude 3.5' },
                     { id: 'gpt-4o', name: 'GPT-4o' },
                   ].map((model) => (
@@ -616,7 +616,7 @@ export default function ProfilePage() {
                     className="w-full bg-[#111118] border border-fouzar-border px-3 py-2 text-[10.5px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
                   >
                     <option value="default">Fasca AI (System Default)</option>
-                    <option value="gemini-personal">Gemini API (Personal Token)</option>
+                    <option value="deepseek-personal">DeepSeek API (Personal Token)</option>
                     <option value="openai-personal">OpenAI GPT-4o (Personal Token)</option>
                     <option value="custom">Custom AI Endpoint</option>
                   </select>

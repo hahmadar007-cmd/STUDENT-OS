@@ -36,7 +36,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   useEffect(() => {
     const fetchChatHistory = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/groups/${groupId}/messages`);
+        const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+        const apiBase = process.env.NEXT_PUBLIC_API_URL || (isLocal ? 'http://localhost:3001' : 'https://ammeeee-student-os.hf.space');
+        const res = await fetch(`${apiBase}/groups/${groupId}/messages`);
         if (res.ok) {
           const data = await res.json();
           setMessages(data);

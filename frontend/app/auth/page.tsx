@@ -133,7 +133,8 @@ export default function AuthPage() {
   const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>('checking');
 
   const router = useRouter();
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || (isLocal ? 'http://localhost:3001' : 'https://ammeeee-student-os.hf.space');
 
   useEffect(() => {
     let cancelled = false;

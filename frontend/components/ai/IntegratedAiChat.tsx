@@ -28,8 +28,7 @@ interface IntegratedAiChatProps {
 }
 
 const MODEL_OPTIONS = [
-  { id: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro', isDefault: true },
-  { id: 'deepseek', label: 'DeepSeek', isDefault: true },
+  { id: 'deepseek', label: 'DeepSeek Chat', isDefault: true },
   { id: 'claude-3-5-sonnet', label: 'Claude 3.5', isDefault: false },
   { id: 'gpt-4o', label: 'GPT-4o', isDefault: false },
 ];
@@ -84,6 +83,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
+
 
   const activeModelLabel =
     MODEL_OPTIONS.find((m) => m.id === aiModel)?.label ?? aiModel;
@@ -261,6 +261,52 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
     }
   };
 
+  const processFileRef = useRef(processFile);
+  useEffect(() => {
+    processFileRef.current = processFile;
+  }, [processFile]);
+
+  useEffect(() => {
+    const handleWindowDragOver = (e: DragEvent) => {
+      e.preventDefault();
+      setIsDragging(true);
+    };
+
+    const handleWindowDragLeave = (e: DragEvent) => {
+      e.preventDefault();
+      if (!e.relatedTarget || e.relatedTarget === document.documentElement) {
+        setIsDragging(false);
+      }
+    };
+
+    const handleWindowDrop = async (e: DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      const file = e.dataTransfer?.files?.[0];
+      if (!file) return;
+
+      const supportedExtensions = ['.pdf', '.pptx', '.txt', '.md', '.js', '.ts', '.tsx', '.py', '.css', '.html', '.cpp', '.java'];
+      const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+
+      if (!supportedExtensions.includes(fileExtension)) {
+        setError(`Unsupported file type. Supported types: ${supportedExtensions.join(', ')}`);
+        return;
+      }
+
+      await processFileRef.current(file);
+    };
+
+    window.addEventListener('dragover', handleWindowDragOver);
+    window.addEventListener('dragleave', handleWindowDragLeave);
+    window.addEventListener('drop', handleWindowDrop);
+
+    return () => {
+      window.removeEventListener('dragover', handleWindowDragOver);
+      window.removeEventListener('dragleave', handleWindowDragLeave);
+      window.removeEventListener('drop', handleWindowDrop);
+    };
+  }, []);
+
   const handleAttachFileClick = () => {
     fileInputRef.current?.click();
   };
@@ -398,10 +444,10 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
       {messages.length === 0 && (
         <div className="shrink-0 mb-2 px-2.5 py-2 bg-emerald-500/5 border border-emerald-500/20 rounded-[var(--fouzar-radius-sm)]">
           <p className="font-mono text-[8px] text-emerald-400 uppercase tracking-wider mb-1">
-            2 Default AI Models Available
+            Default AI Model Active
           </p>
           <p className="font-mono text-[7px] text-fouzar-text-secondary leading-relaxed">
-            Gemini 1.5 Pro &amp; DeepSeek are active by default — no setup needed.
+            DeepSeek Chat is active by default — no setup needed.
             You can also connect your own API key in settings for GPT-4o, Claude, or other providers.
           </p>
         </div>

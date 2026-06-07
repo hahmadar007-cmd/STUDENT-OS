@@ -89,7 +89,8 @@ export interface WorkspaceLayoutProps {
   setActiveDoc: (doc: LmsRepositoryItem | null) => void;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || (isLocal ? 'http://localhost:3001' : 'https://ammeeee-student-os.hf.space');
 
 /**
  * Root workspace shell consumed by /room/[id].

@@ -28,19 +28,18 @@ export const AiPanel: React.FC<AiPanelProps> = ({
     {
       role: 'assistant',
       content: 'FASCA AI connection initialized. Slide context successfully parsed. Ask your query.',
-      model: 'gemini-1.5-pro',
+      model: 'deepseek',
       responseTime: '45ms',
     },
   ]);
   const [inputText, setInputText] = useState('');
-  const [selectedModel, setSelectedModel] = useState('gemini-1.5-pro');
+  const [selectedModel, setSelectedModel] = useState('deepseek');
   const [isLoading, setIsLoading] = useState(false);
   const [showModels, setShowModels] = useState(false);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
   const models = [
-    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', provider: 'Google', isDefault: true },
-    { id: 'deepseek', name: 'DeepSeek', provider: 'DeepSeek', isDefault: true },
+    { id: 'deepseek', name: 'DeepSeek Chat', provider: 'DeepSeek', isDefault: true },
     { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', isDefault: false },
     { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI', isDefault: false },
   ];
@@ -61,7 +60,9 @@ export const AiPanel: React.FC<AiPanelProps> = ({
     const startTime = Date.now();
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/ai/chat`, {
+      const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || (isLocal ? 'http://localhost:3001' : 'https://ammeeee-student-os.hf.space');
+      const response = await fetch(`${apiBase}/ai/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -174,7 +175,7 @@ export const AiPanel: React.FC<AiPanelProps> = ({
         <div className="flex items-center gap-2 px-2.5 py-1.5 bg-emerald-500/5 border border-emerald-500/15 rounded-[4px]">
           <Sparkles className="w-3 h-3 text-emerald-400" />
           <span className="text-[9px] font-mono text-emerald-400/80">
-            2 free AI cores active: <strong>Gemini</strong> &amp; <strong>DeepSeek</strong> — or link your own key
+            Default AI core active: <strong>DeepSeek Chat</strong> — or link your own key
           </span>
         </div>
       </div>
