@@ -1,18 +1,104 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { VectorService } from './vector.service';
+import { YoutubeService } from './youtube.service';
 
 const DEFAULT_GEMINI_KEY = process.env.DEFAULT_GEMINI_KEY || '';
 const DEFAULT_OPENAI_KEY = process.env.DEFAULT_OPENAI_KEY || '';
 
 @Injectable()
 export class AiService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly vectorService: VectorService,
+    private readonly youtubeService: YoutubeService,
+  ) {}
+
+  async buildContextPrompt(
+    dto: {
+      prompt: string;
+      slideId: string | null;
+      currentSlideText?: string;
+      videoUrl?: string;
+      videoTimestamp?: number;
+      courseId?: string;
+    },
+    apiKey: string,
+  ): Promise<string> {
+    const { prompt, slideId, currentSlideText, videoUrl, videoTimestamp, courseId } = dto;
+    let contextParts: string[] = [];
+
+    // Priority 1: Current Slide
+    if (currentSlideText && currentSlideText.trim()) {
+      contextParts.push(`---
+[CURRENT ACTIVE SLIDE CONTEXT]
+Slide/Page Number: ${slideId || 'Unknown'}
+Content:
+${currentSlideText.trim()}`);
+    }
+
+    // Priority 2: Video Transcript Snippet
+    if (videoUrl) {
+      try {
+        const timestamp = videoTimestamp || 0;
+        const snippet = await this.youtubeService.getTranscriptSnippet(videoUrl, timestamp);
+        if (snippet && snippet.trim()) {
+          contextParts.push(`---
+[ACTIVE VIDEO TRANSCRIPT (around timestamp ${timestamp} seconds)]
+${snippet.trim()}`);
+        }
+      } catch (err) {
+        console.error('Failed to get transcript snippet for prompt:', err);
+      }
+    }
+
+    // Priority 3: Vector search on course materials
+    if (courseId && prompt) {
+      try {
+        const searchResults = await this.vectorService.search(courseId, prompt, apiKey, 3);
+        if (searchResults && searchResults.length > 0) {
+          const formatted = searchResults
+            .map((r, idx) => `Snippet #${idx + 1} (Page ${r.pageNum}, Doc: ${r.documentId}):\n${r.text}`)
+            .join('\n\n');
+          contextParts.push(`---
+[RELEVANT COURSE REFERENCE MATERIALS]
+${formatted}`);
+        }
+      } catch (err) {
+        console.error('Vector search failed during prompt context generation:', err);
+      }
+    }
+
+    const contextBlock = contextParts.length > 0
+      ? `Here is the current study environment context:\n\n${contextParts.join('\n\n')}\n\n`
+      : '';
+
+    return `You are Fasca AI, a highly engaging, helpful, and premium AI Study Assistant.
+Your goal is to help the student master their course material.
+
+${contextBlock}Important Guidelines:
+1. ALWAYS use the provided context (current slide text, video transcript, or relevant reference snippets) to answer the student's question directly.
+2. NEVER say "I cannot see the slide" or "I cannot view the video" if context is provided.
+3. If the user asks a question and context is present, assume they are referencing the context.
+4. Keep the explanation clear, educational, and formatting clean with Markdown.
+
+Student's Query: "${prompt}"`;
+  }
 
   async chat(
-    dto: { userId: string; prompt: string; slideId: string | null; modelName: string },
+    dto: {
+      userId: string;
+      prompt: string;
+      slideId: string | null;
+      modelName: string;
+      currentSlideText?: string;
+      videoUrl?: string;
+      videoTimestamp?: number;
+      courseId?: string;
+    },
     headers: Record<string, string> = {},
   ) {
-    const { prompt, slideId, modelName } = dto;
+    const { prompt, slideId, modelName, currentSlideText } = dto;
     const lowercasePrompt = prompt.toLowerCase();
 
     // 1. Resolve keys and endpoints from headers or environment
@@ -21,6 +107,9 @@ export class AiService {
     const anthropicKey = headers['x-anthropic-key'] || process.env.ANTHROPIC_API_KEY;
     const customUrl = headers['x-custom-url'];
     const customKey = headers['x-custom-key'];
+
+    const activeApiKey = geminiKey || openaiKey || '';
+    const fullPrompt = await this.buildContextPrompt(dto, activeApiKey);
 
     // 2. Try real API calls depending on selected model
     // Google Gemini
@@ -32,7 +121,7 @@ export class AiService {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              contents: [{ parts: [{ text: `You are Fasca AI, a helpful study assistant. Context slide: ${slideId || 'none'}. Prompt: ${prompt}` }] }],
+              contents: [{ parts: [{ text: fullPrompt }] }],
             }),
           },
         );
@@ -72,7 +161,7 @@ export class AiService {
           },
           body: JSON.stringify({
             model: 'gpt-4o',
-            messages: [{ role: 'user', content: `You are Fasca AI, a helpful study assistant. Context slide: ${slideId || 'none'}. Prompt: ${prompt}` }],
+            messages: [{ role: 'user', content: fullPrompt }],
           }),
         });
         if (response.ok) {
@@ -107,7 +196,7 @@ export class AiService {
           body: JSON.stringify({
             model: 'claude-3-5-sonnet-20241022',
             max_tokens: 1024,
-            messages: [{ role: 'user', content: `You are Fasca AI, a helpful study assistant. Context slide: ${slideId || 'none'}. Prompt: ${prompt}` }],
+            messages: [{ role: 'user', content: fullPrompt }],
           }),
         });
         if (response.ok) {
@@ -135,7 +224,7 @@ export class AiService {
           headers: headersObj,
           body: JSON.stringify({
             model: 'custom',
-            messages: [{ role: 'user', content: `You are Fasca AI, a helpful study assistant. Context slide: ${slideId || 'none'}. Prompt: ${prompt}` }],
+            messages: [{ role: 'user', content: fullPrompt }],
           }),
         });
         if (response.ok) {
@@ -148,11 +237,20 @@ export class AiService {
       }
     }
 
-    // 3. Fallback to existing mock simulations
+    // 3. Fallback to existing mock simulations but with live context
     await new Promise((resolve) => setTimeout(resolve, 800));
 
     let responseText = '';
-    if (slideId === '4' || lowercasePrompt.includes('backprop') || lowercasePrompt.includes('chain rule') || lowercasePrompt.includes('gradient')) {
+    
+    // Check if we have active slide text to answer from
+    if (currentSlideText && currentSlideText.trim()) {
+      responseText = `### FASCA Core Intelligence (Context Simulation)
+I parsed the active **Slide ${slideId || 'unknown'}** text content:
+"${currentSlideText.substring(0, 150)}..."
+
+Regarding your query **"${prompt}"**:
+Based on this slide's contents, this concept focuses on optimization and structuring learning parameters. Let me know if you would like me to summarize the slide further or write corresponding practice exercises.`;
+    } else if (slideId === '4' || lowercasePrompt.includes('backprop') || lowercasePrompt.includes('chain rule') || lowercasePrompt.includes('gradient')) {
       responseText = `### Slide 4 Context: Gradient Descent & Backpropagation\n\nTo compute the local gradients for neural network training, we utilize the **Chain Rule of Calculus**.\n\nLet $z = wx + b$ and $a = \\sigma(z)$. The loss derivative with respect to weight $w$ is calculated as:\n$$\\frac{\\partial L}{\\partial w} = \\frac{\\partial L}{\\partial a} \\cdot \\frac{\\partial a}{\\partial z} \\cdot \\frac{\\partial z}{\\partial w}$$\n\nWhere:\n1. $\\frac{\\partial z}{\\partial w} = x$\n2. $\\frac{\\partial a}{\\partial z} = \\sigma'(z)$\n\nTherefore, we propagate the error gradient backward through the graph: $\\delta = \\frac{\\partial L}{\\partial z} = \\frac{\\partial L}{\\partial a} \\cdot \\sigma'(z)$.\n\nWould you like me to write a PyTorch snippet demonstrating this manual backward pass?`;
     } else if (slideId === '3' || lowercasePrompt.includes('neural network') || lowercasePrompt.includes('relu') || lowercasePrompt.includes('activation')) {
       responseText = `### Slide 3 Context: Deep Neural Networks Foundations\n\nDeep neural networks consist of nested linear mappings followed by element-wise non-linear activation functions:\n$$f(x) = \\sigma(W_L \\sigma(... \\sigma(W_1 x + b_1)...) + b_L)$$\n\n**Common Activation Functions**:\n*   **ReLU (Rectified Linear Unit)**: $\\text{ReLU}(x) = \\max(0, x)$. It resolves the vanishing gradient problem in deep architectures but can suffer from "dying ReLU" if weights update such that neurons never activate.\n*   **Sigmoid**: $\\sigma(x) = \\frac{1}{1 + e^{-x}}$. Maps values to $(0, 1)$, useful for binary classification output layers.`;

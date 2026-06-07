@@ -103,7 +103,17 @@ export const getPersonalSanctuary = () => apiRequest('/sanctuary', 'GET');
 
 export const getGroupMessages = (groupId: string) => apiRequest(`/groups/${groupId}/messages`, 'GET');
 
-export const askAi = (prompt: string, slideId: string | null, modelName: string) => {
+export const askAi = (
+  prompt: string,
+  slideId: string | null,
+  modelName: string,
+  extraContext?: {
+    currentSlideText?: string;
+    videoUrl?: string;
+    videoTimestamp?: number;
+    courseId?: string;
+  }
+) => {
   // Try to read decoded user info or fallback
   const token = getAuthToken();
   let userId = 'default-user';
@@ -114,7 +124,52 @@ export const askAi = (prompt: string, slideId: string | null, modelName: string)
     }
   } catch (e) {}
 
-  return apiRequest('/ai/chat', 'POST', { userId, prompt, slideId, modelName });
+  return apiRequest('/ai/chat', 'POST', {
+    userId,
+    prompt,
+    slideId,
+    modelName,
+    ...extraContext
+  });
+};
+
+export const indexDocument = (
+  courseId: string,
+  documentId: string,
+  chunks: { text: string; pageNum: number }[]
+) => {
+  return apiRequest('/ai/index-document', 'POST', {
+    courseId,
+    documentId,
+    chunks: JSON.stringify(chunks)
+  });
+};
+
+export const indexDocumentFile = (
+  courseId: string,
+  documentId: string,
+  fileBlob: Blob,
+  fileName: string
+) => {
+  const token = getAuthToken();
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const formData = new FormData();
+  formData.append('courseId', courseId);
+  formData.append('documentId', documentId);
+  formData.append('file', fileBlob, fileName);
+
+  return fetch(`${API_URL}/ai/index-document`, {
+    method: 'POST',
+    headers,
+    body: formData
+  }).then((res) => {
+    if (!res.ok) throw new Error('Failed to index document file');
+    return res.json();
+  });
 };
 
 export const updateFocusState = (isFocusing: boolean) => {
