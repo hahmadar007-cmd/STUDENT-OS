@@ -1,0 +1,12 @@
+# netlify.toml
+# Automates Netlify deployment settings for the monorepo
+
+[build]
+  command = "npm run build --workspace=frontend"
+  publish = "frontend/.next"
+
+[build.environment]
+  NEXT_PUBLIC_API_URL = "https://ammeeee-student-os.hf.space"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

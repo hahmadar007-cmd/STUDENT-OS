@@ -35,3 +35,8 @@ backend/.env.*.local
 
 # Next.js dynamic types
 /frontend/next-env.d.ts
+
+# Hugging Face deployment
+/hf-deploy/
+deploy-hf.ps1
+
