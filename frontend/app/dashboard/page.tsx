@@ -20,7 +20,11 @@ import {
   X,
   Loader2,
   User,
-  LogOut
+  LogOut,
+  MoreVertical,
+  Edit2,
+  Trash2,
+  Palette
 } from 'lucide-react';
 import { useFouzar } from '../../lib/FouzarContext';
 import { FascaLogo } from '../../components/logo/FascaLogo';
@@ -157,6 +161,15 @@ export default function DashboardPage() {
   const [cardColors, setCardColors] = useState<Record<string, string>>({});
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
+  const [activeMenuNodeId, setActiveMenuNodeId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleCloseMenus = () => {
+      setActiveMenuNodeId(null);
+    };
+    window.addEventListener('click', handleCloseMenus);
+    return () => window.removeEventListener('click', handleCloseMenus);
+  }, []);
 
   const COLOR_PRESETS = [
     { name: 'violet', value: '#7c5cfc' },
@@ -657,7 +670,7 @@ export default function DashboardPage() {
               Personal Space
             </span>
             <FascaCard
-              className={`p-4 flex flex-col justify-between min-h-[120px] cursor-pointer transition-all duration-150 ${
+              className={`p-4 flex flex-col justify-between min-h-[120px] cursor-pointer transition-all duration-150 relative ${
                 getCardColorClass('sanctuary', selectedCardId === 'sanctuary')
               }`}
               onClick={(e) => {
@@ -671,28 +684,57 @@ export default function DashboardPage() {
                   Private · Solo
                 </span>
                 <h3 className="text-sm font-bold text-[#f0f0ff] mt-1">My Sanctuary</h3>
-                <p className="text-[9px] text-[#6b6b8a] font-mono mt-1">
+                <p className="text-[9px] text-[#6b6b8a] font-mono mt-1 pr-6">
                   Semester notes, AI tutor, your materials
                 </p>
               </div>
+
+              {/* 3-dots Dropdown Menu (Sanctuary) */}
+              <div className="absolute top-3.5 right-3.5" onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  onClick={() => setActiveMenuNodeId(activeMenuNodeId === 'sanctuary' ? null : 'sanctuary')}
+                  className="p-1 hover:bg-white/5 rounded text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors cursor-pointer"
+                  title="Sanctuary options"
+                >
+                  <MoreVertical className="w-3.5 h-3.5" />
+                </button>
+                <AnimatePresence>
+                  {activeMenuNodeId === 'sanctuary' && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                      transition={{ duration: 0.1 }}
+                      className="absolute right-0 mt-1 w-36 bg-[#14141c]/95 border border-[#2a2a3a] rounded-[4px] shadow-2xl p-2 z-50 text-left"
+                    >
+                      <div className="px-2 py-0.5 text-[7px] font-mono uppercase text-[#6b6b8a] tracking-wider mb-1.5 flex items-center gap-1">
+                        <Palette className="w-2.5 h-2.5 text-[#06b6d4]" /> Set Color
+                      </div>
+                      <div className="flex gap-1.5 px-2 py-0.5 justify-between">
+                        {COLOR_PRESETS.map((preset) => (
+                          <button
+                            key={preset.name}
+                            type="button"
+                            onClick={() => {
+                              updateCardColor('sanctuary', preset.name);
+                              setActiveMenuNodeId(null);
+                            }}
+                            style={{ backgroundColor: preset.value }}
+                            className={`w-2.5 h-2.5 rounded-full border cursor-pointer ${
+                              (cardColors['sanctuary'] || 'violet') === preset.name ? 'border-[#f0f0ff]' : 'border-transparent'
+                            }`}
+                            title={`Set ${preset.name} color`}
+                          />
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
               <div className="flex items-center justify-between mt-3 select-none">
-                {selectedCardId === 'sanctuary' ? (
-                  <div className="flex gap-1 items-center" onClick={(e) => e.stopPropagation()}>
-                    {COLOR_PRESETS.map((preset) => (
-                      <button
-                        key={preset.name}
-                        onClick={() => updateCardColor('sanctuary', preset.name)}
-                        style={{ backgroundColor: preset.value }}
-                        className={`w-2 h-2 rounded-full border cursor-pointer ${
-                          (cardColors['sanctuary'] || 'violet') === preset.name ? 'border-[#f0f0ff]' : 'border-transparent'
-                        }`}
-                        title={`Set ${preset.name} color`}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div />
-                )}
+                <div />
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -738,11 +780,11 @@ export default function DashboardPage() {
                 <span className="text-[7.5px] font-mono text-[#6b6b8a] mt-1.5 uppercase">NO ACTIVE STUDY NODES DETECTED</span>
               </div>
             ) : (
-              <div className="max-h-64 overflow-y-auto space-y-3 pr-1 scrollbar-none">
+              <div className="max-h-64 overflow-y-auto space-y-3 pr-1 scrollbar-none animate-none">
                 {gardenNodes.map((node) => (
                   <FascaCard 
                     key={node.id} 
-                    className={`p-4 flex flex-col justify-between h-32 cursor-pointer transition-all duration-150 ease-out select-none ${
+                    className={`p-4 flex flex-col justify-between h-32 cursor-pointer transition-all duration-150 ease-out select-none relative ${
                       getCardColorClass(node.id, selectedCardId === node.id)
                     }`}
                     onClick={(e) => {
@@ -764,7 +806,7 @@ export default function DashboardPage() {
                           type="text"
                           value={editingName}
                           onChange={(e) => setEditingName(e.target.value)}
-                          className="bg-[#16161f] border border-[#7c5cfc] px-2 py-1 text-xs rounded font-mono text-[#f0f0ff] focus:outline-none w-full mt-1"
+                          className="bg-[#16161f] border border-[#7c5cfc] px-2 py-1 text-xs rounded font-mono text-[#f0f0ff] focus:outline-none w-[80%] mt-1"
                           onKeyDown={async (e) => {
                             if (e.key === 'Enter') {
                               await handleRename(node.id, editingName);
@@ -776,7 +818,7 @@ export default function DashboardPage() {
                           autoFocus
                         />
                       ) : (
-                        <h3 className="text-xs font-bold text-[#f0f0ff] mt-1 truncate" title={node.roomName}>
+                        <h3 className="text-xs font-bold text-[#f0f0ff] mt-1 pr-6 truncate" title={node.roomName}>
                           {node.roomName}
                         </h3>
                       )}
@@ -784,44 +826,77 @@ export default function DashboardPage() {
                         {node.currentSlide}
                       </p>
                     </div>
-                    <div className="flex items-center justify-between mt-2 select-none">
-                      {selectedCardId === node.id && editingNodeId !== node.id ? (
-                        <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            onClick={() => {
-                              setEditingNodeId(node.id);
-                              setEditingName(node.roomName);
-                            }}
-                            className="text-[7.5px] font-mono uppercase tracking-wider text-[#6b6b8a] hover:text-[#f0f0ff] cursor-pointer"
-                          >
-                            Rename
-                          </button>
-                          <span className="text-[#6b6b8a]/40">|</span>
-                          <button
-                            onClick={() => handleDelete(node.id)}
-                            className="text-[7.5px] font-mono uppercase tracking-wider text-[#ff2d55]/80 hover:text-[#ff2d55] cursor-pointer"
-                          >
-                            Delete
-                          </button>
-                          <span className="text-[#6b6b8a]/40">|</span>
-                          <div className="flex gap-1 items-center">
-                            {COLOR_PRESETS.map((preset) => (
+
+                    {/* 3-dots Dropdown Menu (Shared Groups) */}
+                    {editingNodeId !== node.id && (
+                      <div className="absolute top-3.5 right-3.5" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={() => setActiveMenuNodeId(activeMenuNodeId === node.id ? null : node.id)}
+                          className="p-1 hover:bg-white/5 rounded text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors cursor-pointer"
+                          title="Group options"
+                        >
+                          <MoreVertical className="w-3.5 h-3.5" />
+                        </button>
+                        <AnimatePresence>
+                          {activeMenuNodeId === node.id && (
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                              animate={{ opacity: 1, scale: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                              transition={{ duration: 0.1 }}
+                              className="absolute right-0 mt-1 w-36 bg-[#14141c]/95 border border-[#2a2a3a] rounded-[4px] shadow-2xl p-2 z-50 text-left"
+                            >
                               <button
-                                key={preset.name}
-                                onClick={() => updateCardColor(node.id, preset.name)}
-                                style={{ backgroundColor: preset.value }}
-                                className={`w-1.5 h-1.5 rounded-full border cursor-pointer ${
-                                  (cardColors[node.id] || 'violet') === preset.name ? 'border-[#f0f0ff]' : 'border-transparent'
-                                }`}
-                                title={`Set ${preset.name} color`}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      ) : (
-                        <div />
-                      )}
-                      
+                                type="button"
+                                onClick={() => {
+                                  setEditingNodeId(node.id);
+                                  setEditingName(node.roomName);
+                                  setActiveMenuNodeId(null);
+                                }}
+                                className="w-full px-2 py-1.5 text-[8.5px] font-mono uppercase tracking-wider text-[#6b6b8a] hover:text-[#f0f0ff] hover:bg-white/5 rounded flex items-center gap-1.5 cursor-pointer text-left"
+                              >
+                                <Edit2 className="w-3 h-3 text-[#7c5cfc]" /> Rename
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  handleDelete(node.id);
+                                  setActiveMenuNodeId(null);
+                                }}
+                                className="w-full px-2 py-1.5 text-[8.5px] font-mono uppercase tracking-wider text-[#ff2d55]/85 hover:text-[#ff2d55] hover:bg-white/5 rounded flex items-center gap-1.5 cursor-pointer text-left"
+                              >
+                                <Trash2 className="w-3 h-3" /> Delete
+                              </button>
+                              <div className="border-t border-[#2a2a3a]/40 my-1.5" />
+                              <div className="px-2 py-0.5 text-[7px] font-mono uppercase text-[#6b6b8a] tracking-wider mb-1.5 flex items-center gap-1">
+                                <Palette className="w-2.5 h-2.5 text-[#06b6d4]" /> Set Color
+                              </div>
+                              <div className="flex gap-1.5 px-2 py-0.5 justify-between">
+                                {COLOR_PRESETS.map((preset) => (
+                                  <button
+                                    key={preset.name}
+                                    type="button"
+                                    onClick={() => {
+                                      updateCardColor(node.id, preset.name);
+                                      setActiveMenuNodeId(null);
+                                    }}
+                                    style={{ backgroundColor: preset.value }}
+                                    className={`w-2.5 h-2.5 rounded-full border cursor-pointer ${
+                                      (cardColors[node.id] || 'violet') === preset.name ? 'border-[#f0f0ff]' : 'border-transparent'
+                                    }`}
+                                    title={`Set ${preset.name} color`}
+                                  />
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between mt-2 select-none">
+                      <div />
                       <button
                         onClick={(e) => {
                           e.stopPropagation();

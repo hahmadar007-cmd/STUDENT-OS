@@ -39,7 +39,7 @@ export const FascaTimeline: React.FC = () => {
       try {
         const lmsData = await getDeadlines();
         lmsEvents = (lmsData.deadlines || []).map((item) => {
-          const timestamp = Date.now() + item.timeLeftHours * 60 * 60 * 1000;
+          const timestamp = Date.now() + (Number(item.timeLeftHours) || 0) * 60 * 60 * 1000;
           const dateStr = new Date(timestamp).toLocaleDateString('en-US', {
             month: 'short',
             day: '2-digit',
@@ -110,8 +110,14 @@ export const FascaTimeline: React.FC = () => {
         ];
       }
 
-      // 3. Combine and sort by timestamp
-      const combined = [...lmsEvents, ...customEvents].sort((a, b) => a.timestamp - b.timestamp);
+      // 3. Combine, sanitize timestamps, and sort
+      const combined = [...lmsEvents, ...customEvents].map(ev => {
+        if (!ev.timestamp || isNaN(ev.timestamp)) {
+          ev.timestamp = Date.parse(ev.date) || Date.now();
+        }
+        return ev;
+      }).sort((a, b) => a.timestamp - b.timestamp);
+      
       setEvents(combined);
     } catch (e) {
       console.error('Failed to load timeline events', e);
@@ -142,7 +148,7 @@ export const FascaTimeline: React.FC = () => {
       title: newTitle.trim(),
       course: newCourse.trim().toUpperCase() || 'GENERAL',
       type: newType,
-      description: newDescription.trim() || 'Custom user scheduled milestone.',
+      description: newDescription.trim() || 'Custom scheduled milestone.',
       link: '#',
       isCustom: true,
     };
@@ -203,10 +209,10 @@ export const FascaTimeline: React.FC = () => {
   };
 
   return (
-    <div className="w-full bg-[#111118]/40 border border-[#2a2a3a] rounded-[6px] p-6 relative overflow-hidden min-h-[350px] flex flex-col justify-center">
+    <div className="w-full bg-[#111118]/40 border border-[#2a2a3a] rounded-[6px] p-6 relative overflow-hidden min-h-[380px] flex flex-col justify-center">
       
       {/* Header with actions */}
-      <div className="flex justify-between items-center mb-4 z-10">
+      <div className="flex justify-between items-center mb-2 z-10">
         <span className="text-[8.5px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a]">
           Dynamic Timeline Hub
         </span>
@@ -219,111 +225,101 @@ export const FascaTimeline: React.FC = () => {
       </div>
 
       {/* Scrollable Timeline Area */}
-      <div className="w-full overflow-x-auto py-8 relative scrollbar-thin flex items-center justify-start min-w-[500px]">
+      <div className="w-full overflow-x-auto py-1 relative scrollbar-thin min-w-[500px] h-[280px]">
         
         {/* Connecting Horizontal Line */}
-        <div className="absolute left-0 right-0 top-[50%] h-[1.5px] bg-[#2a2a3a]/60 z-0" />
+        <div className="absolute left-0 right-0 top-[205px] h-[1.5px] bg-[#2a2a3a]/60 z-0" />
         
         {/* TODAY Vertical Line Marker */}
         <div 
           className="absolute top-0 bottom-0 w-[2px] bg-[#7c5cfc] z-10 shadow-[0_0_10px_#7c5cfc]"
           style={{ left: '35%' }}
         >
-          <div className="absolute top-[-10px] left-[-24px] bg-[#7c5cfc] text-[#0a0a0f] font-mono text-[8px] font-bold px-1.5 py-0.5 rounded-sm tracking-wider uppercase">
+          <div className="absolute top-[5px] left-[-24px] bg-[#7c5cfc] text-[#0a0a0f] font-mono text-[8px] font-bold px-1.5 py-0.5 rounded-sm tracking-wider uppercase">
             TODAY
           </div>
         </div>
 
         {/* Timeline Events List */}
-        <div className="relative w-full flex items-center justify-start px-10 gap-8 z-10">
+        <div className="absolute top-0 bottom-0 flex items-start justify-start px-10 gap-8 z-10 pt-4">
           {events.map((event) => {
             const isHovered = hoveredEventId === event.id;
             return (
-              <motion.div
+              <div
                 key={event.id}
                 onMouseEnter={() => setHoveredEventId(event.id)}
                 onMouseLeave={() => setHoveredEventId(null)}
-                className="relative shrink-0 w-[190px] z-20 cursor-pointer text-left"
-                animate={{ y: isHovered ? -5 : 0 }}
-                transition={{ duration: 0.15, ease: 'easeOut' }}
+                className="relative shrink-0 w-[190px] h-[240px] flex flex-col justify-between"
               >
-                {/* Node connector dot on the line */}
+                {/* Event Card positioned at the top */}
+                <div className="w-full relative z-20">
+                  <FascaCard 
+                    className={`p-4 flex flex-col justify-between rounded-[6px] bg-[#16161f]/95 hover:border-[#7c5cfc]/60 shadow-xl transition-all duration-200 min-h-[140px] ${
+                      isHovered ? 'shadow-[0_0_16px_rgba(124,92,252,0.15)] border-[#7c5cfc]/50' : 'border-[#2a2a3a]'
+                    }`}
+                  >
+                    <div className="space-y-2.5">
+                      {/* Date and Delete button */}
+                      <div className="flex justify-between items-center">
+                        <span className="text-[7.5px] font-mono text-[#6b6b8a] uppercase tracking-wider">
+                          {event.date}
+                        </span>
+                        {event.isCustom && isHovered && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteCustomEvent(event.id);
+                            }}
+                            className="text-[#6b6b8a] hover:text-[#ff2d55] transition-colors"
+                            title="Delete event"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Event Title */}
+                      <h5 className="text-[11px] font-bold text-[#f0f0ff] tracking-wide line-clamp-1">
+                        {event.title}
+                      </h5>
+
+                      {/* Course Code */}
+                      <span className="text-[8px] font-mono text-[#7c5cfc] uppercase tracking-widest block font-bold">
+                        {event.course}
+                      </span>
+
+                      {/* Type Badge */}
+                      <span className={`px-2 py-0.5 rounded-[4px] font-mono text-[7px] font-bold uppercase tracking-wider inline-block ${getBadgeStyle(event.type)}`}>
+                        {event.type}
+                      </span>
+
+                      {/* Expandable description on hover */}
+                      <AnimatePresence>
+                        {isHovered && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.15 }}
+                            className="pt-2 border-t border-[#2a2a3a]/40"
+                          >
+                            <p className="text-[8px] text-[#6b6b8a] leading-relaxed font-sans mb-2">
+                              {event.description}
+                            </p>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </FascaCard>
+                </div>
+
+                {/* Dot connector positioned exactly at the bottom intersection */}
                 <div 
-                  className={`absolute left-[50%] translate-x-[-50%] top-[98px] w-3 h-3 rounded-full border-2 bg-[#111118] transition-colors duration-150 z-30 ${
-                    isHovered ? 'border-[#7c5cfc] bg-[#7c5cfc]' : 'border-[#2a2a3a]'
+                  className={`absolute left-[50%] translate-x-[-50%] top-[200px] w-2.5 h-2.5 rounded-full border-2 bg-[#111118] transition-colors duration-150 z-30 ${
+                    isHovered ? 'border-[#7c5cfc] bg-[#7c5cfc] shadow-[0_0_8px_#7c5cfc]' : 'border-[#2a2a3a]'
                   }`} 
                 />
-
-                <FascaCard 
-                  className={`p-4 flex flex-col justify-between rounded-[6px] bg-[#16161f]/95 hover:border-[#7c5cfc]/60 shadow-xl transition-all duration-200 min-h-[140px] ${
-                    isHovered ? 'shadow-[0_0_16px_rgba(124,92,252,0.1)] border-[#7c5cfc]/50' : 'border-[#2a2a3a]'
-                  }`}
-                >
-                  <div className="space-y-2.5">
-                    {/* Date and Delete button */}
-                    <div className="flex justify-between items-center">
-                      <span className="text-[7.5px] font-mono text-[#6b6b8a] uppercase tracking-wider">
-                        {event.date}
-                      </span>
-                      {event.isCustom && isHovered && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteCustomEvent(event.id);
-                          }}
-                          className="text-[#6b6b8a] hover:text-[#ff2d55] transition-colors"
-                          title="Delete event"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Event Title */}
-                    <h5 className="text-[11px] font-bold text-[#f0f0ff] tracking-wide line-clamp-1">
-                      {event.title}
-                    </h5>
-
-                    {/* Course Code */}
-                    <span className="text-[8px] font-mono text-[#7c5cfc] uppercase tracking-widest block font-bold">
-                      {event.course}
-                    </span>
-
-                    {/* Type Badge */}
-                    <span className={`px-2 py-0.5 rounded-[4px] font-mono text-[7px] font-bold uppercase tracking-wider inline-block ${getBadgeStyle(event.type)}`}>
-                      {event.type}
-                    </span>
-
-                    {/* Expandable description on hover */}
-                    <AnimatePresence>
-                      {isHovered && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.15 }}
-                          className="pt-2 border-t border-[#2a2a3a]/40"
-                        >
-                          <p className="text-[8px] text-[#6b6b8a] leading-relaxed font-sans mb-2">
-                            {event.description}
-                          </p>
-                          {event.link && event.link !== '#' && (
-                            <a
-                              href={event.link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[8px] font-mono text-[#7c5cfc] hover:underline flex items-center gap-1.5"
-                            >
-                              <span>OPEN LINK</span>
-                              <ExternalLink className="w-2.5 h-2.5" />
-                            </a>
-                          )}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                </FascaCard>
-              </motion.div>
+              </div>
             );
           })}
         </div>
