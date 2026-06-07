@@ -1,6 +1,13 @@
 import { Injectable } from '@nestjs/common';
 // @ts-ignore
 import AdmZip from 'adm-zip';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 @Injectable()
 export class DocumentProcessorService {
@@ -56,6 +63,47 @@ export class DocumentProcessorService {
     } catch (err) {
       console.error('Failed to parse PPTX file:', err);
       throw new Error('Invalid or corrupted PPTX file. Failed to extract slide text.');
+    }
+  }
+
+  // Convert PPTX buffer to PDF buffer using LibreOffice CLI
+  async convertPptxToPdf(buffer: Buffer): Promise<Buffer | null> {
+    const tempDir = os.tmpdir();
+    const uniqueId = Math.random().toString(36).substring(2, 9);
+    const tempInputPath = path.join(tempDir, `input-${uniqueId}.pptx`);
+    
+    try {
+      // Write PPTX buffer to a temporary file
+      fs.writeFileSync(tempInputPath, buffer);
+      
+      // Run headless LibreOffice conversion
+      // soffice --headless --convert-to pdf --outdir <tempDir> <tempInputPath>
+      console.log(`DocumentProcessorService: Converting PPTX to PDF via LibreOffice...`);
+      await execAsync(`soffice --headless --convert-to pdf --outdir "${tempDir}" "${tempInputPath}"`);
+      
+      // The output PDF name is determined by the input filename
+      const tempOutputPath = path.join(tempDir, `input-${uniqueId}.pdf`);
+      
+      if (fs.existsSync(tempOutputPath)) {
+        const pdfBuffer = fs.readFileSync(tempOutputPath);
+        
+        // Clean up output file
+        fs.unlinkSync(tempOutputPath);
+        
+        console.log(`DocumentProcessorService: PPTX successfully converted to PDF (${pdfBuffer.length} bytes)`);
+        return pdfBuffer;
+      } else {
+        console.warn('DocumentProcessorService: Converted PDF file not found at output path.');
+        return null;
+      }
+    } catch (err) {
+      console.warn('DocumentProcessorService: Failed to convert PPTX to PDF. (Ignore if running locally without LibreOffice):', err);
+      return null;
+    } finally {
+      // Clean up input file
+      if (fs.existsSync(tempInputPath)) {
+        fs.unlinkSync(tempInputPath);
+      }
     }
   }
 }

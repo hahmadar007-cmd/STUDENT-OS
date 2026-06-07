@@ -40,10 +40,21 @@ export class AiController {
     const { courseId, documentId } = body;
 
     let chunks: { text: string; pageNum: number }[] = [];
+    let pdfBase64: string | undefined = undefined;
 
     if (file) {
       // PPTX file upload parsed in backend
       chunks = this.documentProcessorService.extractPptxText(file.buffer);
+      
+      // Convert PPTX to PDF for preview purposes
+      try {
+        const pdfBuffer = await this.documentProcessorService.convertPptxToPdf(file.buffer);
+        if (pdfBuffer) {
+          pdfBase64 = pdfBuffer.toString('base64');
+        }
+      } catch (err) {
+        console.warn('Failed to convert PPTX to PDF during indexing:', err);
+      }
     } else if (body.chunks) {
       // Pre-parsed chunks (e.g. from PDF client-side)
       try {
@@ -57,7 +68,7 @@ export class AiController {
       await this.vectorService.indexChunks(courseId, documentId, chunks, geminiKey);
     }
 
-    return { success: true, chunksCount: chunks.length, chunks };
+    return { success: true, chunksCount: chunks.length, chunks, pdfBase64 };
   }
 
   @Get('search')

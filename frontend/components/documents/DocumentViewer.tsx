@@ -8,6 +8,7 @@ import {
   createObjectUrl,
   revokeObjectUrl,
   isViewableInBrowser,
+  updateDocumentPdfPreview,
 } from '../../lib/documentStore';
 import { useFouzar } from '../../lib/FouzarContext';
 import type { LmsRepositoryItem } from '../../lib/FouzarContext';
@@ -68,7 +69,8 @@ export async function extractTextFromPdf(blob: Blob): Promise<{ fullText: string
  */
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClose, isInline = false }) => {
   const { setActiveDocText } = useFouzar();
-  const [objectUrl, setObjectUrl] = useState<string | null>(null);
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [textContent, setTextContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -76,10 +78,13 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
   useEffect(() => {
     if (!document?.storageId) return;
 
-    let url: string | null = null;
+    let dlUrl: string | null = null;
+    let prvUrl: string | null = null;
     setLoading(true);
     setError(null);
     setTextContent(null);
+    setDownloadUrl(null);
+    setPreviewUrl(null);
 
     getDocument(document.storageId)
       .then(async (stored) => {
@@ -87,8 +92,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
           setError('File not found. It may have been cleared from browser storage.');
           return;
         }
-        url = createObjectUrl(stored.blob);
-        setObjectUrl(url);
+
+        // Always create a download URL for the original file
+        dlUrl = createObjectUrl(stored.blob);
+        setDownloadUrl(dlUrl);
 
         const metaText = `[Study Material: ${document.fileName}]\nCategory: ${document.category}\nCourse: ${document.courseCode}`;
 
@@ -100,6 +107,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
           indexDocument(document.courseCode || 'general', document.id || document.storageId || 'text-doc', [{ text, pageNum: 1 }])
             .catch(e => console.error('Failed to index text file:', e));
         } else if (stored.mimeType === 'application/pdf' || document.fileName.toLowerCase().endsWith('.pdf')) {
+          prvUrl = dlUrl;
+          setPreviewUrl(prvUrl);
           setActiveDocText(metaText);
           // Extract and load PDF text contents asynchronously
           try {
@@ -111,26 +120,71 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
           } catch (e) {
             console.error('PDF text extraction error:', e);
           }
+        } else if (stored.mimeType.startsWith('image/')) {
+          prvUrl = dlUrl;
+          setPreviewUrl(prvUrl);
+          setActiveDocText(`${metaText}\nType: Image`);
         } else if (document.fileName.toLowerCase().endsWith('.pptx')) {
           setActiveDocText(metaText);
-          // PPTX parsing on backend
-          try {
-            const res = await indexDocumentFile(
-              document.courseCode || 'general',
-              document.id || document.storageId || 'pptx-doc',
-              stored.blob,
-              document.fileName
-            );
-            if (res && res.chunks && res.chunks.length > 0) {
-              const fullText = res.chunks.map((c: any) => `--- Slide/Page ${c.pageNum} ---\n${c.text}`).join('\n\n');
-              setActiveDocText(`${metaText}\n\n[Extracted PowerPoint Content]:\n${fullText}`);
-              setTextContent(fullText);
-            } else {
-              setError('Failed to extract text. No slide text content could be read from this PowerPoint file.');
+
+          // Check if we already have the converted PDF preview cached locally
+          if (stored.pdfPreviewBlob) {
+            prvUrl = createObjectUrl(stored.pdfPreviewBlob);
+            setPreviewUrl(prvUrl);
+            
+            // Extract slide text for activeDocText by hitting index-document silently
+            try {
+              const res = await indexDocumentFile(document.courseCode || 'general', document.id || document.storageId || 'pptx-doc', stored.blob, document.fileName);
+              if (res && res.chunks) {
+                const fullText = res.chunks.map((c: any) => `--- Slide/Page ${c.pageNum} ---\n${c.text}`).join('\n\n');
+                setActiveDocText(`${metaText}\n\n[Extracted PowerPoint Content]:\n${fullText}`);
+                setTextContent(fullText);
+              }
+            } catch (e) {
+              console.error('Failed to retrieve PPTX chunks for cached preview:', e);
             }
-          } catch (e: any) {
-            console.error('PPTX text indexing/extraction error:', e);
-            setError(`Failed to process PowerPoint: ${e.message || 'API is offline or unreachable'}. Please make sure the backend is running.`);
+          } else {
+            // No cached PDF, call backend to parse and convert
+            try {
+              const res = await indexDocumentFile(
+                document.courseCode || 'general',
+                document.id || document.storageId || 'pptx-doc',
+                stored.blob,
+                document.fileName
+              );
+              if (res && res.chunks && res.chunks.length > 0) {
+                const fullText = res.chunks.map((c: any) => `--- Slide/Page ${c.pageNum} ---\n${c.text}`).join('\n\n');
+                setActiveDocText(`${metaText}\n\n[Extracted PowerPoint Content]:\n${fullText}`);
+                setTextContent(fullText);
+
+                // If backend returned converted PDF base64 string, decode and cache it
+                if (res.pdfBase64) {
+                  try {
+                    const byteCharacters = atob(res.pdfBase64);
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {
+                      byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const pdfBlob = new Blob([byteArray], { type: 'application/pdf' });
+                    
+                    // Save to IndexedDB
+                    await updateDocumentPdfPreview(stored.id, pdfBlob);
+                    
+                    // Create object URL for preview
+                    prvUrl = createObjectUrl(pdfBlob);
+                    setPreviewUrl(prvUrl);
+                  } catch (e) {
+                    console.error('Failed to decode and save PPTX PDF preview:', e);
+                  }
+                }
+              } else {
+                setError('Failed to extract text. No slide text content could be read from this PowerPoint file.');
+              }
+            } catch (e: any) {
+              console.error('PPTX text indexing/extraction error:', e);
+              setError(`Failed to process PowerPoint: ${e.message || 'API is offline or unreachable'}. Please make sure the backend is running.`);
+            }
           }
         } else {
           setActiveDocText(`${metaText}\nType: ${stored.mimeType}`);
@@ -140,21 +194,25 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
       .finally(() => setLoading(false));
 
     return () => {
-      if (url) revokeObjectUrl(url);
+      if (dlUrl) revokeObjectUrl(dlUrl);
+      if (prvUrl) revokeObjectUrl(prvUrl);
       setActiveDocText(null);
     };
   }, [document, setActiveDocText]);
 
   if (!document) return null;
 
+  const isPdf =
+    document.mimeType === 'application/pdf' || 
+    document.fileName.toLowerCase().endsWith('.pdf') ||
+    (document.fileName.toLowerCase().endsWith('.pptx') && previewUrl !== null);
+
+  const isImage = document.mimeType?.startsWith('image/');
+
   const canPreview =
     document.storageId &&
     (isViewableInBrowser(document.mimeType ?? '', document.fileName) ||
-      (document.fileName.toLowerCase().endsWith('.pptx') && textContent !== null));
-
-  const isPdf =
-    document.mimeType === 'application/pdf' || document.fileName.toLowerCase().endsWith('.pdf');
-  const isImage = document.mimeType?.startsWith('image/');
+      (document.fileName.toLowerCase().endsWith('.pptx') && (textContent !== null || previewUrl !== null)));
 
   if (isInline) {
     return (
@@ -168,9 +226,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
             </p>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
-            {objectUrl && (
+            {downloadUrl && (
               <a
-                href={objectUrl}
+                href={downloadUrl}
                 download={document.fileName}
                 className="p-1.5 border border-fouzar-border rounded-[var(--fouzar-radius-md)] text-fouzar-text-secondary hover:text-fouzar-accent"
                 title="Download"
@@ -202,9 +260,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
             <div className="flex-1 flex flex-col items-center justify-center gap-3 p-8 text-center">
               <FileText className="w-8 h-8 text-fouzar-signal opacity-60" />
               <p className="font-mono text-[8px] text-fouzar-signal uppercase max-w-sm">{error}</p>
-              {objectUrl && (
+              {downloadUrl && (
                 <a
-                  href={objectUrl}
+                  href={downloadUrl}
                   download={document.fileName}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-fouzar-accent text-fouzar-text-inverse font-mono text-[8px] uppercase font-bold rounded-[var(--fouzar-radius-md)] hover:opacity-90 transition-opacity mt-1"
                 >
@@ -223,17 +281,17 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
             </div>
           )}
 
-          {!loading && !error && objectUrl && isPdf && (
+          {!loading && !error && previewUrl && isPdf && (
             <iframe
-              src={objectUrl}
+              src={previewUrl}
               title={document.fileName}
               className="flex-1 w-full border-0 bg-white/5"
             />
           )}
 
-          {!loading && !error && objectUrl && isImage && (
+          {!loading && !error && previewUrl && isImage && (
             <div className="flex-1 flex items-center justify-center p-4 overflow-auto">
-              <img src={objectUrl} alt={document.fileName} className="max-w-full max-h-full object-contain" />
+              <img src={previewUrl} alt={document.fileName} className="max-w-full max-h-full object-contain" />
             </div>
           )}
 
@@ -243,7 +301,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
             </pre>
           )}
 
-          {!loading && !error && objectUrl && !canPreview && (
+          {!loading && !error && downloadUrl && !canPreview && (
             <div className="flex-1 flex flex-col items-center justify-center gap-3.5 p-6 text-center max-w-sm mx-auto">
               <FileText className="w-8 h-8 text-fouzar-accent opacity-80" />
               <div className="space-y-1.5">
@@ -258,7 +316,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
                 </p>
               </div>
               <a
-                href={objectUrl}
+                href={downloadUrl}
                 download={document.fileName}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-fouzar-accent text-fouzar-text-inverse font-mono text-[8px] uppercase font-bold rounded-[var(--fouzar-radius-md)] hover:opacity-90 transition-opacity mt-1"
               >
@@ -287,9 +345,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            {objectUrl && (
+            {downloadUrl && (
               <a
-                href={objectUrl}
+                href={downloadUrl}
                 download={document.fileName}
                 className="p-2 border border-fouzar-border rounded-[var(--fouzar-radius-md)] text-fouzar-text-secondary hover:text-fouzar-accent"
                 title="Download"
@@ -320,9 +378,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
             <div className="flex-1 flex flex-col items-center justify-center gap-3 p-8 text-center">
               <FileText className="w-10 h-10 text-fouzar-signal opacity-60" />
               <p className="font-mono text-[9px] text-fouzar-signal uppercase max-w-sm">{error}</p>
-              {objectUrl && (
+              {downloadUrl && (
                 <a
-                  href={objectUrl}
+                  href={downloadUrl}
                   download={document.fileName}
                   className="flex items-center gap-2 px-4 py-2 bg-fouzar-accent text-fouzar-text-inverse font-mono text-[9px] uppercase font-bold rounded-[var(--fouzar-radius-md)] hover:opacity-90 transition-opacity mt-2"
                 >
@@ -341,17 +399,17 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
             </div>
           )}
 
-          {!loading && !error && objectUrl && isPdf && (
+          {!loading && !error && previewUrl && isPdf && (
             <iframe
-              src={objectUrl}
+              src={previewUrl}
               title={document.fileName}
               className="flex-1 w-full border-0 bg-white/5"
             />
           )}
 
-          {!loading && !error && objectUrl && isImage && (
+          {!loading && !error && previewUrl && isImage && (
             <div className="flex-1 flex items-center justify-center p-4 overflow-auto">
-              <img src={objectUrl} alt={document.fileName} className="max-w-full max-h-full object-contain" />
+              <img src={previewUrl} alt={document.fileName} className="max-w-full max-h-full object-contain" />
             </div>
           )}
 
@@ -361,7 +419,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
             </pre>
           )}
 
-          {!loading && !error && objectUrl && !canPreview && (
+          {!loading && !error && downloadUrl && !canPreview && (
             <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8 text-center max-w-md mx-auto">
               <FileText className="w-12 h-12 text-fouzar-accent opacity-80" />
               <div className="space-y-2">
@@ -376,7 +434,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
                 </p>
               </div>
               <a
-                href={objectUrl}
+                href={downloadUrl}
                 download={document.fileName}
                 className="flex items-center gap-2 px-4 py-2 bg-fouzar-accent text-fouzar-text-inverse font-mono text-[9px] uppercase font-bold rounded-[var(--fouzar-radius-md)] hover:opacity-90 transition-opacity mt-2"
               >

@@ -21,6 +21,9 @@ RUN npm run build
 # Production execution stage
 FROM node:20-alpine AS runner
 
+# Install LibreOffice and fonts for PowerPoint to PDF conversion
+RUN apk add --no-cache libreoffice ttf-dejavu font-noto
+
 WORKDIR /app
 
 # Copy compiled files and required packages

@@ -13,6 +13,7 @@ export interface StoredDocument {
   mimeType: string;
   blob: Blob;
   uploadedAt: string;
+  pdfPreviewBlob?: Blob;
 }
 
 function openDb(): Promise<IDBDatabase> {
@@ -62,6 +63,21 @@ export async function deleteDocument(id: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readwrite');
     tx.objectStore(STORE_NAME).delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+export async function updateDocumentPdfPreview(id: string, pdfBlob: Blob): Promise<void> {
+  const db = await openDb();
+  const stored = await getDocument(id);
+  if (!stored) throw new Error('Document not found');
+  
+  stored.pdfPreviewBlob = pdfBlob;
+  
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).put(stored);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
