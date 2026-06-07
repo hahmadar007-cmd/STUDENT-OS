@@ -5,6 +5,7 @@ import { YoutubeService } from './youtube.service';
 
 const DEFAULT_GEMINI_KEY = process.env.DEFAULT_GEMINI_KEY || '';
 const DEFAULT_OPENAI_KEY = process.env.DEFAULT_OPENAI_KEY || '';
+const DEFAULT_DEEPSEEK_KEY = process.env.DEFAULT_DEEPSEEK_KEY || '';
 
 @Injectable()
 export class AiService {
@@ -104,6 +105,7 @@ Student's Query: "${prompt}"`;
     // 1. Resolve keys and endpoints from headers or environment
     const geminiKey = headers['x-gemini-key'] || process.env.GEMINI_API_KEY || DEFAULT_GEMINI_KEY;
     const openaiKey = headers['x-openai-key'] || process.env.OPENAI_API_KEY || DEFAULT_OPENAI_KEY;
+    const deepseekKey = headers['x-deepseek-key'] || process.env.DEEPSEEK_API_KEY || DEFAULT_DEEPSEEK_KEY;
     const anthropicKey = headers['x-anthropic-key'] || process.env.ANTHROPIC_API_KEY;
     const customUrl = headers['x-custom-url'];
     const customKey = headers['x-custom-key'];
@@ -214,6 +216,41 @@ Student's Query: "${prompt}"`;
         return {
           text: `### FASCA Core Intelligence Error\n\nFailed to communicate with the Anthropic API.\n\nError: ${err.message || err}`,
           model: 'Claude (Network Error)',
+        };
+      }
+    }
+
+    // DeepSeek (OpenAI-compatible API)
+    if (modelName === 'deepseek' && deepseekKey) {
+      try {
+        const response = await fetch('https://api.deepseek.com/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${deepseekKey}`,
+          },
+          body: JSON.stringify({
+            model: 'deepseek-chat',
+            messages: [{ role: 'user', content: fullPrompt }],
+          }),
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const text = data.choices?.[0]?.message?.content;
+          if (text) return { text, model: 'DeepSeek' };
+        } else {
+          const data = await response.json().catch(() => ({}));
+          console.error('DeepSeek API Error response:', data);
+          return {
+            text: `### FASCA Core Intelligence Error\n\nThe DeepSeek API returned an error.\n\nStatus: ${response.status}\nMessage: ${data.error?.message || 'Unknown error'}\n\nPlease try again or switch to another model.`,
+            model: `DeepSeek (API Error ${response.status})`,
+          };
+        }
+      } catch (err: any) {
+        console.error('DeepSeek API Error:', err);
+        return {
+          text: `### FASCA Core Intelligence Error\n\nFailed to communicate with the DeepSeek API.\n\nError: ${err.message || err}`,
+          model: 'DeepSeek (Network Error)',
         };
       }
     }

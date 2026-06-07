@@ -28,9 +28,10 @@ interface IntegratedAiChatProps {
 }
 
 const MODEL_OPTIONS = [
-  { id: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
-  { id: 'claude-3-5-sonnet', label: 'Claude 3.5' },
-  { id: 'gpt-4o', label: 'GPT-4o' },
+  { id: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro', isDefault: true },
+  { id: 'deepseek', label: 'DeepSeek', isDefault: true },
+  { id: 'claude-3-5-sonnet', label: 'Claude 3.5', isDefault: false },
+  { id: 'gpt-4o', label: 'GPT-4o', isDefault: false },
 ];
 
 /**
@@ -345,11 +346,24 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
         >
           {MODEL_OPTIONS.map((m) => (
             <option key={m.id} value={m.id}>
-              {m.label}
+              {m.label}{m.isDefault ? ' ✦ Free' : ''}
             </option>
           ))}
         </select>
       </div>
+
+      {/* Default AI Providers Banner */}
+      {messages.length === 0 && (
+        <div className="shrink-0 mb-2 px-2.5 py-2 bg-emerald-500/5 border border-emerald-500/20 rounded-[var(--fouzar-radius-sm)]">
+          <p className="font-mono text-[8px] text-emerald-400 uppercase tracking-wider mb-1">
+            2 Default AI Models Available
+          </p>
+          <p className="font-mono text-[7px] text-fouzar-text-secondary leading-relaxed">
+            Gemini 1.5 Pro &amp; DeepSeek are active by default — no setup needed.
+            You can also connect your own API key in settings for GPT-4o, Claude, or other providers.
+          </p>
+        </div>
+      )}
 
       <div
         className={`flex-1 overflow-y-auto space-y-2.5 scrollbar-none mb-3 ${
