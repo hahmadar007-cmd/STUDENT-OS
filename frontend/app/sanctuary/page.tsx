@@ -25,6 +25,8 @@ import { FileExplorer } from '../../components/documents/FileExplorer';
 import { useFouzar, LmsRepositoryItem } from '../../lib/FouzarContext';
 import { FolderSelector } from '../../components/ui/FolderSelector';
 import { useAuth } from '../../hooks/useAuth';
+import { useBypassTimer } from '../../hooks/useBypassTimer';
+import { formatTime } from '../../lib/formatTime';
 import { buildRepositoryEntryFromFile } from '../../lib/repositoryUpload';
 import {
   getPersonalSanctuary,
@@ -74,20 +76,18 @@ export default function PersonalSanctuaryPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedSidebarDocId, setSelectedSidebarDocId] = useState<string | null>(null);
 
-  const [bypassSecondsLeft, setBypassSecondsLeft] = useState(0);
-
-  useEffect(() => {
-    if (!bypass.isActive || !bypass.expiresAt) return;
-    
-    const update = () => {
-      const left = Math.max(0, Math.floor((new Date(bypass.expiresAt!).getTime() - Date.now()) / 1000));
-      setBypassSecondsLeft(left);
-    };
-    
-    update();
-    const interval = setInterval(update, 1000);
-    return () => clearInterval(interval);
-  }, [bypass.isActive, bypass.expiresAt]);
+  const {
+    bypassSecondsLeft,
+    handleEmergencyBypass,
+    handleReLock,
+    handleDisarmFlow,
+  } = useBypassTimer({
+    bypass,
+    activateBypass,
+    clearBypass,
+    disarmDeepFlow,
+    updateFocusState,
+  });
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -100,28 +100,7 @@ export default function PersonalSanctuaryPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const formatBypass = (secs: number) => {
-    const m = Math.floor(secs / 60);
-    const s = secs % 60;
-    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  };
-
-  const handleEmergencyBypass = (minutes: 5 | 10 = 5) => {
-    activateBypass(minutes);
-  };
-
-  const handleReLock = () => {
-    clearBypass();
-  };
-
-  const handleDisarmFlow = async () => {
-    disarmDeepFlow();
-    try {
-      await updateFocusState(false);
-    } catch {
-      /* optional */
-    }
-  };
+  const formatBypass = formatTime;
 
   const isShielded = isFlowActive && !bypass.isActive;
 

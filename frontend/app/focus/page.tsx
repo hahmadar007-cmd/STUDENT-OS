@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getSocket } from '../../lib/socket';
 import { FascaCard } from '../../components/ui/FascaCard';
+import { formatTime } from '../../lib/formatTime';
 
 interface PeerInFlow {
   id: string;
@@ -93,12 +94,7 @@ export default function FocusTakeoverPage() {
   const timeLeft = Math.max(0, totalSeconds - elapsedSeconds);
   const progress = elapsedSeconds / totalSeconds;
   
-  // Format MM:SS
-  const formatTime = (secs: number) => {
-    const m = Math.floor(secs / 60).toString().padStart(2, '0');
-    const s = (secs % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
-  };
+
 
   // SVG parameters
   const strokeLength = 80;

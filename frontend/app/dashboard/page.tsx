@@ -33,6 +33,8 @@ import { LmsBridgePanel } from '../../components/social/LmsBridgePanel';
 import { FocusShieldPanel } from '../../components/focus/FocusShieldPanel';
 import { useAuth } from '../../hooks/useAuth';
 import { useSocket } from '../../hooks/useSocket';
+import { useBypassTimer } from '../../hooks/useBypassTimer';
+import { formatTime } from '../../lib/formatTime';
 import { useOnFocusStateChanged, updateFocusState as socketUpdateFocusState } from '../../lib/socket';
 import { getMyGroups, updateFocusState as apiUpdateFocusState } from '../../lib/api';
 
@@ -106,44 +108,21 @@ export default function DashboardPage() {
     }
   };
 
-  const [bypassSecondsLeft, setBypassSecondsLeft] = useState(0);
+  const {
+    bypassSecondsLeft,
+    handleEmergencyBypass,
+    handleReLock,
+    handleDisarmFlow,
+  } = useBypassTimer({
+    bypass,
+    activateBypass,
+    clearBypass,
+    disarmDeepFlow,
+    updateFocusState: apiUpdateFocusState,
+    socketUpdateFocusState,
+  });
 
-  useEffect(() => {
-    if (!bypass.isActive || !bypass.expiresAt) return;
-    
-    const update = () => {
-      const left = Math.max(0, Math.floor((new Date(bypass.expiresAt!).getTime() - Date.now()) / 1000));
-      setBypassSecondsLeft(left);
-    };
-    
-    update();
-    const interval = setInterval(update, 1000);
-    return () => clearInterval(interval);
-  }, [bypass.isActive, bypass.expiresAt]);
-
-  const formatBypassTime = (secs: number) => {
-    const m = Math.floor(secs / 60);
-    const s = secs % 60;
-    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  };
-
-  const handleEmergencyBypass = (minutes: 5 | 10 = 5) => {
-    activateBypass(minutes);
-  };
-
-  const handleReLock = () => {
-    clearBypass();
-  };
-
-  const handleDisarmFlow = async () => {
-    disarmDeepFlow();
-    try {
-      await apiUpdateFocusState(false);
-      socketUpdateFocusState(false);
-    } catch {
-      /* optional */
-    }
-  };
+  const formatBypassTime = formatTime;
 
   // Wire auth and sockets
   const { user, loading, logout } = useAuth();
@@ -313,11 +292,7 @@ export default function DashboardPage() {
     };
   }, [isFlowActive, secondsLeft]);
 
-  const formatTime = (totalSeconds: number) => {
-    const mins = Math.floor(totalSeconds / 60);
-    const secs = totalSeconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+
 
   const handleTriggerFlow = async () => {
     try {

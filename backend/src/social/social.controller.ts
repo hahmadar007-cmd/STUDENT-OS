@@ -1,6 +1,17 @@
-import { Controller, Get, Post, Delete, Body, Param, Headers, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Body,
+  Param,
+  Headers,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
+import { extractUserId } from '../utils/extractUserId';
 
 @Controller('social')
 export class SocialController {
@@ -10,16 +21,7 @@ export class SocialController {
   ) {}
 
   private getUserId(authHeader?: string): string {
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Missing or invalid token');
-    }
-    const token = authHeader.split(' ')[1];
-    try {
-      const decoded = this.jwtService.verify(token);
-      return decoded.sub;
-    } catch {
-      throw new UnauthorizedException('Invalid token');
-    }
+    return extractUserId(this.jwtService, authHeader);
   }
 
   @Get('friends')
@@ -30,10 +32,7 @@ export class SocialController {
     const friendships = await this.prisma.friendship.findMany({
       where: {
         status: 'ACCEPTED',
-        OR: [
-          { userId: userId },
-          { friendId: userId },
-        ],
+        OR: [{ userId: userId }, { friendId: userId }],
       },
       include: {
         user: {
@@ -185,9 +184,13 @@ export class SocialController {
       if (existing.status === 'ACCEPTED') {
         throw new BadRequestException('You are already friends with this user');
       } else if (existing.userId === userId) {
-        throw new BadRequestException('You have already sent a friend request to this user');
+        throw new BadRequestException(
+          'You have already sent a friend request to this user',
+        );
       } else {
-        throw new BadRequestException('This user has already sent you a friend request. Accept it from pending requests.');
+        throw new BadRequestException(
+          'This user has already sent you a friend request. Accept it from pending requests.',
+        );
       }
     }
 
@@ -222,7 +225,9 @@ export class SocialController {
     }
 
     if (friendship.friendId !== userId) {
-      throw new UnauthorizedException('You can only accept requests sent to you');
+      throw new UnauthorizedException(
+        'You can only accept requests sent to you',
+      );
     }
 
     await this.prisma.friendship.update({
@@ -252,7 +257,9 @@ export class SocialController {
     }
 
     if (friendship.friendId !== userId && friendship.userId !== userId) {
-      throw new UnauthorizedException('You are not authorized to reject this request');
+      throw new UnauthorizedException(
+        'You are not authorized to reject this request',
+      );
     }
 
     await this.prisma.friendship.delete({
