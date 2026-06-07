@@ -18,4 +18,16 @@ export class AuthController {
   login(@Body() dto: LoginDto): Promise<{ accessToken: string; user: SafeUser }> {
     return this.authService.login(dto);
   }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  forgotPassword(@Body('email') email: string): Promise<void> {
+    return this.authService.forgotPassword(email);
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  resetPassword(@Body() dto: any): Promise<void> {
+    return this.authService.resetPassword(dto);
+  }
 }

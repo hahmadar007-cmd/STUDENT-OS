@@ -11,6 +11,7 @@ import { LoginDto } from './dto/login.dto';
 import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { EmailService } from './email.service';
 
 export type SafeUser = {
   id: string;
@@ -28,10 +29,12 @@ const BCRYPT_ROUNDS = 12;
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+  private resetCodes = new Map<string, { code: string; expiresAt: Date }>();
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly emailService: EmailService,
   ) {}
 
   async register(dto: RegisterDto): Promise<{ accessToken: string; user: SafeUser }> {
@@ -142,5 +145,50 @@ export class AuthService {
         avatarUrl: user.avatarUrl,
       },
     };
+  }
+
+  async forgotPassword(email: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('No account found matching this email address.');
+    }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    this.resetCodes.set(email.toLowerCase(), { code, expiresAt });
+
+    await this.emailService.sendResetCode(email, code);
+  }
+
+  async resetPassword(dto: any): Promise<void> {
+    const { email, code, newPassword } = dto;
+    const lowerEmail = email.toLowerCase();
+    const record = this.resetCodes.get(lowerEmail);
+
+    if (!record) {
+      throw new UnauthorizedException('No verification code was requested for this email.');
+    }
+
+    if (record.code !== code) {
+      throw new UnauthorizedException('Invalid verification code.');
+    }
+
+    if (new Date() > record.expiresAt) {
+      this.resetCodes.delete(lowerEmail);
+      throw new UnauthorizedException('Verification code has expired.');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+
+    await this.prisma.user.update({
+      where: { email: lowerEmail },
+      data: { password: hashedPassword },
+    });
+
+    this.resetCodes.delete(lowerEmail);
   }
 }

@@ -62,7 +62,7 @@ const Tooltip = ({ text }: { text: string }) => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 5 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="absolute left-0 mt-2 z-50 w-64 bg-[#14141c]/95 border border-[#7c5cfc]/60 p-3 rounded-[6px] shadow-2xl text-left normal-case"
+            className="absolute left-0 mt-2 z-50 w-64 bg-fouzar-surface/95 border border-fouzar-accent/60 p-3 rounded-[6px] shadow-2xl text-left normal-case"
           >
             <p className="text-[9px] font-mono text-[#f0f0ff] leading-relaxed normal-case">
               {text}
@@ -280,7 +280,7 @@ export default function DashboardPage() {
       if (color === 'ice') return 'border-[#06b6d4]/20 bg-[#06b6d4]/5 hover:border-[#06b6d4]/60';
       if (color === 'amber') return 'border-[#f5a623]/20 bg-[#f5a623]/5 hover:border-[#f5a623]/60';
       if (color === 'emerald') return 'border-[#10b981]/20 bg-[#10b981]/5 hover:border-[#10b981]/60';
-      return 'border-[#2a2a3a] bg-[#16161f]/40 hover:border-[#7c5cfc]/60';
+      return 'border-fouzar-border bg-fouzar-card/40 hover:border-fouzar-accent/60';
     }
   };
 
@@ -290,7 +290,7 @@ export default function DashboardPage() {
     if (color === 'ice') return 'text-[#06b6d4]';
     if (color === 'amber') return 'text-[#f5a623]';
     if (color === 'emerald') return 'text-[#10b981]';
-    return 'text-[#7c5cfc]';
+    return 'text-fouzar-accent';
   };
 
 
@@ -606,7 +606,7 @@ export default function DashboardPage() {
   return (
     <div 
       onClick={() => setSelectedCardId(null)}
-      className="min-h-screen w-screen bg-[#0a0a0f] text-[#f0f0ff] flex flex-col md:flex-row overflow-hidden relative select-none font-sans"
+      className="min-h-screen w-screen bg-fouzar-bg text-fouzar-text-primary flex flex-col md:flex-row overflow-hidden relative select-none font-sans"
     >
       
       {/* ========================================================================= */}
@@ -617,7 +617,7 @@ export default function DashboardPage() {
         onMouseLeave={() => setIsSidebarHovered(false)}
         animate={{ width: isSidebarHovered ? 220 : 56 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
-        className="hidden md:flex h-full flex-col justify-between bg-[#0a0a0f] border-r border-[#2a2a3a] py-6 z-30 shrink-0 transition-all duration-300"
+        className="hidden md:flex h-full flex-col justify-between bg-fouzar-bg border-r border-fouzar-border py-6 z-30 shrink-0 transition-all duration-300"
       >
         <div className="flex flex-col gap-6">
           {/* Logo Brand top */}
@@ -636,12 +636,12 @@ export default function DashboardPage() {
                 <button
                   key={item.id}
                   onClick={() => handleNavClick(item.id)}
-                  className={`w-full relative flex items-center justify-start py-3 px-4 transition-colors cursor-pointer group hover:bg-[#16161f]/40 ${
-                    isActive ? 'text-[#7c5cfc]' : 'text-[#6b6b8a] hover:text-[#f0f0ff]'
+                  className={`w-full relative flex items-center justify-start py-3 px-4 transition-colors cursor-pointer group hover:bg-fouzar-surface/40 ${
+                    isActive ? 'text-fouzar-accent' : 'text-fouzar-text-secondary hover:text-fouzar-text-primary'
                   }`}
                 >
                   {isActive && (
-                    <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-[#7c5cfc]" />
+                    <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-fouzar-accent" />
                   )}
                   <Icon className="w-4 h-4 shrink-0" />
                   
@@ -665,7 +665,7 @@ export default function DashboardPage() {
         <div className="flex flex-col gap-4 items-center w-full">
           {/* User profile small square avatar */}
           <div className="px-4 w-full flex items-center justify-start gap-3">
-            <div className="w-8 h-8 rounded-none border border-[#2a2a3a] bg-[#16161f] flex items-center justify-center font-mono text-[10px] font-bold text-[#f0f0ff] shrink-0 overflow-hidden">
+            <div className="w-8 h-8 rounded-none border border-fouzar-border bg-fouzar-surface flex items-center justify-center font-mono text-[10px] font-bold text-fouzar-text-primary shrink-0 overflow-hidden">
               {user?.avatarUrl ? (
                 <img
                   src={user.avatarUrl}
@@ -683,7 +683,7 @@ export default function DashboardPage() {
                 className="flex flex-col text-left min-w-0"
               >
                 <span className="text-[10px] font-semibold truncate">{user ? user.name : 'Alex Mercer'}</span>
-                <span className="text-[7.5px] text-[#6b6b8a] font-mono truncate">{user ? user.email : 'MIT Workspace'}</span>
+                <span className="text-[7.5px] text-fouzar-text-secondary font-mono truncate">{user ? user.email : 'MIT Workspace'}</span>
               </motion.div>
             )}
           </div>
@@ -691,7 +691,7 @@ export default function DashboardPage() {
           <button
             type="button"
             onClick={() => router.push('/profile')}
-            className="w-full py-3 px-4 relative flex items-center justify-start text-[#6b6b8a] hover:text-[#7c5cfc] transition-colors cursor-pointer group hover:bg-[#16161f]/40"
+            className="w-full py-3 px-4 relative flex items-center justify-start text-fouzar-text-secondary hover:text-fouzar-accent transition-colors cursor-pointer group hover:bg-fouzar-surface/40"
           >
             <User className="w-4 h-4 shrink-0" />
             {isSidebarHovered && (
@@ -708,7 +708,7 @@ export default function DashboardPage() {
           <button
             type="button"
             onClick={logout}
-            className="w-full py-3 px-4 relative flex items-center justify-start text-[#6b6b8a] hover:text-[#ff2d55] transition-colors cursor-pointer group hover:bg-[#16161f]/40"
+            className="w-full py-3 px-4 relative flex items-center justify-start text-fouzar-text-secondary hover:text-fouzar-signal transition-colors cursor-pointer group hover:bg-fouzar-surface/40"
           >
             <LogOut className="w-4 h-4 shrink-0" />
             {isSidebarHovered && (
@@ -728,7 +728,7 @@ export default function DashboardPage() {
       {/* 2. LEFT MAIN PANEL: Content columns                                       */}
       {/* ========================================================================= */}
       <div 
-        className="flex-1 md:max-w-md bg-[#0a0a0f] border-r border-[#2a2a3a] p-6 flex flex-col justify-between overflow-y-auto scrollbar-none transition-all duration-300"
+        className="flex-1 md:max-w-md bg-fouzar-bg border-r border-fouzar-border p-6 flex flex-col justify-between overflow-y-auto scrollbar-none transition-all duration-300"
       >
         <div className="space-y-8">
           
@@ -827,7 +827,7 @@ export default function DashboardPage() {
               <button
                 type="button"
                 onClick={() => setShowCreateGroupModal(true)}
-                className="text-[8px] font-mono uppercase tracking-wider text-[#7c5cfc] hover:underline cursor-pointer bg-none border-none p-0"
+                className="text-[8px] font-mono uppercase tracking-wider text-fouzar-accent hover:underline cursor-pointer bg-none border-none p-0"
               >
                 + Create Circle
               </button>
@@ -876,7 +876,7 @@ export default function DashboardPage() {
                           type="text"
                           value={editingName}
                           onChange={(e) => setEditingName(e.target.value)}
-                          className="bg-[#16161f] border border-[#7c5cfc] px-2 py-1 text-xs rounded font-mono text-[#f0f0ff] focus:outline-none w-[80%] mt-1"
+                          className="bg-fouzar-surface border border-fouzar-accent px-2 py-1 text-xs rounded font-mono text-fouzar-text-primary focus:outline-none w-[80%] mt-1"
                           onKeyDown={async (e) => {
                             if (e.key === 'Enter') {
                               await handleRename(node.id, editingName);
@@ -959,7 +959,7 @@ export default function DashboardPage() {
                                     }}
                                     className="w-full px-2 py-1.5 text-[8.5px] font-mono uppercase tracking-wider text-[#6b6b8a] hover:text-[#f0f0ff] hover:bg-white/5 rounded flex items-center gap-1.5 cursor-pointer text-left"
                                   >
-                                    <Edit2 className="w-3 h-3 text-[#7c5cfc]" /> Rename
+                                    <Edit2 className="w-3 h-3 text-fouzar-accent" /> Rename
                                   </button>
                                   <button
                                     type="button"
@@ -1047,7 +1047,7 @@ export default function DashboardPage() {
               <button
                 type="button"
                 onClick={() => setIsThemeCustomizerOpen(!isThemeCustomizerOpen)}
-                className="p-1.5 hover:bg-white/5 rounded text-[#6b6b8a] hover:text-[#f0f0ff] transition-all cursor-pointer flex items-center gap-1 border border-[#2a2a3a]/60 hover:border-[#7c5cfc]/60"
+                className="p-1.5 hover:bg-white/5 rounded text-fouzar-text-secondary hover:text-fouzar-text-primary transition-all cursor-pointer flex items-center gap-1 border border-fouzar-border/60 hover:border-fouzar-accent/60"
                 title="Customize UI Theme & Accent"
               >
                 <Palette className="w-3.5 h-3.5 text-glow-accent" />
@@ -1061,11 +1061,11 @@ export default function DashboardPage() {
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 5 }}
                     transition={{ duration: 0.15, ease: 'easeOut' }}
-                    className="absolute right-0 mt-2 z-50 w-52 bg-[#14141c]/95 border border-[#7c5cfc]/60 p-4 rounded-[6px] shadow-2xl text-left backdrop-blur-md space-y-4"
+                    className="absolute right-0 mt-2 z-50 w-52 bg-fouzar-surface/95 border border-fouzar-accent/60 p-4 rounded-[6px] shadow-2xl text-left backdrop-blur-md space-y-4"
                   >
                     {/* Theme chassis */}
                     <div className="space-y-1.5">
-                      <span className="text-[7.5px] font-mono uppercase text-[#6b6b8a] tracking-wider block font-bold">
+                      <span className="text-[7.5px] font-mono uppercase text-fouzar-text-secondary tracking-wider block font-bold">
                         Visual Chassis Theme
                       </span>
                       <div className="grid grid-cols-2 gap-1.5">
@@ -1074,8 +1074,8 @@ export default function DashboardPage() {
                           onClick={() => setMode('onyx')}
                           className={`py-1 px-1.5 text-[7px] font-mono uppercase rounded-[4px] border text-center transition-colors cursor-pointer ${
                             mode === 'onyx'
-                              ? 'border-[#7c5cfc] bg-[#7c5cfc]/10 text-[#7c5cfc] font-bold'
-                              : 'border-[#2a2a3a] text-[#6b6b8a] hover:text-[#f0f0ff]'
+                              ? 'border-fouzar-accent bg-fouzar-accent/10 text-fouzar-accent font-bold'
+                              : 'border-fouzar-border text-fouzar-text-secondary hover:text-fouzar-text-primary'
                           }`}
                         >
                           Onyx
@@ -1085,8 +1085,8 @@ export default function DashboardPage() {
                           onClick={() => setMode('greenhouse')}
                           className={`py-1 px-1.5 text-[7px] font-mono uppercase rounded-[4px] border text-center transition-colors cursor-pointer ${
                             mode === 'greenhouse'
-                              ? 'border-[#6ee7b7] bg-[#6ee7b7]/10 text-[#6ee7b7] font-bold'
-                              : 'border-[#2a2a3a] text-[#6b6b8a] hover:text-[#f0f0ff]'
+                              ? 'border-fouzar-accent bg-fouzar-accent/10 text-fouzar-accent font-bold'
+                              : 'border-fouzar-border text-fouzar-text-secondary hover:text-fouzar-text-primary'
                           }`}
                         >
                           Greenhouse
@@ -1128,7 +1128,7 @@ export default function DashboardPage() {
               </AnimatePresence>
             </div>
 
-            <span className="px-2.5 py-0.5 bg-[#7c5cfc]/10 border border-[#7c5cfc]/20 text-[#7c5cfc] font-mono text-[8px] uppercase tracking-wider rounded">
+            <span className="px-2.5 py-0.5 bg-fouzar-accent/10 border border-fouzar-accent/20 text-fouzar-accent font-mono text-[8px] uppercase tracking-wider rounded">
               V1.0
             </span>
           </div>
@@ -1149,9 +1149,9 @@ export default function DashboardPage() {
           ) : (
             <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
               {peers.map((peer) => {
-                let ringColor = 'border-[#2a2a3a]';
-                if (peer.status === 'online') ringColor = 'border-[#7c5cfc]';
-                if (peer.status === 'flow') ringColor = 'border-[#ff2d55] animate-pulse shadow-[0_0_8px_#ff2d55]';
+                let ringColor = 'border-fouzar-border';
+                if (peer.status === 'online') ringColor = 'border-fouzar-accent';
+                if (peer.status === 'flow') ringColor = 'border-fouzar-signal animate-pulse shadow-[0_0_8px_var(--fouzar-accent-signal)]';
 
                 return (
                   <div 
@@ -1163,11 +1163,11 @@ export default function DashboardPage() {
                     onContextMenu={(e) => handleFriendMenu(e, peer)}
                   >
                     <div className={`p-[1.5px] rounded-full border-2 ${ringColor} transition-all duration-300 cursor-pointer`}>
-                      <div className="w-10 h-10 rounded-full bg-[#16161f] border border-[#2a2a3a] flex items-center justify-center font-mono text-xs font-bold text-[#f0f0ff]">
+                      <div className="w-10 h-10 rounded-full bg-fouzar-surface border border-fouzar-border flex items-center justify-center font-mono text-xs font-bold text-fouzar-text-primary">
                         {peer.initials}
                       </div>
                     </div>
-                    <span className="text-[8px] font-mono uppercase tracking-wider text-[#6b6b8a]">
+                    <span className="text-[8px] font-mono uppercase tracking-wider text-fouzar-text-secondary">
                       {peer.name}
                     </span>
                     
@@ -1177,11 +1177,11 @@ export default function DashboardPage() {
                           initial={{ opacity: 0, y: 10, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                          className="absolute bottom-full mb-2 z-50 bg-[#16161f] border border-[#7c5cfc]/60 p-3 rounded-[6px] shadow-2xl w-40 text-left"
+                          className="absolute bottom-full mb-2 z-50 bg-fouzar-surface border border-fouzar-accent/60 p-3 rounded-[6px] shadow-2xl w-40 text-left"
                         >
-                          <div className="text-[9px] font-bold text-[#f0f0ff] uppercase">{peer.name}</div>
-                          <div className="text-[7.5px] font-mono text-[#6b6b8a] uppercase mt-1">
-                            Status: <span className={peer.status === 'flow' ? 'text-[#ff2d55]' : peer.status === 'online' ? 'text-[#7c5cfc]' : 'text-[#6b6b8a]'}>{peer.status}</span>
+                          <div className="text-[9px] font-bold text-fouzar-text-primary uppercase">{peer.name}</div>
+                          <div className="text-[7.5px] font-mono text-fouzar-text-secondary uppercase mt-1">
+                            Status: <span className={peer.status === 'flow' ? 'text-fouzar-signal' : peer.status === 'online' ? 'text-fouzar-accent' : 'text-fouzar-text-secondary'}>{peer.status}</span>
                           </div>
                           <div className="text-[7.5px] font-mono text-[#6b6b8a] uppercase mt-0.5">
                             Active: {peer.group || 'None'}
@@ -1220,27 +1220,27 @@ export default function DashboardPage() {
                     onClick={() => setSessionMinutes(preset)}
                     className={`w-14 h-12 rounded-[6px] border text-[11px] font-mono flex flex-col items-center justify-center transition-colors cursor-pointer ${
                       sessionMinutes === preset
-                        ? 'border-[#7c5cfc] text-[#7c5cfc] bg-[#7c5cfc]/5 font-semibold'
-                        : 'border-[#2a2a3a] text-[#6b6b8a] hover:border-[#6b6b8a] hover:text-[#f0f0ff]'
+                        ? 'border-fouzar-accent text-fouzar-accent bg-fouzar-accent/5 font-semibold'
+                        : 'border-fouzar-border text-fouzar-text-secondary hover:border-fouzar-text-secondary hover:text-fouzar-text-primary'
                     }`}
                   >
                     <span>{preset}</span>
-                    <span className="text-[7px] font-sans opacity-70">MIN</span>
+                    <span className="text-[7.5px] font-sans opacity-70">MIN</span>
                   </button>
                 ))}
               </div>
             </div>
 
             {/* Circular countdown visualization */}
-            <div className="relative w-44 h-44 flex flex-col items-center justify-center rounded-full bg-[#111118]/60 border border-[#2a2a3a] shadow-lg my-6">
-              <span className="text-[8px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a] mb-1">
+            <div className="relative w-44 h-44 flex flex-col items-center justify-center rounded-full bg-fouzar-surface/60 border border-fouzar-border shadow-lg my-6">
+              <span className="text-[8px] font-mono uppercase tracking-[0.25em] text-fouzar-text-secondary mb-1">
                 Focus Timer
               </span>
-              <span className="text-4xl font-mono font-light text-[#f0f0ff] tracking-wider text-glow-accent">
+              <span className="text-4xl font-mono font-light text-fouzar-text-primary tracking-wider text-glow-accent">
                 {formatTime(secondsLeft)}
               </span>
-              <span className={`text-[7px] font-mono uppercase tracking-widest mt-2 flex items-center gap-1 ${isFlowActive ? 'text-[#ff2d55]' : 'text-[#7c5cfc]'}`}>
-                <span className={`w-1.5 h-1.5 rounded-full animate-ping ${isFlowActive ? 'bg-[#ff2d55]' : 'bg-[#7c5cfc]'}`} />
+              <span className={`text-[7px] font-mono uppercase tracking-widest mt-2 flex items-center gap-1 ${isFlowActive ? 'text-fouzar-signal' : 'text-fouzar-accent'}`}>
+                <span className={`w-1.5 h-1.5 rounded-full animate-ping ${isFlowActive ? 'bg-fouzar-signal' : 'bg-fouzar-accent'}`} />
                 {isFlowActive ? 'FLOW SESSION ACTIVE' : 'IDLE STATE ACTIVE'}
               </span>
             </div>
@@ -1283,9 +1283,9 @@ export default function DashboardPage() {
         </div>
 
         {/* Footer with open-source link */}
-        <div className="pt-4 border-t border-[#2a2a3a]/40 flex items-center justify-between text-[8px] font-mono text-[#6b6b8a] uppercase tracking-wider shrink-0 animate-none">
+        <div className="pt-4 border-t border-fouzar-border/40 flex items-center justify-between text-[8px] font-mono text-fouzar-text-secondary uppercase tracking-wider shrink-0 animate-none">
           <span>Fasca Academic OS</span>
-          <a href="https://github.com/fasca-study/app" target="_blank" rel="noopener noreferrer" className="hover:text-[#7c5cfc] transition-colors">
+          <a href="https://github.com/fasca-study/app" target="_blank" rel="noopener noreferrer" className="hover:text-fouzar-accent transition-colors">
             OPEN SOURCE REPOSITORY
           </a>
         </div>
@@ -1295,7 +1295,7 @@ export default function DashboardPage() {
       {/* ========================================================================= */}
       {/* 4. BOTTOM NAVIGATION BAR: Under 768px view                                */}
       {/* ========================================================================= */}
-      <nav className="md:hidden w-full h-14 bg-[#0a0a0f] border-t border-[#2a2a3a] px-6 py-2 flex items-center justify-between z-30 shrink-0 select-none">
+      <nav className="md:hidden w-full h-14 bg-fouzar-bg border-t border-fouzar-border px-6 py-2 flex items-center justify-between z-30 shrink-0 select-none">
         {sidebarItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeNav === item.id;
@@ -1303,13 +1303,13 @@ export default function DashboardPage() {
             <button
               key={item.id}
               onClick={() => handleNavClick(item.id)}
-              className={`p-2 transition-colors relative flex items-center justify-center shrink-0 cursor-pointer ${
-                isActive ? 'text-[#7c5cfc]' : 'text-[#6b6b8a]'
+              className={`relative flex flex-col items-center justify-center p-2 transition-colors cursor-pointer ${
+                isActive ? 'text-fouzar-accent' : 'text-fouzar-text-secondary'
               }`}
             >
               <Icon className="w-5 h-5" />
               {isActive && (
-                <div className="absolute top-[-8px] left-2 right-2 h-[2px] bg-[#7c5cfc]" />
+                <div className="absolute top-[-8px] left-2 right-2 h-[2px] bg-fouzar-accent" />
               )}
             </button>
           );
@@ -1398,73 +1398,65 @@ export default function DashboardPage() {
               initial={{ opacity: 0, scale: 0.95, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 12 }}
-              className="bg-[#14141c] border border-[#2a2a3a] p-6 rounded-[var(--fouzar-radius-lg)] shadow-2xl w-full max-w-sm space-y-4"
+              className="bg-[#14141c] border border-[#2a2a3a] rounded-[var(--fouzar-radius-lg)] shadow-2xl w-full max-w-sm"
             >
-              <div className="flex items-center justify-between border-b border-[#2a2a3a]/40 pb-2">
-                <span className="font-mono text-[9px] uppercase tracking-widest text-[#6b6b8a] flex items-center gap-1.5">
-                  <Users className="w-4 h-4 text-[#7c5cfc]" /> Create Study Circle
+              <div className="flex bg-[#0a0a0f]/40 border-b border-fouzar-border py-3.5 px-4 items-center justify-between rounded-t-[var(--fouzar-radius-lg)]">
+                <span className="font-mono text-[9px] uppercase tracking-widest text-fouzar-text-primary flex items-center gap-1.5">
+                  <Users className="w-4 h-4 text-fouzar-accent" /> Create Study Circle
                 </span>
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowCreateGroupModal(false);
-                    setCreateGroupError(null);
-                  }}
-                  className="text-[#6b6b8a] hover:text-[#f0f0ff]"
+                  onClick={() => setShowCreateGroupModal(false)}
+                  className="text-fouzar-text-secondary hover:text-fouzar-text-primary cursor-pointer font-mono text-[8px]"
                 >
-                  <X className="w-4 h-4" />
+                  [CLOSE]
                 </button>
               </div>
 
-              <form onSubmit={handleCreateGroupSubmit} className="space-y-4">
-                <div className="space-y-1">
-                  <label className="font-mono text-[7px] uppercase tracking-wider text-[#6b6b8a] block">
-                    Circle Name (e.g. CS-229 Neural Network Room)
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Enter circle name..."
-                    value={newGroupName}
-                    onChange={(e) => setNewGroupName(e.target.value)}
-                    className="w-full bg-[#16161f] border border-[#2a2a3a] px-3 py-2 text-[10px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-[#7c5cfc] text-[#f0f0ff]"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-mono text-[7px] uppercase tracking-wider text-[#6b6b8a] block">
-                    Course Code (e.g. CS-229) (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Enter course code..."
-                    value={newGroupCourse}
-                    onChange={(e) => setNewGroupCourse(e.target.value)}
-                    className="w-full bg-[#16161f] border border-[#2a2a3a] px-3 py-2 text-[10px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-[#7c5cfc] text-[#f0f0ff] uppercase"
-                  />
-                </div>
-
+              <form onSubmit={handleCreateGroupSubmit} className="p-6 space-y-6">
                 {createGroupError && (
-                  <p className="text-[8px] font-mono text-[#ff2d55] uppercase tracking-wider">
+                  <div className="p-3 bg-fouzar-signal/5 border border-fouzar-signal/20 text-fouzar-signal font-mono text-[8.5px] uppercase tracking-wider">
                     {createGroupError}
-                  </p>
+                  </div>
                 )}
 
-                <div className="flex gap-2 justify-end pt-1">
+                <div className="space-y-4">
+                  <div className="flex flex-col">
+                    <span className="text-[7.5px] font-mono uppercase text-fouzar-text-secondary tracking-wider mb-1">Group Title</span>
+                    <input
+                      type="text"
+                      required
+                      value={newGroupName}
+                      onChange={(e) => setNewGroupName(e.target.value)}
+                      placeholder="Algorithms Study Group"
+                      className="w-full bg-fouzar-surface border border-fouzar-border px-3 py-2 text-[10px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
+                    />
+                  </div>
+
+                  <div className="flex flex-col">
+                    <span className="text-[7.5px] font-mono uppercase text-fouzar-text-secondary tracking-wider mb-1">Subject Code (Optional)</span>
+                    <input
+                      type="text"
+                      value={newGroupCourse}
+                      onChange={(e) => setNewGroupCourse(e.target.value)}
+                      placeholder="CS-229"
+                      className="w-full bg-fouzar-surface border border-fouzar-border px-3 py-2 text-[10px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary uppercase"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 mt-8 border-t border-fouzar-border/40 pt-4">
                   <button
                     type="button"
-                    onClick={() => {
-                      setShowCreateGroupModal(false);
-                      setCreateGroupError(null);
-                    }}
-                    className="px-3 py-1.5 border border-[#2a2a3a] rounded-[var(--fouzar-radius-md)] font-mono text-[8px] uppercase text-[#6b6b8a] hover:text-[#f0f0ff] cursor-pointer"
+                    onClick={() => setShowCreateGroupModal(false)}
+                    className="px-3 py-1.5 border border-fouzar-border text-fouzar-text-secondary hover:text-fouzar-text-primary rounded-[var(--fouzar-radius-md)] font-mono text-[8px] uppercase tracking-wider cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={createGroupLoading}
-                    className="px-3 py-1.5 bg-[#7c5cfc] text-[#0a0a0f] rounded-[var(--fouzar-radius-md)] font-mono text-[8px] uppercase font-bold hover:opacity-90 disabled:opacity-50 cursor-pointer flex items-center justify-center"
+                    className="px-3 py-1.5 bg-fouzar-accent text-fouzar-text-inverse rounded-[var(--fouzar-radius-md)] font-mono text-[8px] uppercase font-bold hover:opacity-90 disabled:opacity-50 cursor-pointer flex items-center justify-center"
                   >
                     {createGroupLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Create'}
                   </button>
@@ -1490,16 +1482,16 @@ export default function DashboardPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              style={{ top: contextMenuPos.y, left: contextMenuPos.x }}
-              className="fixed z-50 bg-[#14141c]/95 border border-[#7c5cfc]/60 shadow-2xl p-2 rounded-[6px] w-48 text-left backdrop-blur-md"
+              className="fixed z-50 bg-fouzar-surface/95 border border-fouzar-accent/60 shadow-2xl p-2 rounded-[6px] w-48 text-left backdrop-blur-md"
+              style={{ left: contextMenuPos.x, top: contextMenuPos.y }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="px-2 py-1 text-[7.5px] font-mono uppercase text-[#6b6b8a] tracking-wider mb-1.5 border-b border-[#2a2a3a]/40 pb-1">
-                Add {contextMenuFriend.name} to Group
+              <div className="px-2 py-1 text-[7px] font-mono uppercase text-fouzar-text-secondary tracking-wider mb-1">
+                Invite to Study Group
               </div>
-              <div className="max-h-48 overflow-y-auto scrollbar-none space-y-0.5">
+              <div className="space-y-0.5 max-h-40 overflow-y-auto scrollbar-none">
                 {gardenNodes.length === 0 ? (
-                  <div className="px-2 py-1.5 text-[8px] font-mono text-[#6b6b8a] uppercase">
+                  <div className="px-2 py-1.5 text-[8px] font-mono text-fouzar-text-secondary uppercase">
                     No active study groups
                   </div>
                 ) : (
@@ -1523,7 +1515,7 @@ export default function DashboardPage() {
                           toast(err.message || 'Failed to add friend to group', 'crimson');
                         }
                       }}
-                      className="w-full px-2 py-1 text-[9px] font-mono uppercase tracking-wider text-[#f0f0ff] hover:bg-[#7c5cfc]/15 rounded text-left transition-colors truncate block cursor-pointer"
+                      className="w-full px-2 py-1 text-[9px] font-mono uppercase tracking-wider text-fouzar-text-primary hover:bg-fouzar-accent/15 rounded text-left transition-colors truncate block cursor-pointer"
                       title={node.roomName}
                     >
                       {node.roomName}

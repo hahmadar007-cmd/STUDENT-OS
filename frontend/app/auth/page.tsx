@@ -175,10 +175,24 @@ export default function AuthPage() {
         setIsLoading(false);
         return;
       }
-      setTimeout(() => {
+      try {
+        const res = await fetch(`${apiBase}/auth/forgot-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+
+        if (res.ok) {
+          setActiveTab('reset-password');
+        } else {
+          const data = await res.json();
+          setValidationError(data.message || 'Failed to initiate recovery. Verify email.');
+        }
+      } catch (err) {
+        setValidationError('Connection failed. Verify NestJS backend is running.');
+      } finally {
         setIsLoading(false);
-        setActiveTab('reset-password');
-      }, 1200);
+      }
       return;
     }
 
@@ -193,20 +207,33 @@ export default function AuthPage() {
         setIsLoading(false);
         return;
       }
-      setTimeout(() => {
+      try {
+        const res = await fetch(`${apiBase}/auth/reset-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, code: resetCode, newPassword }),
+        });
+
+        if (res.ok) {
+          setIsResetSuccess(true);
+          setResetCode('');
+          setNewPassword('');
+          setEmail('');
+          setPassword('');
+          
+          setTimeout(() => {
+            setIsResetSuccess(false);
+            setActiveTab('login');
+          }, 1800);
+        } else {
+          const data = await res.json();
+          setValidationError(data.message || 'Failed to reset password. Verify verification code.');
+        }
+      } catch (err) {
+        setValidationError('Connection failed. Verify NestJS backend is running.');
+      } finally {
         setIsLoading(false);
-        setIsResetSuccess(true);
-        
-        setResetCode('');
-        setNewPassword('');
-        setEmail('');
-        setPassword('');
-        
-        setTimeout(() => {
-          setIsResetSuccess(false);
-          setActiveTab('login');
-        }, 1800);
-      }, 1200);
+      }
       return;
     }
 
