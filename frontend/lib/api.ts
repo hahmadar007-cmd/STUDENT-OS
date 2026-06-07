@@ -38,6 +38,24 @@ async function apiRequest(endpoint: string, method: string = 'GET', body?: any) 
     headers['Authorization'] = `Bearer ${token}`;
   }
 
+  // Inject linked personal AI account connection credentials
+  if (typeof window !== 'undefined') {
+    const aiMode = localStorage.getItem('fasca_ai_mode') || 'default';
+    const aiToken = localStorage.getItem('fasca_ai_token');
+    const aiUrl = localStorage.getItem('fasca_ai_url');
+
+    if (aiMode === 'gemini-personal' && aiToken) {
+      headers['x-gemini-key'] = aiToken;
+    } else if (aiMode === 'openai-personal' && aiToken) {
+      headers['x-openai-key'] = aiToken;
+    } else if (aiMode === 'custom' && aiUrl) {
+      headers['x-custom-url'] = aiUrl;
+      if (aiToken) {
+        headers['x-custom-key'] = aiToken;
+      }
+    }
+  }
+
   const response = await fetch(`${API_URL}${endpoint}`, {
     method,
     headers,

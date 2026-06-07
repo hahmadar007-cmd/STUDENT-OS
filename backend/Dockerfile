@@ -34,6 +34,7 @@ COPY --from=builder /app/tsconfig.json ./
 
 # Expose port and start
 ENV NODE_ENV=production
-EXPOSE 3001
+ENV PORT=7860
+EXPOSE 7860
 
 CMD ["sh", "-c", "npx prisma migrate deploy && npm run start:prod"]
