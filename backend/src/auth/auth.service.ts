@@ -4,6 +4,8 @@ import {
   InternalServerErrorException,
   UnauthorizedException,
   Logger,
+  BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
@@ -12,6 +14,7 @@ import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { EmailService } from './email.service';
+import { randomBytes } from 'crypto';
 
 export type SafeUser = {
   id: string;
@@ -29,7 +32,6 @@ const BCRYPT_ROUNDS = 12;
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
-  private resetCodes = new Map<string, { code: string; expiresAt: Date }>();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -147,48 +149,56 @@ export class AuthService {
     };
   }
 
-  async forgotPassword(email: string): Promise<void> {
+  async forgotPassword(email: string): Promise<{ message: string }> {
     const user = await this.prisma.user.findUnique({
       where: { email },
     });
 
     if (!user) {
-      throw new UnauthorizedException('No account found matching this email address.');
+      return { message: 'If that email exists, a reset link has been sent.' };
     }
 
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+    const token = randomBytes(32).toString('hex');
+    const expiry = new Date(Date.now() + 3600000); // 1 hour from now
 
-    this.resetCodes.set(email.toLowerCase(), { code, expiresAt });
+    await this.prisma.user.update({
+      where: { email: user.email },
+      data: {
+        passwordResetToken: token,
+        passwordResetExpiry: expiry,
+      },
+    });
 
-    await this.emailService.sendResetCode(email, code);
+    await this.emailService.sendPasswordResetEmail(user.email, token);
+
+    return { message: 'If that email exists, a reset link has been sent.' };
   }
 
-  async resetPassword(dto: any): Promise<void> {
-    const { email, code, newPassword } = dto;
-    const lowerEmail = email.toLowerCase();
-    const record = this.resetCodes.get(lowerEmail);
+  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        passwordResetToken: token,
+        passwordResetExpiry: {
+          gt: new Date(),
+        },
+      },
+    });
 
-    if (!record) {
-      throw new UnauthorizedException('No verification code was requested for this email.');
-    }
-
-    if (record.code !== code) {
-      throw new UnauthorizedException('Invalid verification code.');
-    }
-
-    if (new Date() > record.expiresAt) {
-      this.resetCodes.delete(lowerEmail);
-      throw new UnauthorizedException('Verification code has expired.');
+    if (!user) {
+      throw new BadRequestException('Invalid or expired reset token.');
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
 
     await this.prisma.user.update({
-      where: { email: lowerEmail },
-      data: { password: hashedPassword },
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        passwordResetToken: null,
+        passwordResetExpiry: null,
+      },
     });
 
-    this.resetCodes.delete(lowerEmail);
+    return { message: 'Password reset successfully.' };
   }
 }

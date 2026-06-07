@@ -107,7 +107,7 @@ const NodeCanvas: React.FC = () => {
 };
 
 export default function AuthPage() {
-  const [activeTab, setActiveTab] = useState<'login' | 'register' | 'forgot-password' | 'reset-password'>('login');
+  const [activeTab, setActiveTab] = useState<'login' | 'register' | 'forgot'>('login');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -128,10 +128,8 @@ export default function AuthPage() {
   const [name, setName] = useState('');
   const [universityName, setUniversityName] = useState('');
 
-  // Forgot password & reset password state simulation
-  const [resetCode, setResetCode] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [isResetSuccess, setIsResetSuccess] = useState(false);
+  // Forgot password & reset password state
+  const [isLinkSent, setIsLinkSent] = useState(false);
 
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -169,7 +167,7 @@ export default function AuthPage() {
     setValidationError(null);
     setIsLoading(true);
 
-    if (activeTab === 'forgot-password') {
+    if (activeTab === 'forgot') {
       if (!email) {
         setValidationError('Email address is required.');
         setIsLoading(false);
@@ -183,51 +181,10 @@ export default function AuthPage() {
         });
 
         if (res.ok) {
-          setActiveTab('reset-password');
+          setIsLinkSent(true);
         } else {
           const data = await res.json();
           setValidationError(data.message || 'Failed to initiate recovery. Verify email.');
-        }
-      } catch (err) {
-        setValidationError('Connection failed. Verify NestJS backend is running.');
-      } finally {
-        setIsLoading(false);
-      }
-      return;
-    }
-
-    if (activeTab === 'reset-password') {
-      if (resetCode.length !== 6) {
-        setValidationError('Invalid authorization code. Must be 6 digits.');
-        setIsLoading(false);
-        return;
-      }
-      if (newPassword.length < 6) {
-        setValidationError('New security key must be at least 6 characters.');
-        setIsLoading(false);
-        return;
-      }
-      try {
-        const res = await fetch(`${apiBase}/auth/reset-password`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, code: resetCode, newPassword }),
-        });
-
-        if (res.ok) {
-          setIsResetSuccess(true);
-          setResetCode('');
-          setNewPassword('');
-          setEmail('');
-          setPassword('');
-          
-          setTimeout(() => {
-            setIsResetSuccess(false);
-            setActiveTab('login');
-          }, 1800);
-        } else {
-          const data = await res.json();
-          setValidationError(data.message || 'Failed to reset password. Verify verification code.');
         }
       } catch (err) {
         setValidationError('Connection failed. Verify NestJS backend is running.');
@@ -282,7 +239,7 @@ export default function AuthPage() {
       
       {/* Dynamic Success Checkmark Screen */}
       <AnimatePresence>
-        {(isSuccess || isResetSuccess) && (
+        {isSuccess && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -309,7 +266,7 @@ export default function AuthPage() {
               </motion.svg>
             </div>
             <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#7c5cfc] animate-pulse">
-              {isSuccess ? 'Fasca core authorized' : 'Security key updated'}
+              Fasca core authorized
             </span>
           </motion.div>
         )}
@@ -341,16 +298,17 @@ export default function AuthPage() {
         <div className="w-full bg-[#16161f] border border-[#7c5cfc] rounded-none shadow-2xl overflow-hidden">
           
           {/* Code Editor Styled Tabs */}
-          {activeTab === 'forgot-password' || activeTab === 'reset-password' ? (
+          {activeTab === 'forgot' ? (
             <div className="flex bg-[#0a0a0f]/40 border-b border-[#2a2a3a] py-3.5 px-4 items-center justify-between">
               <span className="font-mono text-[9px] uppercase tracking-widest text-[#f0f0ff]">
-                {activeTab === 'forgot-password' ? 'RECOVER_KEY.tsx' : 'RESET_KEY.tsx'}
+                RECOVER_KEY.tsx
               </span>
               <button
                 type="button"
                 onClick={() => {
                   setActiveTab('login');
                   setValidationError(null);
+                  setIsLinkSent(false);
                 }}
                 className="text-[7.5px] font-mono uppercase text-[#6b6b8a] hover:text-[#f0f0ff] cursor-pointer transition-colors"
               >
@@ -511,7 +469,7 @@ export default function AuthPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        setActiveTab('forgot-password');
+                        setActiveTab('forgot');
                         setValidationError(null);
                       }}
                       className="text-[7.5px] font-mono uppercase text-[#6b6b8a] hover:text-[#7c5cfc] transition-colors cursor-pointer"
@@ -522,70 +480,54 @@ export default function AuthPage() {
                 </motion.div>
               )}
 
-              {activeTab === 'forgot-password' && (
+              {activeTab === 'forgot' && (
                 /* ========================================================================= */
                 /* FORGOT PASSWORD FIELDS                                                    */
                 /* ========================================================================= */
                 <motion.div
-                  key="forgot-password-fields"
+                  key="forgot-fields"
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -5 }}
                   transition={{ duration: 0.15 }}
                   className="space-y-4"
                 >
-                  <div className="flex flex-col">
-                    <span className="text-[7.5px] font-mono uppercase text-[#6b6b8a] tracking-wider mb-1">Email address</span>
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="alex@university.edu"
-                      className="w-full bg-transparent border-b border-[#2a2a3a] px-1 py-2 text-xs text-[#f0f0ff] placeholder-[#6b6b8a]/50 focus:outline-none focus:border-[#7c5cfc] rounded-none transition-colors"
-                    />
-                  </div>
-                  <div className="p-3 bg-[#7c5cfc]/5 border border-[#7c5cfc]/20 text-[#6b6b8a] font-mono text-[8px] leading-relaxed text-left uppercase tracking-wider">
-                    SIMULATION: An authorization code will be sent to recover access.
-                  </div>
-                </motion.div>
-              )}
-
-              {activeTab === 'reset-password' && (
-                /* ========================================================================= */
-                /* RESET PASSWORD FIELDS                                                     */
-                /* ========================================================================= */
-                <motion.div
-                  key="reset-password-fields"
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -5 }}
-                  transition={{ duration: 0.15 }}
-                  className="space-y-4"
-                >
-                  <div className="flex flex-col">
-                    <span className="text-[7.5px] font-mono uppercase text-[#6b6b8a] tracking-wider mb-1">6-Digit Reset Code</span>
-                    <input
-                      type="text"
-                      maxLength={6}
-                      required
-                      value={resetCode}
-                      onChange={(e) => setResetCode(e.target.value.replace(/\D/g, ''))}
-                      placeholder="888888"
-                      className="w-full bg-transparent border-b border-[#2a2a3a] px-1 py-2 text-xs text-[#f0f0ff] placeholder-[#6b6b8a]/50 focus:outline-none focus:border-[#7c5cfc] rounded-none transition-colors tracking-[0.5em] text-center"
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-[7.5px] font-mono uppercase text-[#6b6b8a] tracking-wider mb-1">New Security Key</span>
-                    <input
-                      type="password"
-                      required
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full bg-transparent border-b border-[#2a2a3a] px-1 py-2 text-xs text-[#f0f0ff] placeholder-[#6b6b8a]/50 focus:outline-none focus:border-[#7c5cfc] rounded-none transition-colors"
-                    />
-                  </div>
+                  {!isLinkSent ? (
+                    <>
+                      <div className="flex flex-col">
+                        <span className="text-[7.5px] font-mono uppercase text-[#6b6b8a] tracking-wider mb-1">Email address</span>
+                        <input
+                          type="email"
+                          required
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="alex@university.edu"
+                          className="w-full bg-transparent border-b border-[#2a2a3a] px-1 py-2 text-xs text-[#f0f0ff] placeholder-[#6b6b8a]/50 focus:outline-none focus:border-[#7c5cfc] rounded-none transition-colors"
+                        />
+                      </div>
+                      <div className="p-3 bg-[#7c5cfc]/5 border border-[#7c5cfc]/20 text-[#6b6b8a] font-mono text-[8px] leading-relaxed text-left uppercase tracking-wider">
+                        A secure password reset link will be sent to your email.
+                      </div>
+                    </>
+                  ) : (
+                    <div className="space-y-4 text-left">
+                      <div className="p-4 bg-[#7c5cfc]/10 border border-[#7c5cfc]/30 text-[#f0f0ff] font-mono text-[9px] leading-relaxed uppercase tracking-widest">
+                        [STATUS: ENCRYPTED LINK TRANSMITTED]
+                        <br/><br/>
+                        A password reset link has been dispatched to {email}. Check your inbox to restore access.
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsLinkSent(false);
+                          setValidationError(null);
+                        }}
+                        className="w-full text-center text-[8px] font-mono uppercase text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors mt-2 cursor-pointer"
+                      >
+                        [Resend Link]
+                      </button>
+                    </div>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -605,14 +547,16 @@ export default function AuthPage() {
             </AnimatePresence>
 
             {/* Form Submit Button (Solid violet, full width, uppercase, sharp rectangular) */}
-            <FascaButton
-              type="submit"
-              disabled={isLoading}
-              variant="solid-violet"
-              className="w-full rounded-none font-bold py-3 text-[10px]"
-            >
-              {isLoading ? 'EXECUTING...' : activeTab === 'login' ? 'ESTABLISH CONNECT' : activeTab === 'register' ? 'REGISTER WORKSPACE' : activeTab === 'forgot-password' ? 'SEND RESET CODE' : 'RESET SECURITY KEY'}
-            </FascaButton>
+            {!(activeTab === 'forgot' && isLinkSent) && (
+              <FascaButton
+                type="submit"
+                disabled={isLoading}
+                variant="solid-violet"
+                className="w-full rounded-none font-bold py-3 text-[10px]"
+              >
+                {isLoading ? 'EXECUTING...' : activeTab === 'login' ? 'ESTABLISH CONNECT' : activeTab === 'register' ? 'REGISTER WORKSPACE' : 'SEND RESET LINK'}
+              </FascaButton>
+            )}
 
           </form>
         </div>

@@ -110,6 +110,14 @@ export const login = async (email: string, password?: string) => {
   return data;
 };
 
+export const forgotPassword = async (email: string) => {
+  return apiRequest('/auth/forgot-password', 'POST', { email });
+};
+
+export const resetPassword = async (token: string, newPassword: string) => {
+  return apiRequest('/auth/reset-password', 'POST', { token, newPassword });
+};
+
 export const getMe = () => apiRequest('/users/me', 'GET');
 
 export const getMyGroups = () => apiRequest('/groups', 'GET');
