@@ -2,9 +2,8 @@
 # Automates Netlify deployment settings for the monorepo
 
 [build]
-  base = "frontend"
   command = "npm run build"
-  publish = ".next"
+  publish = "frontend/.next"
 
 [build.environment]
   NEXT_PUBLIC_API_URL = "https://ammeeee-student-os.hf.space"
