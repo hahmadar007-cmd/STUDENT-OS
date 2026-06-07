@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaService } from './prisma/prisma.service';
+import { JwtService } from '@nestjs/jwt';
+import { LmsService } from './lms/lms.service';
 
 describe('AppController', () => {
   let appController: AppController;
@@ -16,7 +18,22 @@ describe('AppController', () => {
           useValue: {
             user: {
               count: jest.fn().mockResolvedValue(0),
+              findMany: jest.fn().mockResolvedValue([]),
             },
+            $queryRaw: jest.fn().mockResolvedValue([{ '?column?': 1 }]),
+          },
+        },
+        {
+          provide: JwtService,
+          useValue: {
+            sign: jest.fn().mockReturnValue('token'),
+            verify: jest.fn(),
+          },
+        },
+        {
+          provide: LmsService,
+          useValue: {
+            normalizeBaseUrl: jest.fn(),
           },
         },
       ],
