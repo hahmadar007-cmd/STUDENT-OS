@@ -105,7 +105,7 @@ export class GroupsService {
     return group;
   }
 
-  async addGroupMember(groupId: string, connectionId: string, currentUserId: string) {
+  async addGroupMember(groupId: string, connectionIdOrId: string, currentUserId: string) {
     const group = await this.prisma.group.findUnique({
       where: { id: groupId },
     });
@@ -113,12 +113,20 @@ export class GroupsService {
       throw new Error('Group not found');
     }
 
-    const targetUser = await this.prisma.user.findUnique({
-      where: { fouzarId: connectionId },
+    const targetUser = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          { fouzarId: connectionIdOrId },
+          { id: connectionIdOrId }
+        ]
+      },
     });
     if (!targetUser) {
-      throw new Error('User with this Connection ID not found');
+      throw new Error('User not found');
     }
+
+    const isAdmin = group.creatorId === currentUserId;
+    const initialStatus = isAdmin ? 'ACCEPTED' : 'PENDING';
 
     return this.prisma.membership.upsert({
       where: {
@@ -127,11 +135,14 @@ export class GroupsService {
           userId: targetUser.id,
         },
       },
-      update: {},
+      update: {
+        status: isAdmin ? 'ACCEPTED' : undefined,
+      },
       create: {
         groupId,
         userId: targetUser.id,
         role: 'MEMBER',
+        status: initialStatus,
       },
     });
   }
@@ -145,12 +156,7 @@ export class GroupsService {
     }
 
     if (group.creatorId !== userId) {
-      const membership = await this.prisma.membership.findFirst({
-        where: { groupId, userId, role: 'LEADER' },
-      });
-      if (!membership) {
-        throw new Error('Unauthorized: Only the creator or a leader can delete this circle');
-      }
+      throw new Error('Unauthorized: Only the creator of this circle can delete it');
     }
 
     await this.prisma.group.delete({
@@ -169,17 +175,82 @@ export class GroupsService {
     }
 
     if (group.creatorId !== userId) {
-      const membership = await this.prisma.membership.findFirst({
-        where: { groupId, userId, role: 'LEADER' },
-      });
-      if (!membership) {
-        throw new Error('Unauthorized: Only the creator or a leader can rename this circle');
-      }
+      throw new Error('Unauthorized: Only the creator of this circle can rename it');
     }
 
     return this.prisma.group.update({
       where: { id: groupId },
       data: { name },
+    });
+  }
+
+  async getMembers(groupId: string) {
+    return this.prisma.membership.findMany({
+      where: { groupId },
+      include: {
+        group: {
+          select: {
+            creatorId: true,
+            name: true,
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            fouzarId: true,
+            avatarUrl: true,
+            isFocusing: true,
+            focusStartedAt: true,
+          },
+        },
+      },
+    });
+  }
+
+  async acceptMembership(groupId: string, targetUserId: string, currentUserId: string) {
+    const group = await this.prisma.group.findUnique({
+      where: { id: groupId },
+    });
+    if (!group) {
+      throw new Error('Group not found');
+    }
+    if (group.creatorId !== currentUserId) {
+      throw new Error('Unauthorized: Only the creator of this circle can approve join requests');
+    }
+
+    return this.prisma.membership.update({
+      where: {
+        groupId_userId: {
+          groupId,
+          userId: targetUserId,
+        },
+      },
+      data: {
+        status: 'ACCEPTED',
+      },
+    });
+  }
+
+  async rejectMembership(groupId: string, targetUserId: string, currentUserId: string) {
+    const group = await this.prisma.group.findUnique({
+      where: { id: groupId },
+    });
+    if (!group) {
+      throw new Error('Group not found');
+    }
+    if (group.creatorId !== currentUserId) {
+      throw new Error('Unauthorized: Only the creator of this circle can reject join requests');
+    }
+
+    return this.prisma.membership.delete({
+      where: {
+        groupId_userId: {
+          groupId,
+          userId: targetUserId,
+        },
+      },
     });
   }
 }

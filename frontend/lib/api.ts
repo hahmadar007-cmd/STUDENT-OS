@@ -261,6 +261,18 @@ export const inviteMemberToGroup = (groupId: string, connectionId: string) => {
   return apiRequest(`/groups/${groupId}/members`, 'POST', { connectionId });
 };
 
+export const getGroupMembers = (groupId: string) => {
+  return apiRequest(`/groups/${groupId}/members`, 'GET');
+};
+
+export const acceptGroupMember = (groupId: string, userId: string) => {
+  return apiRequest(`/groups/${groupId}/members/${userId}/accept`, 'POST');
+};
+
+export const rejectGroupMember = (groupId: string, userId: string) => {
+  return apiRequest(`/groups/${groupId}/members/${userId}/reject`, 'DELETE');
+};
+
 export const webSearch = (query: string): Promise<{ title: string; link: string; snippet: string }[]> => {
   return apiRequest(`/ai/search?q=${encodeURIComponent(query)}`, 'GET');
 };

@@ -83,4 +83,57 @@ export class GroupsController {
       throw new UnauthorizedException(e.message || 'Authentication failed');
     }
   }
+
+  @Get(':groupId/members')
+  async getMembers(
+    @Headers('authorization') authHeader: string,
+    @Param('groupId') groupId: string,
+  ) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Missing token');
+    }
+    const token = authHeader.split(' ')[1];
+    try {
+      this.jwtService.verify(token);
+      return this.groupsService.getMembers(groupId);
+    } catch (e: any) {
+      throw new UnauthorizedException(e.message || 'Authentication failed');
+    }
+  }
+
+  @Post(':groupId/members/:userId/accept')
+  async acceptMembership(
+    @Headers('authorization') authHeader: string,
+    @Param('groupId') groupId: string,
+    @Param('userId') userId: string,
+  ) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Missing token');
+    }
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded = this.jwtService.verify(token);
+      return this.groupsService.acceptMembership(groupId, userId, decoded.sub);
+    } catch (e: any) {
+      throw new UnauthorizedException(e.message || 'Authentication failed');
+    }
+  }
+
+  @Delete(':groupId/members/:userId/reject')
+  async rejectMembership(
+    @Headers('authorization') authHeader: string,
+    @Param('groupId') groupId: string,
+    @Param('userId') userId: string,
+  ) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Missing token');
+    }
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded = this.jwtService.verify(token);
+      return this.groupsService.rejectMembership(groupId, userId, decoded.sub);
+    } catch (e: any) {
+      throw new UnauthorizedException(e.message || 'Authentication failed');
+    }
+  }
 }

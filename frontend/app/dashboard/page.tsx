@@ -38,7 +38,41 @@ import { FocusShieldPanel } from '../../components/focus/FocusShieldPanel';
 import { useAuth } from '../../hooks/useAuth';
 import { useSocket } from '../../hooks/useSocket';
 import { useOnFocusStateChanged, updateFocusState as socketUpdateFocusState } from '../../lib/socket';
-import { getMyGroups, updateFocusState as apiUpdateFocusState } from '../../lib/api';
+import { getMyGroups, updateFocusState as apiUpdateFocusState, getFriends, inviteMemberToGroup, acceptGroupMember, rejectGroupMember } from '../../lib/api';
+import { toast } from '../../components/ui/Toast';
+
+const Tooltip = ({ text }: { text: string }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className="relative inline-block">
+      <button
+        type="button"
+        onMouseEnter={() => setIsOpen(true)}
+        onMouseLeave={() => setIsOpen(false)}
+        onClick={() => setIsOpen(!isOpen)}
+        className="p-1 hover:bg-white/5 rounded text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors cursor-pointer"
+        title="More information"
+      >
+        <span className="font-mono text-[10px]">ⓘ</span>
+      </button>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 5 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 5 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className="absolute left-0 mt-2 z-50 w-64 bg-[#14141c]/95 border border-[#7c5cfc]/60 p-3 rounded-[6px] shadow-2xl text-left normal-case"
+          >
+            <p className="text-[9px] font-mono text-[#f0f0ff] leading-relaxed normal-case">
+              {text}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 interface StudyCirclePeer {
   id: string;
@@ -47,12 +81,14 @@ interface StudyCirclePeer {
   status: 'online' | 'flow' | 'offline';
   group?: string;
   duration?: string;
+  fouzarId?: string;
 }
 
 interface GardenNode {
   id: string;
   course: string;
   roomName: string;
+  creatorId: string;
   currentSlide: string;
 }
 
@@ -75,6 +111,9 @@ export default function DashboardPage() {
   const [isShieldOpen, setIsShieldOpen] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [pendingGroupRequests, setPendingGroupRequests] = useState<Record<string, any[]>>({});
+  const [contextMenuFriend, setContextMenuFriend] = useState<StudyCirclePeer | null>(null);
+  const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const router = useRouter();
 
@@ -166,6 +205,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const handleCloseMenus = () => {
       setActiveMenuNodeId(null);
+      setContextMenuFriend(null);
     };
     window.addEventListener('click', handleCloseMenus);
     return () => window.removeEventListener('click', handleCloseMenus);
@@ -255,6 +295,52 @@ export default function DashboardPage() {
     { id: 'usr-4', name: 'Devon', initials: 'DV', status: 'offline', group: 'None', duration: 'N/A' },
   ]);
 
+  const loadPendingGroupRequests = async (nodes: any[]) => {
+    if (!user) return;
+    const pendingData: Record<string, any[]> = {};
+    try {
+      const { getGroupMembers } = await import('../../lib/api');
+      await Promise.all(
+        nodes.map(async (node) => {
+          if (node.creatorId === user.id) {
+            try {
+              const members = await getGroupMembers(node.id);
+              const pending = members.filter((m: any) => m.status === 'PENDING');
+              if (pending.length > 0) {
+                pendingData[node.id] = pending;
+              }
+            } catch (e) {
+              console.warn('Failed to load members for node', node.id, e);
+            }
+          }
+        })
+      );
+      setPendingGroupRequests(pendingData);
+    } catch (err) {
+      console.warn('Failed to load pending requests helper:', err);
+    }
+  };
+
+  const handleAcceptGroupRequest = async (groupId: string, targetUserId: string) => {
+    try {
+      await acceptGroupMember(groupId, targetUserId);
+      toast('Group request approved!', 'violet');
+      loadGroups();
+    } catch (err: any) {
+      toast(err.message || 'Failed to approve request', 'crimson');
+    }
+  };
+
+  const handleRejectGroupRequest = async (groupId: string, targetUserId: string) => {
+    try {
+      await rejectGroupMember(groupId, targetUserId);
+      toast('Group request rejected', 'violet');
+      loadGroups();
+    } catch (err: any) {
+      toast(err.message || 'Failed to reject request', 'crimson');
+    }
+  };
+
   // Load Groups from DB
   const loadGroups = async () => {
     setLoadingNodes(true);
@@ -264,9 +350,11 @@ export default function DashboardPage() {
         id: g.id,
         course: g.name.split(' ')[0] || 'CS-229',
         roomName: g.name,
+        creatorId: g.creatorId,
         currentSlide: g.currentSlide ? `Slide ${g.currentSlide}` : 'Slide 1'
       }));
       setGardenNodes(formattedNodes);
+      loadPendingGroupRequests(formattedNodes);
     } catch (err) {
       console.error('Failed to load groups:', err);
     } finally {
@@ -274,9 +362,37 @@ export default function DashboardPage() {
     }
   };
 
+  const handleFriendMenu = (e: React.MouseEvent, peer: StudyCirclePeer) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenuFriend(peer);
+    setContextMenuPos({ x: e.clientX, y: e.clientY });
+  };
+
   useEffect(() => {
+    const loadRealFriends = async () => {
+      try {
+        const list = await getFriends();
+        if (list && list.length > 0) {
+          const mappedPeers = list.map((f: any) => ({
+            id: f.id,
+            name: f.name || f.email.split('@')[0],
+            initials: f.name ? f.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2) : 'FR',
+            status: f.isFocusing ? 'flow' : 'online',
+            group: 'None',
+            duration: 'N/A',
+            fouzarId: f.fouzarId
+          }));
+          setPeers(mappedPeers);
+        }
+      } catch (e) {
+        console.warn('Failed to load real friends for dashboard:', e);
+      }
+    };
+
     if (user) {
       loadGroups();
+      loadRealFriends();
     }
   }, [user]);
 
@@ -308,9 +424,16 @@ export default function DashboardPage() {
     const handleTabEvent = (e: Event) => {
       const tabId = (e as CustomEvent).detail;
       setActivePanelTab(tabId);
-      if (tabId === 'timer') setActiveNav('circles');
-      else if (tabId === 'nodes') setActiveNav('nodes');
-      else if (tabId === 'ai') setActiveNav('ai');
+      if (tabId === 'timer') {
+        document.getElementById('timer-section')?.scrollIntoView({ behavior: 'smooth' });
+        setActiveNav('circles');
+      } else if (tabId === 'nodes') {
+        document.getElementById('mindmap-section')?.scrollIntoView({ behavior: 'smooth' });
+        setActiveNav('nodes');
+      } else if (tabId === 'timeline') {
+        document.getElementById('timeline-section')?.scrollIntoView({ behavior: 'smooth' });
+        setActiveNav('nodes');
+      }
     };
 
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -330,13 +453,16 @@ export default function DashboardPage() {
       const key = e.key.toLowerCase();
       if (key === 's') {
         e.preventDefault();
+        document.getElementById('timer-section')?.scrollIntoView({ behavior: 'smooth' });
         handleNavClick('circles');
       } else if (key === 'g') {
         e.preventDefault();
+        document.getElementById('mindmap-section')?.scrollIntoView({ behavior: 'smooth' });
         handleNavClick('nodes');
       } else if (key === 'a') {
         e.preventDefault();
-        handleNavClick('ai');
+        document.getElementById('timer-section')?.scrollIntoView({ behavior: 'smooth' });
+        handleNavClick('circles');
       } else if (key === 'l') {
         e.preventDefault();
         handleNavClick('bridge');
@@ -368,24 +494,25 @@ export default function DashboardPage() {
       setActiveNav('shield');
     } else {
       setActiveNav(id as any);
-      if (id === 'circles') setActivePanelTab('timer');
-      else if (id === 'nodes') setActivePanelTab('nodes');
-      else if (id === 'ai') setActivePanelTab('ai');
+      if (id === 'circles') {
+        document.getElementById('timer-section')?.scrollIntoView({ behavior: 'smooth' });
+        setActivePanelTab('timer');
+      } else if (id === 'nodes') {
+        document.getElementById('mindmap-section')?.scrollIntoView({ behavior: 'smooth' });
+        setActivePanelTab('nodes');
+      } else if (id === 'ai') {
+        document.getElementById('timer-section')?.scrollIntoView({ behavior: 'smooth' });
+        setActivePanelTab('timer');
+      }
     }
   };
 
   const handleCloseLms = () => {
     setIsLmsOpen(false);
-    if (activePanelTab === 'timer') setActiveNav('circles');
-    else if (activePanelTab === 'nodes') setActiveNav('nodes');
-    else if (activePanelTab === 'ai') setActiveNav('ai');
   };
 
   const handleCloseShield = () => {
     setIsShieldOpen(false);
-    if (activePanelTab === 'timer') setActiveNav('circles');
-    else if (activePanelTab === 'nodes') setActiveNav('nodes');
-    else if (activePanelTab === 'ai') setActiveNav('ai');
   };
 
   // Sync session minutes to countdown seconds
@@ -600,69 +727,7 @@ export default function DashboardPage() {
       >
         <div className="space-y-8">
           
-          {/* Study Circles Avatar Presences */}
-          <div className="space-y-4">
-            <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a] block">
-              Study Circles
-            </span>
-            
-            {peers.length === 0 ? (
-              <div className="w-full h-24 border border-dashed border-[#2a2a3a] rounded-[6px] flex flex-col items-center justify-center p-3 text-center">
-                <Users className="w-6 h-6 text-[#6b6b8a]/40 mb-1.5" />
-                <span className="text-[9px] font-mono text-[#f0f0ff] uppercase tracking-wider">No signal yet</span>
-                <span className="text-[7.5px] font-mono text-[#6b6b8a] mt-0.5 uppercase">PEER BROADCAST DEACTIVATED</span>
-              </div>
-            ) : (
-              <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
-                {peers.map((peer) => {
-                  let ringColor = 'border-[#2a2a3a]'; // Offline / default
-                  
-                  if (peer.status === 'online') ringColor = 'border-[#7c5cfc]';
-                  if (peer.status === 'flow') ringColor = 'border-[#ff2d55] animate-pulse shadow-[0_0_8px_#ff2d55]';
-
-                  return (
-                    <div 
-                      key={peer.id} 
-                      className="flex flex-col items-center gap-1.5 shrink-0 select-none relative"
-                      onMouseEnter={() => setHoveredPeerId(peer.id)}
-                      onMouseLeave={() => setHoveredPeerId(null)}
-                    >
-                      <div className={`p-[1.5px] rounded-full border-2 ${ringColor} transition-all duration-300 cursor-pointer`}>
-                        <div className="w-10 h-10 rounded-full bg-[#16161f] border border-[#2a2a3a] flex items-center justify-center font-mono text-xs font-bold text-[#f0f0ff]">
-                          {peer.initials}
-                        </div>
-                      </div>
-                      <span className="text-[8px] font-mono uppercase tracking-wider text-[#6b6b8a]">
-                        {peer.name}
-                      </span>
-                      
-                      <AnimatePresence>
-                        {hoveredPeerId === peer.id && (
-                          <motion.div
-                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            className="absolute bottom-full mb-2 z-50 bg-[#16161f] border border-[#7c5cfc]/60 p-3 rounded-[6px] shadow-2xl w-40 text-left"
-                          >
-                            <div className="text-[9px] font-bold text-[#f0f0ff] uppercase">{peer.name}</div>
-                            <div className="text-[7.5px] font-mono text-[#6b6b8a] uppercase mt-1">
-                              Status: <span className={peer.status === 'flow' ? 'text-[#ff2d55]' : peer.status === 'online' ? 'text-[#7c5cfc]' : 'text-[#6b6b8a]'}>{peer.status}</span>
-                            </div>
-                            <div className="text-[7.5px] font-mono text-[#6b6b8a] uppercase mt-0.5">
-                              Active: {peer.group || 'None'}
-                            </div>
-                            <div className="text-[7.5px] font-mono text-[#6b6b8a] uppercase mt-0.5">
-                              Duration: {peer.duration || 'N/A'}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          {/* Study circles list relocated to top stories bar in right panel */}
 
           {/* Personal Sanctuary */}
           <div className="space-y-3">
@@ -784,7 +849,7 @@ export default function DashboardPage() {
                 {gardenNodes.map((node) => (
                   <FascaCard 
                     key={node.id} 
-                    className={`p-4 flex flex-col justify-between h-32 cursor-pointer transition-all duration-150 ease-out select-none relative ${
+                    className={`p-4 flex flex-col justify-between min-h-[128px] h-auto py-4 cursor-pointer transition-all duration-150 ease-out select-none relative ${
                       getCardColorClass(node.id, selectedCardId === node.id)
                     }`}
                     onClick={(e) => {
@@ -797,7 +862,7 @@ export default function DashboardPage() {
                       }
                     }}
                   >
-                    <div>
+                    <div className="w-full">
                       <span className={`text-[8.5px] font-mono uppercase tracking-wider block ${getTextColor(node.id)}`}>
                         {node.course}
                       </span>
@@ -825,6 +890,37 @@ export default function DashboardPage() {
                       <p className="text-[9px] text-[#6b6b8a] font-mono mt-1" title={node.currentSlide}>
                         {node.currentSlide}
                       </p>
+                      {/* Pending Join Requests (Creator Only) */}
+                      {node.creatorId === user?.id && pendingGroupRequests[node.id] && pendingGroupRequests[node.id].length > 0 && (
+                        <div className="mt-3 border-t border-[#2a2a3a]/40 pt-2.5 space-y-1.5 animate-none" onClick={(e) => e.stopPropagation()}>
+                          <span className="text-[7.5px] font-mono uppercase text-[#ff2d55] tracking-[0.15em] block font-bold">
+                            Join Requests ({pendingGroupRequests[node.id].length})
+                          </span>
+                          <div className="space-y-1 max-h-24 overflow-y-auto scrollbar-none">
+                            {pendingGroupRequests[node.id].map((req) => (
+                              <div key={req.userId} className="flex items-center justify-between p-1 bg-[#101015] border border-[#2a2a3a]/40 rounded-[4px] gap-2">
+                                <span className="text-[8px] text-[#f0f0ff] font-mono truncate max-w-[120px]">
+                                  {req.user.name || req.user.email}
+                                </span>
+                                <div className="flex gap-1 shrink-0">
+                                  <button
+                                    onClick={() => handleAcceptGroupRequest(node.id, req.userId)}
+                                    className="px-1 py-0.5 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 text-[7px] font-mono uppercase rounded transition-colors cursor-pointer"
+                                  >
+                                    Accept
+                                  </button>
+                                  <button
+                                    onClick={() => handleRejectGroupRequest(node.id, req.userId)}
+                                    className="px-1 py-0.5 bg-[#ff2d55]/20 text-[#ff2d55] hover:bg-[#ff2d55]/30 text-[7px] font-mono uppercase rounded transition-colors cursor-pointer"
+                                  >
+                                    Decline
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* 3-dots Dropdown Menu (Shared Groups) */}
@@ -847,28 +943,32 @@ export default function DashboardPage() {
                               transition={{ duration: 0.1 }}
                               className="absolute right-0 mt-1 w-36 bg-[#14141c]/95 border border-[#2a2a3a] rounded-[4px] shadow-2xl p-2 z-50 text-left"
                             >
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setEditingNodeId(node.id);
-                                  setEditingName(node.roomName);
-                                  setActiveMenuNodeId(null);
-                                }}
-                                className="w-full px-2 py-1.5 text-[8.5px] font-mono uppercase tracking-wider text-[#6b6b8a] hover:text-[#f0f0ff] hover:bg-white/5 rounded flex items-center gap-1.5 cursor-pointer text-left"
-                              >
-                                <Edit2 className="w-3 h-3 text-[#7c5cfc]" /> Rename
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  handleDelete(node.id);
-                                  setActiveMenuNodeId(null);
-                                }}
-                                className="w-full px-2 py-1.5 text-[8.5px] font-mono uppercase tracking-wider text-[#ff2d55]/85 hover:text-[#ff2d55] hover:bg-white/5 rounded flex items-center gap-1.5 cursor-pointer text-left"
-                              >
-                                <Trash2 className="w-3 h-3" /> Delete
-                              </button>
-                              <div className="border-t border-[#2a2a3a]/40 my-1.5" />
+                              {user && user.id === node.creatorId && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditingNodeId(node.id);
+                                      setEditingName(node.roomName);
+                                      setActiveMenuNodeId(null);
+                                    }}
+                                    className="w-full px-2 py-1.5 text-[8.5px] font-mono uppercase tracking-wider text-[#6b6b8a] hover:text-[#f0f0ff] hover:bg-white/5 rounded flex items-center gap-1.5 cursor-pointer text-left"
+                                  >
+                                    <Edit2 className="w-3 h-3 text-[#7c5cfc]" /> Rename
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      handleDelete(node.id);
+                                      setActiveMenuNodeId(null);
+                                    }}
+                                    className="w-full px-2 py-1.5 text-[8.5px] font-mono uppercase tracking-wider text-[#ff2d55]/85 hover:text-[#ff2d55] hover:bg-white/5 rounded flex items-center gap-1.5 cursor-pointer text-left"
+                                  >
+                                    <Trash2 className="w-3 h-3" /> Delete
+                                  </button>
+                                  <div className="border-t border-[#2a2a3a]/40 my-1.5" />
+                                </>
+                              )}
                               <div className="px-2 py-0.5 text-[7px] font-mono uppercase text-[#6b6b8a] tracking-wider mb-1.5 flex items-center gap-1">
                                 <Palette className="w-2.5 h-2.5 text-[#06b6d4]" /> Set Color
                               </div>
@@ -924,16 +1024,16 @@ export default function DashboardPage() {
       {/* ========================================================================= */}
       {/* 3. RIGHT PANEL: Workspace central Central Core controls                   */}
       {/* ========================================================================= */}
-      <main className="flex-1 p-6 md:p-8 flex flex-col relative overflow-hidden h-full">
+      <main className="flex-1 p-6 md:p-8 flex flex-col overflow-y-auto scrollbar-none h-full space-y-12">
         
         {/* Workspace Core Header bar */}
-        <div className="flex items-center justify-between border-b border-[#2a2a3a]/40 pb-4 mb-6 z-10">
+        <div className="flex items-center justify-between border-b border-[#2a2a3a]/40 pb-4 shrink-0">
           <div>
-            <h2 className="font-serif text-lg font-bold tracking-[0.05em] text-[#f0f0ff]">
-              FASCA WORKSPACE CORE
+            <h2 className="font-serif text-lg font-bold tracking-[0.05em] text-[#f0f0ff] uppercase">
+              My Study Dashboard
             </h2>
             <p className="text-[9px] font-mono text-[#6b6b8a] uppercase tracking-wider mt-0.5">
-              Secure digital session
+              Your private, distraction-free space
             </p>
           </div>
           <span className="px-2.5 py-0.5 bg-[#7c5cfc]/10 border border-[#7c5cfc]/20 text-[#7c5cfc] font-mono text-[8px] uppercase tracking-wider rounded">
@@ -941,144 +1041,156 @@ export default function DashboardPage() {
           </span>
         </div>
 
-        {/* Tab Selection Headings */}
-        <div className="flex gap-1.5 border-b border-[#2a2a3a]/40 pb-1.5 mb-6 z-10 overflow-x-auto scrollbar-none shrink-0">
-          {[
-            { id: 'timer', label: 'FOCUS TIMER' },
-            { id: 'nodes', label: 'STUDY NODES' },
-            { id: 'timeline', label: 'TIMELINE' },
-            { id: 'ai', label: 'AI CORE' }
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => {
-                setActivePanelTab(tab.id as any);
-                if (tab.id === 'timer') setActiveNav('circles');
-                else if (tab.id === 'nodes') setActiveNav('nodes');
-                else if (tab.id === 'timeline') setActiveNav('nodes');
-                else if (tab.id === 'ai') setActiveNav('ai');
-              }}
-              className={`px-4 py-2 font-mono text-[9px] uppercase tracking-widest cursor-pointer relative transition-colors ${
-                activePanelTab === tab.id ? 'text-[#7c5cfc]' : 'text-[#6b6b8a] hover:text-[#f0f0ff]'
-              }`}
-            >
-              {tab.label}
-              {activePanelTab === tab.id && (
-                <motion.div
-                  layoutId="activeWorkspaceTabBorder"
-                  className="absolute bottom-[-7.5px] left-0 right-0 h-[1.5px] bg-[#7c5cfc]"
-                />
-              )}
-            </button>
-          ))}
+        {/* 1. Horizontal Friends Social Bar (Top) */}
+        <div className="space-y-3 shrink-0">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a] block">
+              Active Friends
+            </span>
+          </div>
+          
+          {peers.length === 0 ? (
+            <div className="w-full h-16 border border-dashed border-[#2a2a3a] rounded-[6px] flex flex-col items-center justify-center p-3 text-center">
+              <span className="text-[9px] font-mono text-[#f0f0ff] uppercase tracking-wider">No friends active</span>
+            </div>
+          ) : (
+            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
+              {peers.map((peer) => {
+                let ringColor = 'border-[#2a2a3a]';
+                if (peer.status === 'online') ringColor = 'border-[#7c5cfc]';
+                if (peer.status === 'flow') ringColor = 'border-[#ff2d55] animate-pulse shadow-[0_0_8px_#ff2d55]';
+
+                return (
+                  <div 
+                    key={peer.id} 
+                    className="flex flex-col items-center gap-1.5 shrink-0 select-none relative cursor-pointer"
+                    onMouseEnter={() => setHoveredPeerId(peer.id)}
+                    onMouseLeave={() => setHoveredPeerId(null)}
+                    onClick={(e) => handleFriendMenu(e, peer)}
+                    onContextMenu={(e) => handleFriendMenu(e, peer)}
+                  >
+                    <div className={`p-[1.5px] rounded-full border-2 ${ringColor} transition-all duration-300 cursor-pointer`}>
+                      <div className="w-10 h-10 rounded-full bg-[#16161f] border border-[#2a2a3a] flex items-center justify-center font-mono text-xs font-bold text-[#f0f0ff]">
+                        {peer.initials}
+                      </div>
+                    </div>
+                    <span className="text-[8px] font-mono uppercase tracking-wider text-[#6b6b8a]">
+                      {peer.name}
+                    </span>
+                    
+                    <AnimatePresence>
+                      {hoveredPeerId === peer.id && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                          className="absolute bottom-full mb-2 z-50 bg-[#16161f] border border-[#7c5cfc]/60 p-3 rounded-[6px] shadow-2xl w-40 text-left"
+                        >
+                          <div className="text-[9px] font-bold text-[#f0f0ff] uppercase">{peer.name}</div>
+                          <div className="text-[7.5px] font-mono text-[#6b6b8a] uppercase mt-1">
+                            Status: <span className={peer.status === 'flow' ? 'text-[#ff2d55]' : peer.status === 'online' ? 'text-[#7c5cfc]' : 'text-[#6b6b8a]'}>{peer.status}</span>
+                          </div>
+                          <div className="text-[7.5px] font-mono text-[#6b6b8a] uppercase mt-0.5">
+                            Active: {peer.group || 'None'}
+                          </div>
+                          <div className="text-[7.5px] font-mono text-[#6b6b8a] uppercase mt-0.5">
+                            Duration: {peer.duration || 'N/A'}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {/* Tab panels switcher */}
-        <div className="flex-1 flex flex-col justify-center items-center z-10 py-6 min-h-[300px]">
-          <AnimatePresence mode="wait">
-            {activePanelTab === 'timer' && (
-              /* ========================================================================= */
-              /* FOCUS TIMER TAB                                                           */
-              /* ========================================================================= */
-              <motion.div
-                key="timer-tab"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="w-full max-w-sm flex flex-col items-center"
-              >
-                <div className="w-full space-y-8 flex flex-col items-center">
-                  
-                  {/* Time span selector */}
-                  <div className="w-full text-center">
-                    <span className="text-[8px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a] block mb-3">
-                      SELECT FOCUS SESSION SPAN
-                    </span>
-                    <div className="flex gap-2 justify-center">
-                      {[15, 25, 45, 60].map((preset) => (
-                        <button
-                          key={preset}
-                          onClick={() => setSessionMinutes(preset)}
-                          className={`w-14 h-12 rounded-[6px] border text-[11px] font-mono flex flex-col items-center justify-center transition-colors cursor-pointer ${
-                            sessionMinutes === preset
-                              ? 'border-[#7c5cfc] text-[#7c5cfc] bg-[#7c5cfc]/5 font-semibold'
-                              : 'border-[#2a2a3a] text-[#6b6b8a] hover:border-[#6b6b8a] hover:text-[#f0f0ff]'
-                          }`}
-                        >
-                          <span>{preset}</span>
-                          <span className="text-[7px] font-sans opacity-70">MIN</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Circular countdown visualization */}
-                  <div className="relative w-44 h-44 flex flex-col items-center justify-center rounded-full bg-[#111118]/60 border border-[#2a2a3a] shadow-lg">
-                    <span className="text-[8px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a] mb-1">
-                      COGNITIVE LOAD
-                    </span>
-                    <span className="text-4xl font-mono font-light text-[#f0f0ff] tracking-wider text-glow-accent">
-                      {formatTime(secondsLeft)}
-                    </span>
-                    <span className={`text-[7px] font-mono uppercase tracking-widest mt-2 flex items-center gap-1 ${isFlowActive ? 'text-[#ff2d55]' : 'text-[#7c5cfc]'}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full animate-ping ${isFlowActive ? 'bg-[#ff2d55]' : 'bg-[#7c5cfc]'}`} />
-                      {isFlowActive ? 'FLOW SESSION ACTIVE' : 'IDLE STATE ACTIVE'}
-                    </span>
-                  </div>
-
-                  {/* Hero CTA button (sharp, flame icon) */}
-                  <FascaButton
-                    onClick={handleTriggerFlow}
-                    variant={isFlowActive ? 'ghost-crimson' : 'solid-violet'}
-                    className="w-full rounded-[6px] py-3 text-[10px] font-bold flex items-center justify-center gap-2"
+        {/* 2. Focus Timer Section */}
+        <div id="timer-section" className="space-y-4 flex flex-col items-center border-t border-[#2a2a3a]/20 pt-6">
+          <div className="w-full flex items-center justify-start gap-2 mb-2">
+            <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a]">
+              Focus Timer
+            </span>
+            <Tooltip text="Choose a time block, hit 'Start', and our app will lock your open browser tabs and silence notifications so you can fully focus without cheating." />
+          </div>
+          <div className="w-full max-w-sm flex flex-col items-center">
+            {/* Time span selector */}
+            <div className="w-full text-center">
+              <span className="text-[8px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a] block mb-3">
+                SELECT FOCUS SESSION SPAN
+              </span>
+              <div className="flex gap-2 justify-center">
+                {[15, 25, 45, 60].map((preset) => (
+                  <button
+                    key={preset}
+                    onClick={() => setSessionMinutes(preset)}
+                    className={`w-14 h-12 rounded-[6px] border text-[11px] font-mono flex flex-col items-center justify-center transition-colors cursor-pointer ${
+                      sessionMinutes === preset
+                        ? 'border-[#7c5cfc] text-[#7c5cfc] bg-[#7c5cfc]/5 font-semibold'
+                        : 'border-[#2a2a3a] text-[#6b6b8a] hover:border-[#6b6b8a] hover:text-[#f0f0ff]'
+                    }`}
                   >
-                    <Flame className="w-4 h-4 fill-[#0a0a0f]" /> {isFlowActive ? 'EXIT DEEP FLOW' : 'TRIGGER DEEP FLOW'}
-                  </FascaButton>
+                    <span>{preset}</span>
+                    <span className="text-[7px] font-sans opacity-70">MIN</span>
+                  </button>
+                ))}
+              </div>
+            </div>
 
-                </div>
-              </motion.div>
-            )}
+            {/* Circular countdown visualization */}
+            <div className="relative w-44 h-44 flex flex-col items-center justify-center rounded-full bg-[#111118]/60 border border-[#2a2a3a] shadow-lg my-6">
+              <span className="text-[8px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a] mb-1">
+                Focus Timer
+              </span>
+              <span className="text-4xl font-mono font-light text-[#f0f0ff] tracking-wider text-glow-accent">
+                {formatTime(secondsLeft)}
+              </span>
+              <span className={`text-[7px] font-mono uppercase tracking-widest mt-2 flex items-center gap-1 ${isFlowActive ? 'text-[#ff2d55]' : 'text-[#7c5cfc]'}`}>
+                <span className={`w-1.5 h-1.5 rounded-full animate-ping ${isFlowActive ? 'bg-[#ff2d55]' : 'bg-[#7c5cfc]'}`} />
+                {isFlowActive ? 'FLOW SESSION ACTIVE' : 'IDLE STATE ACTIVE'}
+              </span>
+            </div>
 
-            {activePanelTab === 'nodes' && (
-              <motion.div
-                key="nodes-graph"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="w-full text-center"
-              >
-                <StudyNodesGraph nodesData={gardenNodes} />
-              </motion.div>
-            )}
+            {/* Hero CTA button */}
+            <FascaButton
+              onClick={handleTriggerFlow}
+              variant={isFlowActive ? 'ghost-crimson' : 'solid-violet'}
+              className="w-full rounded-[6px] py-3 text-[10px] font-bold flex items-center justify-center gap-2"
+            >
+              <Flame className="w-4 h-4 fill-[#0a0a0f]" /> {isFlowActive ? 'EXIT DEEP FLOW' : 'Start Studying'}
+            </FascaButton>
+          </div>
+        </div>
 
-            {activePanelTab === 'timeline' && (
-              <motion.div
-                key="timeline-scroll"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="w-full text-center"
-              >
-                <FascaTimeline />
-              </motion.div>
-            )}
+        {/* 3. Subject Mind Map Section */}
+        <div id="mindmap-section" className="space-y-4 w-full border-t border-[#2a2a3a]/20 pt-6">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a]">
+              Subject Mind Map
+            </span>
+            <Tooltip text="A visual map of your subjects. Click on a topic to see your uploaded lecture slides, notes, and connected AI flashcards all in one web." />
+          </div>
+          <div className="w-full text-center">
+            <StudyNodesGraph nodesData={gardenNodes} />
+          </div>
+        </div>
 
-            {activePanelTab === 'ai' && (
-              <motion.div
-                key="ai-core-tab"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="w-full text-center"
-              >
-                <FascaAiCore />
-              </motion.div>
-            )}
-          </AnimatePresence>
+        {/* 4. My Study Schedule Section */}
+        <div id="timeline-section" className="space-y-4 w-full border-t border-[#2a2a3a]/20 pt-6 pb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a]">
+              My Study Schedule
+            </span>
+            <Tooltip text="Your academic timeline. Drag it left or right to see upcoming assignment deadlines, exam dates, or custom goals you've set for the semester." />
+          </div>
+          <div className="w-full text-center">
+            <FascaTimeline />
+          </div>
         </div>
 
         {/* Footer with open-source link */}
-        <div className="mt-auto pt-4 border-t border-[#2a2a3a]/40 flex items-center justify-between text-[8px] font-mono text-[#6b6b8a] uppercase tracking-wider z-10 shrink-0">
+        <div className="pt-4 border-t border-[#2a2a3a]/40 flex items-center justify-between text-[8px] font-mono text-[#6b6b8a] uppercase tracking-wider shrink-0 animate-none">
           <span>Fasca Academic OS</span>
           <a href="https://github.com/fasca-study/app" target="_blank" rel="noopener noreferrer" className="hover:text-[#7c5cfc] transition-colors">
             OPEN SOURCE REPOSITORY
@@ -1267,6 +1379,67 @@ export default function DashboardPage() {
               </form>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Friend Context Menu Dropdown */}
+      <AnimatePresence>
+        {contextMenuFriend && (
+          <div
+            className="fixed inset-0 z-50 cursor-default"
+            onClick={() => setContextMenuFriend(null)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setContextMenuFriend(null);
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              style={{ top: contextMenuPos.y, left: contextMenuPos.x }}
+              className="fixed z-50 bg-[#14141c]/95 border border-[#7c5cfc]/60 shadow-2xl p-2 rounded-[6px] w-48 text-left backdrop-blur-md"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="px-2 py-1 text-[7.5px] font-mono uppercase text-[#6b6b8a] tracking-wider mb-1.5 border-b border-[#2a2a3a]/40 pb-1">
+                Add {contextMenuFriend.name} to Group
+              </div>
+              <div className="max-h-48 overflow-y-auto scrollbar-none space-y-0.5">
+                {gardenNodes.length === 0 ? (
+                  <div className="px-2 py-1.5 text-[8px] font-mono text-[#6b6b8a] uppercase">
+                    No active study groups
+                  </div>
+                ) : (
+                  gardenNodes.map((node) => (
+                    <button
+                      key={node.id}
+                      type="button"
+                      onClick={async () => {
+                        const peer = contextMenuFriend;
+                        setContextMenuFriend(null);
+                        try {
+                          await inviteMemberToGroup(node.id, peer.fouzarId || peer.id);
+                          const isAdmin = user && user.id === node.creatorId;
+                          if (isAdmin) {
+                            toast(`Successfully added ${peer.name} to ${node.roomName}!`, 'violet');
+                          } else {
+                            toast(`Invite sent to ${peer.name}! Pending admin approval.`, 'violet');
+                          }
+                          loadGroups();
+                        } catch (err: any) {
+                          toast(err.message || 'Failed to add friend to group', 'crimson');
+                        }
+                      }}
+                      className="w-full px-2 py-1 text-[9px] font-mono uppercase tracking-wider text-[#f0f0ff] hover:bg-[#7c5cfc]/15 rounded text-left transition-colors truncate block cursor-pointer"
+                      title={node.roomName}
+                    >
+                      {node.roomName}
+                    </button>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

@@ -125,6 +125,93 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
   const [localActiveDoc, setLocalActiveDoc] = useState<LmsRepositoryItem | null>(null);
   const [dbFriends, setDbFriends] = useState<any[]>([]);
 
+  const [groupMembers, setGroupMembers] = useState<any[]>([]);
+  const [groupCreatorId, setGroupCreatorId] = useState<string | null>(null);
+  const [loadingMembers, setLoadingMembers] = useState(false);
+  const [contextMenuFriend, setContextMenuFriend] = useState<any | null>(null);
+  const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  const loadGroupMembers = async () => {
+    if (!roomId || roomId.startsWith('personal-')) {
+      setGroupMembers([]);
+      setGroupCreatorId(null);
+      return;
+    }
+    setLoadingMembers(true);
+    try {
+      const { getGroupMembers } = await import('../../../lib/api');
+      const list = await getGroupMembers(roomId);
+      setGroupMembers(list || []);
+      if (list && list.length > 0 && list[0].group) {
+        setGroupCreatorId(list[0].group.creatorId);
+      }
+    } catch (e) {
+      console.warn('Failed to load group members:', e);
+    } finally {
+      setLoadingMembers(false);
+    }
+  };
+
+  useEffect(() => {
+    loadGroupMembers();
+  }, [roomId]);
+
+  const handleFriendContextMenu = (e: React.MouseEvent, friend: any) => {
+    e.preventDefault();
+    if (!roomId || roomId.startsWith('personal-')) return;
+    setContextMenuFriend(friend);
+    setContextMenuPos({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleOpenFriendMenu = (e: React.MouseEvent, friend: any) => {
+    if (!roomId || roomId.startsWith('personal-')) return;
+    e.preventDefault();
+    setContextMenuFriend(friend);
+    setContextMenuPos({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleAddFriendToCircleDirect = async (friendId: string) => {
+    setAddError(null);
+    setAddSuccess(null);
+    if (!roomId || roomId.startsWith('personal-')) {
+      setAddError('You must be inside a shared study circle to invite.');
+      return;
+    }
+    try {
+      const { inviteMemberToGroup } = await import('../../../lib/api');
+      await inviteMemberToGroup(roomId, friendId);
+      const isAdmin = user && user.id === groupCreatorId;
+      if (isAdmin) {
+        setAddSuccess('Successfully added friend to this circle!');
+      } else {
+        setAddSuccess('Invite sent! Pending admin approval.');
+      }
+      loadGroupMembers();
+    } catch (err: any) {
+      setAddError(err.message || 'Failed to add friend to circle.');
+    }
+  };
+
+  const handleAcceptMember = async (targetUserId: string) => {
+    try {
+      const { acceptGroupMember } = await import('../../../lib/api');
+      await acceptGroupMember(roomId, targetUserId);
+      loadGroupMembers();
+    } catch (e: any) {
+      console.error('Failed to accept member:', e);
+    }
+  };
+
+  const handleRejectMember = async (targetUserId: string) => {
+    try {
+      const { rejectGroupMember } = await import('../../../lib/api');
+      await rejectGroupMember(roomId, targetUserId);
+      loadGroupMembers();
+    } catch (e: any) {
+      console.error('Failed to reject member:', e);
+    }
+  };
+
   const activeDoc = propActiveDoc !== undefined ? propActiveDoc : localActiveDoc;
   const setActiveDoc = propSetActiveDoc !== undefined ? propSetActiveDoc : setLocalActiveDoc;
 
@@ -315,10 +402,10 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
               exit={{ opacity: 0, x: 8 }}
               className="p-4 space-y-5"
             >
-              {/* Instagram-style story rings */}
+              {/* Friends List with Quick Invite */}
               <div>
                 <span className="font-mono text-[8px] uppercase tracking-[0.2em] text-fouzar-text-secondary block mb-3">
-                  Study Circles
+                  Friends (Tap/Right-click to Invite)
                 </span>
                 <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
                   {dbFriends.length === 0 ? (
@@ -334,7 +421,8 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
                         <button
                           key={friend.id}
                           type="button"
-                          onClick={() => toggleFriendSelect(friend.id)}
+                          onClick={(e) => handleOpenFriendMenu(e, friend)}
+                          onContextMenu={(e) => handleFriendContextMenu(e, friend)}
                           className="flex flex-col items-center gap-1.5 shrink-0"
                         >
                           <div
@@ -363,6 +451,97 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
                   )}
                 </div>
               </div>
+
+              {/* Pending Join Requests (Creator Only) */}
+              {roomId && !roomId.startsWith('personal-') && user?.id === groupCreatorId && groupMembers.some(m => m.status === 'PENDING') && (
+                <div className="space-y-2">
+                  <span className="font-mono text-[8px] uppercase tracking-[0.2em] text-[#ff2d55] block">
+                    Pending Join Requests
+                  </span>
+                  <div className="space-y-2 max-h-40 overflow-y-auto scrollbar-none">
+                    {groupMembers.filter(m => m.status === 'PENDING').map((mem) => {
+                      const initials = deriveInitials(mem.user.name);
+                      return (
+                        <div key={mem.userId} className="flex items-center justify-between p-2 bg-fouzar-elevated/30 border border-fouzar-border rounded-[var(--fouzar-radius-md)]">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="w-7 h-7 rounded-full bg-fouzar-elevated border border-fouzar-border flex items-center justify-center font-mono text-[9px] font-bold overflow-hidden shrink-0">
+                              {mem.user.avatarUrl ? (
+                                <img src={mem.user.avatarUrl} alt={mem.user.name} className="w-full h-full object-cover" />
+                              ) : (
+                                initials
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-[10px] font-semibold truncate leading-tight">{mem.user.name}</p>
+                              <p className="font-mono text-[7px] text-fouzar-text-secondary truncate uppercase">{mem.user.fouzarId}</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleAcceptMember(mem.userId)}
+                              className="px-2 py-1 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/30 text-[8px] font-mono uppercase rounded transition-colors"
+                            >
+                              Accept
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRejectMember(mem.userId)}
+                              className="px-2 py-1 bg-[#ff2d55]/15 border border-[#ff2d55]/30 text-[#ff2d55] hover:bg-[#ff2d55]/30 text-[8px] font-mono uppercase rounded transition-colors"
+                            >
+                              Decline
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Active Circle Members */}
+              {roomId && !roomId.startsWith('personal-') && groupMembers.some(m => m.status === 'ACCEPTED') && (
+                <div className="space-y-2">
+                  <span className="font-mono text-[8px] uppercase tracking-[0.2em] text-fouzar-text-secondary block">
+                    Active Circle Members
+                  </span>
+                  <div className="space-y-2 max-h-56 overflow-y-auto scrollbar-none">
+                    {groupMembers.filter(m => m.status === 'ACCEPTED').map((mem) => {
+                      const presence = mem.user.isFocusing ? 'flow' : 'online';
+                      const initials = deriveInitials(mem.user.name);
+                      const isCreator = mem.userId === groupCreatorId;
+                      const isSelf = user && user.id === mem.userId;
+                      return (
+                        <div key={mem.userId} className="flex items-center justify-between p-2 bg-fouzar-elevated/10 border border-fouzar-border/60 rounded-[var(--fouzar-radius-md)]">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className={`p-[1.5px] rounded-full border transition-all ${presenceRing(presence)}`}>
+                              <div className="w-7 h-7 rounded-full bg-fouzar-elevated flex items-center justify-center font-mono text-[9px] font-bold overflow-hidden shrink-0">
+                                {mem.user.avatarUrl ? (
+                                  <img src={mem.user.avatarUrl} alt={mem.user.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  initials
+                                )}
+                              </div>
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-[10px] font-semibold truncate leading-tight flex items-center gap-1">
+                                {mem.user.name}
+                                {isSelf && <span className="text-[7.5px] text-fouzar-text-tertiary font-mono lowercase">(you)</span>}
+                              </p>
+                              <p className="font-mono text-[7px] text-fouzar-text-secondary truncate uppercase">{mem.user.fouzarId}</p>
+                            </div>
+                          </div>
+                          {isCreator && (
+                            <span className="px-1.5 py-0.5 bg-fouzar-accent/15 border border-fouzar-accent/30 text-fouzar-accent font-mono text-[7px] uppercase tracking-wider rounded shrink-0">
+                              Admin
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Add friend by Fouzar ID */}
               <div className="space-y-2">
@@ -465,7 +644,21 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
                 ) : (
                   chatMessages.map((msg) => (
                     <div key={msg.id} className="flex flex-col">
-                      <span className="font-mono text-[6.5px] text-fouzar-text-tertiary uppercase">
+                      <span 
+                        onClick={(e) => {
+                          const friend = dbFriends.find(f => f.name.toLowerCase() === msg.senderName.toLowerCase() || f.name.split(' ')[0].toLowerCase() === msg.senderName.toLowerCase());
+                          if (friend) {
+                            handleOpenFriendMenu(e, friend);
+                          }
+                        }}
+                        onContextMenu={(e) => {
+                          const friend = dbFriends.find(f => f.name.toLowerCase() === msg.senderName.toLowerCase() || f.name.split(' ')[0].toLowerCase() === msg.senderName.toLowerCase());
+                          if (friend) {
+                            handleFriendContextMenu(e, friend);
+                          }
+                        }}
+                        className="font-mono text-[6.5px] text-fouzar-text-tertiary uppercase hover:text-fouzar-accent cursor-pointer transition-colors"
+                      >
                         {msg.senderName}
                         {msg.slideContext && (
                           <span className="ml-1 text-fouzar-accent font-bold">· {msg.slideContext}</span>
@@ -592,6 +785,41 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
       {!propSetActiveDoc && (
         <DocumentViewer document={activeDoc} onClose={() => setActiveDoc(null)} />
       )}
+
+      {/* Direct Invite Context Menu */}
+      <AnimatePresence>
+        {contextMenuFriend && (
+          <div
+            className="fixed inset-0 z-50 cursor-default"
+            onClick={() => setContextMenuFriend(null)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setContextMenuFriend(null);
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              style={{ top: contextMenuPos.y, left: contextMenuPos.x }}
+              className="fixed z-50 bg-[#16161f]/95 border border-[#7c5cfc]/60 shadow-2xl p-1.5 rounded-[4px] w-36 text-left"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={async () => {
+                  const friendId = contextMenuFriend.id;
+                  setContextMenuFriend(null);
+                  await handleAddFriendToCircleDirect(friendId);
+                }}
+                className="w-full px-2 py-1.5 text-[8.5px] font-mono uppercase tracking-wider text-[#f0f0ff] hover:bg-[#7c5cfc]/15 rounded flex items-center gap-1.5 cursor-pointer text-left transition-colors"
+              >
+                Add to Circle
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

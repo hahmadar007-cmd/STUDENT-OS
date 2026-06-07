@@ -84,6 +84,7 @@ model Membership {
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   role      GroupRole @default(MEMBER)
+  status    String    @default("ACCEPTED") // PENDING, ACCEPTED
   joinedAt  DateTime  @default(now())
 
   @@unique([groupId, userId])
