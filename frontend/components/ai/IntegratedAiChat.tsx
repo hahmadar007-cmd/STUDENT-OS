@@ -64,6 +64,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [attachedFile, setAttachedFile] = useState<{ name: string; text: string; id: string } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     if (!storageKey || typeof window === 'undefined') return;
@@ -164,6 +165,34 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
 
   const handleAttachFileClick = () => {
     fileInputRef.current?.click();
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      // Trigger the same file handler by creating a synthetic event
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      if (fileInputRef.current) {
+        fileInputRef.current.files = dataTransfer.files;
+        fileInputRef.current.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -328,10 +357,23 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
 
   return (
     <div
-      className={`flex flex-col h-full bg-fouzar-surface border border-fouzar-border rounded-[var(--fouzar-radius-md)] shadow-[var(--fouzar-shadow-sm)] ${
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      className={`flex flex-col h-full bg-fouzar-surface border rounded-[var(--fouzar-radius-md)] shadow-[var(--fouzar-shadow-sm)] relative ${
         compact ? 'p-3' : 'p-4'
-      }`}
+      } ${isDragging ? 'border-fouzar-accent border-dashed' : 'border-fouzar-border'}`}
     >
+      {/* Drag overlay */}
+      {isDragging && (
+        <div className="absolute inset-0 bg-fouzar-accent/5 border-2 border-dashed border-fouzar-accent rounded-[var(--fouzar-radius-md)] z-50 flex items-center justify-center pointer-events-none">
+          <div className="text-center">
+            <Paperclip className="w-6 h-6 text-fouzar-accent mx-auto mb-1" />
+            <p className="font-mono text-[9px] text-fouzar-accent uppercase tracking-wider">Drop file here</p>
+            <p className="font-mono text-[7px] text-fouzar-text-secondary mt-0.5">PDF, PPTX, TXT, Code files</p>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-3 shrink-0">
         <div className="flex items-center gap-2">
           <Bot className="w-4 h-4 text-fouzar-accent" />

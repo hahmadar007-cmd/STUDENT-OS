@@ -1,141 +1,148 @@
 'use client';
 
-import React from 'react';
-import { FascaCard } from '../ui/FascaCard';
+import React, { useState } from 'react';
 import { IntegratedAiChat } from './IntegratedAiChat';
 import { useFouzar } from '../../lib/FouzarContext';
+import { Plus, Key, Sparkles } from 'lucide-react';
 
-interface ModelCard {
+interface AvailableModel {
   id: string;
+  apiId: string;
   name: string;
   provider: string;
-  latency: string;
-  icon: React.ReactNode;
+  isFree: boolean;
 }
 
-const MODEL_API_IDS: Record<string, string> = {
-  gemini: 'gemini-1.5-pro',
-  claude: 'claude-3-5-sonnet',
-  gpt4: 'gpt-4o',
-  custom: 'custom-endpoint',
-};
+const DEFAULT_MODELS: AvailableModel[] = [
+  { id: 'gemini', apiId: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', provider: 'Google', isFree: true },
+  { id: 'deepseek', apiId: 'deepseek', name: 'DeepSeek', provider: 'DeepSeek', isFree: true },
+];
 
 export const FascaAiCore: React.FC = () => {
   const { aiModel, setAiModel } = useFouzar();
+  const [showAddKey, setShowAddKey] = useState(false);
+  const [customKeyName, setCustomKeyName] = useState('');
+  const [customKeyValue, setCustomKeyValue] = useState('');
+  const [customModels, setCustomModels] = useState<AvailableModel[]>(() => {
+    if (typeof window === 'undefined') return [];
+    const saved = localStorage.getItem('fasca_custom_models');
+    return saved ? JSON.parse(saved) : [];
+  });
 
-  const models: ModelCard[] = [
-    {
-      id: 'gemini',
-      name: 'Gemini 1.5 Pro',
-      provider: 'Google',
-      latency: '24ms',
-      icon: (
-        <svg className="w-5 h-5 text-[#7c5cfc]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" />
-        </svg>
-      ),
-    },
-    {
-      id: 'claude',
-      name: 'Claude 3.5 Sonnet',
-      provider: 'Anthropic',
-      latency: '42ms',
-      icon: (
-        <svg className="w-5 h-5 text-[#ff2d55]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <polygon points="12,3 2,21 22,21" stroke="currentColor" strokeWidth="2.5" fill="none" />
-          <polygon points="12,9 6,19 18,19" fill="currentColor" opacity="0.3" />
-        </svg>
-      ),
-    },
-    {
-      id: 'gpt4',
-      name: 'GPT-4o',
-      provider: 'OpenAI',
-      latency: '38ms',
-      icon: (
-        <svg className="w-5 h-5 text-[#00d4ff]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="2.5" />
-          <circle cx="12" cy="12" r="3" fill="currentColor" />
-        </svg>
-      ),
-    },
-    {
-      id: 'custom',
-      name: 'Custom Endpoint',
-      provider: 'Self-Hosted',
-      latency: '110ms',
-      icon: (
-        <svg className="w-5 h-5 text-[#6b6b8a]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="4" y="4" width="16" height="16" rx="1" stroke="currentColor" strokeWidth="2.5" />
-          <path d="M9 9L6 12L9 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          <path d="M15 9L18 12L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        </svg>
-      ),
-    },
-  ];
+  const allModels = [...DEFAULT_MODELS, ...customModels];
+  const activeModel = allModels.find((m) => m.apiId === aiModel) || allModels[0];
+
+  const handleAddCustomKey = () => {
+    if (!customKeyName.trim() || !customKeyValue.trim()) return;
+
+    const newModel: AvailableModel = {
+      id: `custom-${Date.now()}`,
+      apiId: 'custom-endpoint',
+      name: customKeyName.trim(),
+      provider: 'Personal',
+      isFree: false,
+    };
+
+    // Save key to localStorage
+    localStorage.setItem('fasca_ai_mode', 'custom');
+    localStorage.setItem('fasca_ai_token', customKeyValue.trim());
+
+    const updated = [...customModels, newModel];
+    setCustomModels(updated);
+    localStorage.setItem('fasca_custom_models', JSON.stringify(updated));
+    setCustomKeyName('');
+    setCustomKeyValue('');
+    setShowAddKey(false);
+    setAiModel(newModel.apiId);
+  };
 
   return (
-    <div className="w-full bg-[#111118]/40 border border-[#2a2a3a] rounded-[6px] p-6 space-y-6 flex flex-col justify-between min-h-[480px]">
-      
-      {/* 1. Model Selector Cards Grid */}
-      <div className="space-y-3 shrink-0">
-        <span className="text-[8.5px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a] block">
-          Select Thinking Partner
-        </span>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {models.map((model) => {
-            const isActive = aiModel === MODEL_API_IDS[model.id];
+    <div className="w-full bg-[#111118]/40 border border-[#2a2a3a] rounded-[6px] p-6 space-y-4 flex flex-col justify-between min-h-[480px]">
+
+      {/* Active Model Selector - Compact */}
+      <div className="shrink-0 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-[#7c5cfc]" />
+            <span className="text-[8.5px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a]">
+              AI Model
+            </span>
+          </div>
+          <button
+            onClick={() => setShowAddKey(!showAddKey)}
+            className="flex items-center gap-1 px-2 py-1 text-[7.5px] font-mono uppercase tracking-wider text-[#6b6b8a] hover:text-[#f0f0ff] border border-[#2a2a3a] hover:border-[#7c5cfc]/40 rounded-[4px] transition-colors cursor-pointer"
+          >
+            <Plus className="w-3 h-3" />
+            Add Your AI
+          </button>
+        </div>
+
+        {/* Model pills */}
+        <div className="flex flex-wrap gap-2">
+          {allModels.map((model) => {
+            const isActive = aiModel === model.apiId;
             return (
-              <FascaCard
+              <button
                 key={model.id}
-                className={`p-3 flex flex-col justify-between h-32 relative transition-all duration-200 ${
-                  isActive 
-                    ? 'border-[#7c5cfc] shadow-[0_0_12px_rgba(124,92,252,0.15)] bg-[#16161f]' 
-                    : 'border-[#2a2a3a] bg-[#16161f]/40 hover:border-[#2a2a3a]/80'
+                onClick={() => setAiModel(model.apiId)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-[4px] border text-[9px] font-mono transition-all cursor-pointer ${
+                  isActive
+                    ? 'border-[#7c5cfc] bg-[#7c5cfc]/10 text-[#f0f0ff] shadow-[0_0_8px_rgba(124,92,252,0.1)]'
+                    : 'border-[#2a2a3a] bg-[#16161f]/40 text-[#6b6b8a] hover:border-[#7c5cfc]/40 hover:text-[#f0f0ff]'
                 }`}
               >
-                {/* Header: Geometric Icon & Provider */}
-                <div className="flex justify-between items-start">
-                  <div className="p-1.5 bg-[#0a0a0f] border border-[#2a2a3a] rounded-[4px]">
-                    {model.icon}
-                  </div>
-                  <span className="text-[8px] font-mono text-[#6b6b8a] uppercase">
-                    {model.provider}
-                  </span>
-                </div>
-
-                {/* Body: Model details & latency */}
-                <div className="mt-2 text-left">
-                  <h4 className="text-[10px] font-bold text-[#f0f0ff] truncate">
-                    {model.name}
-                  </h4>
-                  <div className="flex items-center gap-1 mt-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#00d4ff] animate-ping" />
-                    <span className="text-[8px] font-mono text-[#6b6b8a]">
-                      LATENCY: {model.latency}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Footer: SET AS ACTIVE Button */}
-                <button
-                  onClick={() => setAiModel(MODEL_API_IDS[model.id])}
-                  disabled={isActive}
-                  className={`w-full py-1 text-[7.5px] font-mono uppercase tracking-widest mt-2.5 transition-colors cursor-pointer border ${
-                    isActive
-                      ? 'border-[#7c5cfc]/20 bg-[#7c5cfc]/10 text-[#7c5cfc] cursor-default'
-                      : 'border-[#2a2a3a] hover:border-[#7c5cfc]/60 text-[#6b6b8a] hover:text-[#f0f0ff]'
-                  }`}
-                >
-                  {isActive ? 'ACTIVE PARTNER' : 'SET AS ACTIVE'}
-                </button>
-              </FascaCard>
+                <span className="font-medium">{model.name}</span>
+                {model.isFree && (
+                  <span className="px-1 py-0.5 text-[6.5px] bg-emerald-500/20 text-emerald-400 rounded uppercase">Free</span>
+                )}
+                {!model.isFree && (
+                  <span className="px-1 py-0.5 text-[6.5px] bg-[#7c5cfc]/20 text-[#7c5cfc] rounded uppercase">Personal</span>
+                )}
+              </button>
             );
           })}
         </div>
+
+        {/* Add custom AI key panel */}
+        {showAddKey && (
+          <div className="p-3 bg-[#16161f] border border-[#2a2a3a] rounded-[4px] space-y-2">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Key className="w-3 h-3 text-[#7c5cfc]" />
+              <span className="text-[8px] font-mono uppercase tracking-wider text-[#6b6b8a]">Connect Your AI Provider</span>
+            </div>
+            <input
+              type="text"
+              placeholder="Model name (e.g. My GPT-4)"
+              value={customKeyName}
+              onChange={(e) => setCustomKeyName(e.target.value)}
+              className="w-full bg-[#0a0a0f] border border-[#2a2a3a] px-3 py-1.5 text-[9px] font-mono text-[#f0f0ff] rounded-[4px] focus:outline-none focus:border-[#7c5cfc]/50 placeholder-[#6b6b8a]/40"
+            />
+            <input
+              type="password"
+              placeholder="API Key"
+              value={customKeyValue}
+              onChange={(e) => setCustomKeyValue(e.target.value)}
+              className="w-full bg-[#0a0a0f] border border-[#2a2a3a] px-3 py-1.5 text-[9px] font-mono text-[#f0f0ff] rounded-[4px] focus:outline-none focus:border-[#7c5cfc]/50 placeholder-[#6b6b8a]/40"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={handleAddCustomKey}
+                className="flex-1 py-1.5 text-[7.5px] font-mono uppercase bg-[#7c5cfc]/10 border border-[#7c5cfc]/30 text-[#7c5cfc] rounded-[4px] hover:bg-[#7c5cfc]/20 cursor-pointer transition-colors"
+              >
+                Connect
+              </button>
+              <button
+                onClick={() => setShowAddKey(false)}
+                className="px-3 py-1.5 text-[7.5px] font-mono uppercase border border-[#2a2a3a] text-[#6b6b8a] rounded-[4px] hover:text-[#f0f0ff] cursor-pointer transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* 2. API-integrated chat */}
+      {/* API-integrated chat */}
       <div className="flex-1 min-h-[240px]">
         <IntegratedAiChat
           contextLabel="Dashboard · AI Core"
