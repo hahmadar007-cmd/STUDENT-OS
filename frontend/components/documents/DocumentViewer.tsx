@@ -18,6 +18,47 @@ interface DocumentViewerProps {
   isInline?: boolean;
 }
 
+async function extractTextFromPdf(blob: Blob): Promise<string> {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (typeof window === 'undefined') {
+        resolve('');
+        return;
+      }
+      
+      // Load PDF.js dynamically from CDN if not already loaded
+      if (!(window as any).pdfjsLib) {
+        const script = window.document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js';
+        window.document.head.appendChild(script);
+        await new Promise((res) => {
+          script.onload = res;
+          script.onerror = () => reject(new Error('Failed to load PDF.js script.'));
+        });
+      }
+
+      const pdfjsLib = (window as any).pdfjsLib;
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+      const arrayBuffer = await blob.arrayBuffer();
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
+      
+      let fullText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map((item: any) => item.str).join(' ');
+        fullText += `--- Slide/Page ${i} ---\n${pageText}\n\n`;
+      }
+      
+      resolve(fullText);
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
 /**
  * In-app viewer for uploaded lecture slides and course files.
  * PDFs and images render inline; other formats offer download.
@@ -51,7 +92,16 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
           setTextContent(text);
           setActiveDocText(text);
         } else if (stored.mimeType === 'application/pdf' || document.fileName.toLowerCase().endsWith('.pdf')) {
-          setActiveDocText(`[Study Material: PDF Document]\nName: ${document.fileName}\nCategory: ${document.category}\nCourse: ${document.courseCode}`);
+          const metaText = `[Study Material: PDF Document]\nName: ${document.fileName}\nCategory: ${document.category}\nCourse: ${document.courseCode}`;
+          setActiveDocText(metaText);
+
+          // Extract and load PDF text contents asynchronously
+          try {
+            const extracted = await extractTextFromPdf(stored.blob);
+            setActiveDocText(`${metaText}\n\n[Extracted Slide Content]:\n${extracted}`);
+          } catch (e) {
+            console.error('PDF text extraction error:', e);
+          }
         } else {
           setActiveDocText(`[Study Material: File]\nName: ${document.fileName}\nCategory: ${document.category}\nCourse: ${document.courseCode}\nType: ${stored.mimeType}`);
         }
