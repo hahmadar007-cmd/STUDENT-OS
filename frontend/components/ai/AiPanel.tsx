@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bot, Send, Sparkles, Hash, ChevronDown, X } from 'lucide-react';
+import { getBackendUrl } from '../../lib/api';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -60,8 +61,7 @@ export const AiPanel: React.FC<AiPanelProps> = ({
     const startTime = Date.now();
 
     try {
-      const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || (isLocal ? 'http://localhost:3001' : 'https://ammeeee-student-os.hf.space');
+      const apiBase = getBackendUrl();
       const response = await fetch(`${apiBase}/ai/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -1,7 +1,19 @@
 'use client';
 
-const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-const API_URL = process.env.NEXT_PUBLIC_API_URL || (isLocal ? 'http://localhost:3001' : 'https://ammeeee-student-os.hf.space');
+export const getBackendUrl = (): string => {
+  const envVal = process.env.NEXT_PUBLIC_API_URL;
+  const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  if (isLocal) {
+    return envVal || 'http://localhost:3001';
+  } else {
+    if (!envVal || envVal.includes('localhost') || envVal.includes('127.0.0.1')) {
+      return 'https://ammeeee-student-os.hf.space';
+    }
+    return envVal;
+  }
+};
+
+const API_URL = getBackendUrl();
 
 export const getAuthToken = (): string => {
   if (typeof window === 'undefined') return '';

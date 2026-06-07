@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Hash, MessageSquare } from 'lucide-react';
 import { getSocket } from '../../lib/socket';
+import { getBackendUrl } from '../../lib/api';
 
 interface Message {
   id: string;
@@ -36,8 +37,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   useEffect(() => {
     const fetchChatHistory = async () => {
       try {
-        const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-        const apiBase = process.env.NEXT_PUBLIC_API_URL || (isLocal ? 'http://localhost:3001' : 'https://ammeeee-student-os.hf.space');
+        const apiBase = getBackendUrl();
         const res = await fetch(`${apiBase}/groups/${groupId}/messages`);
         if (res.ok) {
           const data = await res.json();

@@ -4,6 +4,7 @@ import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Clock, Bot } from 'lucide-react';
 import { useFouzar, LmsRepositoryItem } from '../../lib/FouzarContext';
+import { getBackendUrl } from '../../lib/api';
 import { NavRail } from './workspace/NavRail';
 import { SocialColumn } from './workspace/SocialColumn';
 import { SanctuaryCanvas } from './workspace/SanctuaryCanvas';
@@ -89,8 +90,7 @@ export interface WorkspaceLayoutProps {
   setActiveDoc: (doc: LmsRepositoryItem | null) => void;
 }
 
-const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || (isLocal ? 'http://localhost:3001' : 'https://ammeeee-student-os.hf.space');
+const API_BASE = getBackendUrl();
 
 /**
  * Root workspace shell consumed by /room/[id].

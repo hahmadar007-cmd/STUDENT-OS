@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, ChevronDown, X, Sparkles, Cpu } from 'lucide-react';
 import { useFouzar } from '../../lib/FouzarContext';
+import { getBackendUrl } from '../../lib/api';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -60,8 +61,7 @@ export const AiOrb: React.FC = () => {
     const startTime = Date.now();
 
     try {
-      const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || (isLocal ? 'http://localhost:3001' : 'https://ammeeee-student-os.hf.space');
+      const apiBase = getBackendUrl();
       const response = await fetch(`${apiBase}/ai/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
