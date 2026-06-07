@@ -239,3 +239,7 @@ export const removeFriend = (friendId: string) => {
 export const inviteMemberToGroup = (groupId: string, connectionId: string) => {
   return apiRequest(`/groups/${groupId}/members`, 'POST', { connectionId });
 };
+
+export const webSearch = (query: string): Promise<{ title: string; link: string; snippet: string }[]> => {
+  return apiRequest(`/ai/search?q=${encodeURIComponent(query)}`, 'GET');
+};

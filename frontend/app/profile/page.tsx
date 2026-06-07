@@ -615,8 +615,8 @@ export default function ProfilePage() {
                     onChange={(e) => setAiMode(e.target.value)}
                     className="w-full bg-[#111118] border border-fouzar-border px-3 py-2 text-[10.5px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
                   >
-                    <option value="default">Google Gemini (System Default)</option>
-                    <option value="gemini-personal">Google Gemini (Personal Token)</option>
+                    <option value="default">Fasca AI (System Default)</option>
+                    <option value="gemini-personal">Gemini API (Personal Token)</option>
                     <option value="openai-personal">OpenAI GPT-4o (Personal Token)</option>
                     <option value="custom">Custom AI Endpoint</option>
                   </select>

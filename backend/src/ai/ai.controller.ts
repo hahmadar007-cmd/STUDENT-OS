@@ -59,4 +59,9 @@ export class AiController {
 
     return { success: true, chunksCount: chunks.length, chunks };
   }
+
+  @Get('search')
+  async search(@Query('q') query: string) {
+    return this.aiService.search(query);
+  }
 }

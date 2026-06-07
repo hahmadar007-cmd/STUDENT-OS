@@ -64,6 +64,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [attachedFile, setAttachedFile] = useState<{ name: string; text: string; id: string } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     if (!storageKey || typeof window === 'undefined') return;
@@ -162,14 +163,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
     return () => clearTimeout(t);
   }, [activeDoc, activeDocText, aiModel, slideId, activeModelLabel]);
 
-  const handleAttachFileClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const processFile = async (file: File) => {
     setIsUploading(true);
     setError(null);
 
@@ -264,8 +258,45 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
       setMessages((prev) => prev.filter(m => !m.id.startsWith('sys-upload-')));
     } finally {
       setIsUploading(false);
-      e.target.value = '';
     }
+  };
+
+  const handleAttachFileClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processFile(file);
+    e.target.value = '';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+
+    const supportedExtensions = ['.pdf', '.pptx', '.txt', '.md', '.js', '.ts', '.tsx', '.py', '.css', '.html', '.cpp', '.java'];
+    const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+
+    if (!supportedExtensions.includes(fileExtension)) {
+      setError(`Unsupported file type. Supported types: ${supportedExtensions.join(', ')}`);
+      return;
+    }
+
+    await processFile(file);
   };
 
   const handleSend = async (e: React.FormEvent | null, customPrompt?: string) => {
@@ -328,10 +359,21 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
 
   return (
     <div
-      className={`flex flex-col h-full bg-fouzar-surface border border-fouzar-border rounded-[var(--fouzar-radius-md)] shadow-[var(--fouzar-shadow-sm)] ${
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      className={`relative flex flex-col h-full bg-fouzar-surface border border-fouzar-border rounded-[var(--fouzar-radius-md)] shadow-[var(--fouzar-shadow-sm)] ${
         compact ? 'p-3' : 'p-4'
       }`}
     >
+      {isDragging && (
+        <div className="absolute inset-0 bg-fouzar-accent/10 backdrop-blur-md border-2 border-dashed border-fouzar-accent rounded-[var(--fouzar-radius-md)] flex flex-col items-center justify-center z-50 pointer-events-none transition-all duration-300">
+          <Sparkles className="w-10 h-10 text-fouzar-accent animate-bounce mb-2" />
+          <p className="font-mono text-[9px] text-fouzar-text-primary uppercase tracking-widest">
+            Drop file here to study
+          </p>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-3 shrink-0">
         <div className="flex items-center gap-2">
           <Bot className="w-4 h-4 text-fouzar-accent" />

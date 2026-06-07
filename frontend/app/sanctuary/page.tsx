@@ -16,6 +16,9 @@ import {
   Layers,
   Shield,
   Clock,
+  Globe,
+  ExternalLink,
+  Search,
 } from 'lucide-react';
 import Link from 'next/link';
 import { FouzarLogo } from '../../components/logo/FouzarLogo';
@@ -57,6 +60,7 @@ export default function PersonalSanctuaryPage() {
     mode,
     activeDoc,
     setActiveDoc,
+    setActiveDocText,
   } = useFouzar();
 
   const [semester, setSemester] = useState('Spring 2026');
@@ -68,13 +72,34 @@ export default function PersonalSanctuaryPage() {
   >([]);
   const [lmsSource, setLmsSource] = useState<'live' | 'demo' | 'error'>('demo');
   const [lmsError, setLmsError] = useState<string | null>(null);
-  const [centerTab, setCenterTab] = useState<'notes' | 'slides'>('notes');
+  const [centerTab, setCenterTab] = useState<'notes' | 'slides' | 'web'>('notes');
   const [uploading, setUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedSidebarDocId, setSelectedSidebarDocId] = useState<string | null>(null);
 
   const [bypassSecondsLeft, setBypassSecondsLeft] = useState(0);
+
+  const [searchResults, setSearchResults] = useState<{ title: string; link: string; snippet: string }[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [fedUrls, setFedUrls] = useState<Record<string, boolean>>({});
+
+  const handleWebSearchSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    setIsSearching(true);
+    try {
+      const { webSearch } = await import('../../lib/api');
+      const results = await webSearch(searchQuery);
+      setSearchResults(results || []);
+    } catch (err) {
+      console.error('Failed to query search:', err);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   useEffect(() => {
     if (!bypass.isActive || !bypass.expiresAt) return;
@@ -446,6 +471,7 @@ export default function PersonalSanctuaryPage() {
               {[
                 { id: 'notes' as const, label: 'Notebook' },
                 { id: 'slides' as const, label: 'Lecture Slides' },
+                { id: 'web' as const, label: 'Web Hub' },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -462,7 +488,7 @@ export default function PersonalSanctuaryPage() {
               ))}
             </div>
             <span className="font-mono text-[7px] text-fouzar-text-secondary uppercase">
-              {centerTab === 'notes' ? (isSaving ? 'Saving...' : 'Saved locally') : 'Click a file to open'}
+              {centerTab === 'notes' ? (isSaving ? 'Saving...' : 'Saved locally') : centerTab === 'slides' ? 'Click a file to open' : 'Quick launch links'}
             </span>
           </div>
 
@@ -478,20 +504,173 @@ export default function PersonalSanctuaryPage() {
                 Private — not shared with any group
               </p>
             </>
-          ) : activeDoc ? (
-            <div className="flex-1 min-h-[280px] lg:min-h-0 flex flex-col overflow-hidden relative">
-              <DocumentViewer
-                document={activeDoc}
-                onClose={() => setActiveDoc(null)}
-                isInline={true}
-              />
-            </div>
+          ) : centerTab === 'slides' ? (
+            activeDoc ? (
+              <div className="flex-1 min-h-[280px] lg:min-h-0 flex flex-col overflow-hidden relative">
+                <DocumentViewer
+                  document={activeDoc}
+                  onClose={() => setActiveDoc(null)}
+                  isInline={true}
+                />
+              </div>
+            ) : (
+              <div className="flex-1 min-h-[280px] lg:min-h-0 bg-fouzar-surface/30 border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-4 flex flex-col overflow-hidden">
+                <FileExplorer
+                  rootFolderId={activeFolderId === 'all' ? null : activeFolderId}
+                  onOpenFile={(doc) => setActiveDoc(doc)}
+                />
+              </div>
+            )
           ) : (
-            <div className="flex-1 min-h-[280px] lg:min-h-0 bg-fouzar-surface/30 border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-4 flex flex-col overflow-hidden">
-              <FileExplorer
-                rootFolderId={activeFolderId === 'all' ? null : activeFolderId}
-                onOpenFile={(doc) => setActiveDoc(doc)}
-              />
+            <div className="flex-1 min-h-[280px] lg:min-h-0 bg-fouzar-surface/40 backdrop-blur-xl border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-6 flex flex-col overflow-hidden">
+              <div className="flex flex-col h-full overflow-y-auto scrollbar-none space-y-6">
+                <div className="text-center max-w-xl mx-auto space-y-2 mt-4">
+                  <Sparkles className="w-8 h-8 text-fouzar-accent mx-auto mb-2 animate-pulse" />
+                  <h3 className="font-serif text-sm font-bold uppercase tracking-wider">
+                    Web & Free AI Hub
+                  </h3>
+                  <p className="text-[10px] text-fouzar-text-secondary leading-relaxed">
+                    Access free AI models and study tools directly using your personal accounts. 
+                    No API keys, credits, or subscriptions required.
+                  </p>
+                </div>
+
+                {/* Quick AI & Study Launches */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl mx-auto w-full px-4">
+                  {[
+                    {
+                      name: 'DeepSeek Chat',
+                      desc: 'Free conversational AI by DeepSeek. High quality reasoning models.',
+                      url: 'https://chat.deepseek.com',
+                      color: 'border-blue-500/20 hover:border-blue-500/40 bg-blue-500/5',
+                      textColor: 'text-blue-400',
+                    },
+                    {
+                      name: 'ChatGPT',
+                      desc: 'Free access to GPT-4o mini and standard chat by OpenAI.',
+                      url: 'https://chatgpt.com',
+                      color: 'border-emerald-500/20 hover:border-emerald-500/40 bg-emerald-500/5',
+                      textColor: 'text-emerald-400',
+                    },
+                    {
+                      name: 'Claude AI',
+                      desc: 'Free access to Claude 3.5 Sonnet conversational model by Anthropic.',
+                      url: 'https://claude.ai',
+                      color: 'border-amber-500/20 hover:border-amber-500/40 bg-amber-500/5',
+                      textColor: 'text-amber-400',
+                    },
+                  ].map((preset) => (
+                    <a
+                      key={preset.name}
+                      href={preset.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`p-4 rounded-[var(--fouzar-radius-md)] border text-left flex flex-col justify-between transition-all hover:scale-[1.02] cursor-pointer shadow-[var(--fouzar-shadow-sm)] ${preset.color}`}
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className={`font-serif text-[11px] font-bold uppercase ${preset.textColor}`}>
+                            {preset.name}
+                          </span>
+                          <ExternalLink className="w-3.5 h-3.5 text-fouzar-text-secondary" />
+                        </div>
+                        <p className="text-[9px] text-fouzar-text-secondary leading-relaxed mb-3">
+                          {preset.desc}
+                        </p>
+                      </div>
+                      <span className="font-mono text-[7px] text-fouzar-text-primary uppercase tracking-widest border border-fouzar-border/30 px-2 py-0.5 rounded-[var(--fouzar-radius-sm)] inline-block w-fit">
+                        Launch Free AI ↗
+                      </span>
+                    </a>
+                  ))}
+                </div>
+
+                {/* Integrated Web Search Engine */}
+                <div className="max-w-2xl mx-auto w-full space-y-4 pt-4 border-t border-fouzar-border/20 px-4">
+                  <span className="font-mono text-[8px] uppercase tracking-[0.2em] text-fouzar-text-secondary block text-center">
+                    Integrated Web Search Engine
+                  </span>
+                  <form
+                    onSubmit={handleWebSearchSubmit}
+                    className="flex gap-2"
+                  >
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-fouzar-text-tertiary" />
+                      <input
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search the web (e.g. neural networks, photosynthesis)..."
+                        className="w-full pl-9 pr-4 py-2.5 bg-fouzar-elevated/40 border border-fouzar-border rounded-[var(--fouzar-radius-md)] text-[10px] font-mono focus:outline-none focus:shadow-[var(--fouzar-focus-ring)]"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={isSearching}
+                      className="px-4 py-2.5 bg-fouzar-accent text-fouzar-text-inverse font-mono text-[9px] uppercase tracking-wider font-bold rounded-[var(--fouzar-radius-md)] hover:opacity-90 transition-opacity disabled:opacity-40"
+                    >
+                      {isSearching ? 'Searching...' : 'Search'}
+                    </button>
+                  </form>
+
+                  {isSearching && (
+                    <p className="font-mono text-[8px] text-fouzar-accent animate-pulse text-center">
+                      Querying index & scraping search results...
+                    </p>
+                  )}
+
+                  {searchResults.length > 0 && (
+                    <div className="space-y-2.5 max-h-60 overflow-y-auto scrollbar-none pr-1 mt-2">
+                      {searchResults.map((res, index) => {
+                        const isFed = !!fedUrls[res.link];
+                        return (
+                          <div
+                            key={index}
+                            className="p-3 bg-fouzar-elevated/30 border border-fouzar-border rounded-[var(--fouzar-radius-md)] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 transition-all hover:bg-fouzar-elevated/40"
+                          >
+                            <div className="min-w-0 flex-1 text-left">
+                              <a
+                                href={res.link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="font-serif text-[10px] font-bold text-fouzar-accent hover:underline flex items-center gap-1.5"
+                              >
+                                {res.title} <ExternalLink className="w-3 h-3 text-fouzar-text-secondary" />
+                              </a>
+                              <p className="text-[9px] text-fouzar-text-secondary leading-relaxed mt-1">
+                                {res.snippet}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActiveDocText(`[Web Search context]\nSource Title: ${res.title}\nSource Link: ${res.link}\nContent:\n${res.snippet}`);
+                                setFedUrls((prev) => ({ ...prev, [res.link]: true }));
+                                setTimeout(() => {
+                                  setFedUrls((prev) => ({ ...prev, [res.link]: false }));
+                                }, 2000);
+                              }}
+                              className={`px-3 py-1.5 font-mono text-[8px] uppercase tracking-wider rounded-[var(--fouzar-radius-sm)] border transition-all ${
+                                isFed
+                                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-bold'
+                                  : 'bg-fouzar-elevated hover:bg-fouzar-accent/15 border-fouzar-border hover:border-fouzar-accent/30 text-fouzar-text-primary'
+                              }`}
+                            >
+                              {isFed ? '✓ Fed to AI' : 'Feed to AI ✦'}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <div className="p-3 bg-fouzar-elevated/20 border border-fouzar-border rounded-[var(--fouzar-radius-md)]">
+                    <p className="font-mono text-[7px] text-fouzar-text-secondary leading-relaxed uppercase text-center">
+                      🔒 Privacy &amp; Security Note: Search results are parsed in real-time. 
+                      You can click any title to read the article or click "Feed to AI" to send the text snippet as study context directly into your AI study partner chat.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </main>

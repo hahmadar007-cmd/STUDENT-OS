@@ -326,4 +326,51 @@ Based on this context, this is related to your active learning material. Note th
       model: `${modelName} (Simulated)`,
     };
   }
+
+  async search(query: string) {
+    if (!query || !query.trim()) {
+      return [];
+    }
+
+    try {
+      const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
+        }
+      });
+      const html = await response.text();
+      const results = [];
+      const blocks = html.split('<div class="result results_links results_links_deep web-result');
+
+      for (let i = 1; i < blocks.length; i++) {
+        const block = blocks[i];
+        const linkMatch = block.match(/class="result__a"\s+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/);
+        const snippetMatch = block.match(/class="result__snippet"[^>]*>([\s\S]*?)<\/a>/);
+
+        if (linkMatch && snippetMatch) {
+          let title = linkMatch[2].replace(/<[^>]*>/g, '').trim();
+          let link = linkMatch[1];
+          let snippet = snippetMatch[1].replace(/<[^>]*>/g, '').trim();
+
+          title = title.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+          snippet = snippet.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+
+          if (link.includes('uddg=')) {
+            const matchUddg = link.match(/uddg=([^&]+)/);
+            if (matchUddg) {
+              link = decodeURIComponent(matchUddg[1]);
+            }
+          }
+
+          results.push({ title, link, snippet });
+        }
+      }
+
+      return results.slice(0, 8);
+    } catch (err) {
+      console.error('Search scraping failed:', err);
+      return [];
+    }
+  }
 }
