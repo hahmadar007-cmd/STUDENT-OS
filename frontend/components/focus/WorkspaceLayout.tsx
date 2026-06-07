@@ -237,6 +237,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
           handleSendChat={handleSendChat}
           chatEndRef={chatEndRef}
           currentSlide={currentSlide}
+          slides={slides}
         />
       </motion.div>
 

@@ -454,6 +454,7 @@ export default function StudyRoomPage() {
                 <IntegratedAiChat
                   contextLabel={`Room · Slide ${currentSlide}`}
                   slideId={String(currentSlide)}
+                  slideContextText={slides[currentSlide - 1] ? `Slide ${slides[currentSlide - 1].number}: ${slides[currentSlide - 1].title}\n${slides[currentSlide - 1].subtitle}\n${slides[currentSlide - 1].content}` : ''}
                   storageKey={`fouzar-room-ai-${roomId}`}
                   compact
                 />
