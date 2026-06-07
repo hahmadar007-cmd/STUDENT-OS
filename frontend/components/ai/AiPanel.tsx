@@ -39,9 +39,10 @@ export const AiPanel: React.FC<AiPanelProps> = ({
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
   const models = [
-    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', provider: 'Google' },
-    { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'Anthropic' },
-    { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI' },
+    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', provider: 'Google', isDefault: true },
+    { id: 'deepseek', name: 'DeepSeek', provider: 'DeepSeek', isDefault: true },
+    { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', isDefault: false },
+    { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI', isDefault: false },
   ];
 
   useEffect(() => {
@@ -137,10 +138,18 @@ export const AiPanel: React.FC<AiPanelProps> = ({
                           selectedModel === m.id ? 'bg-white/5 text-violet' : 'text-text-secondary'
                         }`}
                       >
-                        <span>{m.name}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span>{m.name}</span>
+                          {m.isDefault && (
+                            <span className="px-1 py-0.5 text-[7px] bg-emerald-500/20 text-emerald-400 rounded uppercase tracking-wider">Free</span>
+                          )}
+                        </div>
                         <span className="text-[8px] text-text-secondary/60 mt-0.5">{m.provider}</span>
                       </button>
                     ))}
+                    <div className="px-3 py-2 text-[8px] text-text-secondary/50 border-t border-border-color/30 bg-white/[0.02]">
+                      Add your own AI key in Settings
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -160,6 +169,14 @@ export const AiPanel: React.FC<AiPanelProps> = ({
             <span>Context: Slide {currentSlideId} - {currentSlideTitle}</span>
           </div>
         )}
+
+        {/* Default AI info bar */}
+        <div className="flex items-center gap-2 px-2.5 py-1.5 bg-emerald-500/5 border border-emerald-500/15 rounded-[4px]">
+          <Sparkles className="w-3 h-3 text-emerald-400" />
+          <span className="text-[9px] font-mono text-emerald-400/80">
+            2 free AI cores active: <strong>Gemini</strong> &amp; <strong>DeepSeek</strong> — or link your own key
+          </span>
+        </div>
       </div>
 
       {/* Messages */}
