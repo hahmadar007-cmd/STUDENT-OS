@@ -402,14 +402,130 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
               exit={{ opacity: 0, x: 8 }}
               className="p-4 space-y-5"
             >
-              {/* Friends List with Quick Invite */}
-              <div>
-                <span className="font-mono text-[8px] uppercase tracking-[0.2em] text-fouzar-text-secondary block mb-3">
-                  Friends (Tap/Right-click to Invite)
+              {/* 1. Circle Members Block */}
+              <div className="space-y-2">
+                <span className="font-mono text-[8px] uppercase tracking-[0.2em] text-fouzar-text-secondary block">
+                  Circle Members
                 </span>
-                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
+                <div className="space-y-2 max-h-56 overflow-y-auto scrollbar-none bg-fouzar-elevated/10 border border-fouzar-border/60 p-3 rounded-[var(--fouzar-radius-md)]">
+                  {(!roomId || roomId.startsWith('personal-')) ? (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="p-[1.5px] rounded-full border border-fouzar-ice">
+                          <div className="w-7 h-7 rounded-full bg-fouzar-elevated flex items-center justify-center font-mono text-[9px] font-bold overflow-hidden shrink-0">
+                            {user?.avatarInitials ?? 'FZ'}
+                          </div>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-semibold truncate leading-tight flex items-center gap-1">
+                            {user?.name ?? 'Guest Scholar'}
+                            <span className="text-[7.5px] text-fouzar-text-tertiary font-mono lowercase">(you)</span>
+                          </p>
+                          <p className="font-mono text-[7px] text-fouzar-text-secondary truncate uppercase">{user?.fouzarId ?? 'FOUZAR-XXXX'}</p>
+                        </div>
+                      </div>
+                      <span className="px-1.5 py-0.5 bg-fouzar-accent/15 border border-fouzar-accent/30 text-fouzar-accent font-mono text-[7px] uppercase tracking-wider rounded shrink-0">
+                        Solo Owner
+                      </span>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Pending Join Requests (Creator Only) */}
+                      {user?.id === groupCreatorId && groupMembers.some(m => m.status === 'PENDING') && (
+                        <div className="space-y-2 mb-3 border-b border-fouzar-border/30 pb-3">
+                          <span className="font-mono text-[8px] uppercase tracking-[0.2em] text-[#ff2d55] block font-bold">
+                            Pending Join Requests
+                          </span>
+                          <div className="space-y-2 max-h-40 overflow-y-auto scrollbar-none">
+                            {groupMembers.filter(m => m.status === 'PENDING').map((mem) => {
+                              const initials = deriveInitials(mem.user.name);
+                              return (
+                                <div key={mem.userId} className="flex items-center justify-between p-2 bg-fouzar-elevated/30 border border-fouzar-border rounded-[var(--fouzar-radius-md)] animate-none">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <div className="w-7 h-7 rounded-full bg-fouzar-elevated border border-fouzar-border flex items-center justify-center font-mono text-[9px] font-bold overflow-hidden shrink-0">
+                                      {mem.user.avatarUrl ? (
+                                        <img src={mem.user.avatarUrl} alt={mem.user.name} className="w-full h-full object-cover" />
+                                      ) : (
+                                        initials
+                                      )}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <p className="text-[10px] font-semibold truncate leading-tight">{mem.user.name}</p>
+                                      <p className="font-mono text-[7px] text-fouzar-text-secondary truncate uppercase">{mem.user.fouzarId}</p>
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-1.5 shrink-0">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAcceptMember(mem.userId)}
+                                      className="px-2 py-1 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/30 text-[8px] font-mono uppercase rounded transition-colors cursor-pointer"
+                                    >
+                                      Accept
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRejectMember(mem.userId)}
+                                      className="px-2 py-1 bg-[#ff2d55]/15 border border-[#ff2d55]/30 text-[#ff2d55] hover:bg-[#ff2d55]/30 text-[8px] font-mono uppercase rounded transition-colors cursor-pointer"
+                                    >
+                                      Decline
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Active Circle Members */}
+                      <div className="space-y-2">
+                        {groupMembers.filter(m => m.status === 'ACCEPTED').map((mem) => {
+                          const presence = mem.user.isFocusing ? 'flow' : 'online';
+                          const initials = deriveInitials(mem.user.name);
+                          const isCreator = mem.userId === groupCreatorId;
+                          const isSelf = user && user.id === mem.userId;
+                          return (
+                            <div key={mem.userId} className="flex items-center justify-between p-2 bg-fouzar-elevated/10 border border-fouzar-border/60 rounded-[var(--fouzar-radius-md)]">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className={`p-[1.5px] rounded-full border transition-all ${presenceRing(presence)}`}>
+                                  <div className="w-7 h-7 rounded-full bg-fouzar-elevated flex items-center justify-center font-mono text-[9px] font-bold overflow-hidden shrink-0">
+                                    {mem.user.avatarUrl ? (
+                                      <img src={mem.user.avatarUrl} alt={mem.user.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                      initials
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-[10px] font-semibold truncate leading-tight flex items-center gap-1">
+                                    {mem.user.name}
+                                    {isSelf && <span className="text-[7.5px] text-fouzar-text-tertiary font-mono lowercase">(you)</span>}
+                                  </p>
+                                  <p className="font-mono text-[7px] text-fouzar-text-secondary truncate uppercase">{mem.user.fouzarId}</p>
+                                </div>
+                              </div>
+                              {isCreator && (
+                                <span className="px-1.5 py-0.5 bg-fouzar-accent/15 border border-fouzar-accent/30 text-fouzar-accent font-mono text-[7px] uppercase tracking-wider rounded shrink-0">
+                                  Admin
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* 2. Your Friends Block */}
+              <div className="space-y-2">
+                <span className="font-mono text-[8px] uppercase tracking-[0.2em] text-fouzar-text-secondary block">
+                  Your Friends (Tap/Right-click to Invite)
+                </span>
+                <div className="space-y-2 max-h-56 overflow-y-auto scrollbar-none bg-fouzar-elevated/10 border border-fouzar-border/60 p-3 rounded-[var(--fouzar-radius-md)]">
                   {dbFriends.length === 0 ? (
-                    <p className="font-mono text-[7px] text-fouzar-text-tertiary uppercase py-2">
+                    <p className="font-mono text-[7px] text-fouzar-text-tertiary uppercase py-2 text-center">
                       No friends connected
                     </p>
                   ) : (
@@ -418,130 +534,60 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
                       const presence = friend.isFocusing ? 'flow' : 'online';
                       const initials = deriveInitials(friend.name);
                       return (
-                        <button
+                        <div
                           key={friend.id}
-                          type="button"
                           onClick={(e) => handleOpenFriendMenu(e, friend)}
                           onContextMenu={(e) => handleFriendContextMenu(e, friend)}
-                          className="flex flex-col items-center gap-1.5 shrink-0"
+                          className={`flex items-center justify-between p-2 bg-fouzar-elevated/10 border rounded-[var(--fouzar-radius-md)] cursor-pointer hover:bg-fouzar-elevated/25 transition-colors ${
+                            selected ? 'border-fouzar-accent bg-fouzar-accent/5' : 'border-fouzar-border/60'
+                          }`}
                         >
-                          <div
-                            className={`p-[2px] rounded-full border-2 transition-all ${presenceRing(presence)} ${
-                              selected ? 'ring-2 ring-fouzar-accent ring-offset-2 ring-offset-fouzar-bg' : ''
-                            }`}
-                          >
-                            <div className="w-11 h-11 rounded-full bg-fouzar-elevated flex items-center justify-center font-mono text-[10px] font-bold overflow-hidden">
-                              {friend.avatarUrl ? (
-                                <img
-                                  src={friend.avatarUrl}
-                                  alt={friend.name}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                initials
-                              )}
-                            </div>
-                          </div>
-                          <span className="font-mono text-[7px] text-fouzar-text-secondary uppercase max-w-[48px] truncate">
-                            {friend.name.split(' ')[0]}
-                          </span>
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-
-              {/* Pending Join Requests (Creator Only) */}
-              {roomId && !roomId.startsWith('personal-') && user?.id === groupCreatorId && groupMembers.some(m => m.status === 'PENDING') && (
-                <div className="space-y-2">
-                  <span className="font-mono text-[8px] uppercase tracking-[0.2em] text-[#ff2d55] block">
-                    Pending Join Requests
-                  </span>
-                  <div className="space-y-2 max-h-40 overflow-y-auto scrollbar-none">
-                    {groupMembers.filter(m => m.status === 'PENDING').map((mem) => {
-                      const initials = deriveInitials(mem.user.name);
-                      return (
-                        <div key={mem.userId} className="flex items-center justify-between p-2 bg-fouzar-elevated/30 border border-fouzar-border rounded-[var(--fouzar-radius-md)]">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <div className="w-7 h-7 rounded-full bg-fouzar-elevated border border-fouzar-border flex items-center justify-center font-mono text-[9px] font-bold overflow-hidden shrink-0">
-                              {mem.user.avatarUrl ? (
-                                <img src={mem.user.avatarUrl} alt={mem.user.name} className="w-full h-full object-cover" />
-                              ) : (
-                                initials
-                              )}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-[10px] font-semibold truncate leading-tight">{mem.user.name}</p>
-                              <p className="font-mono text-[7px] text-fouzar-text-secondary truncate uppercase">{mem.user.fouzarId}</p>
-                            </div>
-                          </div>
-                          <div className="flex gap-1.5 shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => handleAcceptMember(mem.userId)}
-                              className="px-2 py-1 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/30 text-[8px] font-mono uppercase rounded transition-colors"
-                            >
-                              Accept
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleRejectMember(mem.userId)}
-                              className="px-2 py-1 bg-[#ff2d55]/15 border border-[#ff2d55]/30 text-[#ff2d55] hover:bg-[#ff2d55]/30 text-[8px] font-mono uppercase rounded transition-colors"
-                            >
-                              Decline
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Active Circle Members */}
-              {roomId && !roomId.startsWith('personal-') && groupMembers.some(m => m.status === 'ACCEPTED') && (
-                <div className="space-y-2">
-                  <span className="font-mono text-[8px] uppercase tracking-[0.2em] text-fouzar-text-secondary block">
-                    Active Circle Members
-                  </span>
-                  <div className="space-y-2 max-h-56 overflow-y-auto scrollbar-none">
-                    {groupMembers.filter(m => m.status === 'ACCEPTED').map((mem) => {
-                      const presence = mem.user.isFocusing ? 'flow' : 'online';
-                      const initials = deriveInitials(mem.user.name);
-                      const isCreator = mem.userId === groupCreatorId;
-                      const isSelf = user && user.id === mem.userId;
-                      return (
-                        <div key={mem.userId} className="flex items-center justify-between p-2 bg-fouzar-elevated/10 border border-fouzar-border/60 rounded-[var(--fouzar-radius-md)]">
-                          <div className="flex items-center gap-2 min-w-0">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
                             <div className={`p-[1.5px] rounded-full border transition-all ${presenceRing(presence)}`}>
                               <div className="w-7 h-7 rounded-full bg-fouzar-elevated flex items-center justify-center font-mono text-[9px] font-bold overflow-hidden shrink-0">
-                                {mem.user.avatarUrl ? (
-                                  <img src={mem.user.avatarUrl} alt={mem.user.name} className="w-full h-full object-cover" />
+                                {friend.avatarUrl ? (
+                                  <img src={friend.avatarUrl} alt={friend.name} className="w-full h-full object-cover" />
                                 ) : (
                                   initials
                                 )}
                               </div>
                             </div>
                             <div className="min-w-0">
-                              <p className="text-[10px] font-semibold truncate leading-tight flex items-center gap-1">
-                                {mem.user.name}
-                                {isSelf && <span className="text-[7.5px] text-fouzar-text-tertiary font-mono lowercase">(you)</span>}
-                              </p>
-                              <p className="font-mono text-[7px] text-fouzar-text-secondary truncate uppercase">{mem.user.fouzarId}</p>
+                              <p className="text-[10px] font-semibold truncate leading-tight">{friend.name}</p>
+                              <p className="font-mono text-[7px] text-fouzar-text-secondary truncate uppercase">{friend.fouzarId}</p>
                             </div>
                           </div>
-                          {isCreator && (
-                            <span className="px-1.5 py-0.5 bg-fouzar-accent/15 border border-fouzar-accent/30 text-fouzar-accent font-mono text-[7px] uppercase tracking-wider rounded shrink-0">
-                              Admin
-                            </span>
-                          )}
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {/* Checkbox to multi-select */}
+                            <input
+                              type="checkbox"
+                              checked={selected}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                toggleFriendSelect(friend.id);
+                              }}
+                              className="w-3.5 h-3.5 accent-fouzar-accent rounded border-fouzar-border"
+                            />
+                            {/* Invite button if inside shared circle */}
+                            {roomId && !roomId.startsWith('personal-') && (
+                              <button
+                                type="button"
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  await handleAddFriendToCircleDirect(friend.id);
+                                }}
+                                className="px-2 py-0.5 bg-fouzar-accent/15 border border-fouzar-accent/30 text-fouzar-accent hover:bg-fouzar-accent/25 text-[8px] font-mono uppercase rounded transition-colors cursor-pointer"
+                              >
+                                Add
+                              </button>
+                            )}
+                          </div>
                         </div>
                       );
-                    })}
-                  </div>
+                    })
+                  )}
                 </div>
-              )}
+              </div>
 
               {/* Add friend by Fouzar ID */}
               <div className="space-y-2">
