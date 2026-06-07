@@ -61,6 +61,13 @@ interface ChatMessage {
   slideContext: string | null;
 }
 
+interface SlideData {
+  number: number;
+  title: string;
+  subtitle: string;
+  content: string;
+}
+
 interface SocialColumnProps {
   roomId: string;
   className?: string;
@@ -72,6 +79,7 @@ interface SocialColumnProps {
   handleSendChat?: (e: React.FormEvent) => void;
   chatEndRef?: React.RefObject<HTMLDivElement | null>;
   currentSlide?: number;
+  slides?: SlideData[];
 }
 
 /**
@@ -89,6 +97,7 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
   handleSendChat,
   chatEndRef,
   currentSlide,
+  slides,
 }) => {
   const router = useRouter();
   const {
@@ -493,6 +502,7 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
               <IntegratedAiChat
                 contextLabel={`Room · Slide ${currentSlide ?? 1}`}
                 slideId={currentSlide ? String(currentSlide) : null}
+                slideContextText={slides && currentSlide && slides[currentSlide - 1] ? `Slide ${slides[currentSlide - 1].number}: ${slides[currentSlide - 1].title}\n${slides[currentSlide - 1].subtitle}\n${slides[currentSlide - 1].content}` : ''}
                 storageKey={`fouzar-room-ai-sidebar-${roomId}`}
                 compact={false}
                 placeholder="Ask AI about this slide, the course, or anything else..."

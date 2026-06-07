@@ -17,6 +17,8 @@ interface IntegratedAiChatProps {
   contextLabel?: string;
   /** Slide ID passed to the AI API for contextual answers */
   slideId?: string | null;
+  /** Text content of the active slide to append as prompt context */
+  slideContextText?: string;
   /** localStorage key — persists chat per user/space when set */
   storageKey?: string;
   /** Compact layout for side panels */
@@ -37,6 +39,7 @@ const MODEL_OPTIONS = [
 export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
   contextLabel = 'Study Context',
   slideId = null,
+  slideContextText,
   storageKey,
   compact = false,
   placeholder = 'Ask about your material, deadlines, or concepts...',
@@ -167,6 +170,8 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
         // Truncate document text to avoid overflow, though Gemini 2.5 supports large context
         const truncatedText = activeDocText.length > 30000 ? activeDocText.slice(0, 30000) + "\n... [truncated for token safety]" : activeDocText;
         finalPrompt = `[Study Material Context]\nDocument Name: ${activeDoc.fileName}\nCategory: ${activeDoc.category}\nCourse: ${activeDoc.courseCode}\n\n[Document Content/Metadata]:\n${truncatedText}\n\n[User Query]: ${userMsg.content}`;
+      } else if (slideContextText) {
+        finalPrompt = `[Study Slide Context]\n${slideContextText}\n\n[User Query]: ${userMsg.content}`;
       }
 
       const res = await askAi(finalPrompt, slideId, aiModel);
