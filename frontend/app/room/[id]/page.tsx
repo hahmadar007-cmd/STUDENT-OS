@@ -157,38 +157,7 @@ export default function StudyRoomPage() {
   const [threadReplyInputs, setThreadReplyInputs] = useState<{ [threadId: string]: string }>({});
 
   // Slide content database
-  const slides: SlideData[] = [
-    {
-      number: 1,
-      title: 'Neural Networks & Backpropagation',
-      subtitle: 'Fasca Study Circle • Course CS-229',
-      content: 'Welcome to the Neural Networks review session. We will cover the structure of Multi-Layer Perceptrons (MLPs), gradient descent optimization, and how backpropagation propagates error derivatives backward to update weight matrices.',
-    },
-    {
-      number: 2,
-      title: 'The Single-Layer Perceptron',
-      subtitle: 'Linear Classifier & Activation Limits',
-      content: 'A perceptron computes a weighted sum of inputs and applies a step function. Limits: cannot solve non-linearly separable problems like XOR. Equation: y = \\sigma(\\sum w_i x_i + b). Sigmoid or Step function acts as the threshold gating function.',
-    },
-    {
-      number: 3,
-      title: 'Multi-Layer Feedforward Networks',
-      subtitle: 'Hidden Representations & Non-linearities',
-      content: 'By introducing hidden layers with non-linear activation functions (ReLU, Sigmoid, GeLU), neural networks become universal function approximators. Hidden layers extract hierarchical representations of inputs.',
-    },
-    {
-      number: 4,
-      title: 'Loss Function & Gradient Descent',
-      subtitle: 'Navigating the Optimization Surface',
-      content: 'We define a cost function C (like Mean Squared Error or Cross Entropy) and update weights in the opposite direction of the gradient: W_{new} = W_{old} - \\eta \\nabla C(W). Gradient descent slides down the loss surface to reach a local minima.',
-    },
-    {
-      number: 5,
-      title: 'The Backpropagation Algorithm',
-      subtitle: 'Efficient Gradient Computation via Chain Rule',
-      content: 'Backpropagation calculates the gradient of the loss function with respect to each weight. By caching partial derivatives on the backward pass, we avoid duplicate computations. Computational complexity scales linearly with net edges.',
-    },
-  ];
+  const slides: SlideData[] = [];
 
   // Socket Emitters on Mount
   useEffect(() => {

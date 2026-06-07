@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useFouzar } from '../../../lib/FouzarContext';
 import { DocumentViewer } from '../../documents/DocumentViewer';
+import { FileExplorer } from '../../documents/FileExplorer';
 
 interface SlideData {
   number: number;
@@ -166,7 +167,6 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
     setVideoInput('');
   };
 
-  const activeSlide = slides[currentSlide - 1];
 
   return (
     <div className="fouzar-canvas flex flex-col h-full overflow-hidden bg-fouzar-bg relative">
@@ -196,7 +196,7 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
 
         <div className="flex items-center gap-1">
           {[
-            { id: 'material' as const, icon: BookOpen, label: 'Slides' },
+            { id: 'material' as const, icon: BookOpen, label: 'Materials' },
             { id: 'split' as const, icon: MonitorPlay, label: 'Split' },
             { id: 'media' as const, icon: Play, label: 'Media' },
             { id: 'web' as const, icon: Globe, label: 'Web Hub' },
@@ -268,63 +268,30 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
                   />
                 </div>
               ) : (
-                <>
-                  <div className="flex-1 flex items-center justify-between p-4 relative">
-                    <button
-                      type="button"
-                      onClick={() => handleNavigateSlide('prev')}
-                      disabled={currentSlide === 1 || (syncMode && !isLeader)}
-                      className="p-2 rounded-[var(--fouzar-radius-md)] bg-fouzar-elevated/80 border border-fouzar-border disabled:opacity-20 z-10"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </button>
-
-                    <AnimatePresence mode="wait">
-                      <motion.div
-                        key={currentSlide}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -6 }}
-                        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-                        className="flex-1 max-w-3xl mx-4 h-[88%] fouzar-card p-6 flex flex-col justify-between shadow-[var(--fouzar-shadow-lg)]"
-                      >
-                        <div className="space-y-3">
-                          <span className="font-mono text-[7px] text-fouzar-ice uppercase tracking-widest">
-                            {activeSlide?.subtitle}
-                          </span>
-                          <h2 className="font-serif text-sm font-bold uppercase tracking-wide border-b border-fouzar-border pb-2">
-                            {activeSlide?.title}
-                          </h2>
-                          <p className="text-[11px] text-fouzar-text-primary/90 leading-relaxed font-light">
-                            {activeSlide?.content}
-                          </p>
-                        </div>
-                        <div className="font-mono text-[7px] text-fouzar-text-secondary flex justify-between uppercase">
-                          <span>Slide {currentSlide}/{slides.length}</span>
-                          <span className="text-fouzar-accent">Secured</span>
-                        </div>
-                      </motion.div>
-                    </AnimatePresence>
-
-                    <button
-                      type="button"
-                      onClick={() => handleNavigateSlide('next')}
-                      disabled={currentSlide === slides.length || (syncMode && !isLeader)}
-                      className="p-2 rounded-[var(--fouzar-radius-md)] bg-fouzar-elevated/80 border border-fouzar-border disabled:opacity-20 z-10"
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
+                <div className="flex-1 flex flex-col overflow-hidden p-6 relative">
+                  <div className="mb-4">
+                    <h3 className="font-serif text-xs font-bold uppercase tracking-wider text-fouzar-text-primary">
+                      Sanctuary Materials
+                    </h3>
+                    <p className="text-[9.5px] text-fouzar-text-secondary mt-1">
+                      Select a study document, textbook, or lecture slides from your repository below, or upload a new one to start studying.
+                    </p>
                   </div>
-
+                  <div className="flex-1 overflow-hidden border border-fouzar-border bg-fouzar-elevated/10 rounded-[var(--fouzar-radius-lg)] p-4 flex flex-col">
+                    <FileExplorer
+                      isCompact={false}
+                      onOpenFile={(doc) => setActiveDoc(doc)}
+                    />
+                  </div>
                   {!isFlowActive && (
                     <textarea
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       placeholder="Sanctuary notebook — capture formulas, definitions, insights..."
-                      className="mx-4 mb-4 h-14 bg-fouzar-elevated/30 border border-fouzar-border rounded-[var(--fouzar-radius-md)] p-2 font-mono text-[9px] resize-none focus:outline-none focus:shadow-[var(--fouzar-focus-ring)]"
+                      className="mt-4 h-14 bg-fouzar-elevated/30 border border-fouzar-border rounded-[var(--fouzar-radius-md)] p-2 font-mono text-[9px] resize-none focus:outline-none focus:shadow-[var(--fouzar-focus-ring)] shrink-0"
                     />
                   )}
-                </>
+                </div>
               )}
             </motion.section>
           )}
