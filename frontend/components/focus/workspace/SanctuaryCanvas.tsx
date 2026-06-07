@@ -73,16 +73,40 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
   activeDoc,
   setActiveDoc,
 }) => {
-  const { mode, isFlowActive, activeFolderId } = useFouzar();
+  const { mode, isFlowActive, activeFolderId, setActiveVideoUrl, setActiveVideoTimestamp } = useFouzar();
   const isGreenhouse = mode === 'greenhouse';
 
   const [canvasView, setCanvasView] = useState<CanvasView>('split');
   const [videoInput, setVideoInput] = useState('');
-  const [embedUrl, setEmbedUrl] = useState('https://www.youtube.com/embed/jfKfPfyJRdk?rel=0&modestbranding=1');
+  const [embedUrl, setEmbedUrl] = useState('https://www.youtube.com/embed/jfKfPfyJRdk?rel=0&modestbranding=1&enablejsapi=1');
   const [notes, setNotes] = useState('');
   const [chatExpanded, setChatExpanded] = useState(true);
 
   const notesKey = `fouzar-notes-${roomId}-${activeFolderId}`;
+
+  useEffect(() => {
+    setActiveVideoUrl(embedUrl);
+  }, [embedUrl, setActiveVideoUrl]);
+
+  useEffect(() => {
+    const handleYoutubeMessage = (event: MessageEvent) => {
+      let data = event.data;
+      if (typeof data === 'string') {
+        try {
+          data = JSON.parse(data);
+        } catch {
+          return;
+        }
+      }
+
+      if (data && data.event === 'infoDelivery' && data.info && typeof data.info.currentTime === 'number') {
+        setActiveVideoTimestamp(Math.round(data.info.currentTime));
+      }
+    };
+
+    window.addEventListener('message', handleYoutubeMessage);
+    return () => window.removeEventListener('message', handleYoutubeMessage);
+  }, [setActiveVideoTimestamp]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -109,9 +133,10 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#&?]*).*/;
     const match = videoInput.match(regExp);
     if (match && match[2].length === 11) {
-      setEmbedUrl(`https://www.youtube.com/embed/${match[2]}?rel=0&modestbranding=1&iv_load_policy=3`);
+      setEmbedUrl(`https://www.youtube.com/embed/${match[2]}?rel=0&modestbranding=1&iv_load_policy=3&enablejsapi=1`);
     } else {
-      setEmbedUrl(videoInput);
+      const separator = videoInput.includes('?') ? '&' : '?';
+      setEmbedUrl(`${videoInput}${videoInput.includes('enablejsapi=1') ? '' : `${separator}enablejsapi=1`}`);
     }
     setVideoInput('');
   };

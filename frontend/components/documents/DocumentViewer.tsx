@@ -11,6 +11,7 @@ import {
 } from '../../lib/documentStore';
 import { useFouzar } from '../../lib/FouzarContext';
 import type { LmsRepositoryItem } from '../../lib/FouzarContext';
+import { indexDocument, indexDocumentFile } from '../../lib/api';
 
 interface DocumentViewerProps {
   document: LmsRepositoryItem | null;
@@ -18,11 +19,11 @@ interface DocumentViewerProps {
   isInline?: boolean;
 }
 
-async function extractTextFromPdf(blob: Blob): Promise<string> {
+async function extractTextFromPdf(blob: Blob): Promise<{ fullText: string; chunks: { text: string; pageNum: number }[] }> {
   return new Promise(async (resolve, reject) => {
     try {
       if (typeof window === 'undefined') {
-        resolve('');
+        resolve({ fullText: '', chunks: [] });
         return;
       }
       
@@ -45,14 +46,16 @@ async function extractTextFromPdf(blob: Blob): Promise<string> {
       const pdf = await loadingTask.promise;
       
       let fullText = '';
+      const chunks: { text: string; pageNum: number }[] = [];
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
         const pageText = textContent.items.map((item: any) => item.str).join(' ');
         fullText += `--- Slide/Page ${i} ---\n${pageText}\n\n`;
+        chunks.push({ text: pageText, pageNum: i });
       }
       
-      resolve(fullText);
+      resolve({ fullText, chunks });
     } catch (err) {
       reject(err);
     }
@@ -87,23 +90,42 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
         url = createObjectUrl(stored.blob);
         setObjectUrl(url);
 
+        const metaText = `[Study Material: ${document.fileName}]\nCategory: ${document.category}\nCourse: ${document.courseCode}`;
+
         if (stored.mimeType.startsWith('text/') || document.fileName.endsWith('.md') || document.fileName.endsWith('.txt') || document.fileName.endsWith('.js') || document.fileName.endsWith('.ts') || document.fileName.endsWith('.tsx') || document.fileName.endsWith('.py') || document.fileName.endsWith('.json') || document.fileName.endsWith('.css') || document.fileName.endsWith('.html') || document.fileName.endsWith('.cpp') || document.fileName.endsWith('.java')) {
           const text = await stored.blob.text();
           setTextContent(text);
-          setActiveDocText(text);
+          setActiveDocText(`${metaText}\n\n[Content]:\n${text}`);
+          // Index text file in Vector DB
+          indexDocument(document.courseCode || 'general', document.id || document.storageId || 'text-doc', [{ text, pageNum: 1 }])
+            .catch(e => console.error('Failed to index text file:', e));
         } else if (stored.mimeType === 'application/pdf' || document.fileName.toLowerCase().endsWith('.pdf')) {
-          const metaText = `[Study Material: PDF Document]\nName: ${document.fileName}\nCategory: ${document.category}\nCourse: ${document.courseCode}`;
           setActiveDocText(metaText);
-
           // Extract and load PDF text contents asynchronously
           try {
-            const extracted = await extractTextFromPdf(stored.blob);
-            setActiveDocText(`${metaText}\n\n[Extracted Slide Content]:\n${extracted}`);
+            const { fullText, chunks } = await extractTextFromPdf(stored.blob);
+            setActiveDocText(`${metaText}\n\n[Extracted Slide Content]:\n${fullText}`);
+            // Index PDF page chunks in Vector DB
+            indexDocument(document.courseCode || 'general', document.id || document.storageId || 'pdf-doc', chunks)
+              .catch(e => console.error('Failed to index PDF:', e));
           } catch (e) {
             console.error('PDF text extraction error:', e);
           }
+        } else if (document.fileName.toLowerCase().endsWith('.pptx')) {
+          setActiveDocText(metaText);
+          // PPTX parsing on backend
+          try {
+            const res = await indexDocumentFile(document.courseCode || 'general', document.id || document.storageId || 'pptx-doc', stored.blob, document.fileName);
+            if (res && res.chunks) {
+              const fullText = res.chunks.map((c: any) => `--- Slide/Page ${c.pageNum} ---\n${c.text}`).join('\n\n');
+              setActiveDocText(`${metaText}\n\n[Extracted PowerPoint Content]:\n${fullText}`);
+              setTextContent(fullText);
+            }
+          } catch (e) {
+            console.error('PPTX text indexing/extraction error:', e);
+          }
         } else {
-          setActiveDocText(`[Study Material: File]\nName: ${document.fileName}\nCategory: ${document.category}\nCourse: ${document.courseCode}\nType: ${stored.mimeType}`);
+          setActiveDocText(`${metaText}\nType: ${stored.mimeType}`);
         }
       })
       .catch(() => setError('Failed to load document.'))
@@ -119,7 +141,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
 
   const canPreview =
     document.storageId &&
-    isViewableInBrowser(document.mimeType ?? '', document.fileName);
+    (isViewableInBrowser(document.mimeType ?? '', document.fileName) || document.fileName.toLowerCase().endsWith('.pptx'));
 
   const isPdf =
     document.mimeType === 'application/pdf' || document.fileName.toLowerCase().endsWith('.pdf');

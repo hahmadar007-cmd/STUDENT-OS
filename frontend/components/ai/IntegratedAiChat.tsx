@@ -44,11 +44,19 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
   compact = false,
   placeholder = 'Ask about your material, deadlines, or concepts...',
 }) => {
-  const { aiModel, setAiModel, activeDoc, activeDocText } = useFouzar();
+  const { 
+    aiModel, 
+    setAiModel, 
+    activeDoc, 
+    activeDocText, 
+    activeVideoUrl, 
+    activeVideoTimestamp 
+  } = useFouzar();
   const [messages, setMessages] = useState<AiChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isTechnical, setIsTechnical] = useState(false);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -148,33 +156,39 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
     return () => clearTimeout(t);
   }, [activeDoc, activeDocText, aiModel, slideId, activeModelLabel]);
 
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
+  const handleSend = async (e: React.FormEvent | null, customPrompt?: string) => {
+    if (e) e.preventDefault();
+    const promptText = customPrompt || input;
+    if (!promptText.trim() || isLoading) return;
 
     const userMsg: AiChatMessage = {
       id: `usr-${Date.now()}`,
       role: 'user',
-      content: input.trim(),
+      content: promptText.trim(),
       model: 'You',
     };
 
     setMessages((prev) => [...prev, userMsg]);
-    setInput('');
+    if (!customPrompt) setInput('');
     setIsLoading(true);
     setError(null);
 
     try {
-      let finalPrompt = userMsg.content;
-      if (activeDoc && activeDocText) {
-        // Truncate document text to avoid overflow, though Gemini 2.5 supports large context
-        const truncatedText = activeDocText.length > 30000 ? activeDocText.slice(0, 30000) + "\n... [truncated for token safety]" : activeDocText;
-        finalPrompt = `[Study Material Context]\nDocument Name: ${activeDoc.fileName}\nCategory: ${activeDoc.category}\nCourse: ${activeDoc.courseCode}\n\n[Document Content/Metadata]:\n${truncatedText}\n\n[User Query]: ${userMsg.content}`;
-      } else if (slideContextText) {
-        finalPrompt = `[Study Slide Context]\n${slideContextText}\n\n[User Query]: ${userMsg.content}`;
-      }
+      // Style setting payload wrapper
+      const styleInstruction = isTechnical 
+        ? "\n\n(Note: Provide a highly technical, rigorous, and deep academic explanation with mathematical depth.)"
+        : "\n\n(Note: Explain in extremely simple terms, using relatable everyday analogies for quick understanding.)";
 
-      const res = await askAi(finalPrompt, slideId, aiModel);
+      const finalPrompt = userMsg.content + styleInstruction;
+
+      const extraContext = {
+        currentSlideText: activeDocText || slideContextText || '',
+        videoUrl: activeVideoUrl || '',
+        videoTimestamp: activeVideoTimestamp || 0,
+        courseId: activeDoc?.courseCode || 'general'
+      };
+
+      const res = await askAi(finalPrompt, slideId, aiModel, extraContext);
       setMessages((prev) => [
         ...prev,
         {
@@ -270,11 +284,64 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
         <p className="text-[7px] font-mono text-fouzar-signal mb-2 uppercase">{error}</p>
       )}
 
+      {/* Quick Study Tools Panel */}
+      <div className="shrink-0 py-2 border-t border-fouzar-border flex flex-col gap-2 bg-fouzar-surface/40">
+        <div className="flex items-center justify-between">
+          <span className="font-mono text-[7px] text-fouzar-text-secondary uppercase">Study Tools</span>
+          
+          <button
+            type="button"
+            onClick={() => setIsTechnical(!isTechnical)}
+            className={`px-2 py-0.5 font-mono text-[6.5px] uppercase border rounded-[var(--fouzar-radius-sm)] transition-all cursor-pointer ${
+              isTechnical 
+                ? 'border-fouzar-accent text-fouzar-accent bg-fouzar-accent/5' 
+                : 'border-fouzar-border text-fouzar-text-secondary'
+            }`}
+          >
+            {isTechnical ? '🔬 Technical Mode' : '💡 Simple Mode'}
+          </button>
+        </div>
+
+        <div className="flex flex-wrap gap-1.5">
+          <button
+            type="button"
+            disabled={isLoading}
+            onClick={() => handleSend(null, "Generate a 3-question multiple choice quiz with answers based on the active slide context.")}
+            className="flex-1 min-w-[70px] px-2 py-1 bg-fouzar-elevated hover:bg-fouzar-accent/10 border border-fouzar-border hover:border-fouzar-accent/20 rounded-[var(--fouzar-radius-sm)] font-mono text-[7px] text-fouzar-text-primary uppercase tracking-wider text-center cursor-pointer transition-all disabled:opacity-40"
+          >
+            📝 Quiz
+          </button>
+          <button
+            type="button"
+            disabled={isLoading}
+            onClick={() => handleSend(null, "Create a set of interactive Q&A study flashcards summarizing the core concepts in the active slide context.")}
+            className="flex-1 min-w-[70px] px-2 py-1 bg-fouzar-elevated hover:bg-fouzar-accent/10 border border-fouzar-border hover:border-fouzar-accent/20 rounded-[var(--fouzar-radius-sm)] font-mono text-[7px] text-fouzar-text-primary uppercase tracking-wider text-center cursor-pointer transition-all disabled:opacity-40"
+          >
+            🎴 Flashcards
+          </button>
+          <button
+            type="button"
+            disabled={isLoading}
+            onClick={() => handleSend(null, "Compile a clean, high-yield study sheet and exam notes summarizing the active slide context.")}
+            className="flex-1 min-w-[70px] px-2 py-1 bg-fouzar-elevated hover:bg-fouzar-accent/10 border border-fouzar-border hover:border-fouzar-accent/20 rounded-[var(--fouzar-radius-sm)] font-mono text-[7px] text-fouzar-text-primary uppercase tracking-wider text-center cursor-pointer transition-all disabled:opacity-40"
+          >
+            ✍️ Study Guide
+          </button>
+        </div>
+      </div>
+
       <div className="shrink-0 space-y-2 border-t border-fouzar-border pt-2">
-        <span className="inline-block px-2 py-0.5 bg-fouzar-accent/10 border border-fouzar-accent/20 text-fouzar-accent font-mono text-[7px] uppercase rounded-[var(--fouzar-radius-sm)]">
-          {contextLabel}
-        </span>
-        <form onSubmit={handleSend} className="flex gap-2">
+        <div className="flex justify-between items-center">
+          <span className="inline-block px-2 py-0.5 bg-fouzar-accent/10 border border-fouzar-accent/20 text-fouzar-accent font-mono text-[7px] uppercase rounded-[var(--fouzar-radius-sm)]">
+            {contextLabel}
+          </span>
+          {activeVideoTimestamp > 0 && (
+            <span className="font-mono text-[6.5px] text-fouzar-text-secondary uppercase">
+              Synced at {Math.floor(activeVideoTimestamp / 60)}:{(activeVideoTimestamp % 60).toString().padStart(2, '0')}
+            </span>
+          )}
+        </div>
+        <form onSubmit={(e) => handleSend(e)} className="flex gap-2">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
