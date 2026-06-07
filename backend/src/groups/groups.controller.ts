@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Headers, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Headers, UnauthorizedException, Delete, Patch } from '@nestjs/common';
 import { GroupsService } from './groups.service';
 import { JwtService } from '@nestjs/jwt';
 
@@ -46,6 +46,41 @@ export class GroupsController {
       return this.groupsService.addGroupMember(groupId, body.connectionId, decoded.sub);
     } catch (e) {
       throw e;
+    }
+  }
+
+  @Delete(':groupId')
+  async deleteGroup(
+    @Headers('authorization') authHeader: string,
+    @Param('groupId') groupId: string,
+  ) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Missing token');
+    }
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded = this.jwtService.verify(token);
+      return this.groupsService.deleteGroup(groupId, decoded.sub);
+    } catch (e: any) {
+      throw new UnauthorizedException(e.message || 'Authentication failed');
+    }
+  }
+
+  @Patch(':groupId')
+  async renameGroup(
+    @Headers('authorization') authHeader: string,
+    @Param('groupId') groupId: string,
+    @Body() body: { name: string },
+  ) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Missing token');
+    }
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded = this.jwtService.verify(token);
+      return this.groupsService.renameGroup(groupId, body.name, decoded.sub);
+    } catch (e: any) {
+      throw new UnauthorizedException(e.message || 'Authentication failed');
     }
   }
 }

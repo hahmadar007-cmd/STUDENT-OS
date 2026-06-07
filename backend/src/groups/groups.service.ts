@@ -135,4 +135,51 @@ export class GroupsService {
       },
     });
   }
+
+  async deleteGroup(groupId: string, userId: string) {
+    const group = await this.prisma.group.findUnique({
+      where: { id: groupId },
+    });
+    if (!group) {
+      throw new Error('Group not found');
+    }
+
+    if (group.creatorId !== userId) {
+      const membership = await this.prisma.membership.findFirst({
+        where: { groupId, userId, role: 'LEADER' },
+      });
+      if (!membership) {
+        throw new Error('Unauthorized: Only the creator or a leader can delete this circle');
+      }
+    }
+
+    await this.prisma.group.delete({
+      where: { id: groupId },
+    });
+
+    return { success: true, message: 'Group deleted successfully' };
+  }
+
+  async renameGroup(groupId: string, name: string, userId: string) {
+    const group = await this.prisma.group.findUnique({
+      where: { id: groupId },
+    });
+    if (!group) {
+      throw new Error('Group not found');
+    }
+
+    if (group.creatorId !== userId) {
+      const membership = await this.prisma.membership.findFirst({
+        where: { groupId, userId, role: 'LEADER' },
+      });
+      if (!membership) {
+        throw new Error('Unauthorized: Only the creator or a leader can rename this circle');
+      }
+    }
+
+    return this.prisma.group.update({
+      where: { id: groupId },
+      data: { name },
+    });
+  }
 }

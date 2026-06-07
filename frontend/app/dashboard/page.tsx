@@ -153,6 +153,89 @@ export default function DashboardPage() {
   const [loadingNodes, setLoadingNodes] = useState(true);
   const [hoveredPeerId, setHoveredPeerId] = useState<string | null>(null);
 
+  // Group rename, delete, and card color customization state
+  const [cardColors, setCardColors] = useState<Record<string, string>>({});
+  const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
+
+  const COLOR_PRESETS = [
+    { name: 'violet', value: '#7c5cfc' },
+    { name: 'crimson', value: '#ff2d55' },
+    { name: 'ice', value: '#06b6d4' },
+    { name: 'amber', value: '#f5a623' },
+    { name: 'emerald', value: '#10b981' }
+  ];
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const colors: Record<string, string> = {};
+      const savedSanctuaryColor = localStorage.getItem('circle-color-sanctuary');
+      if (savedSanctuaryColor) colors['sanctuary'] = savedSanctuaryColor;
+      
+      gardenNodes.forEach((node) => {
+        const saved = localStorage.getItem(`circle-color-${node.id}`);
+        if (saved) colors[node.id] = saved;
+      });
+      setCardColors(colors);
+    }
+  }, [gardenNodes]);
+
+  const updateCardColor = (nodeId: string, color: string) => {
+    localStorage.setItem(`circle-color-${nodeId}`, color);
+    setCardColors((prev) => ({ ...prev, [nodeId]: color }));
+  };
+
+  const handleRename = async (nodeId: string, name: string) => {
+    if (!name.trim()) return;
+    try {
+      const { renameGroup } = await import('../../lib/api');
+      await renameGroup(nodeId, name.trim());
+      setEditingNodeId(null);
+      loadGroups();
+    } catch (err) {
+      console.error('Failed to rename group:', err);
+    }
+  };
+
+  const handleDelete = async (nodeId: string) => {
+    if (!confirm('Are you sure you want to delete this study circle?')) return;
+    try {
+      const { deleteGroup } = await import('../../lib/api');
+      await deleteGroup(nodeId);
+      if (selectedCardId === nodeId) setSelectedCardId(null);
+      loadGroups();
+    } catch (err) {
+      console.error('Failed to delete group:', err);
+    }
+  };
+
+  const getCardColorClass = (nodeId: string, isSelected: boolean) => {
+    const color = cardColors[nodeId] || 'violet';
+    if (isSelected) {
+      if (color === 'crimson') return 'border-[#ff2d55] bg-[#ff2d55]/5 shadow-[0_0_12px_rgba(255,45,85,0.25)]';
+      if (color === 'ice') return 'border-[#06b6d4] bg-[#06b6d4]/5 shadow-[0_0_12px_rgba(6,182,212,0.25)]';
+      if (color === 'amber') return 'border-[#f5a623] bg-[#f5a623]/5 shadow-[0_0_12px_rgba(245,166,35,0.25)]';
+      if (color === 'emerald') return 'border-[#10b981] bg-[#10b981]/5 shadow-[0_0_12px_rgba(16,185,129,0.25)]';
+      return 'border-[#7c5cfc] bg-[#7c5cfc]/5 shadow-[0_0_12px_rgba(124,92,252,0.25)]';
+    } else {
+      if (color === 'crimson') return 'border-[#ff2d55]/20 bg-[#ff2d55]/5 hover:border-[#ff2d55]/60';
+      if (color === 'ice') return 'border-[#06b6d4]/20 bg-[#06b6d4]/5 hover:border-[#06b6d4]/60';
+      if (color === 'amber') return 'border-[#f5a623]/20 bg-[#f5a623]/5 hover:border-[#f5a623]/60';
+      if (color === 'emerald') return 'border-[#10b981]/20 bg-[#10b981]/5 hover:border-[#10b981]/60';
+      return 'border-[#2a2a3a] bg-[#16161f]/40 hover:border-[#7c5cfc]/60';
+    }
+  };
+
+  const getTextColor = (nodeId: string) => {
+    const color = cardColors[nodeId] || 'violet';
+    if (color === 'crimson') return 'text-[#ff2d55]';
+    if (color === 'ice') return 'text-[#06b6d4]';
+    if (color === 'amber') return 'text-[#f5a623]';
+    if (color === 'emerald') return 'text-[#10b981]';
+    return 'text-[#7c5cfc]';
+  };
+
+
   const [peers, setPeers] = useState<StudyCirclePeer[]>([
     { id: 'usr-2', name: 'Elena', initials: 'ER', status: 'flow', group: 'CS-229', duration: '14 mins' },
     { id: 'usr-3', name: 'Kai', initials: 'KT', status: 'online', group: 'CS-109', duration: 'N/A' },
@@ -574,8 +657,8 @@ export default function DashboardPage() {
               Personal Space
             </span>
             <FascaCard
-              className={`p-4 flex flex-col justify-between min-h-[120px] cursor-pointer bg-[#7c5cfc]/5 transition-all duration-150 ${
-                selectedCardId === 'sanctuary' ? 'border-[#7c5cfc] shadow-[0_0_12px_rgba(124,92,252,0.2)]' : 'border-[#7c5cfc]/30 hover:border-[#7c5cfc]/80'
+              className={`p-4 flex flex-col justify-between min-h-[120px] cursor-pointer transition-all duration-150 ${
+                getCardColorClass('sanctuary', selectedCardId === 'sanctuary')
               }`}
               onClick={(e) => {
                 e.stopPropagation();
@@ -584,7 +667,7 @@ export default function DashboardPage() {
               onDoubleClick={() => router.push('/sanctuary')}
             >
               <div>
-                <span className="text-[8.5px] font-mono text-[#7c5cfc] uppercase tracking-wider block">
+                <span className={`text-[8.5px] font-mono uppercase tracking-wider block ${getTextColor('sanctuary')}`}>
                   Private · Solo
                 </span>
                 <h3 className="text-sm font-bold text-[#f0f0ff] mt-1">My Sanctuary</h3>
@@ -592,9 +675,34 @@ export default function DashboardPage() {
                   Semester notes, AI tutor, your materials
                 </p>
               </div>
-              <span className="text-[8.5px] font-mono uppercase tracking-widest text-[#7c5cfc] flex items-center gap-1 self-end mt-3">
-                Enter Sanctuary <ArrowRight className="w-3 h-3" />
-              </span>
+              <div className="flex items-center justify-between mt-3 select-none">
+                {selectedCardId === 'sanctuary' ? (
+                  <div className="flex gap-1 items-center" onClick={(e) => e.stopPropagation()}>
+                    {COLOR_PRESETS.map((preset) => (
+                      <button
+                        key={preset.name}
+                        onClick={() => updateCardColor('sanctuary', preset.name)}
+                        style={{ backgroundColor: preset.value }}
+                        className={`w-2 h-2 rounded-full border cursor-pointer ${
+                          (cardColors['sanctuary'] || 'violet') === preset.name ? 'border-[#f0f0ff]' : 'border-transparent'
+                        }`}
+                        title={`Set ${preset.name} color`}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div />
+                )}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push('/sanctuary');
+                  }}
+                  className={`text-[8.5px] font-mono uppercase tracking-widest ${getTextColor('sanctuary')} hover:text-[#f0f0ff] flex items-center gap-1 transition-colors cursor-pointer`}
+                >
+                  Enter Sanctuary <ArrowRight className="w-3 h-3" />
+                </button>
+              </div>
             </FascaCard>
           </div>
 
@@ -635,39 +743,105 @@ export default function DashboardPage() {
                   <FascaCard 
                     key={node.id} 
                     className={`p-4 flex flex-col justify-between h-32 cursor-pointer transition-all duration-150 ease-out select-none ${
-                      selectedCardId === node.id ? 'border-[#7c5cfc] shadow-[0_0_12px_rgba(124,92,252,0.2)]' : 'border-[#2a2a3a] hover:border-[#7c5cfc]/60'
+                      getCardColorClass(node.id, selectedCardId === node.id)
                     }`}
                     onClick={(e) => {
                       e.stopPropagation();
                       setSelectedCardId(node.id);
                     }}
-                    onDoubleClick={() => router.push(`/room/${node.id}`)}
+                    onDoubleClick={() => {
+                      if (editingNodeId !== node.id) {
+                        router.push(`/room/${node.id}`);
+                      }
+                    }}
                   >
                     <div>
-                      <span className="text-[8.5px] font-mono text-[#7c5cfc] uppercase tracking-wider block">
+                      <span className={`text-[8.5px] font-mono uppercase tracking-wider block ${getTextColor(node.id)}`}>
                         {node.course}
                       </span>
-                      <h3 className="text-xs font-bold text-[#f0f0ff] mt-1" title={node.roomName}>
-                        {node.roomName}
-                      </h3>
+                      {editingNodeId === node.id ? (
+                        <input
+                          type="text"
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          className="bg-[#16161f] border border-[#7c5cfc] px-2 py-1 text-xs rounded font-mono text-[#f0f0ff] focus:outline-none w-full mt-1"
+                          onKeyDown={async (e) => {
+                            if (e.key === 'Enter') {
+                              await handleRename(node.id, editingName);
+                            } else if (e.key === 'Escape') {
+                              setEditingNodeId(null);
+                            }
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          autoFocus
+                        />
+                      ) : (
+                        <h3 className="text-xs font-bold text-[#f0f0ff] mt-1 truncate" title={node.roomName}>
+                          {node.roomName}
+                        </h3>
+                      )}
                       <p className="text-[9px] text-[#6b6b8a] font-mono mt-1" title={node.currentSlide}>
                         {node.currentSlide}
                       </p>
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        router.push(`/room/${node.id}`);
-                      }}
-                      className="text-[8.5px] font-mono uppercase tracking-widest text-[#7c5cfc] hover:text-[#f0f0ff] flex items-center gap-1 transition-colors self-end mt-2 cursor-pointer"
-                    >
-                      Join Circle <ArrowRight className="w-3 h-3" />
-                    </button>
+                    <div className="flex items-center justify-between mt-2 select-none">
+                      {selectedCardId === node.id && editingNodeId !== node.id ? (
+                        <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => {
+                              setEditingNodeId(node.id);
+                              setEditingName(node.roomName);
+                            }}
+                            className="text-[7.5px] font-mono uppercase tracking-wider text-[#6b6b8a] hover:text-[#f0f0ff] cursor-pointer"
+                          >
+                            Rename
+                          </button>
+                          <span className="text-[#6b6b8a]/40">|</span>
+                          <button
+                            onClick={() => handleDelete(node.id)}
+                            className="text-[7.5px] font-mono uppercase tracking-wider text-[#ff2d55]/80 hover:text-[#ff2d55] cursor-pointer"
+                          >
+                            Delete
+                          </button>
+                          <span className="text-[#6b6b8a]/40">|</span>
+                          <div className="flex gap-1 items-center">
+                            {COLOR_PRESETS.map((preset) => (
+                              <button
+                                key={preset.name}
+                                onClick={() => updateCardColor(node.id, preset.name)}
+                                style={{ backgroundColor: preset.value }}
+                                className={`w-1.5 h-1.5 rounded-full border cursor-pointer ${
+                                  (cardColors[node.id] || 'violet') === preset.name ? 'border-[#f0f0ff]' : 'border-transparent'
+                                }`}
+                                title={`Set ${preset.name} color`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div />
+                      )}
+                      
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (editingNodeId === node.id) {
+                            handleRename(node.id, editingName);
+                          } else {
+                            router.push(`/room/${node.id}`);
+                          }
+                        }}
+                        className={`text-[8.5px] font-mono uppercase tracking-widest ${getTextColor(node.id)} hover:text-[#f0f0ff] flex items-center gap-1 transition-colors cursor-pointer`}
+                      >
+                        {editingNodeId === node.id ? 'Save' : 'Join Circle'} <ArrowRight className="w-3 h-3" />
+                      </button>
+                    </div>
                   </FascaCard>
                 ))}
               </div>
             )}
           </div>
+
 
         </div>
       </div>
@@ -798,7 +972,7 @@ export default function DashboardPage() {
                 exit={{ opacity: 0 }}
                 className="w-full text-center"
               >
-                <StudyNodesGraph />
+                <StudyNodesGraph nodesData={gardenNodes} />
               </motion.div>
             )}
 

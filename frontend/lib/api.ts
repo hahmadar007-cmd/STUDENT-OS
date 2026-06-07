@@ -225,6 +225,14 @@ export const createGroup = (name: string, courseCode?: string) => {
   return apiRequest('/groups', 'POST', { name, courseCode });
 };
 
+export const deleteGroup = (groupId: string) => {
+  return apiRequest(`/groups/${groupId}`, 'DELETE');
+};
+
+export const renameGroup = (groupId: string, name: string) => {
+  return apiRequest(`/groups/${groupId}`, 'PATCH', { name });
+};
+
 export const updateProfile = (details: { name?: string; email?: string; preferredAiModel?: string; avatarUrl?: string }) => {
   return apiRequest('/users/me', 'PATCH', details);
 };

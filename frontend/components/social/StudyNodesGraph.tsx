@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as d3 from 'd3';
-import { X, Users, Compass, Flame } from 'lucide-react';
+import { X, Users, Compass, Flame, Search } from 'lucide-react';
 import { FascaButton } from '../ui/FascaButton';
 
 interface GraphNode extends d3.SimulationNodeDatum {
@@ -21,33 +21,81 @@ interface GraphLink extends d3.SimulationLinkDatum<GraphNode> {
   target: string;
 }
 
+export interface StudyNodesGraphProps {
+  nodesData?: {
+    id: string;
+    course: string;
+    roomName: string;
+    currentSlide: string;
+  }[];
+}
+
 /**
  * StudyNodesGraph Component
  * Uses D3.js to render a force-directed network graph of study groups.
  * Node size represents member counts, node color indicates activity,
  * and clicking a node shows an interactive details card overlay.
+ * Equipped with real database nodes, search filtering, and drag-and-drop mechanics.
  */
-export const StudyNodesGraph: React.FC = () => {
+export const StudyNodesGraph: React.FC<StudyNodesGraphProps> = ({ nodesData }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
 
-  const nodes: GraphNode[] = [
-    { id: 'group-1', course: 'CS-229', name: 'Neural Network Room', memberCount: 8, currentSlide: 'Slide 4: Backpropagation', isActive: true },
-    { id: 'group-2', course: 'CS-109', name: 'Probability Study Desk', memberCount: 5, currentSlide: 'Slide 12: Normal Distributions', isActive: true },
-    { id: 'group-3', course: 'PHY-201', name: 'Quantum Mechanics Lab', memberCount: 3, currentSlide: 'Slide 2: Schrödinger Wave Equation', isActive: false },
-    { id: 'group-4', course: 'CS-101', name: 'Intro to Algorithms Group', memberCount: 12, currentSlide: 'Slide 9: Recursion Basics', isActive: false },
-    { id: 'group-5', course: 'EE-140', name: 'Analog Circuits Lab', memberCount: 4, currentSlide: 'Slide 7: Op-Amp Feedback', isActive: true },
-  ];
+  // Parse nodes data or fallback to demo
+  const allNodes: GraphNode[] = (nodesData && nodesData.length > 0)
+    ? nodesData.map((n, idx) => ({
+        id: n.id,
+        course: n.course || 'CS-229',
+        name: n.roomName,
+        memberCount: 3 + (idx % 4), // simulate member counts
+        currentSlide: n.currentSlide || 'Slide 1',
+        isActive: idx % 2 === 0,
+      }))
+    : [
+        { id: 'group-1', course: 'CS-229', name: 'Neural Network Room', memberCount: 8, currentSlide: 'Slide 4: Backpropagation', isActive: true },
+        { id: 'group-2', course: 'CS-109', name: 'Probability Study Desk', memberCount: 5, currentSlide: 'Slide 12: Normal Distributions', isActive: true },
+        { id: 'group-3', course: 'PHY-201', name: 'Quantum Mechanics Lab', memberCount: 3, currentSlide: 'Slide 2: Schrödinger Wave Equation', isActive: false },
+        { id: 'group-4', course: 'CS-101', name: 'Intro to Algorithms Group', memberCount: 12, currentSlide: 'Slide 9: Recursion Basics', isActive: false },
+        { id: 'group-5', course: 'EE-140', name: 'Analog Circuits Lab', memberCount: 4, currentSlide: 'Slide 7: Op-Amp Feedback', isActive: true },
+      ];
 
-  const links: GraphLink[] = [
-    { source: 'group-1', target: 'group-2' },
-    { source: 'group-1', target: 'group-5' },
-    { source: 'group-2', target: 'group-3' },
-    { source: 'group-2', target: 'group-4' },
-    { source: 'group-3', target: 'group-5' },
-  ];
+  // Filter nodes based on search query
+  const filteredNodes = allNodes.filter(n => 
+    n.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    n.course.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Dynamic links generation
+  const links: GraphLink[] = [];
+  if (nodesData && nodesData.length > 0) {
+    for (let i = 0; i < filteredNodes.length; i++) {
+      for (let j = i + 1; j < filteredNodes.length; j++) {
+        const prefixA = filteredNodes[i].course.split('-')[0];
+        const prefixB = filteredNodes[j].course.split('-')[0];
+        if (prefixA === prefixB || filteredNodes[i].course === filteredNodes[j].course) {
+          links.push({ source: filteredNodes[i].id, target: filteredNodes[j].id });
+        }
+      }
+    }
+  } else {
+    // Demo links
+    const demoLinks = [
+      { source: 'group-1', target: 'group-2' },
+      { source: 'group-1', target: 'group-5' },
+      { source: 'group-2', target: 'group-3' },
+      { source: 'group-2', target: 'group-4' },
+      { source: 'group-3', target: 'group-5' },
+    ];
+    // Only include links where both source and target exist in filtered nodes
+    demoLinks.forEach(link => {
+      if (filteredNodes.some(n => n.id === link.source) && filteredNodes.some(n => n.id === link.target)) {
+        links.push(link);
+      }
+    });
+  }
 
   useEffect(() => {
     if (!svgRef.current || !containerRef.current) return;
@@ -65,11 +113,11 @@ export const StudyNodesGraph: React.FC = () => {
       .attr('style', 'max-width: 100%; height: auto;');
 
     // Setup force simulation
-    const simulation = d3.forceSimulation<GraphNode>(nodes)
+    const simulation = d3.forceSimulation<GraphNode>(filteredNodes)
       .force('link', d3.forceLink<GraphNode, GraphLink>(links).id(d => d.id).distance(90))
-      .force('charge', d3.forceManyBody().strength(-150))
+      .force('charge', d3.forceManyBody().strength(-180))
       .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collision', d3.forceCollide().radius(d => (d as GraphNode).memberCount * 1.8 + 12));
+      .force('collision', d3.forceCollide().radius(d => (d as GraphNode).memberCount * 1.8 + 14));
 
     // Render connecting lines
     const link = svg.append('g')
@@ -81,10 +129,10 @@ export const StudyNodesGraph: React.FC = () => {
       .attr('stroke-opacity', 0.6)
       .attr('stroke-width', 1.5);
 
-    // Render nodes
+    // Render nodes container
     const node = svg.append('g')
       .selectAll('g')
-      .data(nodes)
+      .data(filteredNodes)
       .enter()
       .append('g')
       .attr('cursor', 'pointer')
@@ -121,6 +169,25 @@ export const StudyNodesGraph: React.FC = () => {
       .attr('font-weight', 'bold')
       .attr('pointer-events', 'none');
 
+    // Drag behavior implementation
+    const drag = d3.drag<any, any>()
+      .on('start', (event, d) => {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      })
+      .on('drag', (event, d) => {
+        d.fx = event.x;
+        d.fy = event.y;
+      })
+      .on('end', (event, d) => {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+      });
+
+    node.call(drag as any);
+
     // Update positions on tick
     simulation.on('tick', () => {
       link
@@ -136,13 +203,30 @@ export const StudyNodesGraph: React.FC = () => {
     return () => {
       simulation.stop();
     };
-  }, []);
+  }, [filteredNodes, links]);
 
   return (
-    <div ref={containerRef} className="w-full relative bg-[#111118]/40 border border-[#2a2a3a] rounded-[6px] overflow-hidden min-h-[300px]">
+    <div ref={containerRef} className="w-full relative bg-[#111118]/40 border border-[#2a2a3a] rounded-[6px] overflow-hidden min-h-[350px]">
       
+      {/* Search Input Bar */}
+      <div className="absolute top-3 left-3 right-3 z-20 flex items-center bg-[#16161f]/90 border border-[#2a2a3a] px-2.5 py-1.5 rounded-[4px] max-w-[200px]">
+        <Search className="w-3.5 h-3.5 text-[#6b6b8a] mr-1.5" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Filter nodes..."
+          className="bg-transparent border-none text-[9px] font-mono text-[#f0f0ff] focus:outline-none w-full placeholder-[#6b6b8a]"
+        />
+        {searchQuery && (
+          <button onClick={() => setSearchQuery('')} className="text-[#6b6b8a] hover:text-[#f0f0ff]">
+            <X className="w-3 h-3" />
+          </button>
+        )}
+      </div>
+
       {/* Simulation SVG */}
-      <svg ref={svgRef} className="w-full h-[300px]" />
+      <svg ref={svgRef} className="w-full h-[300px] mt-8" />
 
       {/* Selected Node Details Overlay Card */}
       <AnimatePresence>
@@ -188,7 +272,7 @@ export const StudyNodesGraph: React.FC = () => {
             </div>
 
             <FascaButton
-              onClick={() => router.push(`/groups/${selectedNode.id}`)}
+              onClick={() => router.push(`/room/${selectedNode.id}`)}
               variant="solid-violet"
               className="w-full rounded-none font-bold py-2 text-[9px] mt-2 flex items-center justify-center gap-1.5"
             >
