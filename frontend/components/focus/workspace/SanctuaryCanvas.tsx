@@ -77,7 +77,7 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
   activeDoc,
   setActiveDoc,
 }) => {
-  const { mode, isFlowActive, activeFolderId, setActiveVideoUrl, setActiveVideoTimestamp, setActiveDocText } = useFouzar();
+  const { mode, isFlowActive, activeFolderId, setActiveVideoUrl, setActiveVideoTimestamp, setActiveDocText, setAiTriggerQuery } = useFouzar();
   const isGreenhouse = mode === 'greenhouse';
 
   const [canvasView, setCanvasView] = useState<CanvasView>('split');
@@ -499,11 +499,15 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
                             <button
                               type="button"
                               onClick={() => {
-                                setActiveDocText(`[Web Search context]\nSource Title: ${res.title}\nSource Link: ${res.link}\nContent:\n${res.snippet}`);
-                                setFedUrls((prev) => ({ ...prev, [res.link]: true }));
-                                setTimeout(() => {
-                                  setFedUrls((prev) => ({ ...prev, [res.link]: false }));
-                                }, 2000);
+                                 setActiveDocText(`[Web Search context]\nSource Title: ${res.title}\nSource Link: ${res.link}\nContent:\n${res.snippet}`);
+                                 setAiTriggerQuery({
+                                   text: `Please analyze this search result context:\n\nTitle: ${res.title}\nLink: ${res.link}\nSnippet: ${res.snippet}`,
+                                   id: Date.now().toString()
+                                 });
+                                 setFedUrls((prev) => ({ ...prev, [res.link]: true }));
+                                 setTimeout(() => {
+                                   setFedUrls((prev) => ({ ...prev, [res.link]: false }));
+                                 }, 2000);
                               }}
                               className={`px-3 py-1.5 font-mono text-[7.5px] uppercase tracking-wider rounded-[var(--fouzar-radius-sm)] border cursor-pointer shrink-0 transition-all ${
                                 isFed

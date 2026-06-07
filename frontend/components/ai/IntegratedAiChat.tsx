@@ -51,7 +51,9 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
     activeDoc, 
     activeDocText, 
     activeVideoUrl, 
-    activeVideoTimestamp 
+    activeVideoTimestamp,
+    aiTriggerQuery,
+    setAiTriggerQuery
   } = useFouzar();
   const [messages, setMessages] = useState<AiChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -403,6 +405,12 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
     }
   };
 
+  useEffect(() => {
+    if (!aiTriggerQuery) return;
+    handleSend(null, aiTriggerQuery.text);
+    setAiTriggerQuery(null);
+  }, [aiTriggerQuery, setAiTriggerQuery]);
+
   return (
     <div
       onDragOver={handleDragOver}
@@ -413,11 +421,16 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
       }`}
     >
       {isDragging && (
-        <div className="absolute inset-0 bg-fouzar-accent/10 backdrop-blur-md border-2 border-dashed border-fouzar-accent rounded-[var(--fouzar-radius-md)] flex flex-col items-center justify-center z-50 pointer-events-none transition-all duration-300">
-          <Sparkles className="w-10 h-10 text-fouzar-accent animate-bounce mb-2" />
-          <p className="font-mono text-[9px] text-fouzar-text-primary uppercase tracking-widest">
-            Drop file here to study
-          </p>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md border-4 border-dashed border-fouzar-accent flex flex-col items-center justify-center z-[9999] pointer-events-none transition-all duration-300">
+          <div className="p-8 bg-fouzar-surface border border-fouzar-border rounded-[var(--fouzar-radius-lg)] flex flex-col items-center justify-center max-w-sm text-center shadow-[var(--fouzar-shadow-lg)]">
+            <Sparkles className="w-12 h-12 text-fouzar-accent animate-bounce mb-4" />
+            <p className="font-serif text-sm font-bold text-fouzar-text-primary uppercase tracking-wider mb-2">
+              Drop file here to study
+            </p>
+            <p className="font-mono text-[9px] text-fouzar-text-secondary uppercase tracking-widest leading-relaxed">
+              Upload PDF, PPTX, or text/code files to instantly index &amp; chat with AI
+            </p>
+          </div>
         </div>
       )}
       <div className="flex items-center justify-between mb-3 shrink-0">

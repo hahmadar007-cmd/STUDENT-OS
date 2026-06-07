@@ -61,6 +61,7 @@ export default function PersonalSanctuaryPage() {
     activeDoc,
     setActiveDoc,
     setActiveDocText,
+    setAiTriggerQuery,
   } = useFouzar();
 
   const [semester, setSemester] = useState('Spring 2026');
@@ -644,6 +645,10 @@ export default function PersonalSanctuaryPage() {
                               type="button"
                               onClick={() => {
                                 setActiveDocText(`[Web Search context]\nSource Title: ${res.title}\nSource Link: ${res.link}\nContent:\n${res.snippet}`);
+                                setAiTriggerQuery({
+                                  text: `Please analyze this search result context:\n\nTitle: ${res.title}\nLink: ${res.link}\nSnippet: ${res.snippet}`,
+                                  id: Date.now().toString()
+                                });
                                 setFedUrls((prev) => ({ ...prev, [res.link]: true }));
                                 setTimeout(() => {
                                   setFedUrls((prev) => ({ ...prev, [res.link]: false }));

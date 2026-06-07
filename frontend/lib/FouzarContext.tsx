@@ -149,6 +149,8 @@ export interface FouzarContextValue {
   setIsOrbOpen: (open: boolean) => void;
   aiModel: string;
   setAiModel: (model: string) => void;
+  aiTriggerQuery: { text: string; id: string } | null;
+  setAiTriggerQuery: (query: { text: string; id: string } | null) => void;
 
   /* --- Folders/Subjects --- */
   folders: FouzarFolder[];
@@ -308,6 +310,7 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [isFlowActive, setIsFlowActive] = useState(false);
   const [isOrbOpen, setIsOrbOpen] = useState(false);
   const [aiModel, setAiModelState] = useState('deepseek');
+  const [aiTriggerQuery, setAiTriggerQuery] = useState<{ text: string; id: string } | null>(null);
   const [user, setUserState] = useState<FouzarUserProfile | null>(null);
   const [friends, setFriends] = useState<FouzarFriendProfile[]>(SEED_FRIENDS);
   const [repository, setRepository] = useState<LmsRepositoryItem[]>([]);
@@ -691,6 +694,8 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setIsOrbOpen,
       aiModel,
       setAiModel,
+      aiTriggerQuery,
+      setAiTriggerQuery,
       folders,
       activeFolderId,
       setActiveFolderId,
@@ -736,6 +741,8 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       isOrbOpen,
       aiModel,
       setAiModel,
+      aiTriggerQuery,
+      setAiTriggerQuery,
       folders,
       activeFolderId,
       setActiveFolderId,
