@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 // @ts-ignore
-import * as AdmZip from 'adm-zip';
+import AdmZip from 'adm-zip';
 
 @Injectable()
 export class DocumentProcessorService {
