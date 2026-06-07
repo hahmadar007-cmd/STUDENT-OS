@@ -132,21 +132,17 @@ Student's Query: "${prompt}"`;
         } else {
           const data = await response.json().catch(() => ({}));
           console.error('Gemini API Error response:', data);
-          if (data.error?.status === 'RESOURCE_EXHAUSTED' || data.error?.code === 429) {
-            return {
-              text: `### FASCA Core Intelligence Error\n\nThe Google Gemini API rate limit or quota has been exceeded.\n\nMessage: ${data.error?.message || 'Quota exceeded'}.\n\nPlease try again shortly, check your billing details, or link a personal key in settings.`,
-              model: 'Gemini (Quota Exceeded)',
-            };
-          }
-          if (data.error?.code === 400 || data.error?.code === 403) {
-            return {
-              text: `### FASCA Core Intelligence Error\n\nFailed to authenticate with Gemini API (error: ${data.error?.message || 'Invalid API key'}).\n\nPlease check your linked Gemini connection token in your settings page.`,
-              model: 'Gemini (Auth Error)',
-            };
-          }
+          return {
+            text: `### FASCA Core Intelligence Error\n\nThe Google Gemini API returned an error.\n\nStatus: ${response.status}\nMessage: ${data.error?.message || 'Unknown error'}\n\nPlease try again shortly, check your billing details, or link a personal key in settings.`,
+            model: `Gemini (API Error ${response.status})`,
+          };
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Gemini API Error:', err);
+        return {
+          text: `### FASCA Core Intelligence Error\n\nFailed to communicate with the Google Gemini API.\n\nError: ${err.message || err}\n\nPlease verify your internet connection or check your API key in settings.`,
+          model: 'Gemini (Network Error)',
+        };
       }
     }
 
@@ -171,15 +167,17 @@ Student's Query: "${prompt}"`;
         } else {
           const data = await response.json().catch(() => ({}));
           console.error('OpenAI API Error response:', data);
-          if (data.error?.code === 'insufficient_quota' || response.status === 429) {
-            return {
-              text: `### FASCA Core Intelligence Error\n\nThe connected OpenAI account has exceeded its API quota (error: insufficient_quota).\n\nPlease update your API key in settings, check your billing status, or switch your connection mode to Google Gemini (System Default).`,
-              model: 'GPT-4o (Error)',
-            };
-          }
+          return {
+            text: `### FASCA Core Intelligence Error\n\nThe OpenAI API returned an error.\n\nStatus: ${response.status}\nMessage: ${data.error?.message || 'Unknown error'}\n\nPlease check your billing details, link a personal key in settings, or switch connection mode.`,
+            model: `GPT-4o (API Error ${response.status})`,
+          };
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('OpenAI API Error:', err);
+        return {
+          text: `### FASCA Core Intelligence Error\n\nFailed to communicate with the OpenAI API.\n\nError: ${err.message || err}\n\nPlease check your internet connection or key status.`,
+          model: 'GPT-4o (Network Error)',
+        };
       }
     }
 
@@ -206,9 +204,17 @@ Student's Query: "${prompt}"`;
         } else {
           const data = await response.json().catch(() => ({}));
           console.error('Anthropic API Error response:', data);
+          return {
+            text: `### FASCA Core Intelligence Error\n\nThe Anthropic API returned an error.\n\nStatus: ${response.status}\nMessage: ${data.error?.message || 'Unknown error'}`,
+            model: `Claude (API Error ${response.status})`,
+          };
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Anthropic API Error:', err);
+        return {
+          text: `### FASCA Core Intelligence Error\n\nFailed to communicate with the Anthropic API.\n\nError: ${err.message || err}`,
+          model: 'Claude (Network Error)',
+        };
       }
     }
 
@@ -231,25 +237,43 @@ Student's Query: "${prompt}"`;
           const data = await response.json();
           const text = data.choices?.[0]?.message?.content;
           if (text) return { text, model: 'Custom Endpoint' };
+        } else {
+          return {
+            text: `### FASCA Core Intelligence Error\n\nThe custom endpoint returned status ${response.status}.`,
+            model: 'Custom Endpoint (Error)',
+          };
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Custom Endpoint Error:', err);
+        return {
+          text: `### FASCA Core Intelligence Error\n\nFailed to contact custom endpoint: ${err.message || err}`,
+          model: 'Custom Endpoint (Error)',
+        };
       }
     }
 
     // 3. Fallback to existing mock simulations but with live context
     await new Promise((resolve) => setTimeout(resolve, 800));
 
+    // Handle common greetings in simulated mode
+    const greetings = ['hi', 'hello', 'hey', 'greetings', 'yo', 'sup'];
+    if (greetings.includes(lowercasePrompt.trim().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g,""))) {
+      return {
+        text: `### FASCA Core Intelligence (Simulated Partner)\n\nHello! I am Fasca AI, your virtual study assistant. I'm currently running in **offline simulated mode** because no live API keys are active in the backend.\n\nIf you started your backend server *before* adding the keys to the \`.env\` file, please **restart your backend command terminal**! Alternatively, you can link your custom API key in the Profile Settings page to enable live responses immediately.`,
+        model: `${modelName} (Simulated)`,
+      };
+    }
+
     let responseText = '';
     
     // Check if we have active slide text to answer from
     if (currentSlideText && currentSlideText.trim()) {
       responseText = `### FASCA Core Intelligence (Context Simulation)
-I parsed the active **Slide ${slideId || 'unknown'}** text content:
+I detected active study content:
 "${currentSlideText.substring(0, 150)}..."
 
 Regarding your query **"${prompt}"**:
-Based on this slide's contents, this concept focuses on optimization and structuring learning parameters. Let me know if you would like me to summarize the slide further or write corresponding practice exercises.`;
+Based on this context, this is related to your active learning material. Note that I am currently running in offline simulated mode. If you have API keys, please make sure they are written in \`backend/.env\` and that you have **restarted your backend server**. You can also enter a key in the settings panel to activate live responses!`;
     } else if (slideId === '4' || lowercasePrompt.includes('backprop') || lowercasePrompt.includes('chain rule') || lowercasePrompt.includes('gradient')) {
       responseText = `### Slide 4 Context: Gradient Descent & Backpropagation\n\nTo compute the local gradients for neural network training, we utilize the **Chain Rule of Calculus**.\n\nLet $z = wx + b$ and $a = \\sigma(z)$. The loss derivative with respect to weight $w$ is calculated as:\n$$\\frac{\\partial L}{\\partial w} = \\frac{\\partial L}{\\partial a} \\cdot \\frac{\\partial a}{\\partial z} \\cdot \\frac{\\partial z}{\\partial w}$$\n\nWhere:\n1. $\\frac{\\partial z}{\\partial w} = x$\n2. $\\frac{\\partial a}{\\partial z} = \\sigma'(z)$\n\nTherefore, we propagate the error gradient backward through the graph: $\\delta = \\frac{\\partial L}{\\partial z} = \\frac{\\partial L}{\\partial a} \\cdot \\sigma'(z)$.\n\nWould you like me to write a PyTorch snippet demonstrating this manual backward pass?`;
     } else if (slideId === '3' || lowercasePrompt.includes('neural network') || lowercasePrompt.includes('relu') || lowercasePrompt.includes('activation')) {
@@ -257,7 +281,7 @@ Based on this slide's contents, this concept focuses on optimization and structu
     } else if (slideId === '2' || lowercasePrompt.includes('supervised') || lowercasePrompt.includes('unsupervised') || lowercasePrompt.includes('learning')) {
       responseText = `### Slide 2 Context: Supervised vs Unsupervised Learning\n\n*   **Supervised Learning**: Learn mapping $f: X \\to Y$ from labeled dataset $\\mathcal{D} = \\{(x_i, y_i)\\}_{i=1}^N$. Used for classification (discrete $Y$) and regression (continuous $Y$).\n*   **Unsupervised Learning**: Learn structure/density of input space $X$ from unlabeled dataset $\\mathcal{D} = \\{x_i\\}_{i=1}^N$. Used for clustering (K-Means, GMM), dimensionality reduction (PCA, t-SNE), and density estimation.`;
     } else {
-      responseText = `### FASCA Core Intelligence Response (${modelName})\n\nI have parsed your request within the active study room. Here is the response:\n\nRegarding your query about **"${prompt}"**:\n\nIn machine learning, this typically refers to optimizing parameter search space coordinates. If this is linked to the current course, I recommend referencing the mathematical foundations on standard derivatives and loss metrics. Let me know if you want me to expand on any specific sub-topic.`;
+      responseText = `### FASCA Core Intelligence Response (${modelName})\n\nRegarding your query about **"${prompt}"**:\n\nI am currently running in offline simulated mode, so I can only respond to preset course concepts like neural networks, activation functions, and gradient descent. Link your Google Gemini or OpenAI API token in settings or restart your backend server to enable real-time AI responses!`;
     }
 
     return {
