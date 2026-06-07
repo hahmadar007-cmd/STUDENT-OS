@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Download, FileText, ExternalLink } from 'lucide-react';
+import { X, Download, FileText, ExternalLink, Maximize2, Minimize2, Eye, EyeOff } from 'lucide-react';
 import {
   getDocument,
   createObjectUrl,
@@ -73,6 +73,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [textContent, setTextContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
+  const [showTextMode, setShowTextMode] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -81,10 +84,12 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
     let dlUrl: string | null = null;
     let prvUrl: string | null = null;
     setLoading(true);
+    setIsConverting(false);
     setError(null);
     setTextContent(null);
     setDownloadUrl(null);
     setPreviewUrl(null);
+    setShowTextMode(false);
 
     getDocument(document.storageId)
       .then(async (stored) => {
@@ -114,6 +119,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
           try {
             const { fullText, chunks } = await extractTextFromPdf(stored.blob);
             setActiveDocText(`${metaText}\n\n[Extracted Slide Content]:\n${fullText}`);
+            setTextContent(fullText); // Plain text view option
             // Index PDF page chunks in Vector DB
             indexDocument(document.courseCode || 'general', document.id || document.storageId || 'pdf-doc', chunks)
               .catch(e => console.error('Failed to index PDF:', e));
@@ -145,6 +151,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
             }
           } else {
             // No cached PDF, call backend to parse and convert
+            setIsConverting(true);
             try {
               const res = await indexDocumentFile(
                 document.courseCode || 'general',
@@ -184,6 +191,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
             } catch (e: any) {
               console.error('PPTX text indexing/extraction error:', e);
               setError(`Failed to process PowerPoint: ${e.message || 'API is offline or unreachable'}. Please make sure the backend is running.`);
+            } finally {
+              setIsConverting(false);
             }
           }
         } else {
@@ -214,28 +223,70 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
     (isViewableInBrowser(document.mimeType ?? '', document.fileName) ||
       (document.fileName.toLowerCase().endsWith('.pptx') && (textContent !== null || previewUrl !== null)));
 
-  if (isInline) {
+  // If in inline mode and NOT expanded to fullscreen
+  if (isInline && !isFullscreen) {
     return (
       <div className="w-full h-full flex flex-col bg-fouzar-surface border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-4 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between mb-3 shrink-0">
-          <div className="min-w-0">
-            <h2 className="font-serif text-xs font-bold truncate">{document.fileName}</h2>
+          <div className="min-w-0 flex-1 mr-2">
+            <h2 className="font-serif text-xs font-bold truncate" title={document.fileName}>{document.fileName}</h2>
             <p className="font-mono text-[7px] text-fouzar-text-secondary uppercase mt-0.5">
               {document.courseCode} · {document.category} · {document.sizeLabel}
             </p>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
+            {/* View Mode Toggle */}
+            {textContent !== null && (isPdf || isImage) && (
+              <button
+                type="button"
+                onClick={() => setShowTextMode(!showTextMode)}
+                className={`p-1.5 border rounded-[var(--fouzar-radius-md)] flex items-center gap-1 font-mono text-[7px] uppercase cursor-pointer ${
+                  showTextMode
+                    ? 'bg-fouzar-accent/20 border-fouzar-accent text-fouzar-accent'
+                    : 'border-fouzar-border text-fouzar-text-secondary hover:text-fouzar-text-primary'
+                }`}
+                title={showTextMode ? "Switch to Visual Presentation View" : "View Extracted Plain Text"}
+              >
+                {showTextMode ? <Eye className="w-3.5 h-3.5" /> : <FileText className="w-3.5 h-3.5" />}
+                <span className="hidden sm:inline">{showTextMode ? "Slides" : "Text"}</span>
+              </button>
+            )}
+
+            {/* Open in New Tab (gives native PDF zoom/print controls) */}
+            {previewUrl && isPdf && (
+              <a
+                href={previewUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 border border-fouzar-border rounded-[var(--fouzar-radius-md)] text-fouzar-text-secondary hover:text-fouzar-accent"
+                title="Open in new tab (Zoom, Print, Present)"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            )}
+
             {downloadUrl && (
               <a
                 href={downloadUrl}
                 download={document.fileName}
                 className="p-1.5 border border-fouzar-border rounded-[var(--fouzar-radius-md)] text-fouzar-text-secondary hover:text-fouzar-accent"
-                title="Download"
+                title="Download Original File"
               >
                 <Download className="w-3.5 h-3.5" />
               </a>
             )}
+
+            {/* Maximize to fullscreen modal */}
+            <button
+              type="button"
+              onClick={() => setIsFullscreen(true)}
+              className="p-1.5 border border-fouzar-border rounded-[var(--fouzar-radius-md)] text-fouzar-text-secondary hover:text-fouzar-accent cursor-pointer"
+              title="Expand to Fullscreen"
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+            </button>
+
             <button
               type="button"
               onClick={onClose}
@@ -249,10 +300,15 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
         {/* Content Viewer */}
         <div className="flex-1 min-h-0 bg-fouzar-elevated/30 border border-fouzar-border rounded-[var(--fouzar-radius-md)] overflow-hidden flex flex-col">
           {loading && (
-            <div className="flex-1 flex items-center justify-center">
-              <span className="font-mono text-[9px] text-fouzar-accent animate-pulse uppercase">
-                Loading document...
+            <div className="flex-1 flex flex-col items-center justify-center gap-2 p-6 text-center">
+              <span className="font-mono text-[9px] text-fouzar-accent animate-pulse uppercase font-bold tracking-wider">
+                {isConverting ? 'Converting PPT to PDF...' : 'Loading document...'}
               </span>
+              {isConverting && (
+                <span className="font-mono text-[7.5px] text-fouzar-text-secondary uppercase">
+                  ⚡ Pre-rendering slides for visual preview. Please wait...
+                </span>
+              )}
             </div>
           )}
 
@@ -281,7 +337,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
             </div>
           )}
 
-          {!loading && !error && previewUrl && isPdf && (
+          {!loading && !error && previewUrl && isPdf && !showTextMode && (
             <iframe
               src={previewUrl}
               title={document.fileName}
@@ -289,13 +345,13 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
             />
           )}
 
-          {!loading && !error && previewUrl && isImage && (
+          {!loading && !error && previewUrl && isImage && !showTextMode && (
             <div className="flex-1 flex items-center justify-center p-4 overflow-auto">
               <img src={previewUrl} alt={document.fileName} className="max-w-full max-h-full object-contain" />
             </div>
           )}
 
-          {!loading && !error && textContent !== null && (
+          {!loading && !error && textContent !== null && (showTextMode || (!isPdf && !isImage)) && (
             <pre className="flex-1 overflow-auto p-4 font-mono text-[10px] leading-relaxed text-fouzar-text-primary whitespace-pre-wrap bg-fouzar-bg/20">
               {textContent}
             </pre>
@@ -329,14 +385,16 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
     );
   }
 
+  // Fullscreen layout (rendered inside fixed backdrop modal)
   return (
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-fouzar-bg/90 backdrop-blur-md flex flex-col p-4 md:p-6"
+        className="fixed inset-0 z-50 bg-fouzar-bg/95 backdrop-blur-md flex flex-col p-4 md:p-6"
       >
+        {/* Header */}
         <div className="flex items-center justify-between mb-4 shrink-0">
           <div className="min-w-0">
             <h2 className="font-serif text-sm font-bold truncate">{document.fileName}</h2>
@@ -345,39 +403,82 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {/* View Mode Toggle */}
+            {textContent !== null && (isPdf || isImage) && (
+              <button
+                type="button"
+                onClick={() => setShowTextMode(!showTextMode)}
+                className={`px-3 py-1.5 border rounded-[var(--fouzar-radius-md)] flex items-center gap-1.5 font-mono text-[8.5px] uppercase cursor-pointer ${
+                  showTextMode
+                    ? 'bg-fouzar-accent/20 border-fouzar-accent text-fouzar-accent'
+                    : 'border-fouzar-border text-fouzar-text-secondary hover:text-fouzar-text-primary'
+                }`}
+                title={showTextMode ? "Switch to Slides View" : "View Extracted Text"}
+              >
+                {showTextMode ? <Eye className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
+                <span>{showTextMode ? "Slides View" : "Text Version"}</span>
+              </button>
+            )}
+
+            {previewUrl && isPdf && (
+              <a
+                href={previewUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 border border-fouzar-border rounded-[var(--fouzar-radius-md)] text-fouzar-text-secondary hover:text-fouzar-accent"
+                title="Open in new tab (Zoom, Print, Present)"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            )}
+
             {downloadUrl && (
               <a
                 href={downloadUrl}
                 download={document.fileName}
                 className="p-2 border border-fouzar-border rounded-[var(--fouzar-radius-md)] text-fouzar-text-secondary hover:text-fouzar-accent"
-                title="Download"
+                title="Download Original File"
               >
                 <Download className="w-4 h-4" />
               </a>
             )}
+
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => {
+                if (isInline) {
+                  setIsFullscreen(false);
+                } else {
+                  onClose();
+                }
+              }}
               className="p-2 border border-fouzar-border rounded-[var(--fouzar-radius-md)] hover:bg-fouzar-elevated"
+              title="Exit Fullscreen"
             >
-              <X className="w-4 h-4" />
+              <Minimize2 className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        <div className="flex-1 min-h-0 fouzar-card overflow-hidden flex flex-col">
+        {/* Content Panel */}
+        <div className="flex-1 min-h-0 fouzar-card overflow-hidden flex flex-col bg-fouzar-surface/40 border border-fouzar-border">
           {loading && (
-            <div className="flex-1 flex items-center justify-center">
-              <span className="font-mono text-[9px] text-fouzar-accent animate-pulse uppercase">
-                Loading document...
+            <div className="flex-1 flex flex-col items-center justify-center gap-2 text-center p-6">
+              <span className="font-mono text-[10px] text-fouzar-accent animate-pulse uppercase font-bold tracking-wider">
+                {isConverting ? 'Converting PPT to PDF...' : 'Loading document...'}
               </span>
+              {isConverting && (
+                <span className="font-mono text-[8px] text-fouzar-text-secondary uppercase">
+                  ⚡ Pre-rendering slides for visual preview. Please wait...
+                </span>
+              )}
             </div>
           )}
 
           {!loading && error && (
-            <div className="flex-1 flex flex-col items-center justify-center gap-3 p-8 text-center">
-              <FileText className="w-10 h-10 text-fouzar-signal opacity-60" />
-              <p className="font-mono text-[9px] text-fouzar-signal uppercase max-w-sm">{error}</p>
+            <div className="flex-1 flex flex-col items-center justify-center gap-3 p-8 text-center max-w-md mx-auto">
+              <FileText className="w-12 h-12 text-fouzar-signal opacity-60" />
+              <p className="font-mono text-[9px] text-fouzar-signal uppercase">{error}</p>
               {downloadUrl && (
                 <a
                   href={downloadUrl}
@@ -399,7 +500,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
             </div>
           )}
 
-          {!loading && !error && previewUrl && isPdf && (
+          {!loading && !error && previewUrl && isPdf && !showTextMode && (
             <iframe
               src={previewUrl}
               title={document.fileName}
@@ -407,13 +508,13 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
             />
           )}
 
-          {!loading && !error && previewUrl && isImage && (
+          {!loading && !error && previewUrl && isImage && !showTextMode && (
             <div className="flex-1 flex items-center justify-center p-4 overflow-auto">
               <img src={previewUrl} alt={document.fileName} className="max-w-full max-h-full object-contain" />
             </div>
           )}
 
-          {!loading && !error && textContent !== null && (
+          {!loading && !error && textContent !== null && (showTextMode || (!isPdf && !isImage)) && (
             <pre className="flex-1 overflow-auto p-6 font-mono text-[11px] leading-relaxed text-fouzar-text-primary whitespace-pre-wrap">
               {textContent}
             </pre>
