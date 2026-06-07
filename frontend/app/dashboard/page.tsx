@@ -101,6 +101,9 @@ export default function DashboardPage() {
     activateBypass,
     clearBypass,
     mode,
+    setMode,
+    accentColor,
+    setAccentColor,
   } = useFouzar();
   const [isSidebarHovered, setIsSidebarHovered] = useState(false);
   const [activeNav, setActiveNav] = useState<'circles' | 'nodes' | 'ai' | 'bridge' | 'shield'>('circles');
@@ -114,6 +117,7 @@ export default function DashboardPage() {
   const [pendingGroupRequests, setPendingGroupRequests] = useState<Record<string, any[]>>({});
   const [contextMenuFriend, setContextMenuFriend] = useState<StudyCirclePeer | null>(null);
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isThemeCustomizerOpen, setIsThemeCustomizerOpen] = useState(false);
 
   const router = useRouter();
 
@@ -206,6 +210,7 @@ export default function DashboardPage() {
     const handleCloseMenus = () => {
       setActiveMenuNodeId(null);
       setContextMenuFriend(null);
+      setIsThemeCustomizerOpen(false);
     };
     window.addEventListener('click', handleCloseMenus);
     return () => window.removeEventListener('click', handleCloseMenus);
@@ -1036,9 +1041,97 @@ export default function DashboardPage() {
               Your private, distraction-free space
             </p>
           </div>
-          <span className="px-2.5 py-0.5 bg-[#7c5cfc]/10 border border-[#7c5cfc]/20 text-[#7c5cfc] font-mono text-[8px] uppercase tracking-wider rounded">
-            V1.0
-          </span>
+          <div className="flex items-center gap-2 relative">
+            {/* UI Customizer Palette Trigger */}
+            <div onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                onClick={() => setIsThemeCustomizerOpen(!isThemeCustomizerOpen)}
+                className="p-1.5 hover:bg-white/5 rounded text-[#6b6b8a] hover:text-[#f0f0ff] transition-all cursor-pointer flex items-center gap-1 border border-[#2a2a3a]/60 hover:border-[#7c5cfc]/60"
+                title="Customize UI Theme & Accent"
+              >
+                <Palette className="w-3.5 h-3.5 text-glow-accent" />
+                <span className="text-[7.5px] font-mono uppercase tracking-wider hidden sm:inline">Customize</span>
+              </button>
+              
+              <AnimatePresence>
+                {isThemeCustomizerOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: 5 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 5 }}
+                    transition={{ duration: 0.15, ease: 'easeOut' }}
+                    className="absolute right-0 mt-2 z-50 w-52 bg-[#14141c]/95 border border-[#7c5cfc]/60 p-4 rounded-[6px] shadow-2xl text-left backdrop-blur-md space-y-4"
+                  >
+                    {/* Theme chassis */}
+                    <div className="space-y-1.5">
+                      <span className="text-[7.5px] font-mono uppercase text-[#6b6b8a] tracking-wider block font-bold">
+                        Visual Chassis Theme
+                      </span>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setMode('onyx')}
+                          className={`py-1 px-1.5 text-[7px] font-mono uppercase rounded-[4px] border text-center transition-colors cursor-pointer ${
+                            mode === 'onyx'
+                              ? 'border-[#7c5cfc] bg-[#7c5cfc]/10 text-[#7c5cfc] font-bold'
+                              : 'border-[#2a2a3a] text-[#6b6b8a] hover:text-[#f0f0ff]'
+                          }`}
+                        >
+                          Onyx
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setMode('greenhouse')}
+                          className={`py-1 px-1.5 text-[7px] font-mono uppercase rounded-[4px] border text-center transition-colors cursor-pointer ${
+                            mode === 'greenhouse'
+                              ? 'border-[#6ee7b7] bg-[#6ee7b7]/10 text-[#6ee7b7] font-bold'
+                              : 'border-[#2a2a3a] text-[#6b6b8a] hover:text-[#f0f0ff]'
+                          }`}
+                        >
+                          Greenhouse
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Accent Color picker */}
+                    <div className="space-y-1.5">
+                      <span className="text-[7.5px] font-mono uppercase text-[#6b6b8a] tracking-wider block font-bold">
+                        Workspace Accent Color
+                      </span>
+                      <div className="flex gap-2 justify-between">
+                        {[
+                          { id: 'violet' as const, name: 'Violet', color: '#7c5cfc' },
+                          { id: 'emerald' as const, name: 'Emerald', color: '#3dd68c' },
+                          { id: 'ice' as const, name: 'Ice', color: '#5ce1ff' },
+                          { id: 'amber' as const, name: 'Amber', color: '#f5a623' },
+                          { id: 'signal' as const, name: 'Crimson', color: '#ff2d55' },
+                        ].map((accent) => {
+                          const isSelected = accentColor === accent.id;
+                          return (
+                            <button
+                              key={accent.id}
+                              type="button"
+                              onClick={() => setAccentColor(accent.id)}
+                              style={{ backgroundColor: accent.color }}
+                              className={`w-3.5 h-3.5 rounded-full border cursor-pointer transition-transform hover:scale-110 ${
+                                isSelected ? 'border-[#f0f0ff] scale-110' : 'border-transparent'
+                              }`}
+                              title={`Set ${accent.name} accent`}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <span className="px-2.5 py-0.5 bg-[#7c5cfc]/10 border border-[#7c5cfc]/20 text-[#7c5cfc] font-mono text-[8px] uppercase tracking-wider rounded">
+              V1.0
+            </span>
+          </div>
         </div>
 
         {/* 1. Horizontal Friends Social Bar (Top) */}

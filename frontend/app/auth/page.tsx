@@ -107,7 +107,7 @@ const NodeCanvas: React.FC = () => {
 };
 
 export default function AuthPage() {
-  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
+  const [activeTab, setActiveTab] = useState<'login' | 'register' | 'forgot-password' | 'reset-password'>('login');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -127,6 +127,11 @@ export default function AuthPage() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [universityName, setUniversityName] = useState('');
+
+  // Forgot password & reset password state simulation
+  const [resetCode, setResetCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [isResetSuccess, setIsResetSuccess] = useState(false);
 
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -163,6 +168,47 @@ export default function AuthPage() {
     e.preventDefault();
     setValidationError(null);
     setIsLoading(true);
+
+    if (activeTab === 'forgot-password') {
+      if (!email) {
+        setValidationError('Email address is required.');
+        setIsLoading(false);
+        return;
+      }
+      setTimeout(() => {
+        setIsLoading(false);
+        setActiveTab('reset-password');
+      }, 1200);
+      return;
+    }
+
+    if (activeTab === 'reset-password') {
+      if (resetCode.length !== 6) {
+        setValidationError('Invalid authorization code. Must be 6 digits.');
+        setIsLoading(false);
+        return;
+      }
+      if (newPassword.length < 6) {
+        setValidationError('New security key must be at least 6 characters.');
+        setIsLoading(false);
+        return;
+      }
+      setTimeout(() => {
+        setIsLoading(false);
+        setIsResetSuccess(true);
+        
+        setResetCode('');
+        setNewPassword('');
+        setEmail('');
+        setPassword('');
+        
+        setTimeout(() => {
+          setIsResetSuccess(false);
+          setActiveTab('login');
+        }, 1800);
+      }, 1200);
+      return;
+    }
 
     const endpoint = activeTab === 'login' ? '/auth/login' : '/auth/register';
     const payload = activeTab === 'login' 
@@ -209,7 +255,7 @@ export default function AuthPage() {
       
       {/* Dynamic Success Checkmark Screen */}
       <AnimatePresence>
-        {isSuccess && (
+        {(isSuccess || isResetSuccess) && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -236,7 +282,7 @@ export default function AuthPage() {
               </motion.svg>
             </div>
             <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#7c5cfc] animate-pulse">
-              Fasca core authorized
+              {isSuccess ? 'Fasca core authorized' : 'Security key updated'}
             </span>
           </motion.div>
         )}
@@ -268,57 +314,75 @@ export default function AuthPage() {
         <div className="w-full bg-[#16161f] border border-[#7c5cfc] rounded-none shadow-2xl overflow-hidden">
           
           {/* Code Editor Styled Tabs */}
-          <div className="flex bg-[#0a0a0f]/40 border-b border-[#2a2a3a]">
-            {/* REGISTER TAB */}
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab('register');
-                setValidationError(null);
-              }}
-              className="relative flex-1 py-3.5 font-mono text-[9px] uppercase tracking-widest text-center cursor-pointer transition-colors"
-              style={{
-                color: activeTab === 'register' ? '#f0f0ff' : '#6b6b8a',
-                backgroundColor: activeTab === 'register' ? '#16161f' : 'transparent',
-              }}
-            >
-              REGISTER.tsx
-              {activeTab === 'register' && (
-                <motion.div
-                  layoutId="activeTabBorder"
-                  className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#7c5cfc]"
-                />
-              )}
-            </button>
+          {activeTab === 'forgot-password' || activeTab === 'reset-password' ? (
+            <div className="flex bg-[#0a0a0f]/40 border-b border-[#2a2a3a] py-3.5 px-4 items-center justify-between">
+              <span className="font-mono text-[9px] uppercase tracking-widest text-[#f0f0ff]">
+                {activeTab === 'forgot-password' ? 'RECOVER_KEY.tsx' : 'RESET_KEY.tsx'}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('login');
+                  setValidationError(null);
+                }}
+                className="text-[7.5px] font-mono uppercase text-[#6b6b8a] hover:text-[#f0f0ff] cursor-pointer transition-colors"
+              >
+                [Cancel]
+              </button>
+            </div>
+          ) : (
+            <div className="flex bg-[#0a0a0f]/40 border-b border-[#2a2a3a]">
+              {/* REGISTER TAB */}
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('register');
+                  setValidationError(null);
+                }}
+                className="relative flex-1 py-3.5 font-mono text-[9px] uppercase tracking-widest text-center cursor-pointer transition-colors"
+                style={{
+                  color: activeTab === 'register' ? '#f0f0ff' : '#6b6b8a',
+                  backgroundColor: activeTab === 'register' ? '#16161f' : 'transparent',
+                }}
+              >
+                REGISTER.tsx
+                {activeTab === 'register' && (
+                  <motion.div
+                    layoutId="activeTabBorder"
+                    className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#7c5cfc]"
+                  />
+                )}
+              </button>
 
-            {/* LOGIN TAB */}
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab('login');
-                setValidationError(null);
-              }}
-              className="relative flex-1 py-3.5 font-mono text-[9px] uppercase tracking-widest text-center cursor-pointer transition-colors"
-              style={{
-                color: activeTab === 'login' ? '#f0f0ff' : '#6b6b8a',
-                backgroundColor: activeTab === 'login' ? '#16161f' : 'transparent',
-              }}
-            >
-              LOGIN.tsx
-              {activeTab === 'login' && (
-                <motion.div
-                  layoutId="activeTabBorder"
-                  className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#7c5cfc]"
-                />
-              )}
-            </button>
-          </div>
+              {/* LOGIN TAB */}
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('login');
+                  setValidationError(null);
+                }}
+                className="relative flex-1 py-3.5 font-mono text-[9px] uppercase tracking-widest text-center cursor-pointer transition-colors"
+                style={{
+                  color: activeTab === 'login' ? '#f0f0ff' : '#6b6b8a',
+                  backgroundColor: activeTab === 'login' ? '#16161f' : 'transparent',
+                }}
+              >
+                LOGIN.tsx
+                {activeTab === 'login' && (
+                  <motion.div
+                    layoutId="activeTabBorder"
+                    className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#7c5cfc]"
+                  />
+                )}
+              </button>
+            </div>
+          )}
 
           {/* Form Content */}
           <form onSubmit={handleAuth} className="p-6 space-y-6">
             
             <AnimatePresence mode="wait">
-              {activeTab === 'register' ? (
+              {activeTab === 'register' && (
                 /* ========================================================================= */
                 /* REGISTER FIELDS                                                           */
                 /* ========================================================================= */
@@ -378,7 +442,9 @@ export default function AuthPage() {
                     />
                   </div>
                 </motion.div>
-              ) : (
+              )}
+
+              {activeTab === 'login' && (
                 /* ========================================================================= */
                 /* LOGIN FIELDS                                                              */
                 /* ========================================================================= */
@@ -413,6 +479,86 @@ export default function AuthPage() {
                       className="w-full bg-transparent border-b border-[#2a2a3a] px-1 py-2 text-xs text-[#f0f0ff] placeholder-[#6b6b8a]/50 focus:outline-none focus:border-[#7c5cfc] rounded-none transition-colors"
                     />
                   </div>
+
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab('forgot-password');
+                        setValidationError(null);
+                      }}
+                      className="text-[7.5px] font-mono uppercase text-[#6b6b8a] hover:text-[#7c5cfc] transition-colors cursor-pointer"
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
+              {activeTab === 'forgot-password' && (
+                /* ========================================================================= */
+                /* FORGOT PASSWORD FIELDS                                                    */
+                /* ========================================================================= */
+                <motion.div
+                  key="forgot-password-fields"
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                  transition={{ duration: 0.15 }}
+                  className="space-y-4"
+                >
+                  <div className="flex flex-col">
+                    <span className="text-[7.5px] font-mono uppercase text-[#6b6b8a] tracking-wider mb-1">Email address</span>
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="alex@university.edu"
+                      className="w-full bg-transparent border-b border-[#2a2a3a] px-1 py-2 text-xs text-[#f0f0ff] placeholder-[#6b6b8a]/50 focus:outline-none focus:border-[#7c5cfc] rounded-none transition-colors"
+                    />
+                  </div>
+                  <div className="p-3 bg-[#7c5cfc]/5 border border-[#7c5cfc]/20 text-[#6b6b8a] font-mono text-[8px] leading-relaxed text-left uppercase tracking-wider">
+                    SIMULATION: An authorization code will be sent to recover access.
+                  </div>
+                </motion.div>
+              )}
+
+              {activeTab === 'reset-password' && (
+                /* ========================================================================= */
+                /* RESET PASSWORD FIELDS                                                     */
+                /* ========================================================================= */
+                <motion.div
+                  key="reset-password-fields"
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                  transition={{ duration: 0.15 }}
+                  className="space-y-4"
+                >
+                  <div className="flex flex-col">
+                    <span className="text-[7.5px] font-mono uppercase text-[#6b6b8a] tracking-wider mb-1">6-Digit Reset Code</span>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      required
+                      value={resetCode}
+                      onChange={(e) => setResetCode(e.target.value.replace(/\D/g, ''))}
+                      placeholder="888888"
+                      className="w-full bg-transparent border-b border-[#2a2a3a] px-1 py-2 text-xs text-[#f0f0ff] placeholder-[#6b6b8a]/50 focus:outline-none focus:border-[#7c5cfc] rounded-none transition-colors tracking-[0.5em] text-center"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[7.5px] font-mono uppercase text-[#6b6b8a] tracking-wider mb-1">New Security Key</span>
+                    <input
+                      type="password"
+                      required
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full bg-transparent border-b border-[#2a2a3a] px-1 py-2 text-xs text-[#f0f0ff] placeholder-[#6b6b8a]/50 focus:outline-none focus:border-[#7c5cfc] rounded-none transition-colors"
+                    />
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -438,7 +584,7 @@ export default function AuthPage() {
               variant="solid-violet"
               className="w-full rounded-none font-bold py-3 text-[10px]"
             >
-              {isLoading ? 'EXECUTING...' : activeTab === 'login' ? 'ESTABLISH CONNECT' : 'REGISTER WORKSPACE'}
+              {isLoading ? 'EXECUTING...' : activeTab === 'login' ? 'ESTABLISH CONNECT' : activeTab === 'register' ? 'REGISTER WORKSPACE' : activeTab === 'forgot-password' ? 'SEND RESET CODE' : 'RESET SECURITY KEY'}
             </FascaButton>
 
           </form>
