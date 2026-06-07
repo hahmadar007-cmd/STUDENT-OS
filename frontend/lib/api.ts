@@ -48,6 +48,8 @@ async function apiRequest(endpoint: string, method: string = 'GET', body?: any) 
       headers['x-gemini-key'] = aiToken;
     } else if (aiMode === 'openai-personal' && aiToken) {
       headers['x-openai-key'] = aiToken;
+    } else if (aiMode === 'deepseek-personal' && aiToken) {
+      headers['x-deepseek-key'] = aiToken;
     } else if (aiMode === 'custom' && aiUrl) {
       headers['x-custom-url'] = aiUrl;
       if (aiToken) {
