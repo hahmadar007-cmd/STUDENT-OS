@@ -19,7 +19,7 @@ interface DocumentViewerProps {
   isInline?: boolean;
 }
 
-async function extractTextFromPdf(blob: Blob): Promise<{ fullText: string; chunks: { text: string; pageNum: number }[] }> {
+export async function extractTextFromPdf(blob: Blob): Promise<{ fullText: string; chunks: { text: string; pageNum: number }[] }> {
   return new Promise(async (resolve, reject) => {
     try {
       if (typeof window === 'undefined') {

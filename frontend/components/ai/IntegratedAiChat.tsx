@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, Sparkles } from 'lucide-react';
-import { askAi } from '../../lib/api';
+import { Send, Bot, Sparkles, Paperclip, X } from 'lucide-react';
+import { askAi, indexDocument, indexDocumentFile } from '../../lib/api';
 import { useFouzar } from '../../lib/FouzarContext';
+import { extractTextFromPdf } from '../documents/DocumentViewer';
 
 export interface AiChatMessage {
   id: string;
@@ -58,6 +59,10 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isTechnical, setIsTechnical] = useState(false);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [attachedFile, setAttachedFile] = useState<{ name: string; text: string; id: string } | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (!storageKey || typeof window === 'undefined') return;
@@ -156,6 +161,112 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
     return () => clearTimeout(t);
   }, [activeDoc, activeDocText, aiModel, slideId, activeModelLabel]);
 
+  const handleAttachFileClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setError(null);
+
+    const docId = `doc-attached-${Date.now()}`;
+    const courseCode = activeDoc?.courseCode || 'general';
+
+    try {
+      let extractedText = '';
+      let textChunks: { text: string; pageNum: number }[] = [];
+
+      // Add a loader system message to let the user know we're parsing
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `sys-upload-${Date.now()}`,
+          role: 'assistant',
+          content: `⏳ **Analyzing & Indexing Attachment: ${file.name}**...`,
+          model: 'System',
+        }
+      ]);
+
+      if (file.name.toLowerCase().endsWith('.pdf')) {
+        // Parse PDF in browser
+        const { fullText, chunks } = await extractTextFromPdf(file);
+        extractedText = fullText;
+        textChunks = chunks;
+
+        // Index in backend vector database
+        await indexDocument(courseCode, docId, textChunks);
+      } else if (file.name.toLowerCase().endsWith('.pptx')) {
+        // PPTX unzipping on backend
+        const res = await indexDocumentFile(courseCode, docId, file, file.name);
+        if (res && res.chunks) {
+          extractedText = res.chunks.map((c: any) => `--- Slide/Page ${c.pageNum} ---\n${c.text}`).join('\n\n');
+        } else {
+          throw new Error('PowerPoint parsed successfully but no slide text was returned.');
+        }
+      } else {
+        // Assume text file
+        extractedText = await file.text();
+        textChunks = [{ text: extractedText, pageNum: 1 }];
+        await indexDocument(courseCode, docId, textChunks);
+      }
+
+      setAttachedFile({
+        name: file.name,
+        text: extractedText,
+        id: docId
+      });
+
+      // Clear the temporary analyzing indicator and print system status
+      setMessages((prev) => {
+        const filtered = prev.filter(m => !m.id.startsWith('sys-upload-'));
+        return [
+          ...filtered,
+          {
+            id: `sys-upload-ok-${Date.now()}`,
+            role: 'assistant',
+            content: `📎 **Attached & Indexed**: \`${file.name}\` successfully! Asking AI to summarize...`,
+            model: 'System',
+          }
+        ];
+      });
+
+      // Automatically trigger a summarizing welcome query for the file
+      try {
+        const summaryPrompt = `[System Action: File Attached] The student has directly attached the document "${file.name}".\nHere is its text content:\n\n${extractedText.slice(0, 15000)}\n\nPlease provide a very brief (2-3 sentences max) summary of this file and explain how you can help them study it (e.g. solve its exercises, explain formulas, or generate flashcards).`;
+        const res = await askAi(summaryPrompt, slideId, aiModel, {
+          currentSlideText: extractedText,
+          courseId: courseCode
+        });
+
+        setMessages((prev) => {
+          const filtered = prev.filter(m => !m.id.startsWith('sys-upload-ok-'));
+          return [
+            ...filtered,
+            {
+              id: `ai-attach-summary-${Date.now()}`,
+              role: 'assistant',
+              content: res.text ?? `I've processed \`${file.name}\`. Ask me anything about it!`,
+              model: res.model ?? activeModelLabel,
+            }
+          ];
+        });
+      } catch (err) {
+        console.error('Failed to summarize attachment:', err);
+      }
+
+    } catch (err: any) {
+      console.error('File attachment processing error:', err);
+      setError(`Failed to process attachment: ${err.message || err}`);
+      setMessages((prev) => prev.filter(m => !m.id.startsWith('sys-upload-')));
+    } finally {
+      setIsUploading(false);
+      e.target.value = '';
+    }
+  };
+
   const handleSend = async (e: React.FormEvent | null, customPrompt?: string) => {
     if (e) e.preventDefault();
     const promptText = customPrompt || input;
@@ -182,7 +293,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
       const finalPrompt = userMsg.content + styleInstruction;
 
       const extraContext = {
-        currentSlideText: activeDocText || slideContextText || '',
+        currentSlideText: attachedFile ? attachedFile.text : (activeDocText || slideContextText || ''),
         videoUrl: activeVideoUrl || '',
         videoTimestamp: activeVideoTimestamp || 0,
         courseId: activeDoc?.courseCode || 'general'
@@ -330,6 +441,24 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
         </div>
       </div>
 
+      {/* Attachment badge */}
+      {attachedFile && (
+        <div className="shrink-0 px-2 py-1 bg-fouzar-accent/5 border border-fouzar-accent/20 rounded-[var(--fouzar-radius-sm)] flex items-center justify-between text-[7px] font-mono text-fouzar-accent uppercase mt-2">
+          <div className="flex items-center gap-1.5 truncate">
+            <Paperclip className="w-2.5 h-2.5 shrink-0" />
+            <span className="truncate">Attached: {attachedFile.name}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setAttachedFile(null)}
+            className="p-0.5 hover:bg-fouzar-accent/10 rounded-full cursor-pointer transition-colors"
+            title="Remove attachment"
+          >
+            <X className="w-2.5 h-2.5 text-fouzar-text-secondary hover:text-fouzar-signal" />
+          </button>
+        </div>
+      )}
+
       <div className="shrink-0 space-y-2 border-t border-fouzar-border pt-2">
         <div className="flex justify-between items-center">
           <span className="inline-block px-2 py-0.5 bg-fouzar-accent/10 border border-fouzar-accent/20 text-fouzar-accent font-mono text-[7px] uppercase rounded-[var(--fouzar-radius-sm)]">
@@ -343,6 +472,27 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
         </div>
         <form onSubmit={(e) => handleSend(e)} className="flex gap-2">
           <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept=".pdf,.pptx,.txt,.md,.js,.ts,.tsx,.py,.css,.html,.cpp,.java"
+            className="hidden"
+          />
+          <button
+            type="button"
+            disabled={isUploading || isLoading}
+            onClick={handleAttachFileClick}
+            className="p-2 border border-fouzar-border text-fouzar-text-secondary hover:text-fouzar-accent rounded-[var(--fouzar-radius-md)] hover:bg-fouzar-elevated/40 disabled:opacity-40 cursor-pointer animate-none"
+            title="Attach study slides, PDF, or code files"
+          >
+            {isUploading ? (
+              <span className="w-4 h-4 block border-2 border-fouzar-accent border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Paperclip className="w-4 h-4" />
+            )}
+          </button>
+
+          <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={placeholder}
@@ -350,7 +500,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
           />
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || isUploading}
             className="p-2 bg-fouzar-accent text-fouzar-text-inverse rounded-[var(--fouzar-radius-md)] hover:opacity-90 disabled:opacity-40"
           >
             <Send className="w-4 h-4" />
