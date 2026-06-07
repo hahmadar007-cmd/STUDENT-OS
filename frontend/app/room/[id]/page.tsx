@@ -84,10 +84,9 @@ export default function StudyRoomPage() {
   const router = useRouter();
   const roomId = (params.id as string) || 'group-1';
   
-  const { isFlowActive, setIsFlowActive } = useFouzar();
+  const { isFlowActive, setIsFlowActive, activeDoc, setActiveDoc } = useFouzar();
   const [currentSlide, setCurrentSlide] = useState(1);
   const [syncMode, setSyncMode] = useState(true);
-  const [activeDoc, setActiveDoc] = useState<LmsRepositoryItem | null>(null);
   const [isLeader, setIsLeader] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
 

@@ -135,6 +135,10 @@ export interface FouzarContextValue {
   repository: LmsRepositoryItem[];
   addRepositoryItem: (item: Omit<LmsRepositoryItem, 'id' | 'uploadedAt'>) => void;
   removeRepositoryItem: (id: string) => void;
+  activeDoc: LmsRepositoryItem | null;
+  setActiveDoc: (doc: LmsRepositoryItem | null) => void;
+  activeDocText: string | null;
+  setActiveDocText: (text: string | null) => void;
 
   /* --- AI workspace --- */
   isOrbOpen: boolean;
@@ -305,6 +309,8 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [repository, setRepository] = useState<LmsRepositoryItem[]>([]);
   const [bypass, setBypass] = useState<FouzarBypassState>(INITIAL_BYPASS);
   const [accentColor, setAccentColorState] = useState<FouzarAccent>('violet');
+  const [activeDoc, setActiveDoc] = useState<LmsRepositoryItem | null>(null);
+  const [activeDocText, setActiveDocText] = useState<string | null>(null);
 
   const setAccentColor = useCallback((next: FouzarAccent) => {
     setAccentColorState(next);
@@ -688,6 +694,10 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setCurrentFolderId,
       accentColor,
       setAccentColor,
+      activeDoc,
+      setActiveDoc,
+      activeDocText,
+      setActiveDocText,
     }),
     [
       mode,
@@ -725,6 +735,8 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setCurrentFolderId,
       accentColor,
       setAccentColor,
+      activeDoc,
+      activeDocText,
     ],
   );
 
