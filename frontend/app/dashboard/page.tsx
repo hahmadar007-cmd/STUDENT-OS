@@ -36,6 +36,7 @@ import { FascaAiCore } from '../../components/ai/FascaAiCore';
 import { LmsBridgePanel } from '../../components/social/LmsBridgePanel';
 import { FocusShieldPanel } from '../../components/focus/FocusShieldPanel';
 import { AiControlCenter } from '../../components/ai/AiControlCenter';
+import { AcademicInfoPanel } from '../../components/academic/AcademicInfoPanel';
 import { useAuth } from '../../hooks/useAuth';
 import { useSocket } from '../../hooks/useSocket';
 import { useOnFocusStateChanged, updateFocusState as socketUpdateFocusState } from '../../lib/socket';
@@ -1312,7 +1313,18 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 5. AI Control Center Section */}
+        {/* 5. Academic Info Section */}
+        <div className="space-y-4 w-full border-t border-[#2a2a3a]/20 pt-6 pb-2">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a]">
+              Academic Info
+            </span>
+            <Tooltip text="Track your attendance per subject with live pie charts, input your marks and grades, and view your full transcript with auto-calculated GPA. All stored locally — works for any university." />
+          </div>
+          <AcademicInfoPanel />
+        </div>
+
+        {/* 6. AI Engines Section */}
         <div className="space-y-4 w-full border-t border-[#2a2a3a]/20 pt-6 pb-6">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a]">
@@ -1320,7 +1332,7 @@ export default function DashboardPage() {
             </span>
             <Tooltip text="Connect your own AI API keys (OpenAI, Anthropic, Gemini, or local Ollama). Keys are encrypted with AES-256 before storage. Only one engine can be active at a time." />
           </div>
-          {user && <AiControlCenter userId={user.id} />}
+          {user && <AiControlCenter />}
         </div>
 
         {/* Footer with open-source link */}
