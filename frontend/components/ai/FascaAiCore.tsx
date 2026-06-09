@@ -14,7 +14,7 @@ interface ModelCard {
 }
 
 const MODEL_API_IDS: Record<string, string> = {
-  deepseek: 'deepseek',
+  gemini: 'gemini',
   claude: 'claude-3-5-sonnet',
   gpt4: 'gpt-4o',
   custom: 'custom-endpoint',
@@ -25,13 +25,13 @@ export const FascaAiCore: React.FC = () => {
 
   const models: ModelCard[] = [
     {
-      id: 'deepseek',
-      name: 'DeepSeek Chat',
-      provider: 'DeepSeek',
-      latency: '24ms',
+      id: 'gemini',
+      name: 'Gemini 1.5 Pro',
+      provider: 'Google',
+      latency: '28ms',
       icon: (
-        <svg className="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" />
+        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="#8b5cf6" strokeWidth="2" fill="rgba(139,92,246,0.2)" strokeLinejoin="round" />
         </svg>
       ),
     },

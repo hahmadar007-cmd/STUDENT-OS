@@ -27,11 +27,35 @@ interface IntegratedAiChatProps {
   placeholder?: string;
 }
 
-const MODEL_OPTIONS = [
-  { id: 'deepseek', label: 'DeepSeek Chat', isDefault: true },
-  { id: 'claude-3-5-sonnet', label: 'Claude 3.5', isDefault: false },
-  { id: 'gpt-4o', label: 'GPT-4o', isDefault: false },
-];
+const AI_PROVIDERS_KEY = 'fasca_ai_providers_v1';
+
+interface StoredProvider {
+  id: string;
+  name: string;
+  providerType: string;
+  isActive: boolean;
+  apiKeyRaw: string;
+  baseUrl: string | null;
+}
+
+function useConfiguredEngines() {
+  const [engines, setEngines] = useState<StoredProvider[]>([]);
+  useEffect(() => {
+    const load = () => {
+      try {
+        const raw = localStorage.getItem(AI_PROVIDERS_KEY);
+        if (raw) setEngines(JSON.parse(raw));
+        else setEngines([]);
+      } catch { setEngines([]); }
+    };
+    load();
+    // Re-sync when user switches tabs back or adds an engine
+    window.addEventListener('focus', load);
+    window.addEventListener('storage', load);
+    return () => { window.removeEventListener('focus', load); window.removeEventListener('storage', load); };
+  }, []);
+  return engines;
+}
 
 /**
  * Shared AI chat surface wired to POST /ai/chat.
@@ -61,6 +85,8 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isTechnical, setIsTechnical] = useState(false);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
+  const engines = useConfiguredEngines();
+  const activeEngine = engines.find(e => e.isActive) ?? engines[0] ?? null;
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [attachedFile, setAttachedFile] = useState<{ name: string; text: string; id: string } | null>(null);
@@ -87,8 +113,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
   }, [messages, isLoading]);
 
 
-  const activeModelLabel =
-    MODEL_OPTIONS.find((m) => m.id === aiModel)?.label ?? aiModel;
+  const activeModelLabel = activeEngine?.name ?? 'No Engine';
 
   // Automatically trigger AI document summary/welcome message when a new document is opened
   const lastOpenedDocIdRef = useRef<string | null>(null);
@@ -440,28 +465,42 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
             Fouzar AI
           </span>
         </div>
-        <select
-          value={aiModel}
-          onChange={(e) => setAiModel(e.target.value)}
-          className="bg-fouzar-elevated border border-fouzar-border text-[8px] font-mono uppercase px-2 py-1 rounded-[var(--fouzar-radius-sm)] text-fouzar-text-primary focus:outline-none"
-        >
-          {MODEL_OPTIONS.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.label}{m.isDefault ? ' ✦ Free' : ''}
-            </option>
-          ))}
-        </select>
+        {/* Engine selector — shows user's configured engines */}
+        {engines.length > 0 ? (
+          <select
+            value={activeEngine?.id ?? ''}
+            onChange={(e) => {
+              // Mark selected engine as active in localStorage
+              try {
+                const raw = localStorage.getItem(AI_PROVIDERS_KEY);
+                if (raw) {
+                  const all: StoredProvider[] = JSON.parse(raw);
+                  const updated = all.map(p => ({ ...p, isActive: p.id === e.target.value }));
+                  localStorage.setItem(AI_PROVIDERS_KEY, JSON.stringify(updated));
+                  window.dispatchEvent(new Event('storage'));
+                }
+              } catch {}
+            }}
+            className="bg-fouzar-elevated border border-fouzar-border text-[8px] font-mono uppercase px-2 py-1 rounded-[var(--fouzar-radius-sm)] text-fouzar-text-primary focus:outline-none max-w-[130px] truncate"
+          >
+            {engines.map((e) => (
+              <option key={e.id} value={e.id}>{e.name}</option>
+            ))}
+          </select>
+        ) : (
+          <span className="font-mono text-[8px] text-white/25 border border-white/10 px-2 py-1 rounded">
+            + Add engine below
+          </span>
+        )}
       </div>
 
-      {/* Default AI Providers Banner */}
-      {messages.length === 0 && (
-        <div className="shrink-0 mb-2 px-2.5 py-2 bg-emerald-500/5 border border-emerald-500/20 rounded-[var(--fouzar-radius-sm)]">
-          <p className="font-mono text-[8px] text-emerald-400 uppercase tracking-wider mb-1">
-            Default AI Model Active
+      {messages.length === 0 && engines.length === 0 && (
+        <div className="shrink-0 mb-2 px-2.5 py-2 bg-[#7c5cfc]/5 border border-[#7c5cfc]/20 rounded-[var(--fouzar-radius-sm)]">
+          <p className="font-mono text-[8px] text-[#7c5cfc] uppercase tracking-wider mb-1">
+            No AI Engine Connected
           </p>
           <p className="font-mono text-[7px] text-fouzar-text-secondary leading-relaxed">
-            DeepSeek Chat is active by default — no setup needed.
-            You can also connect your own API key in settings for GPT-4o, Claude, or other providers.
+            Add your OpenAI, Anthropic, or Gemini API key in the <strong>AI Engines</strong> panel below to enable real-time AI responses.
           </p>
         </div>
       )}

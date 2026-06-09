@@ -537,8 +537,7 @@ export default function DashboardPage() {
         document.getElementById('mindmap-section')?.scrollIntoView({ behavior: 'smooth' });
         setActivePanelTab('nodes');
       } else if (id === 'ai') {
-        document.getElementById('timer-section')?.scrollIntoView({ behavior: 'smooth' });
-        setActivePanelTab('timer');
+        document.getElementById('ai-engines-section')?.scrollIntoView({ behavior: 'smooth' });
       }
     }
   };
