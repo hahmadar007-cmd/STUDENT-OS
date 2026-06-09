@@ -240,4 +240,129 @@ export class GroupsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       console.log(`Signal sent from ${senderName} (${senderId}) to ${data.targetUserId}`);
     }
   }
+
+  /**
+   * FEATURE B — Live Presentation Engine
+   * Broadcaster announces that they have started a live preview session.
+   * Emits `onPresenterSessionStart` to all members in the room.
+   * Does NOT force layout changes or block any peer's current workflow.
+   */
+  @SubscribeMessage('presenter-session-start')
+  async handlePresenterSessionStart(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { groupId: string; fileId: string; fileName: string },
+  ) {
+    let presenterId = '';
+    let presenterName = 'A scholar';
+
+    try {
+      const token = client.handshake.auth?.token || client.handshake.query?.token;
+      if (token) {
+        const decoded = this.jwtService.verify(token);
+        presenterId = decoded.sub;
+        const presenter = await this.prisma.user.findUnique({ where: { id: presenterId } });
+        if (presenter) {
+          presenterName = presenter.name || 'A scholar';
+        }
+      }
+    } catch (e: any) {
+      console.warn('Failed to parse token in presenter-session-start:', e.message);
+    }
+
+    if (!presenterId) {
+      client.emit('error', { message: 'Authentication required to start a presentation.' });
+      return;
+    }
+
+    console.log(`[LivePresent] ${presenterName} (${presenterId}) started live session in group ${data.groupId} for file ${data.fileId}`);
+
+    // Broadcast presence signal to everyone in the room (excluding the presenter themselves)
+    client.to(data.groupId).emit('onPresenterSessionStart', {
+      presenterId,
+      presenterName,
+      groupId: data.groupId,
+      fileId: data.fileId,
+      fileName: data.fileName,
+      startedAt: new Date().toISOString(),
+    });
+  }
+
+  /**
+   * FEATURE B — Slide Page Relay
+   * Presenter sends the current page number; gateway relays strictly to the
+   * room socket registry. Peers who opted-in via `isFollowingPresenter` will
+   * consume this. Peers who ignored the session are unaffected.
+   */
+  @SubscribeMessage('sync-slide-page')
+  async handleSyncSlidePage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { groupId: string; fileId: string; pageNumber: number },
+  ) {
+    let presenterId = '';
+
+    try {
+      const token = client.handshake.auth?.token || client.handshake.query?.token;
+      if (token) {
+        const decoded = this.jwtService.verify(token);
+        presenterId = decoded.sub;
+      }
+    } catch (e: any) {
+      console.warn('Failed to parse token in sync-slide-page:', e.message);
+    }
+
+    if (!presenterId) return;
+
+    // Persist current slide to DB (reuse existing group.currentSlide field)
+    try {
+      await this.prisma.group.update({
+        where: { id: data.groupId },
+        data: { currentSlide: String(data.pageNumber) },
+      });
+    } catch (e) {
+      // Group may not exist in DB; non-fatal
+    }
+
+    // Relay page frame to all room members — frontend gate (isFollowingPresenter) controls who acts on it
+    client.to(data.groupId).emit('onSyncSlidePage', {
+      presenterId,
+      fileId: data.fileId,
+      pageNumber: data.pageNumber,
+    });
+  }
+
+  /**
+   * FEATURE B — Presenter Session End
+   * Cleanly signals that a live session has concluded so followers can
+   * detach their viewport tracking automatically.
+   */
+  @SubscribeMessage('presenter-session-end')
+  async handlePresenterSessionEnd(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { groupId: string },
+  ) {
+    let presenterId = '';
+    let presenterName = 'A scholar';
+
+    try {
+      const token = client.handshake.auth?.token || client.handshake.query?.token;
+      if (token) {
+        const decoded = this.jwtService.verify(token);
+        presenterId = decoded.sub;
+        const presenter = await this.prisma.user.findUnique({ where: { id: presenterId } });
+        if (presenter) presenterName = presenter.name || 'A scholar';
+      }
+    } catch (e: any) {
+      console.warn('Failed to parse token in presenter-session-end:', e.message);
+    }
+
+    if (!presenterId) return;
+
+    client.to(data.groupId).emit('onPresenterSessionEnd', {
+      presenterId,
+      presenterName,
+      groupId: data.groupId,
+    });
+
+    console.log(`[LivePresent] ${presenterName} ended live session in group ${data.groupId}`);
+  }
 }

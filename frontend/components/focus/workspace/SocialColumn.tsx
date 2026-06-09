@@ -24,6 +24,7 @@ import { DocumentViewer } from '../../documents/DocumentViewer';
 import { FileExplorer } from '../../documents/FileExplorer';
 import type { LmsRepositoryItem } from '../../../lib/FouzarContext';
 import { IntegratedAiChat } from '../../ai/IntegratedAiChat';
+import { SharedGroupDrive } from '../../groups/SharedGroupDrive';
 
 /** Remote peer directory for ID lookup until backend search ships. */
 const NETWORK_DIRECTORY: FouzarFriendProfile[] = [
@@ -80,6 +81,8 @@ interface SocialColumnProps {
   chatEndRef?: React.RefObject<HTMLDivElement | null>;
   currentSlide?: number;
   slides?: SlideData[];
+  /** Bubbles up to WorkspaceLayout to start a live presentation via useLivePresentation */
+  onPresentFile?: (fileId: string, fileName: string) => void;
 }
 
 /**
@@ -98,6 +101,7 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
   chatEndRef,
   currentSlide,
   slides,
+  onPresentFile,
 }) => {
   const router = useRouter();
   const {
@@ -121,7 +125,7 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
   const [deadlines, setDeadlines] = useState<DeadlineItem[]>([]);
   const [loadingDeadlines, setLoadingDeadlines] = useState(false);
   const [lmsSource, setLmsSource] = useState<'live' | 'demo' | 'error'>('demo');
-  const [activeTab, setActiveTab] = useState<'circles' | 'chat' | 'ai' | 'lms' | 'repository'>('circles');
+  const [activeTab, setActiveTab] = useState<'circles' | 'chat' | 'ai' | 'lms' | 'repository' | 'drive'>('circles');
   const [localActiveDoc, setLocalActiveDoc] = useState<LmsRepositoryItem | null>(null);
   const [dbFriends, setDbFriends] = useState<any[]>([]);
 
@@ -369,19 +373,23 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
       </div>
 
       {/* Section tabs */}
-      <div className="flex border-b border-fouzar-border shrink-0">
+      <div className="flex border-b border-fouzar-border shrink-0 overflow-x-auto scrollbar-none">
         {[
           { id: 'circles' as const, label: 'Circles' },
           { id: 'chat' as const, label: 'Chat' },
           { id: 'ai' as const, label: 'AI' },
           { id: 'lms' as const, label: 'LMS Feed' },
           { id: 'repository' as const, label: 'Archive' },
+          // Shared Drive tab — only visible inside a real shared circle
+          ...(roomId && !roomId.startsWith('personal-')
+            ? [{ id: 'drive' as const, label: '📂 Drive' }]
+            : []),
         ].map((tab) => (
           <button
             key={tab.id}
             type="button"
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 py-2.5 font-mono text-[8px] uppercase tracking-widest transition-colors ${
+            className={`flex-shrink-0 flex-1 py-2.5 font-mono text-[8px] uppercase tracking-widest transition-colors ${
               activeTab === tab.id
                 ? 'text-fouzar-accent border-b-2 border-fouzar-accent'
                 : 'text-fouzar-text-secondary hover:text-fouzar-text-primary'
@@ -821,6 +829,23 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
                 isCompact
                 rootFolderId={activeFolderId === 'all' ? null : activeFolderId}
                 onOpenFile={(doc) => setActiveDoc(doc)}
+              />
+            </motion.div>
+          )}
+
+          {/* Feature A — Shared Group Drive */}
+          {activeTab === 'drive' && roomId && !roomId.startsWith('personal-') && (
+            <motion.div
+              key="drive"
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 8 }}
+              className="p-4 flex-1 overflow-hidden flex flex-col"
+            >
+              <SharedGroupDrive
+                groupId={roomId}
+                onPresentFile={onPresentFile}
+                currentUserId={user?.id}
               />
             </motion.div>
           )}

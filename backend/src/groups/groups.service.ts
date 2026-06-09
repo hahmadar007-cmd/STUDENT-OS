@@ -253,4 +253,43 @@ export class GroupsService {
       },
     });
   }
+
+  async createGroupFile(
+    groupId: string,
+    fileName: string,
+    fileUrl: string,
+    fileSize: string,
+    uploadedBy: string,
+  ) {
+    return this.prisma.groupFile.create({
+      data: {
+        groupId,
+        fileName,
+        fileUrl,
+        fileSize,
+        uploadedBy,
+      },
+    });
+  }
+
+  async getGroupFiles(groupId: string) {
+    return this.prisma.groupFile.findMany({
+      where: { groupId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async deleteGroupFile(groupId: string, fileId: string) {
+    const file = await this.prisma.groupFile.findFirst({
+      where: { id: fileId, groupId },
+    });
+    if (!file) {
+      throw new Error('File not found in this circle');
+    }
+    
+    await this.prisma.groupFile.delete({
+      where: { id: fileId },
+    });
+    return file;
+  }
 }

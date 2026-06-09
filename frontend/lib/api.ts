@@ -228,6 +228,117 @@ export const getLmsStatus = () => apiRequest('/lms/status', 'GET');
 
 export const getDeadlines = (): Promise<LmsDeadlinesResponse> => apiRequest('/lms/deadlines', 'GET');
 
+export interface CourseFile {
+  id: string;
+  name: string;
+  fileUrl: string;
+  fileSize: number;
+  mimeType: string;
+}
+
+export interface CourseContents {
+  courseId: number;
+  courseName: string;
+  courseShortName: string;
+  files: CourseFile[];
+}
+
+export interface CourseContentsResponse {
+  source: 'live' | 'not-connected' | 'unsupported' | 'error';
+  courses: CourseContents[];
+}
+
+export interface GradeItem {
+  courseId: number;
+  courseName: string;
+  courseShortName: string;
+  gradePercent: number | null;
+  letterGrade: string | null;
+}
+
+export interface GradesResponse {
+  source: 'live' | 'not-connected' | 'unsupported' | 'error';
+  grades: GradeItem[];
+}
+
+export const getCourseContents = (): Promise<CourseContentsResponse> =>
+  apiRequest('/lms/courses/contents', 'GET');
+
+export const getGrades = (): Promise<GradesResponse> =>
+  apiRequest('/lms/grades', 'GET');
+
+export interface AssignmentStatusItem {
+  id: string;
+  title: string;
+  course: string;
+  courseId: number;
+  dueDate: string | null;
+  dueDateMs: number | null;
+  status: 'submitted' | 'draft' | 'new' | 'overdue';
+}
+
+export interface AssignmentsResponse {
+  source: 'live' | 'not-connected' | 'unsupported' | 'error';
+  assignments: AssignmentStatusItem[];
+}
+
+export interface QuizItem {
+  id: string;
+  title: string;
+  course: string;
+  courseId: number;
+  timeOpen: number | null;
+  timeClose: number | null;
+  timeLimit: number | null;
+  attemptsAllowed: number;
+  grade: number | null;
+}
+
+export interface QuizzesResponse {
+  source: 'live' | 'not-connected' | 'unsupported' | 'error';
+  quizzes: QuizItem[];
+}
+
+export interface ForumItem {
+  id: string;
+  forumId: number;
+  name: string;
+  course: string;
+  courseId: number;
+  discussionCount: number;
+  unreadCount: number;
+  type: string;
+}
+
+export interface ForumsResponse {
+  source: 'live' | 'not-connected' | 'unsupported' | 'error';
+  forums: ForumItem[];
+}
+
+export const getAssignments = (): Promise<AssignmentsResponse> =>
+  apiRequest('/lms/assignments', 'GET');
+
+export const getQuizzes = (): Promise<QuizzesResponse> =>
+  apiRequest('/lms/quizzes', 'GET');
+
+export const getForumActivity = (): Promise<ForumsResponse> =>
+  apiRequest('/lms/forums', 'GET');
+
+export interface CourseInfo {
+  id: number;
+  shortname: string;
+  fullname: string;
+  teacherName: string | null;
+}
+
+export interface CoursesResponse {
+  source: 'live' | 'not-connected' | 'unsupported' | 'error';
+  courses: CourseInfo[];
+}
+
+export const getCourses = (): Promise<CoursesResponse> =>
+  apiRequest('/lms/courses', 'GET');
+
 // Social & Profile APIs
 export const createGroup = (name: string, courseCode?: string) => {
   return apiRequest('/groups', 'POST', { name, courseCode });
@@ -283,4 +394,75 @@ export const rejectGroupMember = (groupId: string, userId: string) => {
 
 export const webSearch = (query: string): Promise<{ title: string; link: string; snippet: string }[]> => {
   return apiRequest(`/ai/search?q=${encodeURIComponent(query)}`, 'GET');
+};
+
+// ─── Shared Group Drive ───────────────────────────────────────────────────────
+
+export interface GroupFileItem {
+  id: string;
+  fileName: string;
+  fileUrl: string;
+  fileSize: string;
+  uploadedBy: string;
+  createdAt: string;
+  groupId: string;
+}
+
+/** Fetch all files for a study circle. */
+export const getGroupFiles = (groupId: string): Promise<GroupFileItem[]> => {
+  return apiRequest(`/groups/${groupId}/files`, 'GET');
+};
+
+/**
+ * Upload a file to the shared group drive using XHR so we can report
+ * upload progress to the drag-and-drop UI in real time.
+ */
+export const uploadGroupFile = (
+  groupId: string,
+  file: File,
+  onProgress?: (percent: number) => void,
+): Promise<{ success: boolean; file: GroupFileItem }> => {
+  return new Promise((resolve, reject) => {
+    const token = getAuthToken();
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${API_URL}/groups/${groupId}/files`, true);
+    if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && onProgress) {
+        onProgress(Math.round((e.loaded / e.total) * 100));
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          resolve(JSON.parse(xhr.responseText));
+        } catch {
+          reject(new Error('Failed to parse upload response'));
+        }
+      } else if (xhr.status === 401) {
+        clearAuthToken();
+        reject(new Error('Unauthorized'));
+      } else {
+        try {
+          const err = JSON.parse(xhr.responseText);
+          reject(new Error(err.message || 'Upload failed'));
+        } catch {
+          reject(new Error(`Upload failed with status ${xhr.status}`));
+        }
+      }
+    };
+
+    xhr.onerror = () => reject(new Error('Network error during upload'));
+    xhr.send(formData);
+  });
+};
+
+/** Delete a file from the shared group drive. */
+export const deleteGroupFile = (groupId: string, fileId: string): Promise<{ success: boolean }> => {
+  return apiRequest(`/groups/${groupId}/files/${fileId}`, 'DELETE');
 };

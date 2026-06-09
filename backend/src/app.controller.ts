@@ -1,9 +1,12 @@
-import { Controller, Get, Post, Patch, Body, Headers, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Headers, UnauthorizedException, Res, Param } from '@nestjs/common';
 import { AppService } from './app.service';
 import { PrismaService } from './prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { LmsService } from './lms/lms.service';
 import { encrypt, decrypt } from './utils/crypto';
+import type { Response } from 'express';
+import * as path from 'path';
+import * as fs from 'fs';
 
 @Controller()
 export class AppController {
@@ -483,6 +486,167 @@ export class AppController {
         provider: null,
         deadlines: demoDeadlines,
       };
+    }
+  }
+
+  @Get('uploads/:filename')
+  async getUploadedFile(@Param('filename') filename: string, @Res() res: Response) {
+    const filePath = path.join(process.cwd(), 'uploads', filename);
+    if (!fs.existsSync(filePath)) {
+      res.status(404).send('File not found');
+      return;
+    }
+    
+    // Guess MIME type or set general application/octet-stream
+    const ext = path.extname(filename).toLowerCase();
+    let contentType = 'application/octet-stream';
+    if (ext === '.pdf') contentType = 'application/pdf';
+    else if (ext === '.png') contentType = 'image/png';
+    else if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
+    else if (ext === '.gif') contentType = 'image/gif';
+    else if (ext === '.txt' || ext === '.md') contentType = 'text/plain';
+    
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', 'inline');
+    res.sendFile(filePath);
+  }
+
+  @Get('lms/courses/contents')
+  async getCourseContents(@Headers('authorization') authHeader?: string) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Missing token');
+    }
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded = this.jwtService.verify(token);
+      const user = await this.prisma.user.findUnique({
+        where: { id: decoded.sub },
+        select: { lmsToken: true, lmsBaseUrl: true, lmsProvider: true },
+      });
+      if (!user?.lmsToken || !user?.lmsBaseUrl) {
+        return { source: 'not-connected', courses: [] };
+      }
+      const decryptedToken = decrypt(user.lmsToken);
+      // Only Moodle supports core_course_get_contents
+      if (user.lmsProvider === 'canvas') {
+        return { source: 'unsupported', courses: [] };
+      }
+      const courses = await this.lmsService.getAllCourseContents(user.lmsBaseUrl, decryptedToken);
+      return { source: 'live', courses };
+    } catch (e) {
+      console.warn('Course contents fetch failed:', e);
+      return { source: 'error', courses: [] };
+    }
+  }
+
+  @Get('lms/grades')
+  async getGrades(@Headers('authorization') authHeader?: string) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Missing token');
+    }
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded = this.jwtService.verify(token);
+      const user = await this.prisma.user.findUnique({
+        where: { id: decoded.sub },
+        select: { lmsToken: true, lmsBaseUrl: true, lmsProvider: true },
+      });
+      if (!user?.lmsToken || !user?.lmsBaseUrl) {
+        return { source: 'not-connected', grades: [] };
+      }
+      const decryptedToken = decrypt(user.lmsToken);
+      if (user.lmsProvider === 'canvas') {
+        return { source: 'unsupported', grades: [] };
+      }
+      const grades = await this.lmsService.getMoodleGrades(user.lmsBaseUrl, decryptedToken);
+      return { source: 'live', grades };
+    } catch (e) {
+      console.warn('Grades fetch failed:', e);
+      return { source: 'error', grades: [] };
+    }
+  }
+
+  @Get('lms/assignments')
+  async getAssignments(@Headers('authorization') authHeader?: string) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) throw new UnauthorizedException('Missing token');
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded = this.jwtService.verify(token);
+      const user = await this.prisma.user.findUnique({
+        where: { id: decoded.sub },
+        select: { lmsToken: true, lmsBaseUrl: true, lmsProvider: true },
+      });
+      if (!user?.lmsToken || !user?.lmsBaseUrl) return { source: 'not-connected', assignments: [] };
+      if (user.lmsProvider === 'canvas') return { source: 'unsupported', assignments: [] };
+      const decryptedToken = decrypt(user.lmsToken);
+      const assignments = await this.lmsService.getMoodleAssignmentsWithStatus(user.lmsBaseUrl, decryptedToken);
+      return { source: 'live', assignments };
+    } catch (e) {
+      console.warn('Assignments fetch failed:', e);
+      return { source: 'error', assignments: [] };
+    }
+  }
+
+  @Get('lms/quizzes')
+  async getQuizzes(@Headers('authorization') authHeader?: string) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) throw new UnauthorizedException('Missing token');
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded = this.jwtService.verify(token);
+      const user = await this.prisma.user.findUnique({
+        where: { id: decoded.sub },
+        select: { lmsToken: true, lmsBaseUrl: true, lmsProvider: true },
+      });
+      if (!user?.lmsToken || !user?.lmsBaseUrl) return { source: 'not-connected', quizzes: [] };
+      if (user.lmsProvider === 'canvas') return { source: 'unsupported', quizzes: [] };
+      const decryptedToken = decrypt(user.lmsToken);
+      const quizzes = await this.lmsService.getMoodleQuizzes(user.lmsBaseUrl, decryptedToken);
+      return { source: 'live', quizzes };
+    } catch (e) {
+      console.warn('Quizzes fetch failed:', e);
+      return { source: 'error', quizzes: [] };
+    }
+  }
+
+  @Get('lms/forums')
+  async getForums(@Headers('authorization') authHeader?: string) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) throw new UnauthorizedException('Missing token');
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded = this.jwtService.verify(token);
+      const user = await this.prisma.user.findUnique({
+        where: { id: decoded.sub },
+        select: { lmsToken: true, lmsBaseUrl: true, lmsProvider: true },
+      });
+      if (!user?.lmsToken || !user?.lmsBaseUrl) return { source: 'not-connected', forums: [] };
+      if (user.lmsProvider === 'canvas') return { source: 'unsupported', forums: [] };
+      const decryptedToken = decrypt(user.lmsToken);
+      const forums = await this.lmsService.getMoodleForumActivity(user.lmsBaseUrl, decryptedToken);
+      return { source: 'live', forums };
+    } catch (e) {
+      console.warn('Forums fetch failed:', e);
+      return { source: 'error', forums: [] };
+    }
+  }
+
+  @Get('lms/courses')
+  async getCourses(@Headers('authorization') authHeader?: string) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) throw new UnauthorizedException('Missing token');
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded = this.jwtService.verify(token);
+      const user = await this.prisma.user.findUnique({
+        where: { id: decoded.sub },
+        select: { lmsToken: true, lmsBaseUrl: true, lmsProvider: true },
+      });
+      if (!user?.lmsToken || !user?.lmsBaseUrl) return { source: 'not-connected', courses: [] };
+      if (user.lmsProvider === 'canvas') return { source: 'unsupported', courses: [] };
+      const decryptedToken = decrypt(user.lmsToken);
+      const courses = await this.lmsService.getMoodleCoursesDetailed(user.lmsBaseUrl, decryptedToken);
+      return { source: 'live', courses };
+    } catch (e) {
+      console.warn('Courses fetch failed:', e);
+      return { source: 'error', courses: [] };
     }
   }
 }

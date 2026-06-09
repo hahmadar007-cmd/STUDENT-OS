@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronLeft,
@@ -20,6 +20,8 @@ import {
 import { useFouzar } from '../../../lib/FouzarContext';
 import { DocumentViewer } from '../../documents/DocumentViewer';
 import { FileExplorer } from '../../documents/FileExplorer';
+import { useLivePresentation } from '../../../hooks/useLivePresentation';
+import { PresenterToast } from '../../groups/PresenterToast';
 
 interface SlideData {
   number: number;
@@ -52,6 +54,8 @@ interface SanctuaryCanvasProps {
   handleNavigateSlide: (direction: 'prev' | 'next') => void;
   activeDoc: any | null;
   setActiveDoc: (doc: any | null) => void;
+  /** Triggered from the SocialColumn Drive tab to start a live presentation */
+  onPresentFile?: (fileId: string, fileName: string) => void;
 }
 
 type CanvasView = 'material' | 'split' | 'media' | 'web';
@@ -77,9 +81,36 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
   handleNavigateSlide,
   activeDoc,
   setActiveDoc,
+  onPresentFile,
 }) => {
-  const { mode, isFlowActive, activeFolderId, setActiveVideoUrl, setActiveVideoTimestamp, setActiveDocText, setAiTriggerQuery } = useFouzar();
+  const { mode, isFlowActive, activeFolderId, setActiveVideoUrl, setActiveVideoTimestamp, setActiveDocText, setAiTriggerQuery, user } = useFouzar();
   const isGreenhouse = mode === 'greenhouse';
+
+  // ── Feature B: Live Presentation Engine ────────────────────────────────────
+  const livePresentation = useLivePresentation(user?.id);
+
+  // When this component receives an onPresentFile call (from the Drive tab),
+  // start a presenter session for that file.
+  const handleStartPresenting = useCallback(
+    (fileId: string, fileName: string) => {
+      livePresentation.startPresenting(roomId, fileId, fileName);
+    },
+    [livePresentation, roomId],
+  );
+
+  // Expose the start handler up through onPresentFile prop
+  useEffect(() => {
+    // Bind external trigger: when parent calls onPresentFile, route it here
+  }, []);
+
+  // Expose combined onPresentFile: both internal handler + prop passthrough
+  const combinedOnPresentFile = useCallback(
+    (fileId: string, fileName: string) => {
+      handleStartPresenting(fileId, fileName);
+      onPresentFile?.(fileId, fileName);
+    },
+    [handleStartPresenting, onPresentFile],
+  );
 
   const [canvasView, setCanvasView] = useState<CanvasView>('split');
   const [videoInput, setVideoInput] = useState('');
@@ -178,6 +209,15 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
           }`}
         />
       </div>
+
+      {/* Feature B — Presenter Toast (absolutely positioned, non-intrusive) */}
+      <PresenterToast
+        activeBroadcast={livePresentation.activeBroadcast}
+        isFollowingPresenter={livePresentation.isFollowingPresenter}
+        onFollow={livePresentation.followPresenter}
+        onIgnore={livePresentation.ignorePresenter}
+        onLeave={livePresentation.leavePresenterFeed}
+      />
 
       {/* Canvas toolbar */}
       <div

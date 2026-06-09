@@ -113,3 +113,101 @@ export const useOnSignalReceived = (callback: (data: any) => void) => {
     };
   }, [callback]);
 };
+
+// ─── Feature B: Live Presentation Engine ──────────────────────────────────────
+
+/**
+ * Emits `presenter-session-start` to tell all room peers that this user
+ * is beginning a live slide presentation for a specific file.
+ */
+export const startPresenterSession = (groupId: string, fileId: string, fileName: string) => {
+  const s = getSocket();
+  s.emit('presenter-session-start', { groupId, fileId, fileName });
+};
+
+/**
+ * Relays the active page number to all room members. The gateway re-emits
+ * `onSyncSlidePage`; only peers with `isFollowingPresenter = true` snap to it.
+ */
+export const broadcastSlidePage = (groupId: string, fileId: string, pageNumber: number) => {
+  const s = getSocket();
+  s.emit('sync-slide-page', { groupId, fileId, pageNumber });
+};
+
+/** Cleanly terminates the live session so followers can detach automatically. */
+export const endPresenterSession = (groupId: string) => {
+  const s = getSocket();
+  s.emit('presenter-session-end', { groupId });
+};
+
+// ─── Live Presentation React Hooks ────────────────────────────────────────────
+
+export interface PresenterSessionPayload {
+  presenterId: string;
+  presenterName: string;
+  groupId: string;
+  fileId: string;
+  fileName: string;
+  startedAt: string;
+}
+
+export interface SyncSlidePagePayload {
+  presenterId: string;
+  fileId: string;
+  pageNumber: number;
+}
+
+export interface PresenterSessionEndPayload {
+  presenterId: string;
+  presenterName: string;
+  groupId: string;
+}
+
+export const useOnPresenterSessionStart = (callback: (data: PresenterSessionPayload) => void) => {
+  useEffect(() => {
+    const s = getSocket();
+    s.on('onPresenterSessionStart', callback);
+    return () => {
+      s.off('onPresenterSessionStart', callback);
+    };
+  }, [callback]);
+};
+
+export const useOnSyncSlidePage = (callback: (data: SyncSlidePagePayload) => void) => {
+  useEffect(() => {
+    const s = getSocket();
+    s.on('onSyncSlidePage', callback);
+    return () => {
+      s.off('onSyncSlidePage', callback);
+    };
+  }, [callback]);
+};
+
+export const useOnPresenterSessionEnd = (callback: (data: PresenterSessionEndPayload) => void) => {
+  useEffect(() => {
+    const s = getSocket();
+    s.on('onPresenterSessionEnd', callback);
+    return () => {
+      s.off('onPresenterSessionEnd', callback);
+    };
+  }, [callback]);
+};
+
+// ─── Feature A: Shared Drive Real-Time Sync Hook ─────────────────────────────
+
+export interface FileSyncPayload {
+  action: 'uploaded' | 'deleted';
+  groupId: string;
+  file?: any;
+  fileId?: string;
+}
+
+export const useOnFileSync = (callback: (data: FileSyncPayload) => void) => {
+  useEffect(() => {
+    const s = getSocket();
+    s.on('fileSync', callback);
+    return () => {
+      s.off('fileSync', callback);
+    };
+  }, [callback]);
+};

@@ -4,6 +4,7 @@ import { GroupsController } from './groups.controller';
 import { GroupsGateway } from './groups.gateway';
 import { PrismaModule } from '../prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
+import { CloudStorageService } from './cloud-storage.service';
 
 @Module({
   imports: [
@@ -14,7 +15,7 @@ import { JwtModule } from '@nestjs/jwt';
     }),
   ],
   controllers: [GroupsController],
-  providers: [GroupsService, GroupsGateway],
+  providers: [GroupsService, GroupsGateway, CloudStorageService],
   exports: [GroupsService],
 })
 export class GroupsModule {}

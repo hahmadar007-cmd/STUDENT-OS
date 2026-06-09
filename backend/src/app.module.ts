@@ -4,6 +4,7 @@ import { AuthModule } from './auth/auth.module';
 import { GroupsModule } from './groups/groups.module';
 import { AiModule } from './ai/ai.module';
 import { LmsModule } from './lms/lms.module';
+import { AiProvidersModule } from './ai-providers/ai-providers.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { SocialController } from './social/social.controller';
@@ -16,6 +17,7 @@ import { JwtModule } from '@nestjs/jwt';
     GroupsModule,
     AiModule,
     LmsModule,
+    AiProvidersModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'fasca-obsidian-secret-key-1337',
       signOptions: { expiresIn: '7d' },

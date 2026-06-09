@@ -35,6 +35,7 @@ import { FascaTimeline } from '../../components/social/FascaTimeline';
 import { FascaAiCore } from '../../components/ai/FascaAiCore';
 import { LmsBridgePanel } from '../../components/social/LmsBridgePanel';
 import { FocusShieldPanel } from '../../components/focus/FocusShieldPanel';
+import { AiControlCenter } from '../../components/ai/AiControlCenter';
 import { useAuth } from '../../hooks/useAuth';
 import { useSocket } from '../../hooks/useSocket';
 import { useOnFocusStateChanged, updateFocusState as socketUpdateFocusState } from '../../lib/socket';
@@ -441,6 +442,31 @@ export default function DashboardPage() {
       }
     };
 
+    // Fired by LMS panel file rows — opens PDF viewer with the streamed URL
+    const handleOpenPdfViewer = (e: Event) => {
+      const { url } = (e as CustomEvent).detail ?? {};
+      if (!url) return;
+      // Store URL for the viewer to pick up, then open documents panel
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('fasca_pending_pdf_url', url);
+      }
+      setActivePanelTab('timer');
+      setActiveNav('circles');
+      document.getElementById('timer-section')?.scrollIntoView({ behavior: 'smooth' });
+      // Open the URL in a new tab as the primary viewer pathway
+      window.open(url, '_blank', 'noopener,noreferrer');
+    };
+
+    // Fired by ⚡ Focus on this button — pre-sets timer to 45 min and activates shield
+    const handleStartFocusTimer = (e: Event) => {
+      const { minutes } = (e as CustomEvent).detail ?? {};
+      const mins = typeof minutes === 'number' ? minutes : 45;
+      setSessionMinutes(mins);
+      setSecondsLeft(mins * 60);
+      setIsShieldOpen(true);
+      setActiveNav('shield');
+    };
+
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       const activeEl = document.activeElement;
       if (
@@ -480,12 +506,16 @@ export default function DashboardPage() {
     window.addEventListener('toggle-lms', handleLmsEvent);
     window.addEventListener('toggle-shield', handleShieldEvent);
     window.addEventListener('switch-tab', handleTabEvent);
+    window.addEventListener('open-pdf-viewer', handleOpenPdfViewer);
+    window.addEventListener('start-focus-timer', handleStartFocusTimer);
     window.addEventListener('keydown', handleGlobalKeyDown);
 
     return () => {
       window.removeEventListener('toggle-lms', handleLmsEvent);
       window.removeEventListener('toggle-shield', handleShieldEvent);
       window.removeEventListener('switch-tab', handleTabEvent);
+      window.removeEventListener('open-pdf-viewer', handleOpenPdfViewer);
+      window.removeEventListener('start-focus-timer', handleStartFocusTimer);
       window.removeEventListener('keydown', handleGlobalKeyDown);
     };
   }, []);
@@ -565,7 +595,7 @@ export default function DashboardPage() {
     { id: 'circles', label: 'Study Circles', icon: Compass, keyHint: 'S' },
     { id: 'nodes', label: 'Garden Nodes', icon: Layers, keyHint: 'G' },
     { id: 'ai', label: 'AI Core', icon: Cpu, keyHint: 'A' },
-    { id: 'bridge', label: 'LMS Bridge', icon: Plug, keyHint: 'L' },
+    { id: 'bridge', label: 'Campus Gateway', icon: Plug, keyHint: 'L' },
     { id: 'shield', label: 'Focus Shield', icon: Shield, keyHint: 'F' },
   ];
 
@@ -1280,6 +1310,17 @@ export default function DashboardPage() {
           <div className="w-full text-center">
             <FascaTimeline />
           </div>
+        </div>
+
+        {/* 5. AI Control Center Section */}
+        <div className="space-y-4 w-full border-t border-[#2a2a3a]/20 pt-6 pb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a]">
+              AI Engines
+            </span>
+            <Tooltip text="Connect your own AI API keys (OpenAI, Anthropic, Gemini, or local Ollama). Keys are encrypted with AES-256 before storage. Only one engine can be active at a time." />
+          </div>
+          {user && <AiControlCenter userId={user.id} />}
         </div>
 
         {/* Footer with open-source link */}
