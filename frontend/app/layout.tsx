@@ -1,3 +1,11 @@
+// ============================================================================
+// Copyright (c) 2025 hahmadar007-cmd. All Rights Reserved.
+// STUDENT-OS — Proprietary & Confidential Software.
+// Unauthorized copying, modification, distribution, or use of this file,
+// via any medium, is strictly prohibited and punishable by law.
+// See LICENSE file for full legal terms and penalties.
+// ============================================================================
+
 import type { Metadata } from "next";
 import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";

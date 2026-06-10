@@ -1,3 +1,11 @@
+// ============================================================================
+// Copyright (c) 2025 hahmadar007-cmd. All Rights Reserved.
+// STUDENT-OS — Proprietary & Confidential Software.
+// Unauthorized copying, modification, distribution, or use of this file,
+// via any medium, is strictly prohibited and punishable by law.
+// See LICENSE file for full legal terms and penalties.
+// ============================================================================
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -395,14 +403,9 @@ export default function LandingPage() {
           <span className="w-[1.5px] h-2.5 bg-[#2a2a3a]" />
           <span>V1.0</span>
         </div>
-        <a 
-          href="https://github.com/fasca" 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className="hover:text-[#7c5cfc] transition-colors"
-        >
-          OPEN SOURCE
-        </a>
+        <span className="text-[#6b6b8a]">
+          © 2025 hahmadar007-cmd — All Rights Reserved. Proprietary & Confidential.
+        </span>
       </footer>
 
     </div>
