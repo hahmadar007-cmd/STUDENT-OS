@@ -25,6 +25,7 @@ import Link from 'next/link';
 import { useAuth } from '../../hooks/useAuth';
 import { useFouzar } from '../../lib/FouzarContext';
 import { FascaLogo } from '../../components/logo/FascaLogo';
+import { AiControlCenter } from '../../components/ai/AiControlCenter';
 import {
   updateProfile,
   getFriends,
@@ -74,14 +75,6 @@ export default function ProfilePage() {
   const [lmsSaving, setLmsSaving] = useState(false);
   const [lmsMessage, setLmsMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
-  // AI Connection State
-  const [aiEmail, setAiEmail] = useState('');
-  const [aiMode, setAiMode] = useState('default');
-  const [aiToken, setAiToken] = useState('');
-  const [aiUrl, setAiUrl] = useState('');
-  const [aiSaving, setAiSaving] = useState(false);
-  const [aiMessage, setAiMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
-
   // Friends State
   const [friends, setFriends] = useState<Friend[]>([]);
   const [incomingRequests, setIncomingRequests] = useState<FriendRequest[]>([]);
@@ -102,15 +95,6 @@ export default function ProfilePage() {
       }
     }
   }, [user, setAiModel]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setAiEmail(localStorage.getItem('fasca_ai_email') || '');
-      setAiMode(localStorage.getItem('fasca_ai_mode') || 'default');
-      setAiToken(localStorage.getItem('fasca_ai_token') || '');
-      setAiUrl(localStorage.getItem('fasca_ai_url') || '');
-    }
-  }, []);
 
   const loadLmsStatus = async () => {
     try {
@@ -201,23 +185,6 @@ export default function ProfilePage() {
       setLmsMessage({ text: err.message || 'Failed to configure LMS Bridge.', type: 'error' });
     } finally {
       setLmsSaving(false);
-    }
-  };
-
-  const handleAiSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setAiSaving(true);
-    setAiMessage(null);
-    try {
-      localStorage.setItem('fasca_ai_email', aiEmail.trim());
-      localStorage.setItem('fasca_ai_mode', aiMode);
-      localStorage.setItem('fasca_ai_token', aiToken.trim());
-      localStorage.setItem('fasca_ai_url', aiUrl.trim());
-      setAiMessage({ text: 'AI account link saved successfully!', type: 'success' });
-    } catch (err: any) {
-      setAiMessage({ text: 'Failed to save configuration.', type: 'error' });
-    } finally {
-      setAiSaving(false);
     }
   };
 
@@ -578,101 +545,13 @@ export default function ProfilePage() {
             </div>
           </motion.div>
 
-          {/* Section: AI Account Connection settings */}
+          {/* Section: AI Engines */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.06 }}
-            className="p-6 bg-fouzar-surface border border-fouzar-border rounded-[var(--fouzar-radius-lg)] space-y-4"
           >
-            <div className="flex items-center gap-2 border-b border-fouzar-border pb-3">
-              <Sparkles className="w-4 h-4 text-fouzar-accent" />
-              <h2 className="font-mono text-[9px] uppercase tracking-widest text-fouzar-text-secondary">
-                Fasca AI Account Link
-              </h2>
-            </div>
-
-            <form onSubmit={handleAiSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="font-mono text-[7px] uppercase tracking-wider text-fouzar-text-secondary block">
-                    AI Account Email
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="Enter your AI account email..."
-                    value={aiEmail}
-                    onChange={(e) => setAiEmail(e.target.value)}
-                    className="w-full bg-fouzar-elevated/40 border border-fouzar-border px-3 py-2 text-[10.5px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="font-mono text-[7px] uppercase tracking-wider text-fouzar-text-secondary block">
-                    Connection Mode
-                  </label>
-                  <select
-                    value={aiMode}
-                    onChange={(e) => setAiMode(e.target.value)}
-                    className="w-full bg-[#111118] border border-fouzar-border px-3 py-2 text-[10.5px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
-                  >
-                    <option value="default">Fasca AI (System Default)</option>
-                    <option value="deepseek-personal">DeepSeek API (Personal Token)</option>
-                    <option value="openai-personal">OpenAI GPT-4o (Personal Token)</option>
-                    <option value="custom">Custom AI Endpoint</option>
-                  </select>
-                </div>
-
-                {aiMode !== 'default' && (
-                  <div className="space-y-1 sm:col-span-2">
-                    <label className="font-mono text-[7px] uppercase tracking-wider text-fouzar-text-secondary block">
-                      Connection Token / API Key
-                    </label>
-                    <input
-                      type="password"
-                      placeholder="Enter connection token / key..."
-                      value={aiToken}
-                      onChange={(e) => setAiToken(e.target.value)}
-                      className="w-full bg-fouzar-elevated/40 border border-fouzar-border px-3 py-2 text-[10.5px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
-                    />
-                  </div>
-                )}
-
-                {aiMode === 'custom' && (
-                  <div className="space-y-1 sm:col-span-2">
-                    <label className="font-mono text-[7px] uppercase tracking-wider text-fouzar-text-secondary block">
-                      Custom Endpoint URL (OpenAI-Compatible)
-                    </label>
-                    <input
-                      type="url"
-                      placeholder="https://api.your-endpoint.com/v1"
-                      value={aiUrl}
-                      onChange={(e) => setAiUrl(e.target.value)}
-                      className="w-full bg-fouzar-elevated/40 border border-fouzar-border px-3 py-2 text-[10.5px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {aiMessage && (
-                <p
-                  className={`text-[8.5px] font-mono uppercase tracking-wider ${
-                    aiMessage.type === 'success' ? 'text-fouzar-accent' : 'text-fouzar-signal'
-                  }`}
-                >
-                  {aiMessage.text}
-                </p>
-              )}
-
-              <div className="flex justify-end pt-1">
-                <button
-                  type="submit"
-                  disabled={aiSaving}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-fouzar-accent text-fouzar-text-inverse font-mono text-[8.5px] uppercase font-bold rounded-[var(--fouzar-radius-md)] hover:opacity-90 disabled:opacity-50 cursor-pointer"
-                >
-                  {aiSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Connect AI Account'}
-                </button>
-              </div>
-            </form>
+            <AiControlCenter />
           </motion.div>
 
           {/* Section 2: LMS Connection settings */}

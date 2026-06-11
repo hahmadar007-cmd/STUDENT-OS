@@ -135,9 +135,9 @@ export const askAi = (
     videoUrl?: string;
     videoTimestamp?: number;
     courseId?: string;
-  }
+  },
+  activeEngine?: { name: string; apiKeyRaw: string; baseUrl: string | null }
 ) => {
-  // Try to read decoded user info or fallback
   const token = getAuthToken();
   let userId = 'default-user';
   try {
@@ -147,12 +147,57 @@ export const askAi = (
     }
   } catch (e) {}
 
-  return apiRequest('/ai/chat', 'POST', {
-    userId,
-    prompt,
-    slideId,
-    modelName,
-    ...extraContext
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Authorization': token ? `Bearer ${token}` : '',
+  };
+
+  // Inject active engine credentials for OpenRouter / custom endpoint routing
+  if (activeEngine?.apiKeyRaw) {
+    headers['x-openrouter-key'] = activeEngine.apiKeyRaw;
+    if (activeEngine.baseUrl) {
+      headers['x-custom-url'] = activeEngine.baseUrl;
+      headers['x-custom-key'] = activeEngine.apiKeyRaw;
+    }
+  } else if (typeof window !== 'undefined') {
+    // Legacy localStorage key injection fallback
+    const aiMode = localStorage.getItem('fasca_ai_mode') || 'default';
+    const aiToken = localStorage.getItem('fasca_ai_token');
+    const aiUrl = localStorage.getItem('fasca_ai_url');
+    if (aiMode === 'gemini-personal' && aiToken) headers['x-gemini-key'] = aiToken;
+    else if (aiMode === 'openai-personal' && aiToken) headers['x-openai-key'] = aiToken;
+    else if (aiMode === 'deepseek-personal' && aiToken) headers['x-deepseek-key'] = aiToken;
+    else if (aiMode === 'custom' && aiUrl) {
+      headers['x-custom-url'] = aiUrl;
+      if (aiToken) headers['x-custom-key'] = aiToken;
+    }
+  }
+
+  const resolvedModel = activeEngine?.name ?? modelName;
+
+  return fetch(`${API_URL}/ai/chat`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      userId,
+      prompt,
+      slideId,
+      modelName: resolvedModel,
+      ...extraContext,
+    }),
+  }).then(async res => {
+    if (res.status === 401) {
+      clearAuthToken();
+      if (typeof window !== 'undefined' && window.location.pathname !== '/auth') {
+        window.location.href = '/auth';
+      }
+      throw new Error('Unauthorized');
+    }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'API request failed');
+    }
+    return res.json();
   });
 };
 

@@ -32,7 +32,6 @@ const AI_PROVIDERS_KEY = 'fasca_ai_providers_v1';
 interface StoredProvider {
   id: string;
   name: string;
-  providerType: string;
   isActive: boolean;
   apiKeyRaw: string;
   baseUrl: string | null;
@@ -404,7 +403,8 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
         courseId: activeDoc?.courseCode || 'general'
       };
 
-      const res = await askAi(finalPrompt, slideId, aiModel, extraContext);
+      const modelName = activeEngine?.name ?? aiModel;
+      const res = await askAi(finalPrompt, slideId, modelName, extraContext, activeEngine ?? undefined);
       setMessages((prev) => [
         ...prev,
         {

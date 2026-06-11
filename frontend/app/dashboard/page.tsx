@@ -33,6 +33,7 @@ import { FascaCard } from '../../components/ui/FascaCard';
 import { StudyNodesGraph } from '../../components/social/StudyNodesGraph';
 import { FascaTimeline } from '../../components/social/FascaTimeline';
 import { FascaAiCore } from '../../components/ai/FascaAiCore';
+import { AiOnboardingModal } from '../../components/ai/AiOnboardingModal';
 import { LmsBridgePanel } from '../../components/social/LmsBridgePanel';
 import { FocusShieldPanel } from '../../components/focus/FocusShieldPanel';
 import { AiControlCenter } from '../../components/ai/AiControlCenter';
@@ -120,6 +121,7 @@ export default function DashboardPage() {
   const [contextMenuFriend, setContextMenuFriend] = useState<StudyCirclePeer | null>(null);
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isThemeCustomizerOpen, setIsThemeCustomizerOpen] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const router = useRouter();
 
@@ -400,6 +402,15 @@ export default function DashboardPage() {
     if (user) {
       loadGroups();
       loadRealFriends();
+
+      // Show onboarding modal for new signups who haven't configured an AI engine yet
+      const justSignedUp = localStorage.getItem('fasca_just_signed_up') === '1';
+      const alreadyOnboarded = localStorage.getItem('fasca_onboarded') === '1';
+      const hasEngines = !!localStorage.getItem('fasca_ai_providers_v1');
+      if ((justSignedUp || !alreadyOnboarded) && !hasEngines) {
+        localStorage.removeItem('fasca_just_signed_up');
+        setShowOnboarding(true);
+      }
     }
   }, [user]);
 
@@ -638,6 +649,11 @@ export default function DashboardPage() {
       onClick={() => setSelectedCardId(null)}
       className="min-h-screen w-screen bg-fouzar-bg text-fouzar-text-primary flex flex-col md:flex-row overflow-hidden relative select-none font-sans"
     >
+      <AnimatePresence>
+        {showOnboarding && (
+          <AiOnboardingModal onClose={() => setShowOnboarding(false)} />
+        )}
+      </AnimatePresence>
       
       {/* ========================================================================= */}
       {/* 1. LEFT SIDEBAR: Icon-only, expands on hover (MD and up)                  */}

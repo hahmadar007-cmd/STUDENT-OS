@@ -214,7 +214,9 @@ export default function AuthPage() {
           localStorage.setItem('token', data.accessToken);
         }
         localStorage.setItem('user', JSON.stringify(data.user || data));
-        
+        if (activeTab === 'register') {
+          localStorage.setItem('fasca_just_signed_up', '1');
+        }
         setTimeout(() => {
           router.push('/dashboard');
         }, 1800);
