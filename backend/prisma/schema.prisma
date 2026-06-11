@@ -59,6 +59,9 @@ model User {
   passwordResetToken   String?  
   passwordResetExpiry  DateTime?
 
+  // Admin flag – used for privileged endpoint access
+  isAdmin              Boolean       @default(false)
+
   // AI Provider credentials
   aiProviders          AiProvider[]
 }

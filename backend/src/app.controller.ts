@@ -33,7 +33,26 @@ export class AppController {
   }
 
   @Get('test/db')
-  async testDb() {
+  async testDb(@Headers('authorization') authHeader?: string) {
+    // Restrict user count disclosure to admin accounts only
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Missing or invalid auth token');
+    }
+    const token = authHeader.split(' ')[1];
+    let isAdmin = false;
+    try {
+      const decoded = this.jwtService.verify(token);
+      const requester = await this.prisma.user.findUnique({
+        where: { id: decoded.sub },
+        select: { isAdmin: true },
+      });
+      isAdmin = requester?.isAdmin ?? false;
+    } catch {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+    if (!isAdmin) {
+      throw new UnauthorizedException('Admin access required');
+    }
     const count = await this.prisma.user.count();
     return { status: 'Database connected!', userCount: count };
   }
