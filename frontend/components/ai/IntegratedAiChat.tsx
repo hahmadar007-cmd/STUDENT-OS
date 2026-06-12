@@ -82,7 +82,6 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isTechnical, setIsTechnical] = useState(false);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
   const engines = useConfiguredEngines();
   const activeEngine = engines.find(e => e.isActive) ?? engines[0] ?? null;
@@ -389,13 +388,6 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
     setError(null);
 
     try {
-      // Style setting payload wrapper
-      const styleInstruction = isTechnical 
-        ? "\n\n(Note: Provide a highly technical, rigorous, and deep academic explanation with mathematical depth.)"
-        : "\n\n(Note: Explain in extremely simple terms, using relatable everyday analogies for quick understanding.)";
-
-      const finalPrompt = userMsg.content + styleInstruction;
-
       const extraContext = {
         currentSlideText: attachedFile ? attachedFile.text : (activeDocText || slideContextText || ''),
         videoUrl: activeVideoUrl || '',
@@ -404,7 +396,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
       };
 
       const modelName = activeEngine?.name ?? aiModel;
-      const res = await askAi(finalPrompt, slideId, modelName, extraContext, activeEngine ?? undefined);
+      const res = await askAi(userMsg.content, slideId, modelName, extraContext, activeEngine ?? undefined);
       setMessages((prev) => [
         ...prev,
         {
@@ -549,53 +541,6 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
         <p className="text-[7px] font-mono text-fouzar-signal mb-2 uppercase">{error}</p>
       )}
 
-      {/* Quick Study Tools Panel */}
-      <div className="shrink-0 py-2 border-t border-fouzar-border flex flex-col gap-2 bg-fouzar-surface/40">
-        <div className="flex items-center justify-between">
-          <span className="font-mono text-[7px] text-fouzar-text-secondary uppercase">Study Tools</span>
-          
-          <button
-            type="button"
-            onClick={() => setIsTechnical(!isTechnical)}
-            className={`px-2 py-0.5 font-mono text-[6.5px] uppercase border rounded-[var(--fouzar-radius-sm)] transition-all cursor-pointer ${
-              isTechnical 
-                ? 'border-fouzar-accent text-fouzar-accent bg-fouzar-accent/5' 
-                : 'border-fouzar-border text-fouzar-text-secondary'
-            }`}
-          >
-            {isTechnical ? '🔬 Technical Mode' : '💡 Simple Mode'}
-          </button>
-        </div>
-
-        <div className="flex flex-wrap gap-1.5">
-          <button
-            type="button"
-            disabled={isLoading}
-            onClick={() => handleSend(null, "Generate a 3-question multiple choice quiz with answers based on the active slide context.")}
-            className="flex-1 min-w-[70px] px-2 py-1 bg-fouzar-elevated hover:bg-fouzar-accent/10 border border-fouzar-border hover:border-fouzar-accent/20 rounded-[var(--fouzar-radius-sm)] font-mono text-[7px] text-fouzar-text-primary uppercase tracking-wider text-center cursor-pointer transition-all disabled:opacity-40"
-          >
-            📝 Quiz
-          </button>
-          <button
-            type="button"
-            disabled={isLoading}
-            onClick={() => handleSend(null, "Create a set of interactive Q&A study flashcards summarizing the core concepts in the active slide context.")}
-            className="flex-1 min-w-[70px] px-2 py-1 bg-fouzar-elevated hover:bg-fouzar-accent/10 border border-fouzar-border hover:border-fouzar-accent/20 rounded-[var(--fouzar-radius-sm)] font-mono text-[7px] text-fouzar-text-primary uppercase tracking-wider text-center cursor-pointer transition-all disabled:opacity-40"
-          >
-            🎴 Flashcards
-          </button>
-          <button
-            type="button"
-            disabled={isLoading}
-            onClick={() => handleSend(null, "Compile a clean, high-yield study sheet and exam notes summarizing the active slide context.")}
-            className="flex-1 min-w-[70px] px-2 py-1 bg-fouzar-elevated hover:bg-fouzar-accent/10 border border-fouzar-border hover:border-fouzar-accent/20 rounded-[var(--fouzar-radius-sm)] font-mono text-[7px] text-fouzar-text-primary uppercase tracking-wider text-center cursor-pointer transition-all disabled:opacity-40"
-          >
-            ✍️ Study Guide
-          </button>
-        </div>
-      </div>
-
-      {/* Attachment badge */}
       {attachedFile && (
         <div className="shrink-0 px-2 py-1 bg-fouzar-accent/5 border border-fouzar-accent/20 rounded-[var(--fouzar-radius-sm)] flex items-center justify-between text-[7px] font-mono text-fouzar-accent uppercase mt-2">
           <div className="flex items-center gap-1.5 truncate">
