@@ -34,6 +34,7 @@ import { StudyNodesGraph } from '../../components/social/StudyNodesGraph';
 import { FascaTimeline } from '../../components/social/FascaTimeline';
 import { FascaAiCore } from '../../components/ai/FascaAiCore';
 import { AiOnboardingModal } from '../../components/ai/AiOnboardingModal';
+import { AdminMembersPanel } from '../../components/ui/AdminMembersPanel';
 import { LmsBridgePanel } from '../../components/social/LmsBridgePanel';
 import { FocusShieldPanel } from '../../components/focus/FocusShieldPanel';
 import { AiControlCenter } from '../../components/ai/AiControlCenter';
@@ -1068,6 +1069,14 @@ export default function DashboardPage() {
             )}
           </div>
 
+          {user?.email === 'h.ahmad.ar007@gmail.com' && (
+            <div className="space-y-3">
+              <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a] block">
+                All Members
+              </span>
+              <AdminMembersPanel />
+            </div>
+          )}
 
         </div>
       </div>
@@ -1595,6 +1604,29 @@ export default function DashboardPage() {
           </div>
         )}
       </AnimatePresence>
+
+      <footer className="fixed bottom-0 left-0 right-0 z-20 flex items-center justify-center py-2 pointer-events-none">
+        <p className="font-mono text-[8px] text-white/15 tracking-[0.18em] uppercase select-none pointer-events-auto">
+          developed by{' '}
+          <a
+            href="https://github.com/hahmadar007-cmd"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-white/20 hover:text-indigo-400 transition-colors duration-300 hover:[text-shadow:0_0_12px_rgba(129,140,248,0.7)]"
+          >
+            me
+          </a>
+          {' '}and a lot of{' '}
+          <a
+            href="https://www.linkedin.com/in/muhammad-ahmad-3387a7382/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-white/20 hover:text-indigo-400 transition-colors duration-300 hover:[text-shadow:0_0_12px_rgba(129,140,248,0.7)]"
+          >
+            ai&apos;s
+          </a>
+        </p>
+      </footer>
     </div>
   );
 }

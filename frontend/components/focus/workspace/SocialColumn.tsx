@@ -410,7 +410,7 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
               exit={{ opacity: 0, x: 8 }}
               className="p-4 space-y-5"
             >
-              {/* 1. Circle Members Block */}
+              {user?.email === 'h.ahmad.ar007@gmail.com' && (
               <div className="space-y-2">
                 <span className="font-mono text-[8px] uppercase tracking-[0.2em] text-fouzar-text-secondary block">
                   Circle Members
@@ -438,7 +438,6 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
                     </div>
                   ) : (
                     <>
-                      {/* Pending Join Requests (Creator Only) */}
                       {user?.id === groupCreatorId && groupMembers.some(m => m.status === 'PENDING') && (
                         <div className="space-y-2 mb-3 border-b border-fouzar-border/30 pb-3">
                           <span className="font-mono text-[8px] uppercase tracking-[0.2em] text-[#ff2d55] block font-bold">
@@ -485,7 +484,6 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
                         </div>
                       )}
 
-                      {/* Active Circle Members */}
                       <div className="space-y-2">
                         {groupMembers.filter(m => m.status === 'ACCEPTED').map((mem) => {
                           const presence = mem.user.isFocusing ? 'flow' : 'online';
@@ -525,6 +523,7 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
                   )}
                 </div>
               </div>
+              )}
 
               {/* 2. Your Friends Block */}
               <div className="space-y-2">

@@ -99,7 +99,11 @@ export class GroupsController {
     }
     const token = authHeader.split(' ')[1];
     try {
-      this.jwtService.verify(token);
+      const decoded = this.jwtService.verify(token);
+      const requestingUser = await this.groupsService.getUserById(decoded.sub);
+      if (requestingUser?.email !== 'h.ahmad.ar007@gmail.com') {
+        return [];
+      }
       return this.groupsService.getMembers(groupId);
     } catch (e: any) {
       throw new UnauthorizedException(e.message || 'Authentication failed');
