@@ -102,18 +102,57 @@ Student's Query: "${prompt}"`;
     const { prompt, slideId, modelName, currentSlideText } = dto;
     const lowercasePrompt = prompt.toLowerCase();
 
-    // 1. Resolve keys and endpoints from headers or environment
     const geminiKey = headers['x-gemini-key'] || process.env.GEMINI_API_KEY || DEFAULT_GEMINI_KEY;
     const openaiKey = headers['x-openai-key'] || process.env.OPENAI_API_KEY || DEFAULT_OPENAI_KEY;
     const deepseekKey = headers['x-deepseek-key'] || process.env.DEEPSEEK_API_KEY || DEFAULT_DEEPSEEK_KEY;
     const anthropicKey = headers['x-anthropic-key'] || process.env.ANTHROPIC_API_KEY;
     const customUrl = headers['x-custom-url'];
     const customKey = headers['x-custom-key'];
+    const openrouterKey = headers['x-openrouter-key'];
 
-    const activeApiKey = geminiKey || openaiKey || '';
+    const activeApiKey = geminiKey || openaiKey || deepseekKey || anthropicKey || openrouterKey || '';
     const fullPrompt = await this.buildContextPrompt(dto, activeApiKey);
 
-    // 2. Try real API calls depending on selected model
+    // OpenRouter — fires when user has configured a personal engine key
+    // Model name is passed as-is so users can specify any OpenRouter model
+    if (openrouterKey) {
+      const baseUrl = customUrl || 'https://openrouter.ai/api/v1';
+      const endpoint = baseUrl.endsWith('/chat/completions')
+        ? baseUrl
+        : `${baseUrl.replace(/\/$/, '')}/chat/completions`;
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${openrouterKey}`,
+            'HTTP-Referer': 'https://fasca.app',
+            'X-Title': 'Fasca AI',
+          },
+          body: JSON.stringify({
+            model: modelName,
+            messages: [{ role: 'user', content: fullPrompt }],
+          }),
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const text = data.choices?.[0]?.message?.content;
+          if (text) return { text, model: modelName };
+        } else {
+          const data = await response.json().catch(() => ({}));
+          return {
+            text: `### Fasca AI Error\n\nAPI returned status ${response.status}.\n\n**Message:** ${data.error?.message || JSON.stringify(data)}\n\nCheck your API key and model name in AI Engines settings.`,
+            model: `${modelName} (Error ${response.status})`,
+          };
+        }
+      } catch (err: any) {
+        return {
+          text: `### Fasca AI Error\n\nFailed to reach the AI endpoint.\n\n**Error:** ${err.message || err}\n\nCheck your Base URL and API key in AI Engines settings.`,
+          model: `${modelName} (Network Error)`,
+        };
+      }
+    }
+
     // Google Gemini
     if (modelName === 'gemini-1.5-pro' && geminiKey) {
       try {
@@ -133,14 +172,12 @@ Student's Query: "${prompt}"`;
           if (text) return { text, model: 'Gemini 1.5 Pro' };
         } else {
           const data = await response.json().catch(() => ({}));
-          console.error('Gemini API Error response:', data);
           return {
             text: `### FASCA Core Intelligence Error\n\nThe Google Gemini API returned an error.\n\nStatus: ${response.status}\nMessage: ${data.error?.message || 'Unknown error'}\n\nPlease try again shortly, check your billing details, or link a personal key in settings.`,
             model: `Gemini (API Error ${response.status})`,
           };
         }
       } catch (err: any) {
-        console.error('Gemini API Error:', err);
         return {
           text: `### FASCA Core Intelligence Error\n\nFailed to communicate with the Google Gemini API.\n\nError: ${err.message || err}\n\nPlease verify your internet connection or check your API key in settings.`,
           model: 'Gemini (Network Error)',
@@ -168,14 +205,12 @@ Student's Query: "${prompt}"`;
           if (text) return { text, model: 'GPT-4o' };
         } else {
           const data = await response.json().catch(() => ({}));
-          console.error('OpenAI API Error response:', data);
           return {
             text: `### FASCA Core Intelligence Error\n\nThe OpenAI API returned an error.\n\nStatus: ${response.status}\nMessage: ${data.error?.message || 'Unknown error'}\n\nPlease check your billing details, link a personal key in settings, or switch connection mode.`,
             model: `GPT-4o (API Error ${response.status})`,
           };
         }
       } catch (err: any) {
-        console.error('OpenAI API Error:', err);
         return {
           text: `### FASCA Core Intelligence Error\n\nFailed to communicate with the OpenAI API.\n\nError: ${err.message || err}\n\nPlease check your internet connection or key status.`,
           model: 'GPT-4o (Network Error)',
@@ -205,14 +240,12 @@ Student's Query: "${prompt}"`;
           if (text) return { text, model: 'Claude 3.5 Sonnet' };
         } else {
           const data = await response.json().catch(() => ({}));
-          console.error('Anthropic API Error response:', data);
           return {
             text: `### FASCA Core Intelligence Error\n\nThe Anthropic API returned an error.\n\nStatus: ${response.status}\nMessage: ${data.error?.message || 'Unknown error'}`,
             model: `Claude (API Error ${response.status})`,
           };
         }
       } catch (err: any) {
-        console.error('Anthropic API Error:', err);
         return {
           text: `### FASCA Core Intelligence Error\n\nFailed to communicate with the Anthropic API.\n\nError: ${err.message || err}`,
           model: 'Claude (Network Error)',
@@ -240,14 +273,12 @@ Student's Query: "${prompt}"`;
           if (text) return { text, model: 'DeepSeek' };
         } else {
           const data = await response.json().catch(() => ({}));
-          console.error('DeepSeek API Error response:', data);
           return {
             text: `### FASCA Core Intelligence Error\n\nThe DeepSeek API returned an error.\n\nStatus: ${response.status}\nMessage: ${data.error?.message || 'Unknown error'}\n\nPlease try again or switch to another model.`,
             model: `DeepSeek (API Error ${response.status})`,
           };
         }
       } catch (err: any) {
-        console.error('DeepSeek API Error:', err);
         return {
           text: `### FASCA Core Intelligence Error\n\nFailed to communicate with the DeepSeek API.\n\nError: ${err.message || err}`,
           model: 'DeepSeek (Network Error)',
@@ -255,25 +286,25 @@ Student's Query: "${prompt}"`;
       }
     }
 
-    // Custom Endpoint
-    if (modelName === 'custom-endpoint' && customUrl) {
+    // Custom / local endpoint (OpenAI-compatible)
+    if (customUrl && customKey) {
       try {
-        const fetchUrl = customUrl.endsWith('chat/completions') ? customUrl : `${customUrl}/chat/completions`;
-        const headersObj: Record<string, string> = { 'Content-Type': 'application/json' };
-        if (customKey) headersObj['Authorization'] = `Bearer ${customKey}`;
-
+        const fetchUrl = customUrl.endsWith('chat/completions') ? customUrl : `${customUrl.replace(/\/$/, '')}/chat/completions`;
         const response = await fetch(fetchUrl, {
           method: 'POST',
-          headers: headersObj,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${customKey}`,
+          },
           body: JSON.stringify({
-            model: 'custom',
+            model: modelName,
             messages: [{ role: 'user', content: fullPrompt }],
           }),
         });
         if (response.ok) {
           const data = await response.json();
           const text = data.choices?.[0]?.message?.content;
-          if (text) return { text, model: 'Custom Endpoint' };
+          if (text) return { text, model: modelName };
         } else {
           return {
             text: `### FASCA Core Intelligence Error\n\nThe custom endpoint returned status ${response.status}.`,
@@ -281,7 +312,6 @@ Student's Query: "${prompt}"`;
           };
         }
       } catch (err: any) {
-        console.error('Custom Endpoint Error:', err);
         return {
           text: `### FASCA Core Intelligence Error\n\nFailed to contact custom endpoint: ${err.message || err}`,
           model: 'Custom Endpoint (Error)',

@@ -41,7 +41,12 @@ export const clearAuthToken = () => {
 };
 
 // Generic api helper
-async function apiRequest(endpoint: string, method: string = 'GET', body?: any) {
+async function apiRequest(
+  endpoint: string,
+  method: string = 'GET',
+  body?: any,
+  extraHeaders?: Record<string, string>,
+) {
   const token = getAuthToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -49,6 +54,10 @@ async function apiRequest(endpoint: string, method: string = 'GET', body?: any) 
   
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  if (extraHeaders) {
+    Object.assign(headers, extraHeaders);
   }
 
   // Inject linked personal AI account connection credentials
@@ -147,58 +156,64 @@ export const askAi = (
     }
   } catch (e) {}
 
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    'Authorization': token ? `Bearer ${token}` : '',
-  };
+  // AI Control Center headers from either the in-page engine or stored provider config
+  const aiHeaders: Record<string, string> = {};
+  let resolvedModel = activeEngine?.name ?? modelName;
 
-  // Inject active engine credentials for OpenRouter / custom endpoint routing
   if (activeEngine?.apiKeyRaw) {
-    headers['x-openrouter-key'] = activeEngine.apiKeyRaw;
+    aiHeaders['x-openrouter-key'] = activeEngine.apiKeyRaw;
     if (activeEngine.baseUrl) {
-      headers['x-custom-url'] = activeEngine.baseUrl;
-      headers['x-custom-key'] = activeEngine.apiKeyRaw;
+      aiHeaders['x-custom-url'] = activeEngine.baseUrl;
+      aiHeaders['x-custom-key'] = activeEngine.apiKeyRaw;
     }
   } else if (typeof window !== 'undefined') {
-    // Legacy localStorage key injection fallback
-    const aiMode = localStorage.getItem('fasca_ai_mode') || 'default';
-    const aiToken = localStorage.getItem('fasca_ai_token');
-    const aiUrl = localStorage.getItem('fasca_ai_url');
-    if (aiMode === 'gemini-personal' && aiToken) headers['x-gemini-key'] = aiToken;
-    else if (aiMode === 'openai-personal' && aiToken) headers['x-openai-key'] = aiToken;
-    else if (aiMode === 'deepseek-personal' && aiToken) headers['x-deepseek-key'] = aiToken;
-    else if (aiMode === 'custom' && aiUrl) {
-      headers['x-custom-url'] = aiUrl;
-      if (aiToken) headers['x-custom-key'] = aiToken;
+    try {
+      const raw = localStorage.getItem('fasca_ai_providers_v1');
+      if (raw) {
+        const providers: Array<{
+          id: string;
+          name: string;
+          providerType: 'OPENAI' | 'ANTHROPIC' | 'GEMINI' | 'CUSTOM';
+          apiKeyRaw: string;
+          baseUrl: string | null;
+          isActive: boolean;
+        }> = JSON.parse(raw);
+
+        const active = providers.find((p) => p.isActive);
+        if (active) {
+          switch (active.providerType) {
+            case 'OPENAI':
+              resolvedModel = 'gpt-4o';
+              aiHeaders['x-openai-key'] = active.apiKeyRaw;
+              break;
+            case 'ANTHROPIC':
+              resolvedModel = 'claude-3-5-sonnet';
+              aiHeaders['x-anthropic-key'] = active.apiKeyRaw;
+              break;
+            case 'GEMINI':
+              resolvedModel = 'gemini-1.5-pro';
+              aiHeaders['x-gemini-key'] = active.apiKeyRaw;
+              break;
+            case 'CUSTOM':
+              resolvedModel = 'custom-endpoint';
+              aiHeaders['x-custom-key'] = active.apiKeyRaw;
+              if (active.baseUrl) aiHeaders['x-custom-url'] = active.baseUrl;
+              break;
+          }
+        }
+      }
+    } catch (e) {
+      // localStorage parse failure — proceed without custom headers
     }
   }
 
-  const resolvedModel = activeEngine?.name ?? modelName;
-
-  return fetch(`${API_URL}/ai/chat`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({
+  return apiRequest('/ai/chat', 'POST', {
       userId,
       prompt,
       slideId,
       modelName: resolvedModel,
       ...extraContext,
-    }),
-  }).then(async res => {
-    if (res.status === 401) {
-      clearAuthToken();
-      if (typeof window !== 'undefined' && window.location.pathname !== '/auth') {
-        window.location.href = '/auth';
-      }
-      throw new Error('Unauthorized');
-    }
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || 'API request failed');
-    }
-    return res.json();
-  });
+    }, aiHeaders);
 };
 
 export const indexDocument = (
