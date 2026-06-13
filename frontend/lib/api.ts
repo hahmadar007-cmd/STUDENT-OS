@@ -156,10 +156,26 @@ export const askAi = (
   let resolvedModel = activeEngine?.name ?? modelName;
 
   if (activeEngine?.apiKeyRaw) {
-    aiHeaders['x-openrouter-key'] = activeEngine.apiKeyRaw;
-    if (activeEngine.baseUrl) {
-      aiHeaders['x-custom-url'] = activeEngine.baseUrl;
+    const pType = (activeEngine as any).providerType;
+    if (pType === 'OPENAI') {
+      resolvedModel = 'gpt-4o';
+      aiHeaders['x-openai-key'] = activeEngine.apiKeyRaw;
+    } else if (pType === 'ANTHROPIC') {
+      resolvedModel = 'claude-3-5-sonnet';
+      aiHeaders['x-anthropic-key'] = activeEngine.apiKeyRaw;
+    } else if (pType === 'GEMINI') {
+      resolvedModel = 'gemini-1.5-pro';
+      aiHeaders['x-gemini-key'] = activeEngine.apiKeyRaw;
+    } else if (pType === 'CUSTOM') {
+      resolvedModel = 'custom-endpoint';
       aiHeaders['x-custom-key'] = activeEngine.apiKeyRaw;
+      if (activeEngine.baseUrl) aiHeaders['x-custom-url'] = activeEngine.baseUrl;
+    } else {
+      aiHeaders['x-openrouter-key'] = activeEngine.apiKeyRaw;
+      if (activeEngine.baseUrl) {
+        aiHeaders['x-custom-url'] = activeEngine.baseUrl;
+        aiHeaders['x-custom-key'] = activeEngine.apiKeyRaw;
+      }
     }
   } else if (typeof window !== 'undefined') {
     try {

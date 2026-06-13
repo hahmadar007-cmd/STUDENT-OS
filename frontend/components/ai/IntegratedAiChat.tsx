@@ -35,6 +35,7 @@ interface StoredProvider {
   isActive: boolean;
   apiKeyRaw: string;
   baseUrl: string | null;
+  providerType: 'OPENAI' | 'ANTHROPIC' | 'GEMINI' | 'CUSTOM';
 }
 
 function useConfiguredEngines() {
