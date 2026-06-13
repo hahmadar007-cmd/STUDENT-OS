@@ -1,10 +1,15 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, Sparkles, Paperclip, X } from 'lucide-react';
+import { Send, Bot, Sparkles, Paperclip, X, History, Plus, MessageSquare } from 'lucide-react';
 import { askAi, indexDocument, indexDocumentFile } from '../../lib/api';
 import { useFouzar } from '../../lib/FouzarContext';
 import { extractTextFromPdf } from '../documents/DocumentViewer';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 export interface AiChatMessage {
   id: string;
@@ -12,6 +17,70 @@ export interface AiChatMessage {
   content: string;
   model: string;
 }
+
+export interface AiChatSession {
+  id: string;
+  title: string;
+  updatedAt: number;
+  messages: AiChatMessage[];
+}
+
+const MarkdownComponents: any = {
+  code({ node, inline, className, children, ...props }: any) {
+    const match = /language-(\w+)/.exec(className || '');
+    return !inline && match ? (
+      <SyntaxHighlighter
+        style={vscDarkPlus as any}
+        language={match[1]}
+        PreTag="div"
+        className="rounded-md my-2 text-[9px] scrollbar-thin !bg-black/40 !border !border-white/10"
+        {...props}
+      >
+        {String(children).replace(/\n$/, '')}
+      </SyntaxHighlighter>
+    ) : (
+      <code className="bg-white/10 px-1 py-0.5 rounded font-mono text-[9px] text-fouzar-accent" {...props}>
+        {children}
+      </code>
+    );
+  },
+  table({ node, ...props }: any) {
+    return <div className="overflow-x-auto my-2 border border-fouzar-border rounded-lg"><table className="min-w-full text-left border-collapse" {...props} /></div>;
+  },
+  thead({ node, ...props }: any) {
+    return <thead className="bg-fouzar-elevated text-fouzar-text-primary" {...props} />;
+  },
+  th({ node, ...props }: any) {
+    return <th className="px-3 py-2 border-b border-fouzar-border font-bold" {...props} />;
+  },
+  td({ node, ...props }: any) {
+    return <td className="px-3 py-2 border-b border-fouzar-border/50 text-fouzar-text-secondary" {...props} />;
+  },
+  p({ node, ...props }: any) {
+    return <p className="mb-2 last:mb-0" {...props} />;
+  },
+  ul({ node, ...props }: any) {
+    return <ul className="list-disc pl-4 mb-2 space-y-1" {...props} />;
+  },
+  ol({ node, ...props }: any) {
+    return <ol className="list-decimal pl-4 mb-2 space-y-1" {...props} />;
+  },
+  h1({ node, ...props }: any) {
+    return <h1 className="text-sm font-bold text-white mt-4 mb-2" {...props} />;
+  },
+  h2({ node, ...props }: any) {
+    return <h2 className="text-xs font-bold text-white mt-3 mb-1.5" {...props} />;
+  },
+  h3({ node, ...props }: any) {
+    return <h3 className="text-[11px] font-bold text-white mt-2 mb-1" {...props} />;
+  },
+  a({ node, ...props }: any) {
+    return <a className="text-fouzar-accent hover:underline" target="_blank" rel="noopener noreferrer" {...props} />;
+  },
+  blockquote({ node, ...props }: any) {
+    return <blockquote className="border-l-2 border-fouzar-accent pl-2 italic text-fouzar-text-tertiary my-2" {...props} />;
+  }
+};
 
 interface IntegratedAiChatProps {
   /** Context chip label (e.g. "Semester Notes", "Slide 4") */
@@ -79,7 +148,37 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
     aiTriggerQuery,
     setAiTriggerQuery
   } = useFouzar();
-  const [messages, setMessages] = useState<AiChatMessage[]>([]);
+  const [sessions, setSessions] = useState<AiChatSession[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  
+  const activeSession = sessions.find(s => s.id === activeSessionId);
+  const messages = activeSession?.messages || [];
+
+  const setMessages = (updater: React.SetStateAction<AiChatMessage[]>) => {
+    setSessions(prev => {
+      let activeId = activeSessionId;
+      let newSessions = [...prev];
+
+      if (!activeId) {
+        activeId = `session-${Date.now()}`;
+        newSessions = [{ id: activeId, title: 'New Chat', updatedAt: Date.now(), messages: [] }, ...newSessions];
+        setTimeout(() => setActiveSessionId(activeId), 0);
+      }
+
+      return newSessions.map(s => {
+        if (s.id === activeId) {
+          const nextMsgs = typeof updater === 'function' ? updater(s.messages) : updater;
+          let newTitle = s.title;
+          if (s.title === 'New Chat' && nextMsgs.length > 0) {
+            const first = nextMsgs.find(m => m.role === 'user');
+            if (first) newTitle = first.content.slice(0, 24) + '...';
+          }
+          return { ...s, messages: nextMsgs, updatedAt: Date.now(), title: newTitle };
+        }
+        return s;
+      });
+    });
+  };
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -96,16 +195,36 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
     if (!storageKey || typeof window === 'undefined') return;
     try {
       const saved = localStorage.getItem(storageKey);
-      if (saved) setMessages(JSON.parse(saved));
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          // Migration from old array
+          if (parsed.length > 0) {
+            const migratedSession: AiChatSession = {
+              id: `session-migrated-${Date.now()}`,
+              title: 'Previous Chat',
+              updatedAt: Date.now(),
+              messages: parsed
+            };
+            setSessions([migratedSession]);
+            setActiveSessionId(migratedSession.id);
+          }
+        } else if (parsed.sessions && Array.isArray(parsed.sessions)) {
+          setSessions(parsed.sessions);
+          setActiveSessionId(parsed.activeSessionId || (parsed.sessions.length > 0 ? parsed.sessions[0].id : null));
+        }
+      }
     } catch {
       localStorage.removeItem(storageKey);
     }
   }, [storageKey]);
 
   useEffect(() => {
-    if (!storageKey || messages.length === 0) return;
-    localStorage.setItem(storageKey, JSON.stringify(messages));
-  }, [messages, storageKey]);
+    if (!storageKey) return;
+    if (sessions.length > 0) {
+      localStorage.setItem(storageKey, JSON.stringify({ sessions, activeSessionId }));
+    }
+  }, [sessions, activeSessionId, storageKey]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -457,6 +576,47 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
           <span className="font-mono text-[8px] uppercase tracking-widest text-fouzar-text-secondary">
             Fouzar AI
           </span>
+          <div className="flex gap-1 ml-2">
+            <button
+              onClick={() => {
+                const newId = `session-${Date.now()}`;
+                setSessions(prev => [{ id: newId, title: 'New Chat', updatedAt: Date.now(), messages: [] }, ...prev]);
+                setActiveSessionId(newId);
+              }}
+              className="p-1 rounded hover:bg-fouzar-accent/10 text-fouzar-text-secondary hover:text-fouzar-accent transition-colors"
+              title="New Chat"
+            >
+              <Plus className="w-3 h-3" />
+            </button>
+            <div className="relative group">
+              <button
+                className="p-1 rounded hover:bg-fouzar-accent/10 text-fouzar-text-secondary hover:text-fouzar-accent transition-colors"
+                title="Chat History"
+              >
+                <History className="w-3 h-3" />
+              </button>
+              <div className="absolute top-full left-0 mt-1 w-48 bg-fouzar-elevated border border-fouzar-border rounded-[var(--fouzar-radius-md)] shadow-xl z-50 hidden group-hover:block group-focus-within:block max-h-60 overflow-y-auto">
+                <div className="p-2 space-y-1">
+                  <div className="text-[7px] font-mono uppercase text-fouzar-text-tertiary px-1 pb-1">Past Sessions</div>
+                  {sessions.map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => setActiveSessionId(s.id)}
+                      className={`w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-[var(--fouzar-radius-sm)] text-[9px] ${
+                        activeSessionId === s.id ? 'bg-fouzar-accent/20 text-fouzar-accent' : 'hover:bg-fouzar-accent/10 text-fouzar-text-secondary'
+                      }`}
+                    >
+                      <MessageSquare className="w-3 h-3 shrink-0" />
+                      <span className="truncate flex-1">{s.title}</span>
+                    </button>
+                  ))}
+                  {sessions.length === 0 && (
+                    <div className="text-[8px] text-fouzar-text-tertiary px-1 py-2 italic">No history yet</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         {/* Engine selector — shows user's configured engines */}
         {engines.length > 0 ? (
@@ -519,11 +679,17 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
             <div
               className={`text-[10px] leading-relaxed max-w-[92%] p-2.5 rounded-[var(--fouzar-radius-md)] ${
                 msg.role === 'user'
-                  ? 'bg-fouzar-accent/10 border border-fouzar-accent/25 text-fouzar-text-primary'
+                  ? 'bg-fouzar-accent/10 border border-fouzar-accent/25 text-fouzar-text-primary whitespace-pre-wrap'
                   : 'bg-fouzar-elevated border border-fouzar-border text-fouzar-text-primary/90'
               }`}
             >
-              {msg.content}
+              {msg.role === 'user' ? (
+                msg.content
+              ) : (
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents}>
+                  {msg.content}
+                </ReactMarkdown>
+              )}
             </div>
             {msg.role === 'assistant' && (
               <span className="font-mono text-[6.5px] text-fouzar-text-tertiary mt-0.5 uppercase">
