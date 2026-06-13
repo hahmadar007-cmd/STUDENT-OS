@@ -40,11 +40,7 @@ export const clearAuthToken = () => {
   document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
 };
 
-<<<<<<< HEAD
-// Generic api helper
-=======
-// Generic api helper — accepts optional extraHeaders to inject AI provider keys per-request
->>>>>>> 8e339bf (feat: user access restrictions and dynamic openrouter integration)
+// Generic api helper accepts optional extraHeaders to inject AI provider keys per-request
 async function apiRequest(
   endpoint: string,
   method: string = 'GET',
@@ -60,15 +56,7 @@ async function apiRequest(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-<<<<<<< HEAD
-  if (extraHeaders) {
-    Object.assign(headers, extraHeaders);
-  }
-
-  // Inject linked personal AI account connection credentials
-=======
   // Legacy fasca_ai_mode support (kept for backwards compat)
->>>>>>> 8e339bf (feat: user access restrictions and dynamic openrouter integration)
   if (typeof window !== 'undefined') {
     const aiMode = localStorage.getItem('fasca_ai_mode') || 'default';
     const aiToken = localStorage.getItem('fasca_ai_token');
@@ -163,7 +151,6 @@ export const askAi = (
     }
   } catch (e) {}
 
-<<<<<<< HEAD
   // AI Control Center headers from either the in-page engine or stored provider config
   const aiHeaders: Record<string, string> = {};
   let resolvedModel = activeEngine?.name ?? modelName;
@@ -175,13 +162,6 @@ export const askAi = (
       aiHeaders['x-custom-key'] = activeEngine.apiKeyRaw;
     }
   } else if (typeof window !== 'undefined') {
-=======
-  // ── AI Control Center: read active provider from localStorage ──────────────
-  const aiHeaders: Record<string, string> = {};
-  let resolvedModel = modelName;
-
-  if (typeof window !== 'undefined') {
->>>>>>> 8e339bf (feat: user access restrictions and dynamic openrouter integration)
     try {
       const raw = localStorage.getItem('fasca_ai_providers_v1');
       if (raw) {
@@ -221,7 +201,6 @@ export const askAi = (
       // localStorage parse failure — proceed without custom headers
     }
   }
-<<<<<<< HEAD
 
   return apiRequest('/ai/chat', 'POST', {
       userId,
@@ -230,16 +209,6 @@ export const askAi = (
       modelName: resolvedModel,
       ...extraContext,
     }, aiHeaders);
-=======
-  // ───────────────────────────────────────────────────────────────────────────
-
-  return apiRequest(
-    '/ai/chat',
-    'POST',
-    { userId, prompt, slideId, modelName: resolvedModel, ...extraContext },
-    aiHeaders,
-  );
->>>>>>> 8e339bf (feat: user access restrictions and dynamic openrouter integration)
 };
 
 export const indexDocument = (

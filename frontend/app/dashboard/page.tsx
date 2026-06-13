@@ -549,6 +549,7 @@ export default function DashboardPage() {
         document.getElementById('mindmap-section')?.scrollIntoView({ behavior: 'smooth' });
         setActivePanelTab('nodes');
       } else if (id === 'ai') {
+        setActivePanelTab('ai');
         document.getElementById('ai-engines-section')?.scrollIntoView({ behavior: 'smooth' });
       }
     }
@@ -1349,7 +1350,7 @@ export default function DashboardPage() {
         </div>
 
         {/* 6. AI Engines Section */}
-        <div className="space-y-4 w-full border-t border-[#2a2a3a]/20 pt-6 pb-6">
+        <div id="ai-engines-section" className="space-y-4 w-full border-t border-[#2a2a3a]/20 pt-6 pb-6 scroll-mt-6">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a]">
               AI Engines
