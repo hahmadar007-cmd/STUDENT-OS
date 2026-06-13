@@ -6,55 +6,51 @@ import {
   Delete,
   Body,
   Param,
-  Headers,
-  UnauthorizedException,
+  UseGuards,
+  Request,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { AiProvidersService } from './ai-providers.service';
 import { CreateAiProviderDto } from './dto/create-ai-provider.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('ai-providers')
+@UseGuards(JwtAuthGuard)
 @UsePipes(new ValidationPipe({ whitelist: true }))
 export class AiProvidersController {
   constructor(private readonly aiProvidersService: AiProvidersService) {}
 
-  private getUserId(headers: Record<string, string>): string {
-    const userId = headers['x-user-id'];
-    if (!userId) throw new UnauthorizedException('Missing x-user-id header.');
-    return userId;
-  }
-
   @Post()
   create(
     @Body() dto: CreateAiProviderDto,
-    @Headers() headers: Record<string, string>,
+    @Request() req: any,
   ) {
-    const userId = this.getUserId(headers);
+    const userId = req.user.userId;
     return this.aiProvidersService.create(userId, dto);
   }
 
   @Get()
-  findAll(@Headers() headers: Record<string, string>) {
-    const userId = this.getUserId(headers);
+  findAll(@Request() req: any) {
+    const userId = req.user.userId;
     return this.aiProvidersService.findAllForUser(userId);
   }
 
   @Patch(':id/toggle')
   toggle(
     @Param('id') id: string,
-    @Headers() headers: Record<string, string>,
+    @Request() req: any,
   ) {
-    const userId = this.getUserId(headers);
+    const userId = req.user.userId;
     return this.aiProvidersService.toggleActive(userId, id);
   }
 
   @Delete(':id')
   remove(
     @Param('id') id: string,
-    @Headers() headers: Record<string, string>,
+    @Request() req: any,
   ) {
-    const userId = this.getUserId(headers);
+    const userId = req.user.userId;
     return this.aiProvidersService.remove(userId, id);
   }
 }
