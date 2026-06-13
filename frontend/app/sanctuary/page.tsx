@@ -52,6 +52,9 @@ export default function PersonalSanctuaryPage() {
     user: fouzarUser,
     folders,
     activeFolderId,
+    setActiveFolderId,
+    addFolder,
+    deleteFolder,
     isFlowActive,
     disarmDeepFlow,
     bypass,
@@ -86,6 +89,11 @@ export default function PersonalSanctuaryPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [fedUrls, setFedUrls] = useState<Record<string, boolean>>({});
 
+  const [showAddSubject, setShowAddSubject] = useState(false);
+  const [newSubjectName, setNewSubjectName] = useState('');
+  const [newSubjectCode, setNewSubjectCode] = useState('');
+  const [addSubjectError, setAddSubjectError] = useState<string | null>(null);
+
   const handleWebSearchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
@@ -101,6 +109,27 @@ export default function PersonalSanctuaryPage() {
       setIsSearching(false);
     }
   };
+
+  const handleAddSubjectSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddSubjectError(null);
+    const name = newSubjectName.trim();
+    const code = newSubjectCode.trim().toUpperCase();
+
+    if (!name || !code) {
+      setAddSubjectError('Name and code required.');
+      return;
+    }
+    if (folders.some(f => f.code === code)) {
+      setAddSubjectError('Code already exists.');
+      return;
+    }
+    addFolder(name, code, null);
+    setNewSubjectName('');
+    setNewSubjectCode('');
+    setShowAddSubject(false);
+  };
+
 
   useEffect(() => {
     if (!bypass.isActive || !bypass.expiresAt) return;
@@ -229,25 +258,8 @@ export default function PersonalSanctuaryPage() {
     localStorage.setItem(semesterKey, value);
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    try {
-      const folderCode = activeFolder && activeFolder.id !== 'all' ? activeFolder.code : (semester.split(' ')[0]?.toUpperCase() ?? 'SEM');
-      const entry = await buildRepositoryEntryFromFile(
-        file,
-        folderCode,
-      );
-      addRepositoryItem(entry);
-      setCenterTab('slides');
-    } catch {
-      /* storage quota etc */
-    } finally {
-      setUploading(false);
-      e.target.value = '';
-    }
-  };
+
+
 
   const handleDeepFlow = async () => {
     armDeepFlow();
@@ -309,10 +321,10 @@ export default function PersonalSanctuaryPage() {
       </header>
 
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-        {/* Left — Semester hub */}
+        {/* Left — Subject Spaces */}
         <motion.aside
-          className={`border-b lg:border-b-0 lg:border-r border-fouzar-border p-4 space-y-5 overflow-y-auto shrink-0 ${
-            isShielded ? 'lg:w-0 lg:opacity-0 lg:pointer-events-none lg:p-0 lg:border-r-0' : 'lg:w-72 xl:w-80'
+          className={`border-b lg:border-b-0 lg:border-r border-fouzar-border p-4 space-y-6 overflow-y-auto scrollbar-none shrink-0 ${
+            isShielded ? 'lg:w-0 lg:opacity-0 lg:pointer-events-none lg:p-0 lg:border-r-0' : 'lg:w-64 xl:w-72'
           }`}
           animate={{
             opacity: isShielded ? 0 : 1,
@@ -321,145 +333,102 @@ export default function PersonalSanctuaryPage() {
           transition={{ duration: 0.68, ease: [0.16, 1, 0.3, 1] }}
         >
           <div>
-            <label className="font-mono text-[7px] uppercase tracking-widest text-fouzar-text-secondary block mb-1.5">
-              Semester
-            </label>
-            <input
-              value={semester}
-              onChange={(e) => handleSemesterChange(e.target.value)}
-              className="w-full bg-fouzar-elevated border border-fouzar-border px-3 py-2 text-[11px] font-semibold rounded-[var(--fouzar-radius-md)] focus:outline-none focus:shadow-[var(--fouzar-focus-ring)]"
-            />
-          </div>
-
-          <FolderSelector />
-
-
-
-          {/* Deadlines */}
-          <div>
-            <span className="font-mono text-[7px] uppercase tracking-widest text-fouzar-text-secondary flex items-center gap-1 mb-2">
-              <Calendar className="w-3 h-3" /> Deadlines
-            </span>
-            <div className="space-y-2">
-              {deadlines.slice(0, 4).map((dl) => (
-                <div
-                  key={dl.id}
-                  className="p-2.5 bg-fouzar-elevated/40 border border-fouzar-border rounded-[var(--fouzar-radius-md)]"
-                >
-                  <p className="text-[9px] font-medium leading-snug">{dl.title}</p>
-                  <p className="font-mono text-[6.5px] text-fouzar-amber mt-0.5 uppercase">
-                    {dl.course} · {dl.timeLeftLabel}
-                  </p>
-                </div>
-              ))}
-              {lmsSource === 'demo' && (
-                <p className="font-mono text-[7px] text-fouzar-amber uppercase">
-                  Demo data — connect LMS on dashboard
-                </p>
-              )}
-              {lmsSource === 'error' && lmsError && (
-                <p className="font-mono text-[7px] text-fouzar-signal uppercase">{lmsError}</p>
-              )}
-              {deadlines.length === 0 && lmsSource === 'live' && (
-                <p className="font-mono text-[7px] text-fouzar-text-tertiary uppercase">
-                  LMS connected — no upcoming deadlines
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Archive */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-mono text-[7px] uppercase tracking-widest text-fouzar-text-secondary flex items-center gap-1">
-                <FileText className="w-3 h-3" /> Materials
-              </span>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="text-fouzar-accent hover:opacity-80"
-              >
-                <Upload className="w-3.5 h-3.5" />
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.md"
-                className="hidden"
-                onChange={handleFileUpload}
-              />
-            </div>
-            <div className="space-y-1.5 max-h-48 overflow-y-auto scrollbar-none">
-              {filteredRepository.map((doc) => (
-                <div
-                  key={doc.id}
-                  onClick={(e) => e.stopPropagation()}
-                  className={`group flex items-center gap-2 p-2 bg-fouzar-elevated/30 border rounded-[var(--fouzar-radius-sm)] transition-colors ${
-                    selectedSidebarDocId === doc.id
-                      ? 'border-fouzar-accent bg-fouzar-accent/5'
-                      : 'border-fouzar-border hover:border-fouzar-accent/40'
-                  }`}
-                >
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedSidebarDocId(doc.id);
-                    }}
-                    onDoubleClick={(e) => {
-                      e.stopPropagation();
-                      setActiveDoc(doc);
-                      setCenterTab('slides');
-                      setSelectedSidebarDocId(null);
-                    }}
-                    className="flex items-center gap-2 flex-1 min-w-0 text-left cursor-pointer"
-                  >
-                    <FileText className="w-3 h-3 text-fouzar-ice shrink-0" />
-                    <span className="text-[8px] truncate">{doc.fileName}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeRepositoryItem(doc.id);
-                    }}
-                    className="opacity-0 group-hover:opacity-100 text-fouzar-signal shrink-0 cursor-pointer"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
-              {uploading && (
-                <p className="font-mono text-[7px] text-fouzar-accent animate-pulse uppercase">
-                  Storing file...
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Shared groups shortcut */}
-          <div>
-            <span className="font-mono text-[7px] uppercase tracking-widest text-fouzar-text-secondary flex items-center gap-1 mb-2">
-              <Users className="w-3 h-3" /> Your Groups
+            <span className="font-mono text-[7px] uppercase tracking-widest text-fouzar-text-secondary flex items-center gap-1 mb-3">
+              <Layers className="w-3 h-3" /> Spaces
             </span>
             <div className="space-y-1.5">
-              {groups.map((g) => (
-                <button
-                  key={g.id}
-                  type="button"
-                  onClick={() => router.push(`/room/${g.id}`)}
-                  className="w-full text-left p-2.5 bg-fouzar-elevated/30 border border-fouzar-border rounded-[var(--fouzar-radius-md)] hover:border-fouzar-accent/40 transition-colors"
-                >
-                  <p className="text-[9px] font-medium truncate">{g.name}</p>
-                  <p className="font-mono text-[6.5px] text-fouzar-text-tertiary uppercase mt-0.5">
-                    Shared room
-                  </p>
-                </button>
+              {folders.map((folder) => (
+                <div key={folder.id} className="relative group">
+                  <button
+                    type="button"
+                    onClick={() => setActiveFolderId(folder.id)}
+                    className={`w-full text-left p-2.5 border rounded-[var(--fouzar-radius-md)] transition-colors flex items-center justify-between ${
+                      activeFolderId === folder.id
+                        ? 'bg-fouzar-accent/20 border-fouzar-accent/50'
+                        : 'bg-fouzar-elevated/30 border-fouzar-border hover:border-fouzar-accent/40'
+                    }`}
+                  >
+                    <div className="min-w-0 pr-6">
+                      <p className={`text-[10px] font-medium truncate ${
+                        activeFolderId === folder.id ? 'text-fouzar-accent font-bold' : 'text-fouzar-text-primary'
+                      }`}>
+                        {folder.name}
+                      </p>
+                      {folder.id !== 'general' && (
+                        <p className="font-mono text-[6.5px] text-fouzar-text-tertiary uppercase mt-0.5">
+                          {folder.code}
+                        </p>
+                      )}
+                    </div>
+                  </button>
+                  {folder.id !== 'general' && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteFolder(folder.id);
+                      }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 text-fouzar-text-tertiary hover:text-fouzar-signal transition-all cursor-pointer"
+                      title="Delete Space"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
               ))}
-              {groups.length === 0 && (
-                <p className="font-mono text-[7px] text-fouzar-text-tertiary uppercase">
-                  No shared groups yet
-                </p>
+
+              {/* Add Subject Inline Form */}
+              {showAddSubject ? (
+                <form
+                  onSubmit={handleAddSubjectSubmit}
+                  className="p-3 mt-2 bg-fouzar-elevated/30 border border-fouzar-accent/40 rounded-[var(--fouzar-radius-md)] space-y-2.5"
+                >
+                  <input
+                    type="text"
+                    required
+                    placeholder="Subject Name (e.g. Algorithms)"
+                    value={newSubjectName}
+                    onChange={(e) => setNewSubjectName(e.target.value)}
+                    className="w-full bg-fouzar-bg border border-fouzar-border px-2 py-1.5 text-[10px] font-mono rounded-[var(--fouzar-radius-sm)] focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
+                  />
+                  <input
+                    type="text"
+                    required
+                    placeholder="Code (e.g. CS101)"
+                    value={newSubjectCode}
+                    onChange={(e) => setNewSubjectCode(e.target.value)}
+                    className="w-full bg-fouzar-bg border border-fouzar-border px-2 py-1.5 text-[10px] font-mono rounded-[var(--fouzar-radius-sm)] focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary uppercase"
+                  />
+                  {addSubjectError && (
+                    <p className="text-[8px] font-mono text-fouzar-signal uppercase tracking-wider">
+                      {addSubjectError}
+                    </p>
+                  )}
+                  <div className="flex gap-1.5 justify-end mt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddSubject(false)}
+                      className="px-2.5 py-1 border border-fouzar-border rounded-[var(--fouzar-radius-sm)] font-mono text-[8px] uppercase text-fouzar-text-secondary hover:text-fouzar-text-primary cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-2.5 py-1 bg-fouzar-accent text-fouzar-text-inverse rounded-[var(--fouzar-radius-sm)] font-mono text-[8px] uppercase font-bold hover:opacity-90 cursor-pointer"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowAddSubject(true)}
+                  className="w-full mt-2 text-left p-2.5 border border-dashed border-fouzar-border rounded-[var(--fouzar-radius-md)] hover:border-fouzar-accent/40 hover:bg-fouzar-accent/5 transition-colors text-fouzar-text-tertiary hover:text-fouzar-accent flex items-center justify-center gap-1.5"
+                >
+                  <Layers className="w-3 h-3" />
+                  <span className="font-mono text-[8px] uppercase tracking-wider font-bold">Add Subject</span>
+                </button>
               )}
             </div>
           </div>
@@ -782,4 +751,4 @@ export default function PersonalSanctuaryPage() {
       </AnimatePresence>
     </div>
   );
-};
+}

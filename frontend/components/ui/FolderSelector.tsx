@@ -14,7 +14,7 @@ const getHierarchicalFolders = (
   parentId: string | null = null,
   level = 0
 ): HierarchicalFolder[] => {
-  const levelFolders = folderList.filter((f) => f.parentFolderId === parentId && f.id !== 'all');
+  const levelFolders = folderList.filter((f) => f.parentFolderId === parentId && f.id !== 'general');
   const result: HierarchicalFolder[] = [];
   for (const f of levelFolders) {
     result.push({ ...f, level });
@@ -35,7 +35,7 @@ export const FolderSelector: React.FC = () => {
   } = useFouzar();
 
   const dropdownFolders = React.useMemo(() => {
-    const allFolder = folders.find((f) => f.id === 'all');
+    const allFolder = folders.find((f) => f.id === 'general');
     const tree = getHierarchicalFolders(folders, null, 0);
     if (allFolder) {
       return [{ ...allFolder, level: 0 }, ...tree];
@@ -109,7 +109,7 @@ export const FolderSelector: React.FC = () => {
         <div className="flex items-center gap-2 min-w-0">
           <Folder className="w-3.5 h-3.5 text-fouzar-accent shrink-0" />
           <span className="truncate">{activeFolder?.name}</span>
-          {activeFolder?.code && activeFolder.id !== 'all' && (
+          {activeFolder?.code && activeFolder.id !== 'general' && (
             <span className="px-1 py-0.5 bg-fouzar-accent/10 border border-fouzar-accent/20 text-fouzar-accent font-mono text-[6.5px] rounded uppercase shrink-0">
               {activeFolder.code}
             </span>
@@ -166,7 +166,7 @@ export const FolderSelector: React.FC = () => {
                       ) : (
                         <span className="truncate">{folder.name}</span>
                       )}
-                      {folder.code && folder.id !== 'all' && (
+                      {folder.code && folder.id !== 'general' && (
                         <span className="text-[7px] opacity-60 font-semibold font-mono shrink-0">
                           [{folder.code}]
                         </span>
@@ -177,7 +177,7 @@ export const FolderSelector: React.FC = () => {
                       {isActive && (
                         <Check className="w-3 h-3 text-fouzar-accent" />
                       )}
-                      {folder.id !== 'all' && (
+                      {folder.id !== 'general' && (
                         <button
                           type="button"
                           onClick={(e) => {

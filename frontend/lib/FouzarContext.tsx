@@ -274,12 +274,7 @@ const SEED_FRIENDS: FouzarFriendProfile[] = [
 ];
 
 const SEED_FOLDERS: FouzarFolder[] = [
-  { id: 'all', name: 'All Subjects', code: 'ALL', parentFolderId: null },
-  { id: 'cn', name: 'Computer Networks', code: 'CN', parentFolderId: null },
-  { id: 'cn-lab', name: 'CN Lab', code: 'CN-LAB', parentFolderId: null },
-  { id: 'cn-lectures', name: 'Lectures', code: 'CN', parentFolderId: 'cn' },
-  { id: 'cn-labs', name: 'Labs', code: 'CN', parentFolderId: 'cn' },
-  { id: 'cn-lab-assignments', name: 'Assignments', code: 'CN-LAB', parentFolderId: 'cn-lab' },
+  { id: 'general', name: 'General / Playground', code: 'GEN', parentFolderId: null },
 ];
 
 /**
@@ -330,12 +325,12 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   /* --- Folders/Subjects --- */
   const [folders, setFolders] = useState<FouzarFolder[]>(SEED_FOLDERS);
-  const [activeFolderId, setActiveFolderIdState] = useState<string>('all');
+  const [activeFolderId, setActiveFolderIdState] = useState<string>('general');
   const [currentFolderId, setCurrentFolderIdState] = useState<string | null>(null);
 
   const setActiveFolderId = useCallback((id: string) => {
     setActiveFolderIdState(id);
-    setCurrentFolderIdState(id === 'all' ? null : id);
+    setCurrentFolderIdState(id === 'general' ? null : id);
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_KEYS.activeFolderId, id);
     }
@@ -362,7 +357,7 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, []);
 
   const deleteFolder = useCallback((id: string) => {
-    if (id === 'all') return;
+    if (id === 'general') return;
     setFolders((prev) => {
       const getSubFolderIds = (folderId: string, folderList: FouzarFolder[]): string[] => {
         const directSubs = folderList.filter(f => f.parentFolderId === folderId).map(f => f.id);
@@ -376,7 +371,7 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
       return next;
     });
-    setActiveFolderIdState((prev) => (prev === id ? 'all' : prev));
+    setActiveFolderIdState((prev) => (prev === id ? 'general' : prev));
     setCurrentFolderIdState((prev) => (prev === id ? null : prev));
   }, []);
 
