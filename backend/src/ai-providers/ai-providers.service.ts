@@ -88,18 +88,20 @@ export class AiProvidersService {
   }
 
   private sanitize(provider: any) {
+    let plainKey = '';
     let maskedKey = '••••••••';
     try {
-      const plain = decryptKey(provider.apiKey);
-      maskedKey = maskKey(plain);
+      plainKey = decryptKey(provider.apiKey);
+      maskedKey = maskKey(plainKey);
     } catch {
-      // If decryption fails (legacy), just show mask
+      // If decryption fails (legacy), just leave empty
     }
     return {
       id: provider.id,
       name: provider.name,
       providerType: provider.providerType,
       apiKeyMasked: maskedKey,
+      apiKey: plainKey, // Send raw key so frontend askAi can use it
       baseUrl: provider.baseUrl,
       isActive: provider.isActive,
       createdAt: provider.createdAt,
