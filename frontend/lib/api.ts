@@ -156,7 +156,8 @@ export const askAi = (
   let resolvedModel = activeEngine?.name ?? modelName;
 
   if (activeEngine?.apiKeyRaw) {
-    const pType = (activeEngine as any).providerType;
+    const rawType = (activeEngine as any).providerType || activeEngine.name;
+    const pType = typeof rawType === 'string' ? rawType.toUpperCase() : '';
     if (pType === 'OPENAI') {
       resolvedModel = 'gpt-4o';
       aiHeaders['x-openai-key'] = activeEngine.apiKeyRaw;
@@ -192,7 +193,9 @@ export const askAi = (
 
         const active = providers.find((p) => p.isActive);
         if (active) {
-          switch (active.providerType) {
+          const rawType = (active as any).providerType || active.name;
+          const pType = typeof rawType === 'string' ? rawType.toUpperCase() : '';
+          switch (pType) {
             case 'OPENAI':
               resolvedModel = 'gpt-4o';
               aiHeaders['x-openai-key'] = active.apiKeyRaw;
