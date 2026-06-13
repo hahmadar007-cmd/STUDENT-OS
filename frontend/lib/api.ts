@@ -151,34 +151,11 @@ export const askAi = (
     }
   } catch (e) {}
 
-  // AI Control Center headers from either the in-page engine or stored provider config
+  // ── AI Control Center: read active provider from localStorage ──────────────
   const aiHeaders: Record<string, string> = {};
-  let resolvedModel = activeEngine?.name ?? modelName;
+  let resolvedModel = modelName;
 
-  if (activeEngine?.apiKeyRaw) {
-    const rawType = (activeEngine as any).providerType || activeEngine.name;
-    const pType = typeof rawType === 'string' ? rawType.toUpperCase() : '';
-    if (pType === 'OPENAI') {
-      resolvedModel = 'gpt-4o';
-      aiHeaders['x-openai-key'] = activeEngine.apiKeyRaw;
-    } else if (pType === 'ANTHROPIC') {
-      resolvedModel = 'claude-3-5-sonnet';
-      aiHeaders['x-anthropic-key'] = activeEngine.apiKeyRaw;
-    } else if (pType === 'GEMINI') {
-      resolvedModel = 'gemini-1.5-pro';
-      aiHeaders['x-gemini-key'] = activeEngine.apiKeyRaw;
-    } else if (pType === 'CUSTOM') {
-      resolvedModel = 'custom-endpoint';
-      aiHeaders['x-custom-key'] = activeEngine.apiKeyRaw;
-      if (activeEngine.baseUrl) aiHeaders['x-custom-url'] = activeEngine.baseUrl;
-    } else {
-      aiHeaders['x-openrouter-key'] = activeEngine.apiKeyRaw;
-      if (activeEngine.baseUrl) {
-        aiHeaders['x-custom-url'] = activeEngine.baseUrl;
-        aiHeaders['x-custom-key'] = activeEngine.apiKeyRaw;
-      }
-    }
-  } else if (typeof window !== 'undefined') {
+  if (typeof window !== 'undefined') {
     try {
       const raw = localStorage.getItem('fasca_ai_providers_v1');
       if (raw) {
@@ -193,26 +170,27 @@ export const askAi = (
 
         const active = providers.find((p) => p.isActive);
         if (active) {
-          const rawType = (active as any).providerType || active.name;
-          const pType = typeof rawType === 'string' ? rawType.toUpperCase() : '';
-          switch (pType) {
-            case 'OPENAI':
-              resolvedModel = 'gpt-4o';
-              aiHeaders['x-openai-key'] = active.apiKeyRaw;
-              break;
-            case 'ANTHROPIC':
-              resolvedModel = 'claude-3-5-sonnet';
-              aiHeaders['x-anthropic-key'] = active.apiKeyRaw;
-              break;
-            case 'GEMINI':
-              resolvedModel = 'gemini-1.5-pro';
-              aiHeaders['x-gemini-key'] = active.apiKeyRaw;
-              break;
-            case 'CUSTOM':
-              resolvedModel = 'custom-endpoint';
+          const pType = active.providerType || (typeof active.name === 'string' ? active.name.trim().toUpperCase() : '');
+          if (pType === 'OPENAI') {
+            resolvedModel = 'gpt-4o';
+            aiHeaders['x-openai-key'] = active.apiKeyRaw;
+          } else if (pType === 'ANTHROPIC') {
+            resolvedModel = 'claude-3-5-sonnet';
+            aiHeaders['x-anthropic-key'] = active.apiKeyRaw;
+          } else if (pType === 'GEMINI') {
+            resolvedModel = 'gemini-1.5-pro';
+            aiHeaders['x-gemini-key'] = active.apiKeyRaw;
+          } else if (pType === 'CUSTOM') {
+            resolvedModel = 'custom-endpoint';
+            aiHeaders['x-custom-key'] = active.apiKeyRaw;
+            if (active.baseUrl) aiHeaders['x-custom-url'] = active.baseUrl;
+          } else {
+            // Fallback for custom OpenRouter
+            aiHeaders['x-openrouter-key'] = active.apiKeyRaw;
+            if (active.baseUrl) {
+              aiHeaders['x-custom-url'] = active.baseUrl;
               aiHeaders['x-custom-key'] = active.apiKeyRaw;
-              if (active.baseUrl) aiHeaders['x-custom-url'] = active.baseUrl;
-              break;
+            }
           }
         }
       }
