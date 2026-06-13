@@ -12,6 +12,7 @@ interface AiProvider {
   name: string;
   apiKeyRaw: string;
   baseUrl: string | null;
+  providerType?: string;
   isActive: boolean;
   createdAt: string;
   colorIndex: number;
@@ -47,24 +48,38 @@ function AddProviderModal({ onClose, onAdded, nextColorIndex }: AddModalProps) {
 
   const palette = CARD_COLORS[nextColorIndex % CARD_COLORS.length];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) { setError('Engine name is required.'); return; }
     if (!apiKey.trim()) { setError('API key is required.'); return; }
     setError('');
 
-    const provider: AiProvider = {
+    let provider: AiProvider = {
       id: `ap_${Date.now()}`,
       name: name.trim(),
       apiKeyRaw: apiKey.trim(),
       baseUrl: baseUrl.trim() || null,
+      providerType: 'CUSTOM',
       isActive: false,
       createdAt: new Date().toISOString(),
       colorIndex: nextColorIndex % CARD_COLORS.length,
     };
+
+    try {
+      const { addAiProvider } = await import('../../lib/api');
+      const savedProvider = await addAiProvider(provider.name, provider.providerType || 'CUSTOM', provider.apiKeyRaw, provider.baseUrl || undefined);
+      if (savedProvider && savedProvider.id) {
+        provider.id = savedProvider.id;
+      }
+    } catch (err) {
+      console.error('Failed to save AI provider to backend:', err);
+      // Fallback to local storage only if backend fails
+    }
+
     onAdded(provider);
     onClose();
   };
+
 
   return (
     <motion.div

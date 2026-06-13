@@ -130,6 +130,11 @@ export const getPersonalSanctuary = () => apiRequest('/sanctuary', 'GET');
 
 export const getGroupMessages = (groupId: string) => apiRequest(`/groups/${groupId}/messages`, 'GET');
 
+export const getAiProviders = () => apiRequest('/ai-providers', 'GET');
+
+export const addAiProvider = (name: string, providerType: string, apiKey: string, baseUrl?: string) => 
+  apiRequest('/ai-providers', 'POST', { name, providerType, apiKey, baseUrl });
+
 export const askAi = (
   prompt: string,
   slideId: string | null,

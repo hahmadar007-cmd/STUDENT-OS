@@ -38,6 +38,27 @@ export const useAuth = () => {
     try {
       const userData = await getMe();
       setUser(userData);
+      
+      try {
+        const { getAiProviders } = await import('../lib/api');
+        const providers = await getAiProviders();
+        if (Array.isArray(providers) && providers.length > 0) {
+          // Map backend provider schema to frontend storage schema
+          const mappedProviders = providers.map((p: any, index: number) => ({
+            id: p.id,
+            name: p.name,
+            apiKeyRaw: p.apiKey, // Note: For real prod this shouldn't be sent back raw unless encrypted, assuming backend sends it
+            baseUrl: p.baseUrl || null,
+            providerType: p.providerType || 'CUSTOM',
+            isActive: p.isActive !== false,
+            createdAt: p.createdAt || new Date().toISOString(),
+            colorIndex: index
+          }));
+          localStorage.setItem('fasca_ai_providers_v1', JSON.stringify(mappedProviders));
+        }
+      } catch (aiErr) {
+        console.error('Failed to sync AI providers:', aiErr);
+      }
     } catch (err) {
       console.error('Failed to resolve authenticated session:', err);
       setUser(null);

@@ -40,7 +40,7 @@ export const AiOnboardingModal: React.FC<AiOnboardingModalProps> = ({ onClose })
     setEntries(prev => [...prev, { name: '', apiKey: '', showKey: false }]);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const valid = entries.filter(e => e.name.trim() && e.apiKey.trim());
     if (valid.length === 0) {
       setError('Add at least one engine name and API key.');
@@ -53,16 +53,30 @@ export const AiOnboardingModal: React.FC<AiOnboardingModalProps> = ({ onClose })
       name: e.name.trim(),
       apiKeyRaw: e.apiKey.trim(),
       baseUrl: null,
+      providerType: 'CUSTOM',
       isActive: i === 0,
       createdAt: new Date().toISOString(),
       colorIndex: i % CARD_COLORS.length,
     }));
+
+    try {
+      const { addAiProvider } = await import('../../lib/api');
+      for (const p of providers) {
+        const savedProvider = await addAiProvider(p.name, p.providerType || 'CUSTOM', p.apiKeyRaw, p.baseUrl || undefined);
+        if (savedProvider && savedProvider.id) {
+          p.id = savedProvider.id;
+        }
+      }
+    } catch (err) {
+      console.error('Failed to sync to backend:', err);
+    }
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(providers));
     window.dispatchEvent(new Event('storage'));
     localStorage.setItem('fasca_onboarded', '1');
     onClose();
   };
+
 
   return (
     <motion.div
