@@ -6,9 +6,12 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 import { CloudStorageService } from './cloud-storage.service';
 
+import { AiModule } from '../ai/ai.module';
+
 @Module({
   imports: [
     PrismaModule,
+    AiModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'fasca-obsidian-secret-key-1337',
       signOptions: { expiresIn: '7d' },

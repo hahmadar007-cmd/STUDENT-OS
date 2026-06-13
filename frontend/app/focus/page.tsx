@@ -17,10 +17,7 @@ export default function FocusTakeoverPage() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [totalSeconds, setTotalSeconds] = useState(25 * 60); // 25 minutes
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [peersInFlow, setPeersInFlow] = useState<PeerInFlow[]>([
-    { id: 'usr-3', name: 'Kai', initials: 'KT' },
-    { id: 'usr-2', name: 'Elena', initials: 'ER' },
-  ]);
+  const [peersInFlow, setPeersInFlow] = useState<PeerInFlow[]>([]);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 

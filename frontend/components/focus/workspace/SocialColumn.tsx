@@ -375,15 +375,13 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
       {/* Section tabs */}
       <div className="flex border-b border-fouzar-border shrink-0 overflow-x-auto scrollbar-none">
         {[
-          { id: 'circles' as const, label: 'Circles' },
+          { id: 'circles' as const, label: roomId && !roomId.startsWith('personal-') ? 'Members' : 'Circles' },
           { id: 'chat' as const, label: 'Chat' },
           { id: 'ai' as const, label: 'AI' },
           { id: 'lms' as const, label: 'LMS Feed' },
-          { id: 'repository' as const, label: 'Archive' },
-          // Shared Drive tab — only visible inside a real shared circle
           ...(roomId && !roomId.startsWith('personal-')
-            ? [{ id: 'drive' as const, label: '📂 Drive' }]
-            : []),
+            ? [{ id: 'drive' as const, label: 'Drive' }]
+            : [{ id: 'repository' as const, label: 'Archive' }]),
         ].map((tab) => (
           <button
             key={tab.id}

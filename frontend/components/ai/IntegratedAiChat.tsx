@@ -618,33 +618,41 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
             </div>
           </div>
         </div>
-        {/* Engine selector — shows user's configured engines */}
-        {engines.length > 0 ? (
-          <select
-            value={activeEngine?.id ?? ''}
-            onChange={(e) => {
-              // Mark selected engine as active in localStorage
+        {/* Engine selector — shows user's configured engines and free tier */}
+        <select
+          value={activeEngine ? activeEngine.id : aiModel}
+          onChange={(e) => {
+            const selectedId = e.target.value;
+            if (selectedId === 'deepseek') {
+              setAiModel(selectedId);
               try {
                 const raw = localStorage.getItem(AI_PROVIDERS_KEY);
                 if (raw) {
                   const all: StoredProvider[] = JSON.parse(raw);
-                  const updated = all.map(p => ({ ...p, isActive: p.id === e.target.value }));
+                  const updated = all.map(p => ({ ...p, isActive: false }));
                   localStorage.setItem(AI_PROVIDERS_KEY, JSON.stringify(updated));
                   window.dispatchEvent(new Event('storage'));
                 }
               } catch {}
-            }}
-            className="bg-fouzar-elevated border border-fouzar-border text-[8px] font-mono uppercase px-2 py-1 rounded-[var(--fouzar-radius-sm)] text-fouzar-text-primary focus:outline-none max-w-[130px] truncate"
-          >
-            {engines.map((e) => (
-              <option key={e.id} value={e.id}>{e.name}</option>
-            ))}
-          </select>
-        ) : (
-          <span className="font-mono text-[8px] text-white/25 border border-white/10 px-2 py-1 rounded">
-            + Add engine below
-          </span>
-        )}
+            } else {
+              try {
+                const raw = localStorage.getItem(AI_PROVIDERS_KEY);
+                if (raw) {
+                  const all: StoredProvider[] = JSON.parse(raw);
+                  const updated = all.map(p => ({ ...p, isActive: p.id === selectedId }));
+                  localStorage.setItem(AI_PROVIDERS_KEY, JSON.stringify(updated));
+                  window.dispatchEvent(new Event('storage'));
+                }
+              } catch {}
+            }
+          }}
+          className="bg-fouzar-elevated border border-fouzar-border text-[8px] font-mono uppercase px-2 py-1 rounded-[var(--fouzar-radius-sm)] text-fouzar-text-primary focus:outline-none max-w-[130px] truncate cursor-pointer"
+        >
+          <option value="deepseek">DeepSeek (Free)</option>
+          {engines.map((e) => (
+            <option key={e.id} value={e.id}>{e.name}</option>
+          ))}
+        </select>
       </div>
 
       {messages.length === 0 && engines.length === 0 && (

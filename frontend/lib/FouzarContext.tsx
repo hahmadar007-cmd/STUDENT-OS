@@ -137,6 +137,9 @@ export interface FouzarContextValue {
   removeRepositoryItem: (id: string) => void;
   activeDoc: LmsRepositoryItem | null;
   setActiveDoc: (doc: LmsRepositoryItem | null) => void;
+  openDocs: LmsRepositoryItem[];
+  activeDocId: string | null;
+  closeDoc: (id: string) => void;
   activeDocText: string | null;
   setActiveDocText: (text: string | null) => void;
   activeVideoUrl: string | null;
@@ -243,35 +246,7 @@ const INITIAL_BYPASS: FouzarBypassState = {
 };
 
 /** Seeds the social rail with demo peers until the network API is wired. */
-const SEED_FRIENDS: FouzarFriendProfile[] = [
-  {
-    id: 'usr-2',
-    name: 'Elena Reyes',
-    handle: 'elena_reyes',
-    fouzarId: 'FOUZAR-K7M2',
-    avatarInitials: 'ER',
-    presence: 'flow',
-    activeGroup: 'CS-229',
-    focusDurationLabel: '14 mins',
-  },
-  {
-    id: 'usr-3',
-    name: 'Kai Tanaka',
-    handle: 'kai_tanaka',
-    fouzarId: 'FOUZAR-P4N8',
-    avatarInitials: 'KT',
-    presence: 'online',
-    activeGroup: 'CS-109',
-  },
-  {
-    id: 'usr-4',
-    name: 'Devon Vale',
-    handle: 'devon_vale',
-    fouzarId: 'FOUZAR-R2X5',
-    avatarInitials: 'DV',
-    presence: 'offline',
-  },
-];
+const SEED_FRIENDS: FouzarFriendProfile[] = [];
 
 const SEED_FOLDERS: FouzarFolder[] = [
   { id: 'general', name: 'General / Playground', code: 'GEN', parentFolderId: null },
@@ -311,8 +286,35 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [repository, setRepository] = useState<LmsRepositoryItem[]>([]);
   const [bypass, setBypass] = useState<FouzarBypassState>(INITIAL_BYPASS);
   const [accentColor, setAccentColorState] = useState<FouzarAccent>('violet');
-  const [activeDoc, setActiveDoc] = useState<LmsRepositoryItem | null>(null);
+  const [openDocs, setOpenDocs] = useState<LmsRepositoryItem[]>([]);
+  const [activeDocId, setActiveDocId] = useState<string | null>(null);
   const [activeDocText, setActiveDocText] = useState<string | null>(null);
+
+  const activeDoc = useMemo(() => openDocs.find((d) => d.id === activeDocId) || null, [openDocs, activeDocId]);
+
+  const setActiveDoc = useCallback((doc: LmsRepositoryItem | null) => {
+    if (!doc) {
+      setActiveDocId(null);
+      return;
+    }
+    setOpenDocs((prev) => {
+      if (!prev.find((d) => d.id === doc.id)) {
+        return [...prev, doc];
+      }
+      return prev;
+    });
+    setActiveDocId(doc.id);
+  }, []);
+
+  const closeDoc = useCallback((docId: string) => {
+    setOpenDocs((prev) => {
+      const next = prev.filter((d) => d.id !== docId);
+      if (activeDocId === docId) {
+        setActiveDocId(next.length > 0 ? next[next.length - 1].id : null);
+      }
+      return next;
+    });
+  }, [activeDocId]);
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
   const [activeVideoTimestamp, setActiveVideoTimestamp] = useState<number>(0);
 
@@ -702,6 +704,9 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setAccentColor,
       activeDoc,
       setActiveDoc,
+      openDocs,
+      activeDocId,
+      closeDoc,
       activeDocText,
       setActiveDocText,
       activeVideoUrl,

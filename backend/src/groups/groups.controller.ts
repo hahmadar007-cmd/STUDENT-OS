@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CloudStorageService } from './cloud-storage.service';
 import { GroupsGateway } from './groups.gateway';
+import { DocumentProcessorService } from '../ai/document-processor.service';
 
 @Controller('groups')
 export class GroupsController {
@@ -12,6 +13,7 @@ export class GroupsController {
     private readonly jwtService: JwtService,
     private readonly cloudStorageService: CloudStorageService,
     private readonly groupsGateway: GroupsGateway,
+    private readonly documentProcessorService: DocumentProcessorService,
   ) {}
 
   @Post()
@@ -40,7 +42,7 @@ export class GroupsController {
   async addGroupMember(
     @Headers('authorization') authHeader: string,
     @Param('groupId') groupId: string,
-    @Body() body: { connectionId: string },
+    @Body() body: { userId: string },
   ) {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       throw new UnauthorizedException('Missing token');
@@ -48,9 +50,27 @@ export class GroupsController {
     const token = authHeader.split(' ')[1];
     try {
       const decoded = this.jwtService.verify(token);
-      return this.groupsService.addGroupMember(groupId, body.connectionId, decoded.sub);
-    } catch (e) {
-      throw e;
+      return this.groupsService.addMember(groupId, body.userId, decoded.sub);
+    } catch (e: any) {
+      throw new UnauthorizedException(e.message || 'Authentication failed');
+    }
+  }
+
+  @Delete(':groupId/members/:userId')
+  async removeGroupMember(
+    @Headers('authorization') authHeader: string,
+    @Param('groupId') groupId: string,
+    @Param('userId') userId: string,
+  ) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Missing token');
+    }
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded = this.jwtService.verify(token);
+      return this.groupsService.removeMember(groupId, userId, decoded.sub);
+    } catch (e: any) {
+      throw new UnauthorizedException(e.message || 'Authentication failed');
     }
   }
 
@@ -72,7 +92,7 @@ export class GroupsController {
   }
 
   @Patch(':groupId')
-  async renameGroup(
+  async updateGroup(
     @Headers('authorization') authHeader: string,
     @Param('groupId') groupId: string,
     @Body() body: { name: string },
@@ -83,7 +103,7 @@ export class GroupsController {
     const token = authHeader.split(' ')[1];
     try {
       const decoded = this.jwtService.verify(token);
-      return this.groupsService.renameGroup(groupId, body.name, decoded.sub);
+      return this.groupsService.updateGroup(groupId, body.name, decoded.sub);
     } catch (e: any) {
       throw new UnauthorizedException(e.message || 'Authentication failed');
     }
@@ -146,6 +166,60 @@ export class GroupsController {
     }
   }
 
+  @Post(':groupId/invites')
+  async inviteMember(
+    @Headers('authorization') authHeader: string,
+    @Param('groupId') groupId: string,
+    @Body() body: { targetUserId: string },
+  ) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Missing token');
+    }
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded = this.jwtService.verify(token);
+      return this.groupsService.requestOrInviteMember(groupId, decoded.sub, body.targetUserId);
+    } catch (e: any) {
+      throw new UnauthorizedException(e.message || 'Authentication failed');
+    }
+  }
+
+  @Post(':groupId/requests/:userId/accept')
+  async acceptRequest(
+    @Headers('authorization') authHeader: string,
+    @Param('groupId') groupId: string,
+    @Param('userId') userId: string,
+  ) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Missing token');
+    }
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded = this.jwtService.verify(token);
+      return this.groupsService.acceptMembership(groupId, userId, decoded.sub);
+    } catch (e: any) {
+      throw new UnauthorizedException(e.message || 'Authentication failed');
+    }
+  }
+
+  @Post(':groupId/requests/:userId/reject')
+  async rejectRequest(
+    @Headers('authorization') authHeader: string,
+    @Param('groupId') groupId: string,
+    @Param('userId') userId: string,
+  ) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Missing token');
+    }
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded = this.jwtService.verify(token);
+      return this.groupsService.rejectMembership(groupId, userId, decoded.sub);
+    } catch (e: any) {
+      throw new UnauthorizedException(e.message || 'Authentication failed');
+    }
+  }
+
   @Post(':groupId/files')
   @UseInterceptors(FileInterceptor('file'))
   async uploadGroupFile(
@@ -166,10 +240,33 @@ export class GroupsController {
       );
       const uploadedBy = user?.name || 'A circle scholar';
 
-      const uploadResult = await this.cloudStorageService.uploadFile(file);
+      let fileToUpload = file;
+      let finalName = file.originalname;
+
+      // Intercept PPTX files and convert to PDF
+      if (finalName.toLowerCase().endsWith('.pptx') || finalName.toLowerCase().endsWith('.ppt')) {
+        try {
+          const pdfBuffer = await this.documentProcessorService.convertPptxToPdf(file.buffer);
+          if (pdfBuffer) {
+            finalName = finalName.replace(/\.pptx?$/i, '.pdf');
+            fileToUpload = {
+              ...file,
+              originalname: finalName,
+              buffer: pdfBuffer,
+              mimetype: 'application/pdf',
+              size: pdfBuffer.length
+            };
+          }
+        } catch (convertErr) {
+          console.warn('Failed to convert PPTX to PDF during upload:', convertErr);
+          // Fallback to uploading original PPTX
+        }
+      }
+
+      const uploadResult = await this.cloudStorageService.uploadFile(fileToUpload);
       const groupFile = await this.groupsService.createGroupFile(
         groupId,
-        file.originalname,
+        finalName,
         uploadResult.url,
         uploadResult.sizeLabel,
         uploadedBy,

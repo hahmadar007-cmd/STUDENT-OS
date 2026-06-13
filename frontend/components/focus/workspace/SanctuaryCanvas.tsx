@@ -16,6 +16,7 @@ import {
   ExternalLink,
   Search,
   Sparkles,
+  X,
 } from 'lucide-react';
 import { useFouzar } from '../../../lib/FouzarContext';
 import { DocumentViewer } from '../../documents/DocumentViewer';
@@ -83,7 +84,7 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
   setActiveDoc,
   onPresentFile,
 }) => {
-  const { mode, isFlowActive, activeFolderId, setActiveVideoUrl, setActiveVideoTimestamp, setActiveDocText, setAiTriggerQuery, user } = useFouzar();
+  const { mode, isFlowActive, activeFolderId, setActiveVideoUrl, setActiveVideoTimestamp, setActiveDocText, setAiTriggerQuery, user, openDocs, closeDoc } = useFouzar();
   const isGreenhouse = mode === 'greenhouse';
 
   // ── Feature B: Live Presentation Engine ────────────────────────────────────
@@ -299,13 +300,43 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
                 canvasView === 'split' ? 'md:w-1/2 border-r' : 'flex-1'
               } ${isGreenhouse ? 'fouzar-glass m-2 rounded-[var(--fouzar-radius-lg)]' : ''}`}
             >
-              {activeDoc ? (
+              {openDocs && openDocs.length > 0 ? (
                 <div className="flex-1 flex flex-col overflow-hidden relative p-4">
-                  <DocumentViewer
-                    document={activeDoc}
-                    onClose={() => setActiveDoc(null)}
-                    isInline={true}
-                  />
+                  <div className="flex gap-1 overflow-x-auto scrollbar-none mb-2">
+                    {openDocs.map((doc) => (
+                      <div key={doc.id} className="flex items-center">
+                        <button
+                          onClick={() => setActiveDoc(doc)}
+                          className={`pl-4 pr-2 py-2 rounded-l-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all whitespace-nowrap max-w-[150px] truncate ${
+                            activeDoc?.id === doc.id
+                              ? 'bg-fouzar-accent text-fouzar-text-inverse shadow-[0_0_12px_var(--fouzar-accent-glow)]'
+                              : 'bg-fouzar-elevated/50 text-fouzar-text-tertiary hover:text-fouzar-text-primary hover:bg-fouzar-elevated'
+                          }`}
+                        >
+                          {doc.fileName}
+                        </button>
+                        <button
+                          onClick={() => closeDoc(doc.id)}
+                          className={`pr-3 pl-1 py-2 rounded-r-[var(--fouzar-radius-md)] transition-all ${
+                            activeDoc?.id === doc.id
+                              ? 'bg-fouzar-accent text-fouzar-text-inverse shadow-[0_0_12px_var(--fouzar-accent-glow)]'
+                              : 'bg-fouzar-elevated/50 text-fouzar-text-tertiary hover:text-fouzar-text-primary hover:bg-fouzar-elevated'
+                          }`}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  {activeDoc && (
+                    <div className="flex-1 overflow-hidden rounded-[var(--fouzar-radius-lg)] border border-fouzar-border bg-fouzar-elevated relative">
+                      <DocumentViewer
+                        document={activeDoc}
+                        onClose={() => closeDoc(activeDoc.id)}
+                        isInline={true}
+                      />
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="flex-1 flex flex-col overflow-hidden p-6 relative">

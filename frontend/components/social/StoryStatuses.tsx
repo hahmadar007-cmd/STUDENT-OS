@@ -31,46 +31,6 @@ export const StoryStatuses: React.FC = () => {
       statusMessage: 'Ready to study Machine Learning.',
       course: 'CS-229',
     },
-    {
-      id: '1',
-      name: 'Elena Rostova',
-      initials: 'ER',
-      isOnline: true,
-      isFocusing: true,
-      focusStartedAt: new Date(Date.now() - 15 * 60000).toISOString(),
-      statusMessage: 'Deep focusing on backpropagation equations.',
-      course: 'CS-229',
-    },
-    {
-      id: '4',
-      name: 'Devon Vance',
-      initials: 'DV',
-      isOnline: true,
-      isFocusing: true,
-      focusStartedAt: new Date(Date.now() - 42 * 60000).toISOString(),
-      statusMessage: 'Quantum mechanical wavefunctions lab writeup.',
-      course: 'PHY-201',
-    },
-    {
-      id: '2',
-      name: 'Kai Takahashi',
-      initials: 'KT',
-      isOnline: true,
-      isFocusing: false,
-      focusStartedAt: null,
-      statusMessage: 'Reviewing homework sheet.',
-      course: 'CS-109',
-    },
-    {
-      id: '3',
-      name: 'Lila Thorne',
-      initials: 'LT',
-      isOnline: false,
-      isFocusing: false,
-      focusStartedAt: null,
-      statusMessage: 'AFK, eating ramen.',
-      course: 'PHY-201',
-    },
   ];
 
   const handleCircleClick = (story: FriendStory) => {
@@ -81,7 +41,7 @@ export const StoryStatuses: React.FC = () => {
   return (
     <>
       {/* Horizontal scrolling story track */}
-      <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none select-none w-full">
+      <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none select-none w-full items-center">
         {stories.map((story) => {
           const isSelf = story.id === 'self';
           return (
@@ -128,6 +88,11 @@ export const StoryStatuses: React.FC = () => {
             </div>
           );
         })}
+        {stories.length === 1 && (
+          <div className="text-text-muted text-xs font-mono tracking-wider ml-2">
+            NO FRIENDS YET
+          </div>
+        )}
       </div>
 
       {/* Story View Overlay Modal */}

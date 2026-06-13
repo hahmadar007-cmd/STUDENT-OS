@@ -16,7 +16,10 @@ import {
   Lock,
   Unlock,
   MessageCircle,
-  Users
+  Users,
+  Maximize2,
+  Minimize2,
+  Minus
 } from 'lucide-react';
 import { 
   joinGroup, 
@@ -84,74 +87,23 @@ export default function StudyRoomPage() {
   const router = useRouter();
   const roomId = (params.id as string) || 'group-1';
   
-  const { isFlowActive, setIsFlowActive, activeDoc, setActiveDoc } = useFouzar();
+  const { isFlowActive, setIsFlowActive, activeDoc, setActiveDoc, closeDoc } = useFouzar();
   const [currentSlide, setCurrentSlide] = useState(1);
   const [syncMode, setSyncMode] = useState(true);
   const [isLeader, setIsLeader] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
+  const [aiModalSize, setAiModalSize] = useState<'minimized' | 'default' | 'maximized'>('default');
 
   // 1. Connected Members state
-  const [connectedMembers, setConnectedMembers] = useState<ConnectedMember[]>([
-    { id: 'usr-1', name: 'Alex (You)', initials: 'AM', status: 'online' },
-    { id: 'usr-2', name: 'Elena', initials: 'ER', status: 'online' },
-    { id: 'usr-3', name: 'Kai', initials: 'KT', status: 'flow' },
-    { id: 'usr-4', name: 'Devon', initials: 'DV', status: 'offline' },
-  ]);
+  const [connectedMembers, setConnectedMembers] = useState<ConnectedMember[]>([]);
 
   // 2. Chat messages state
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    {
-      id: 'msg-1',
-      senderName: 'Kai',
-      content: 'Hey! Did everyone finish reading Slide 3? The hidden representations logic is key.',
-      timestamp: '02:02 AM',
-      slideContext: 'SLIDE 3',
-    },
-    {
-      id: 'msg-2',
-      senderName: 'Elena',
-      content: 'Yes, but I think the backpropagation equations on Slide 5 are much trickier to implement.',
-      timestamp: '02:04 AM',
-      slideContext: 'SLIDE 5',
-    },
-  ]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
   // 3. Threads state
-  const [threads, setThreads] = useState<Thread[]>([
-    {
-      id: 'th-1',
-      slideNumber: 3,
-      title: 'Universal Approximation Theorem',
-      replyCount: 2,
-      lastActivity: '4m ago',
-      originalMessage: {
-        sender: 'Elena',
-        content: 'Why does adding a single hidden layer with ReLU allow approximating any continuous function?',
-        timestamp: '01:50 AM',
-      },
-      replies: [
-        { sender: 'Kai', content: 'Because we can combine linear segments to create arbitrary bounding boxes/bumps.', timestamp: '01:52 AM' },
-        { sender: 'Devon', content: 'Yes, Sigmoid worked too, but ReLU helps avoid early gradient vanishing.', timestamp: '01:55 AM' },
-      ],
-      isExpanded: false,
-    },
-    {
-      id: 'th-2',
-      slideNumber: 5,
-      title: 'Backprop weight update matrix math',
-      replyCount: 0,
-      lastActivity: '12m ago',
-      originalMessage: {
-        sender: 'Kai',
-        content: 'Let\'s double check if we need to transpose the weight matrix when backward propagating delta values.',
-        timestamp: '01:40 AM',
-      },
-      replies: [],
-      isExpanded: false,
-    },
-  ]);
+  const [threads, setThreads] = useState<Thread[]>([]);
   const [newThreadTitle, setNewThreadTitle] = useState('');
   const [showNewThreadInput, setShowNewThreadInput] = useState(false);
   const [threadReplyInputs, setThreadReplyInputs] = useState<{ [threadId: string]: string }>({});
@@ -171,7 +123,7 @@ export default function StudyRoomPage() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setActiveDoc(null);
+        if (activeDoc) closeDoc(activeDoc.id);
         setShowAiModal(false);
       }
     };
@@ -393,50 +345,103 @@ export default function StudyRoomPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-[#0a0a0f]/90 backdrop-blur-md flex items-center justify-center p-4"
+            className={`fixed z-50 ${
+              aiModalSize === 'minimized' 
+                ? 'bottom-6 right-6 flex items-end justify-end pointer-events-none' 
+                : 'inset-0 bg-[#0a0a0f]/90 backdrop-blur-md flex items-center justify-center p-4'
+            }`}
           >
             <motion.div
+              layout
               initial={{ scale: 0.95, y: 15 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 15 }}
-              className="w-full max-w-md bg-[#16161f] border border-[#7c5cfc] shadow-2xl p-6 relative overflow-hidden"
+              className={`w-full bg-[#16161f] border border-[#7c5cfc] shadow-2xl relative overflow-hidden flex flex-col pointer-events-auto ${
+                aiModalSize === 'maximized' ? 'max-w-7xl h-[90vh] p-8' :
+                aiModalSize === 'minimized' ? 'w-[320px] h-[60px] p-0 shadow-lg cursor-pointer border-[#7c5cfc]/50 hover:border-[#7c5cfc]' :
+                'max-w-md h-[80vh] p-6'
+              }`}
+              onClick={() => {
+                if (aiModalSize === 'minimized') setAiModalSize('default');
+              }}
             >
-              <div className="flex justify-between items-start mb-4 border-b border-[#2a2a3a]/40 pb-2">
-                <div className="flex items-center gap-1.5">
-                  <Bot className="w-4 h-4 text-[#7c5cfc]" />
-                  <div>
-                    <h4 className="font-serif text-xs font-bold tracking-widest text-[#f0f0ff] uppercase">
-                      FASCA AI ROOM ASSIST
-                    </h4>
-                    <p className="text-[7.5px] font-mono text-[#6b6b8a] uppercase">Slide Context Co-pilot</p>
+              {aiModalSize === 'minimized' ? (
+                <div className="flex items-center justify-between w-full h-full px-4 bg-[#7c5cfc]/10">
+                  <div className="flex items-center gap-2">
+                    <Bot className="w-5 h-5 text-[#7c5cfc]" />
+                    <span className="font-serif text-[10px] font-bold tracking-widest text-[#f0f0ff] uppercase">AI Assist Active</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={(e) => { e.stopPropagation(); setAiModalSize('default'); }} className="p-1 text-[#6b6b8a] hover:text-[#f0f0ff]">
+                      <Maximize2 className="w-4 h-4" />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); setShowAiModal(false); }} className="p-1 text-[#6b6b8a] hover:text-[#f0f0ff]">
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-                <button
-                  onClick={() => setShowAiModal(false)}
-                  className="p-1 hover:bg-white/5 rounded text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
+              ) : (
+                <>
+                  <div className="flex justify-between items-start mb-4 border-b border-[#2a2a3a]/40 pb-2 shrink-0">
+                    <div className="flex items-center gap-1.5">
+                      <Bot className="w-4 h-4 text-[#7c5cfc]" />
+                      <div>
+                        <h4 className="font-serif text-xs font-bold tracking-widest text-[#f0f0ff] uppercase">
+                          FASCA AI ROOM ASSIST
+                        </h4>
+                        <p className="text-[7.5px] font-mono text-[#6b6b8a] uppercase">Slide Context Co-pilot</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      {aiModalSize === 'maximized' ? (
+                        <button
+                          onClick={() => setAiModalSize('default')}
+                          className="p-1 hover:bg-white/5 rounded text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors cursor-pointer"
+                        >
+                          <Minimize2 className="w-3.5 h-3.5" />
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setAiModalSize('maximized')}
+                          className="p-1 hover:bg-white/5 rounded text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors cursor-pointer"
+                        >
+                          <Maximize2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setAiModalSize('minimized')}
+                        className="p-1 hover:bg-white/5 rounded text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors cursor-pointer"
+                      >
+                        <Minus className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setShowAiModal(false)}
+                        className="p-1 hover:bg-white/5 rounded text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors cursor-pointer ml-2"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
 
-              <div className="my-4 min-h-[320px]">
-                <IntegratedAiChat
-                  contextLabel={`Room · Slide ${currentSlide}`}
-                  slideId={String(currentSlide)}
-                  slideContextText={slides[currentSlide - 1] ? `Slide ${slides[currentSlide - 1].number}: ${slides[currentSlide - 1].title}\n${slides[currentSlide - 1].subtitle}\n${slides[currentSlide - 1].content}` : ''}
-                  storageKey={`fouzar-room-ai-${roomId}`}
-                  compact
-                />
-              </div>
+                  <div className="flex-1 overflow-hidden my-2 border border-[#2a2a3a]/30 rounded-md">
+                    <IntegratedAiChat
+                      contextLabel={`Room · Slide ${currentSlide}`}
+                      slideId={String(currentSlide)}
+                      slideContextText={slides[currentSlide - 1] ? `Slide ${slides[currentSlide - 1].number}: ${slides[currentSlide - 1].title}\n${slides[currentSlide - 1].subtitle}\n${slides[currentSlide - 1].content}` : ''}
+                      storageKey={`fouzar-room-ai-${roomId}`}
+                      compact={aiModalSize !== 'maximized'}
+                    />
+                  </div>
 
-              <FascaButton
-                onClick={() => setShowAiModal(false)}
-                variant="solid-violet"
-                className="w-full rounded-none font-bold py-2 text-[9px]"
-              >
-                DISMISS
-              </FascaButton>
-
+                  <FascaButton
+                    onClick={() => setShowAiModal(false)}
+                    variant="solid-violet"
+                    className="w-full shrink-0 rounded-none font-bold py-2 text-[9px] mt-2"
+                  >
+                    DISMISS
+                  </FascaButton>
+                </>
+              )}
             </motion.div>
           </motion.div>
         )}

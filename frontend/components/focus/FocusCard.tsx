@@ -127,17 +127,9 @@ export const FocusCard: React.FC = () => {
   };
 
   // Preset data reflecting RonDesignLab/Nixtio designs
-  const activePeers: PeerPresence[] = [
-    { name: 'Elena Rostova', initials: 'ER', isFocusing: true, status: 'online' },
-    { name: 'Kai Takahashi', initials: 'KT', isFocusing: true, status: 'online' },
-    { name: 'Devon Vance', initials: 'DV', isFocusing: false, status: 'idle' },
-  ];
+  const activePeers: PeerPresence[] = [];
 
-  const mockTimelineTasks = [
-    { title: 'UX Research Synthesis', time: '10:00 - 11:30', progress: 85, color: '#c5a880', width: 'w-4/5' },
-    { title: 'Interactive Framer Prototypes', time: '13:00 - 14:15', progress: 40, color: '#7c5cfc', width: 'w-2/5' },
-    { title: 'Client Feedback Overhaul', time: '15:30 - 17:00', progress: 10, color: '#f59e0b', width: 'w-[12%]' },
-  ];
+  const mockTimelineTasks: any[] = [];
 
   return (
     <div className="relative w-full max-w-xl mx-auto select-none font-sans">

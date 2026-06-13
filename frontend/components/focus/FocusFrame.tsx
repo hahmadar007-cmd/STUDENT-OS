@@ -119,11 +119,7 @@ export const FocusFrame: React.FC<FocusFrameProps> = ({
   };
 
   const presetTimes = [15, 25, 45, 60];
-  const peers = [
-    { name: 'Elena', initials: 'ER' },
-    { name: 'Kai', initials: 'KT' },
-    { name: 'Devon', initials: 'DV' },
-  ];
+  const peers: any[] = [];
 
   return (
     <>
