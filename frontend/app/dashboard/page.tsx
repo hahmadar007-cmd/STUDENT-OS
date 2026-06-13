@@ -1606,27 +1606,28 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
 
-      <footer className="fixed bottom-0 left-0 right-0 z-20 flex items-center justify-center py-2 pointer-events-none">
-        <p className="font-mono text-[8px] text-white/15 tracking-[0.18em] uppercase select-none pointer-events-auto">
-          developed by{' '}
-          <a
-            href="https://github.com/hahmadar007-cmd"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-white/20 hover:text-indigo-400 transition-colors duration-300 hover:[text-shadow:0_0_12px_rgba(129,140,248,0.7)]"
-          >
-            me
-          </a>
-          {' '}and a lot of{' '}
-          <a
-            href="https://www.linkedin.com/in/muhammad-ahmad-3387a7382/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-white/20 hover:text-indigo-400 transition-colors duration-300 hover:[text-shadow:0_0_12px_rgba(129,140,248,0.7)]"
-          >
-            ai&apos;s
-          </a>
+      <footer className="fixed bottom-0 left-0 right-0 z-20 flex items-center justify-between px-6 py-2 pointer-events-none">
+        <a 
+          href="https://www.linkedin.com/in/muhammad-ahmad-3387a7382/?skipRedirect=true" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="font-mono text-[10px] text-white/20 hover:text-indigo-400 transition-colors duration-300 hover:[text-shadow:0_0_12px_rgba(129,140,248,0.7)] pointer-events-auto uppercase tracking-widest"
+        >
+          LinkedIn
+        </a>
+
+        <p className="font-mono text-[8px] text-white/15 tracking-[0.18em] uppercase select-none pointer-events-auto text-center absolute left-1/2 -translate-x-1/2">
+          developed by Muhammad Ahmad and a lot of ai&apos;s
         </p>
+
+        <a 
+          href="https://github.com/hahmadar007-cmd/STUDENT-OS" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="font-mono text-[10px] text-white/20 hover:text-indigo-400 transition-colors duration-300 hover:[text-shadow:0_0_12px_rgba(129,140,248,0.7)] pointer-events-auto uppercase tracking-widest"
+        >
+          GitHub
+        </a>
       </footer>
     </div>
   );
