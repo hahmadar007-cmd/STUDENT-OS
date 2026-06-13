@@ -110,7 +110,11 @@ Student's Query: "${prompt}"`;
     const customKey = headers['x-custom-key'];
     const openrouterKey = headers['x-openrouter-key'];
 
+<<<<<<< HEAD
     const activeApiKey = geminiKey || openaiKey || deepseekKey || anthropicKey || openrouterKey || '';
+=======
+    const activeApiKey = geminiKey || openaiKey || deepseekKey || anthropicKey || '';
+>>>>>>> 8e339bf (feat: user access restrictions and dynamic openrouter integration)
     const fullPrompt = await this.buildContextPrompt(dto, activeApiKey);
 
     // OpenRouter — fires when user has configured a personal engine key
