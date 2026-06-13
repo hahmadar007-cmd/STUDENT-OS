@@ -19,7 +19,8 @@ import {
   Loader2,
   Plug,
   LogOut,
-  Palette
+  Palette,
+  GraduationCap
 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '../../hooks/useAuth';
@@ -35,7 +36,13 @@ import {
   rejectFriendRequest,
   removeFriend,
   patchLmsToken,
-  getLmsStatus
+  getLmsStatus,
+  getPortalStatus,
+  connectPortal,
+  getPortalProfile,
+  savePortalAttendance,
+  savePortalTranscript,
+  savePortalGpa
 } from '../../lib/api';
 
 interface Friend {
@@ -75,6 +82,21 @@ export default function ProfilePage() {
   const [lmsSaving, setLmsSaving] = useState(false);
   const [lmsMessage, setLmsMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
+  // Portal State
+  const [portalType, setPortalType] = useState('moodle');
+  const [portalUrl, setPortalUrl] = useState('');
+  const [studentId, setStudentId] = useState('');
+  const [portalConnected, setPortalConnected] = useState(false);
+  const [portalSaving, setPortalSaving] = useState(false);
+  const [portalMessage, setPortalMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [gpa, setGpa] = useState('');
+  const [cgpa, setCgpa] = useState('');
+  const [semester, setSemester] = useState('');
+  const [attendanceRows, setAttendanceRows] = useState<any[]>([]);
+  const [transcriptRows, setTranscriptRows] = useState<any[]>([]);
+  const [academicSaving, setAcademicSaving] = useState(false);
+  const [academicMessage, setAcademicMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
   // Friends State
   const [friends, setFriends] = useState<Friend[]>([]);
   const [incomingRequests, setIncomingRequests] = useState<FriendRequest[]>([]);
@@ -109,6 +131,27 @@ export default function ProfilePage() {
     }
   };
 
+  const loadPortalStatus = async () => {
+    try {
+      const status = await getPortalStatus();
+      if (status.connected) {
+        setPortalConnected(true);
+        setPortalUrl(status.portalUrl || '');
+        setPortalType(status.portalType || 'moodle');
+        setStudentId(status.studentId || '');
+        setGpa(status.gpa?.toString() || '');
+        setCgpa(status.cgpa?.toString() || '');
+        setSemester(status.semester || '');
+        
+        const profile = await getPortalProfile();
+        if (profile?.attendance) setAttendanceRows(profile.attendance);
+        if (profile?.transcript) setTranscriptRows(profile.transcript);
+      }
+    } catch (err) {
+      console.error('Failed to load Portal status:', err);
+    }
+  };
+
   const loadSocialData = async () => {
     setFriendsLoading(true);
     try {
@@ -128,6 +171,7 @@ export default function ProfilePage() {
   useEffect(() => {
     if (user) {
       loadLmsStatus();
+      loadPortalStatus();
       loadSocialData();
     }
   }, [user]);
@@ -185,6 +229,43 @@ export default function ProfilePage() {
       setLmsMessage({ text: err.message || 'Failed to configure LMS Bridge.', type: 'error' });
     } finally {
       setLmsSaving(false);
+    }
+  };
+
+  const handlePortalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPortalSaving(true);
+    setPortalMessage(null);
+
+    try {
+      const res = await connectPortal(portalUrl.trim(), portalType, studentId.trim());
+      if (res.success) {
+        setPortalMessage({ text: 'Portal connected successfully!', type: 'success' });
+        loadPortalStatus();
+      } else {
+        setPortalMessage({ text: res.message || 'Failed to connect.', type: 'error' });
+      }
+    } catch (err: any) {
+      setPortalMessage({ text: err.message || 'Failed to configure Portal.', type: 'error' });
+    } finally {
+      setPortalSaving(false);
+    }
+  };
+
+  const handleAcademicSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAcademicSaving(true);
+    setAcademicMessage(null);
+
+    try {
+      await savePortalGpa(gpa ? Number(gpa) : null, cgpa ? Number(cgpa) : null, semester);
+      await savePortalAttendance(attendanceRows);
+      await savePortalTranscript(transcriptRows);
+      setAcademicMessage({ text: 'Academic data saved successfully!', type: 'success' });
+    } catch (err: any) {
+      setAcademicMessage({ text: err.message || 'Failed to save academic data.', type: 'error' });
+    } finally {
+      setAcademicSaving(false);
     }
   };
 
@@ -634,6 +715,348 @@ export default function ProfilePage() {
               </div>
             </form>
           </motion.div>
+
+          {/* Section 3: Student Portal Connection */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.10 }}
+            className="p-6 bg-fouzar-surface border border-fouzar-border rounded-[var(--fouzar-radius-lg)] space-y-4"
+          >
+            <div className="flex items-center gap-2 border-b border-fouzar-border pb-3">
+              <GraduationCap className="w-4 h-4 text-fouzar-accent" />
+              <h2 className="font-mono text-[9px] uppercase tracking-widest text-fouzar-text-secondary">
+                Student Portal Configuration
+              </h2>
+              {portalConnected && (
+                <span className="ml-auto px-2 py-0.5 bg-fouzar-accent/20 text-fouzar-accent border border-fouzar-accent/40 rounded-full font-mono text-[7px] uppercase tracking-widest">
+                  Connected
+                </span>
+              )}
+            </div>
+
+            <form onSubmit={handlePortalSubmit} className="space-y-4">
+              <div className="space-y-1">
+                <label className="font-mono text-[7px] uppercase tracking-wider text-fouzar-text-secondary block">
+                  Portal Type
+                </label>
+                <select
+                  value={portalType}
+                  onChange={(e) => setPortalType(e.target.value)}
+                  className="w-full bg-fouzar-elevated/40 border border-fouzar-border px-3 py-2 text-[10.5px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
+                >
+                  <option value="moodle">Moodle</option>
+                  <option value="canvas">Canvas</option>
+                  <option value="blackboard">Blackboard</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <label className="font-mono text-[7px] uppercase tracking-wider text-fouzar-text-secondary block">
+                    Portal Base URL
+                  </label>
+                  <input
+                    type="url"
+                    required
+                    placeholder="https://portal.youruniversity.edu"
+                    value={portalUrl}
+                    onChange={(e) => setPortalUrl(e.target.value)}
+                    className="w-full bg-fouzar-elevated/40 border border-fouzar-border px-3 py-2 text-[10.5px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-mono text-[7px] uppercase tracking-wider text-fouzar-text-secondary block">
+                    Student ID
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Enter your student ID..."
+                    value={studentId}
+                    onChange={(e) => setStudentId(e.target.value)}
+                    className="w-full bg-fouzar-elevated/40 border border-fouzar-border px-3 py-2 text-[10.5px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
+                  />
+                </div>
+              </div>
+
+              {portalMessage && (
+                <p
+                  className={`text-[8.5px] font-mono uppercase tracking-wider ${
+                    portalMessage.type === 'success' ? 'text-fouzar-accent' : 'text-fouzar-signal'
+                  }`}
+                >
+                  {portalMessage.text}
+                </p>
+              )}
+
+              <div className="flex justify-end pt-1">
+                <button
+                  type="submit"
+                  disabled={portalSaving}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-fouzar-accent text-fouzar-text-inverse font-mono text-[8.5px] uppercase font-bold rounded-[var(--fouzar-radius-md)] hover:opacity-90 disabled:opacity-50 cursor-pointer"
+                >
+                  {portalSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Connect Portal'}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+
+          {/* Section 4: Academic Data (Only visible if connected) */}
+          {portalConnected && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.12 }}
+              className="p-6 bg-fouzar-surface border border-fouzar-border rounded-[var(--fouzar-radius-lg)] space-y-4"
+            >
+              <div className="flex items-center gap-2 border-b border-fouzar-border pb-3">
+                <Briefcase className="w-4 h-4 text-fouzar-accent" />
+                <h2 className="font-mono text-[9px] uppercase tracking-widest text-fouzar-text-secondary">
+                  Academic Data (Manual Entry)
+                </h2>
+              </div>
+
+              <form onSubmit={handleAcademicSubmit} className="space-y-6">
+                {/* GPA & Semester */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-1">
+                    <label className="font-mono text-[7px] uppercase tracking-wider text-fouzar-text-secondary block">
+                      Current GPA
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="e.g. 3.5"
+                      value={gpa}
+                      onChange={(e) => setGpa(e.target.value)}
+                      className="w-full bg-fouzar-elevated/40 border border-fouzar-border px-3 py-2 text-[10.5px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="font-mono text-[7px] uppercase tracking-wider text-fouzar-text-secondary block">
+                      CGPA
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="e.g. 3.8"
+                      value={cgpa}
+                      onChange={(e) => setCgpa(e.target.value)}
+                      className="w-full bg-fouzar-elevated/40 border border-fouzar-border px-3 py-2 text-[10.5px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="font-mono text-[7px] uppercase tracking-wider text-fouzar-text-secondary block">
+                      Semester
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Fall 2024"
+                      value={semester}
+                      onChange={(e) => setSemester(e.target.value)}
+                      className="w-full bg-fouzar-elevated/40 border border-fouzar-border px-3 py-2 text-[10.5px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
+                    />
+                  </div>
+                </div>
+
+                {/* Attendance */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="font-mono text-[7px] uppercase tracking-wider text-fouzar-text-secondary block">
+                      Attendance Records
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setAttendanceRows([...attendanceRows, { subjectCode: '', subjectName: '', total: 0, attended: 0, percentage: 0 }])}
+                      className="text-[8px] font-mono uppercase text-fouzar-accent hover:underline cursor-pointer"
+                    >
+                      + Add Row
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {attendanceRows.map((row, i) => (
+                      <div key={i} className="flex gap-2 items-center">
+                        <input
+                          type="text"
+                          placeholder="Code"
+                          value={row.subjectCode}
+                          onChange={(e) => {
+                            const newRows = [...attendanceRows];
+                            newRows[i].subjectCode = e.target.value;
+                            setAttendanceRows(newRows);
+                          }}
+                          className="w-20 bg-fouzar-elevated/40 border border-fouzar-border px-2 py-1.5 text-[9px] font-mono rounded focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Subject Name"
+                          value={row.subjectName}
+                          onChange={(e) => {
+                            const newRows = [...attendanceRows];
+                            newRows[i].subjectName = e.target.value;
+                            setAttendanceRows(newRows);
+                          }}
+                          className="flex-1 bg-fouzar-elevated/40 border border-fouzar-border px-2 py-1.5 text-[9px] font-mono rounded focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
+                        />
+                        <input
+                          type="number"
+                          placeholder="Total"
+                          value={row.total}
+                          onChange={(e) => {
+                            const newRows = [...attendanceRows];
+                            newRows[i].total = Number(e.target.value);
+                            newRows[i].percentage = newRows[i].total ? (newRows[i].attended / newRows[i].total) * 100 : 0;
+                            setAttendanceRows(newRows);
+                          }}
+                          className="w-16 bg-fouzar-elevated/40 border border-fouzar-border px-2 py-1.5 text-[9px] font-mono rounded focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
+                        />
+                        <input
+                          type="number"
+                          placeholder="Attended"
+                          value={row.attended}
+                          onChange={(e) => {
+                            const newRows = [...attendanceRows];
+                            newRows[i].attended = Number(e.target.value);
+                            newRows[i].percentage = newRows[i].total ? (newRows[i].attended / newRows[i].total) * 100 : 0;
+                            setAttendanceRows(newRows);
+                          }}
+                          className="w-16 bg-fouzar-elevated/40 border border-fouzar-border px-2 py-1.5 text-[9px] font-mono rounded focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
+                        />
+                        <span className="w-12 text-[9px] font-mono text-fouzar-text-secondary text-right">
+                          {row.percentage ? row.percentage.toFixed(0) : 0}%
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setAttendanceRows(attendanceRows.filter((_, idx) => idx !== i))}
+                          className="p-1 text-fouzar-signal hover:bg-fouzar-signal/10 rounded cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Transcript */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="font-mono text-[7px] uppercase tracking-wider text-fouzar-text-secondary block">
+                      Transcript Records
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setTranscriptRows([...transcriptRows, { subjectCode: '', subjectName: '', creditHours: 3, grade: '', gradePoints: '', semester: '' }])}
+                      className="text-[8px] font-mono uppercase text-fouzar-accent hover:underline cursor-pointer"
+                    >
+                      + Add Row
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {transcriptRows.map((row, i) => (
+                      <div key={i} className="flex gap-2 items-center flex-wrap sm:flex-nowrap">
+                        <input
+                          type="text"
+                          placeholder="Code"
+                          value={row.subjectCode}
+                          onChange={(e) => {
+                            const newRows = [...transcriptRows];
+                            newRows[i].subjectCode = e.target.value;
+                            setTranscriptRows(newRows);
+                          }}
+                          className="w-16 bg-fouzar-elevated/40 border border-fouzar-border px-2 py-1.5 text-[9px] font-mono rounded focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Subject Name"
+                          value={row.subjectName}
+                          onChange={(e) => {
+                            const newRows = [...transcriptRows];
+                            newRows[i].subjectName = e.target.value;
+                            setTranscriptRows(newRows);
+                          }}
+                          className="flex-1 bg-fouzar-elevated/40 border border-fouzar-border px-2 py-1.5 text-[9px] font-mono rounded focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
+                        />
+                        <input
+                          type="number"
+                          placeholder="Cr.Hr"
+                          value={row.creditHours}
+                          onChange={(e) => {
+                            const newRows = [...transcriptRows];
+                            newRows[i].creditHours = Number(e.target.value);
+                            setTranscriptRows(newRows);
+                          }}
+                          className="w-12 bg-fouzar-elevated/40 border border-fouzar-border px-2 py-1.5 text-[9px] font-mono rounded focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Grade"
+                          value={row.grade}
+                          onChange={(e) => {
+                            const newRows = [...transcriptRows];
+                            newRows[i].grade = e.target.value;
+                            setTranscriptRows(newRows);
+                          }}
+                          className="w-12 bg-fouzar-elevated/40 border border-fouzar-border px-2 py-1.5 text-[9px] font-mono rounded focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
+                        />
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder="Points"
+                          value={row.gradePoints}
+                          onChange={(e) => {
+                            const newRows = [...transcriptRows];
+                            newRows[i].gradePoints = e.target.value;
+                            setTranscriptRows(newRows);
+                          }}
+                          className="w-16 bg-fouzar-elevated/40 border border-fouzar-border px-2 py-1.5 text-[9px] font-mono rounded focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Sem"
+                          value={row.semester}
+                          onChange={(e) => {
+                            const newRows = [...transcriptRows];
+                            newRows[i].semester = e.target.value;
+                            setTranscriptRows(newRows);
+                          }}
+                          className="w-16 bg-fouzar-elevated/40 border border-fouzar-border px-2 py-1.5 text-[9px] font-mono rounded focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setTranscriptRows(transcriptRows.filter((_, idx) => idx !== i))}
+                          className="p-1 text-fouzar-signal hover:bg-fouzar-signal/10 rounded cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {academicMessage && (
+                  <p
+                    className={`text-[8.5px] font-mono uppercase tracking-wider ${
+                      academicMessage.type === 'success' ? 'text-fouzar-accent' : 'text-fouzar-signal'
+                    }`}
+                  >
+                    {academicMessage.text}
+                  </p>
+                )}
+
+                <div className="flex justify-end pt-1">
+                  <button
+                    type="submit"
+                    disabled={academicSaving}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-fouzar-accent text-fouzar-text-inverse font-mono text-[8.5px] uppercase font-bold rounded-[var(--fouzar-radius-md)] hover:opacity-90 disabled:opacity-50 cursor-pointer"
+                  >
+                    {academicSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Save Academic Data'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          )}
         </div>
 
         {/* Right Column - Friends Panel */}

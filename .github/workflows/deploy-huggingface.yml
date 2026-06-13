@@ -1,0 +1,32 @@
+name: Deploy Backend to Hugging Face
+
+on:
+  push:
+    branches:
+      - master
+      - main
+    paths:
+      - 'backend/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Push backend to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_USERNAME: 'ammeeee'
+          HF_SPACE_NAME: 'student-os'
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git remote add hf https://oauth2:${HF_TOKEN}@huggingface.co/spaces/${HF_USERNAME}/${HF_SPACE_NAME}
+          
+          # We use git subtree split to only push the 'backend' folder
+          # We force push to the main branch of the Hugging Face space
+          git push --force hf `git subtree split --prefix backend HEAD`:main

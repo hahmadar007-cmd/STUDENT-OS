@@ -281,6 +281,22 @@ export const patchLmsToken = (token: string, baseUrl: string, lmsProvider: 'mood
 
 export const getLmsStatus = () => apiRequest('/lms/status', 'GET');
 
+export const getPortalStatus = () => apiRequest('/portal/status', 'GET');
+
+export const connectPortal = (portalUrl: string, portalType: string, studentId: string) =>
+  apiRequest('/portal/connect', 'PATCH', { portalUrl, portalType, studentId });
+
+export const getPortalProfile = () => apiRequest('/portal/profile', 'GET');
+
+export const savePortalAttendance = (attendance: any[]) =>
+  apiRequest('/portal/attendance', 'POST', { attendance });
+
+export const savePortalTranscript = (transcript: any[]) =>
+  apiRequest('/portal/transcript', 'POST', { transcript });
+
+export const savePortalGpa = (gpa: number | null, cgpa: number | null, semester: string) =>
+  apiRequest('/portal/gpa', 'PATCH', { gpa, cgpa, semester });
+
 export const getDeadlines = (): Promise<LmsDeadlinesResponse> => apiRequest('/lms/deadlines', 'GET');
 
 export interface CourseFile {
