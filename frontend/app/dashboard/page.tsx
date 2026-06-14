@@ -124,7 +124,7 @@ export default function DashboardPage() {
   const [pendingGroupRequests, setPendingGroupRequests] = useState<Record<string, any[]>>({});
   const [contextMenuFriend, setContextMenuFriend] = useState<StudyCirclePeer | null>(null);
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [isUiCustomizerOpen, setIsUiCustomizerOpen] = useState(false);
+  const [isThemeCustomizerOpen, setIsThemeCustomizerOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   const router = useRouter();
@@ -134,24 +134,6 @@ export default function DashboardPage() {
   const [newGroupCourse, setNewGroupCourse] = useState('');
   const [createGroupError, setCreateGroupError] = useState<string | null>(null);
   const [createGroupLoading, setCreateGroupLoading] = useState(false);
-  
-  const [dashboardDeadlines, setDashboardDeadlines] = useState<any[]>([]);
-  const [deadlinesLoading, setDeadlinesLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchDashboardDeadlines() {
-      try {
-        const { getDeadlines } = await import('../../lib/api');
-        const res = await getDeadlines();
-        setDashboardDeadlines((res.deadlines || []).slice(0, 3));
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setDeadlinesLoading(false);
-      }
-    }
-    fetchDashboardDeadlines();
-  }, []);
 
   const handleCreateGroupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -236,7 +218,7 @@ export default function DashboardPage() {
     const handleCloseMenus = () => {
       setActiveMenuNodeId(null);
       setContextMenuFriend(null);
-      setIsUiCustomizerOpen(false);
+      setIsThemeCustomizerOpen(false);
     };
     window.addEventListener('click', handleCloseMenus);
     return () => window.removeEventListener('click', handleCloseMenus);
@@ -1125,14 +1107,14 @@ export default function DashboardPage() {
               <div onClick={(e) => e.stopPropagation()}>
                 <button
                   type="button"
-                  onClick={() => setIsUiCustomizerOpen(!isUiCustomizerOpen)}
+                  onClick={() => setIsThemeCustomizerOpen(!isThemeCustomizerOpen)}
                   className="w-8 h-8 rounded border border-[#2a2a3a] bg-[#14141c] hover:bg-[#1e1e2a] text-[#6b6b8a] hover:text-[#f0f0ff] flex items-center justify-center transition-colors cursor-pointer"
                   title="Customize Theme"
                 >
                   <Palette className="w-3.5 h-3.5" />
                 </button>
                 <AnimatePresence>
-                  {isUiCustomizerOpen && (
+                  {isThemeCustomizerOpen && (
                     <motion.div
                       initial={{ opacity: 0, scale: 0.95, y: 8 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -1160,7 +1142,7 @@ export default function DashboardPage() {
                                   // Simplified color update - in a real app this would update a CSS variable context
                                   document.documentElement.style.setProperty('--fouzar-accent', preset.value);
                                   document.documentElement.style.setProperty('--fouzar-accent-glow', `${preset.value}33`);
-                                  setIsUiCustomizerOpen(false);
+                                  setIsThemeCustomizerOpen(false);
                                   toast(`Theme set to ${preset.name}`, 'violet');
                                 }}
                                 style={{ backgroundColor: preset.value }}
@@ -1178,7 +1160,7 @@ export default function DashboardPage() {
                               onClick={() => {
                                 document.documentElement.style.setProperty('--fouzar-bg', '#0a0a0f');
                                 document.documentElement.style.setProperty('--fouzar-surface', '#101015');
-                                setIsUiCustomizerOpen(false);
+                                setIsThemeCustomizerOpen(false);
                               }}
                               className="px-2 py-1.5 text-[8px] font-mono uppercase bg-[#16161f] border border-[#2a2a3a] hover:border-fouzar-accent rounded text-[#f0f0ff] transition-colors cursor-pointer"
                             >
@@ -1189,7 +1171,7 @@ export default function DashboardPage() {
                               onClick={() => {
                                 document.documentElement.style.setProperty('--fouzar-bg', '#0f1115');
                                 document.documentElement.style.setProperty('--fouzar-surface', '#15171c');
-                                setIsUiCustomizerOpen(false);
+                                setIsThemeCustomizerOpen(false);
                               }}
                               className="px-2 py-1.5 text-[8px] font-mono uppercase bg-[#16161f] border border-[#2a2a3a] hover:border-fouzar-accent rounded text-[#f0f0ff] transition-colors cursor-pointer"
                             >
@@ -1212,256 +1194,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Network Graph Section */}
-          <div id="mindmap-section" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a] flex items-center gap-2">
-                <Layers className="w-3.5 h-3.5 text-[#818cf8]" /> Knowledge Network Graph
-              </span>
-              <span className="text-[7.5px] font-mono text-[#6b6b8a] border border-[#2a2a3a] px-1.5 py-0.5 rounded uppercase">
-                {gardenNodes.length} active nodes
-              </span>
-            </div>
-            
-            <div className="w-full bg-[#0a0a0f] border border-[#2a2a3a] rounded-[8px] overflow-hidden relative shadow-[inset_0_0_40px_rgba(0,0,0,0.5)]">
-              <div className="absolute top-4 left-4 z-10 space-y-1.5 pointer-events-none">
-                <h3 className="font-mono text-[10px] text-[#f0f0ff] uppercase tracking-widest opacity-80 mix-blend-screen bg-[#0a0a0f]/50 px-2 py-0.5 rounded w-fit">
-                  Topology Map
-                </h3>
-                <p className="font-mono text-[7px] text-[#6b6b8a] uppercase bg-[#0a0a0f]/50 px-2 py-0.5 rounded w-fit backdrop-blur-sm">
-                  Interactive cluster visualization
-                </p>
-              </div>
-              <StudyNodesGraph nodesData={gardenNodes} />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 pt-6 border-t border-[#2a2a3a]/40">
-            
-            {/* Timeline Section */}
-            <div id="timeline-section" className="space-y-4">
-              <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a] flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5 text-fouzar-amber" /> Social Timeline
-              </span>
-              <FascaTimeline />
-            </div>
-
-            {/* AI Core / LMS Bridge Container */}
-            <div className="flex flex-col gap-8">
-              {/* LMS Bridge Panel inside Workspace */}
-              <div id="lms-section" className="space-y-4">
-                 <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a] flex items-center gap-2">
-                    <Plug className="w-3.5 h-3.5 text-[#34d399]" /> Connected Systems
-                  </span>
-                </div>
-                <div 
-                  onClick={() => setIsLmsOpen(true)}
-                  className="w-full relative group cursor-pointer overflow-hidden rounded-[var(--fouzar-radius-lg)] border border-[#2a2a3a]/80 bg-gradient-to-br from-[#101015] to-[#0a0a0f] shadow-lg transition-all hover:border-[#34d399]/50 hover:shadow-[0_0_20px_rgba(52,211,153,0.1)]"
-                >
-                  {/* Subtle background glow */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#34d399]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  
-                  <div className="relative p-5">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-[6px] bg-[#34d399]/10 border border-[#34d399]/20 flex items-center justify-center">
-                          <Plug className="w-4 h-4 text-[#34d399]" />
-                        </div>
-                        <div>
-                          <h3 className="text-xs font-bold text-[#f0f0ff]">My Campus Gateway</h3>
-                          <p className="text-[8.5px] font-mono text-[#6b6b8a] uppercase tracking-wider mt-0.5">University LMS Bridge</p>
-                        </div>
-                      </div>
-                      <div className="h-6 w-6 rounded-full border border-[#2a2a3a] bg-[#16161f] flex items-center justify-center group-hover:bg-[#34d399]/10 group-hover:border-[#34d399]/30 transition-colors">
-                        <ChevronRight className="w-3.5 h-3.5 text-[#6b6b8a] group-hover:text-[#34d399]" />
-                      </div>
-                    </div>
-
-                    {deadlinesLoading ? (
-                      <div className="animate-pulse space-y-2 mt-4">
-                        <div className="h-2 w-2/3 bg-[#2a2a3a] rounded" />
-                        <div className="h-2 w-1/2 bg-[#2a2a3a] rounded" />
-                      </div>
-                    ) : dashboardDeadlines.length > 0 ? (
-                      <div className="space-y-2.5 mt-2 border-t border-[#2a2a3a]/40 pt-4">
-                        <span className="text-[8px] font-mono uppercase tracking-[0.2em] text-[#34d399]">Upcoming Deadlines</span>
-                        {dashboardDeadlines.map((dl, idx) => (
-                          <div key={idx} className="flex items-center justify-between bg-[#16161f]/50 p-2 rounded-[6px] border border-[#2a2a3a]/40">
-                            <div className="flex flex-col min-w-0">
-                              <span className="text-[9.5px] font-bold text-[#e2e8f0] truncate">{dl.title}</span>
-                              <span className="text-[8px] font-mono text-[#6b6b8a] uppercase mt-0.5">{dl.course}</span>
-                            </div>
-                            <span className="text-[8.5px] font-mono text-[#f5a623] shrink-0 ml-3 bg-[#f5a623]/10 px-1.5 py-0.5 rounded border border-[#f5a623]/20">{dl.timeLeftLabel}</span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="mt-2 border-t border-[#2a2a3a]/40 pt-4 text-center pb-2">
-                        <span className="text-[9.5px] font-mono text-[#6b6b8a]">Click to connect & sync your deadlines</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* AI Models Panel */}
-              <div id="ai-engines-section" className="space-y-4">
-                <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a] flex items-center gap-2">
-                  <Cpu className="w-3.5 h-3.5 text-[#818cf8]" /> Intelligence Engines
-                </span>
-                <AiControlCenter />
-              </div>
-            </div>
-
-          </div>
-
-          {/* Peer Presence Grid (Active friends visualization) */}
-          <div className="pt-8 border-t border-[#2a2a3a]/40 space-y-4">
-            <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a] flex items-center gap-2">
-              <Users className="w-3.5 h-3.5 text-[#fbbf24]" /> Cohort Presence Grid
-            </span>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-              {peers.slice(0, 6).map(peer => (
-                <div key={peer.id} className="relative group p-3 bg-[#101015] border border-[#2a2a3a]/60 rounded-[6px] hover:border-[#818cf8]/50 transition-colors cursor-default">
-                  <div className="flex flex-col items-center gap-2 relative z-10">
-                    <div className="relative">
-                      <div className="w-10 h-10 rounded-full border border-[#2a2a3a] bg-[#16161f] flex items-center justify-center overflow-hidden">
-                        {peer.avatarUrl ? (
-                          <img src={peer.avatarUrl} alt={peer.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <span className="font-mono text-[10px] text-[#6b6b8a] uppercase">{peer.name.substring(0, 2)}</span>
-                        )}
-                      </div>
-                      <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-[2px] border-[#101015] ${
-                        peer.status === 'flow' ? 'bg-[#ff2d55] animate-pulse shadow-[0_0_8px_#ff2d55]' : 
-                        peer.status === 'online' ? 'bg-[#34d399]' : 'bg-[#6b6b8a]'
-                      }`} />
-                    </div>
-                    <div className="text-center">
-                      <span className="text-[10px] font-bold text-[#f0f0ff] block truncate w-full">{peer.name}</span>
-                      <span className={`text-[8px] font-mono uppercase mt-0.5 block ${
-                        peer.status === 'flow' ? 'text-[#ff2d55]' : 'text-[#6b6b8a]'
-                      }`}>
-                        {peer.status === 'flow' ? 'In Flow' : peer.status}
-                      </span>
-                    </div>
-                  </div>
-                  {/* Context Menu Trigger */}
-                  <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setContextMenuFriend(peer);
-                        setContextMenuPos({ x: e.clientX, y: e.clientY });
-                      }}
-                      className="p-1 text-[#6b6b8a] hover:text-[#f0f0ff] hover:bg-[#2a2a3a]/50 rounded transition-colors cursor-pointer"
-                    >
-                      <MoreVertical className="w-3 h-3" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {peers.length === 0 && (
-                <div className="col-span-full py-8 text-center border border-dashed border-[#2a2a3a] rounded-[6px]">
-                  <p className="font-mono text-[9px] text-[#6b6b8a] uppercase tracking-wider">No cohort members online</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-
-      {/* Global Modals overlay... (unchanged) */}
-      <AnimatePresence>
-        {isShieldOpen && (
-          <FocusShieldPanel isOpen={isShieldOpen} onClose={handleCloseShield} />
-        )}
-      </AnimatePresence>
-
-      {/* Create Room Modal */}
-      <AnimatePresence>
-        {showCreateGroupModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="bg-fouzar-bg border border-fouzar-accent/40 rounded-xl p-6 w-full max-w-sm shadow-[0_0_50px_rgba(0,0,0,0.8)] relative overflow-hidden"
-            >
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-fouzar-accent to-fouzar-signal" />
-              
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-sm font-bold font-serif uppercase tracking-widest text-fouzar-text-primary">
-                    Create Study Circle
-                  </h3>
-                  <p className="text-[9px] font-mono text-fouzar-text-secondary mt-1">
-                    Establish a new shared intelligence node
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowCreateGroupModal(false)}
-                  className="p-1.5 bg-fouzar-surface hover:bg-fouzar-elevated border border-fouzar-border rounded-[var(--fouzar-radius-sm)] text-fouzar-text-secondary hover:text-fouzar-text-primary transition-colors cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              <form onSubmit={handleCreateGroupSubmit}>
-                <div className="space-y-4">
-                  <div className="flex flex-col">
-                    <span className="text-[7.5px] font-mono uppercase text-fouzar-text-secondary tracking-wider mb-1 flex items-center gap-1">
-                      Circle Name <span className="text-fouzar-signal">*</span>
-                    </span>
-                    <input
-                      type="text"
-                      required
-                      value={newGroupName}
-                      onChange={(e) => setNewGroupName(e.target.value)}
-                      placeholder="Algorithms Study Group"
-                      className="w-full bg-fouzar-surface border border-fouzar-border px-3 py-2 text-[10px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
-                    />
-                  </div>
-
-                  <div className="flex flex-col">
-                    <span className="text-[7.5px] font-mono uppercase text-fouzar-text-secondary tracking-wider mb-1">Subject Code (Optional)</span>
-                    <input
-                      type="text"
-                      value={newGroupCourse}
-                      onChange={(e) => setNewGroupCourse(e.target.value)}
-                      placeholder="CS-229"
-                      className="w-full bg-fouzar-surface border border-fouzar-border px-3 py-2 text-[10px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary uppercase"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-3 mt-8 border-t border-fouzar-border/40 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateGroupModal(false)}
-                    className="px-3 py-1.5 border border-fouzar-border text-fouzar-text-secondary hover:text-fouzar-text-primary rounded-[var(--fouzar-radius-md)] font-mono text-[8px] uppercase tracking-wider cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={createGroupLoading}
-                    className="px-3 py-1.5 bg-fouzar-accent text-fouzar-text-inverse rounded-[var(--fouzar-radius-md)] font-mono text-[8px] uppercase font-bold hover:opacity-90 disabled:opacity-50 cursor-pointer flex items-center justify-center"
-                  >
-                    {createGroupLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Create'}
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
 
         {/* 1. Horizontal Friends Social Bar (Top) */}
