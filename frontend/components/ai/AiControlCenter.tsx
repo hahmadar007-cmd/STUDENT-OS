@@ -6,6 +6,7 @@ import {
   Plus, Trash2, ChevronDown, ChevronUp,
   Loader2, Zap, Globe, Lock, X, Eye, EyeOff, AlertCircle,
 } from 'lucide-react';
+import { useFouzar } from '../../lib/FouzarContext';
 
 interface AiProvider {
   id: string;
@@ -213,6 +214,8 @@ export function AiControlCenter() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(true);
+  const [isMutating, setIsMutating] = useState(false);
+  const { setAiModel } = useFouzar();
 
   useEffect(() => {
     try {
@@ -229,18 +232,61 @@ export function AiControlCenter() {
 
   const handleAdded = (p: AiProvider) => save([p, ...providers]);
 
-  const handleToggle = (id: string) => {
-    const isCurrentlyActive = providers.find(p => p.id === id)?.isActive ?? false;
-    // Clicking the active card deactivates it; clicking inactive makes it the sole active
-    save(providers.map(p => ({ ...p, isActive: p.id === id ? !isCurrentlyActive : false })));
+  const handleToggle = async (id: string) => {
+    if (isMutating) return;
+    setIsMutating(true);
+    
+    const target = providers.find(p => p.id === id);
+    if (!target) {
+      setIsMutating(false);
+      return;
+    }
+    
+    const isCurrentlyActive = target.isActive;
+    const nextActiveState = !isCurrentlyActive;
+    
+    const nextProvidersState = providers.map(p => ({
+      ...p,
+      isActive: p.id === id ? nextActiveState : false
+    }));
+    save(nextProvidersState);
+
+    if (!nextActiveState) {
+      setAiModel('deepseek');
+    }
+
+    try {
+      const { toggleAiProviderActive } = await import('../../lib/api');
+      await toggleAiProviderActive(id);
+    } catch (err) {
+      console.error('Failed to sync toggle with backend:', err);
+    } finally {
+      setIsMutating(false);
+    }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    if (isMutating) return;
+    setIsMutating(true);
     setDeletingId(id);
-    setTimeout(() => {
-      save(providers.filter(p => p.id !== id));
+    
+    const target = providers.find(p => p.id === id);
+    const updatedProviders = providers.filter(p => p.id !== id);
+    save(updatedProviders);
+    
+    if (target?.isActive) {
+      setAiModel('deepseek');
+    }
+
+    try {
+      const { deleteAiProvider } = await import('../../lib/api');
+      await deleteAiProvider(id);
+    } catch (err) {
+      console.error('Failed to sync delete with backend:', err);
+    } finally {
       setDeletingId(null);
-    }, 300);
+      setIsMutating(false);
+    }
   };
 
   const activeProvider = providers.find(p => p.isActive);
@@ -324,8 +370,10 @@ export function AiControlCenter() {
                         animate={{ opacity: isDeleting ? 0 : 1, x: isDeleting ? 20 : 0 }}
                         exit={{ opacity: 0, x: 20 }}
                         transition={{ duration: 0.25 }}
-                        onClick={() => handleToggle(provider.id)}
-                        className="relative rounded-lg p-3.5 cursor-pointer transition-all select-none"
+                        onClick={() => !isMutating && handleToggle(provider.id)}
+                        className={`relative rounded-lg p-3.5 transition-all select-none ${
+                          isMutating ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'
+                        }`}
                         style={{
                           background: provider.isActive
                             ? `linear-gradient(135deg,${palette.color}10,${palette.color}06)`
@@ -367,8 +415,11 @@ export function AiControlCenter() {
                           )}
 
                           <button
-                            onClick={e => { e.stopPropagation(); handleDelete(provider.id); }}
-                            className="w-6 h-6 rounded flex items-center justify-center text-white/20 hover:text-[#ff4d6d] hover:bg-[#ff4d6d]/10 transition-all cursor-pointer shrink-0"
+                            onClick={e => { e.stopPropagation(); !isMutating && handleDelete(provider.id); }}
+                            disabled={isMutating}
+                            className={`w-6 h-6 rounded flex items-center justify-center text-white/20 hover:text-[#ff4d6d] hover:bg-[#ff4d6d]/10 transition-all shrink-0 ${
+                              isMutating ? 'cursor-not-allowed' : 'cursor-pointer'
+                            }`}
                             title="Remove engine"
                           >
                             <Trash2 className="w-3 h-3" />

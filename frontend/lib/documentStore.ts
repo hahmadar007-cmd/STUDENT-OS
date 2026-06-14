@@ -83,6 +83,24 @@ export async function updateDocumentPdfPreview(id: string, pdfBlob: Blob): Promi
   });
 }
 
+export async function convertStoredDocumentToPdf(id: string, pdfBlob: Blob, newFileName: string): Promise<void> {
+  const db = await openDb();
+  const stored = await getDocument(id);
+  if (!stored) throw new Error('Document not found');
+  
+  stored.fileName = newFileName;
+  stored.mimeType = 'application/pdf';
+  stored.blob = pdfBlob;
+  delete stored.pdfPreviewBlob;
+  
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).put(stored);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
 export function createObjectUrl(blob: Blob): string {
   return URL.createObjectURL(blob);
 }

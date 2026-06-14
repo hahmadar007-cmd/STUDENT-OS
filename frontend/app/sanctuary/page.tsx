@@ -10,6 +10,7 @@ import {
   Users,
   FileText,
   Upload,
+  Loader2,
   Trash2,
   Calendar,
   Sparkles,
@@ -148,6 +149,7 @@ export default function PersonalSanctuaryPage() {
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedSidebarDocId, setSelectedSidebarDocId] = useState<string | null>(null);
+  const [showDemoSlides, setShowDemoSlides] = useState(false);
 
   const [bypassSecondsLeft, setBypassSecondsLeft] = useState(0);
 
@@ -201,6 +203,28 @@ export default function PersonalSanctuaryPage() {
     setNewSubjectName('');
     setNewSubjectCode('');
     setShowAddSubject(false);
+  };
+
+  const handleSlideUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const activeFolder = folders.find((f) => f.id === activeFolderId);
+      const folderCode = activeFolder ? activeFolder.code : 'GEN';
+      const entry = await buildRepositoryEntryFromFile(file, folderCode);
+      addRepositoryItem({
+        ...entry,
+        folderId: activeFolderId || 'general',
+      });
+    } catch (err) {
+      console.error('Failed to upload slide file:', err);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
 
@@ -512,6 +536,21 @@ export default function PersonalSanctuaryPage() {
                 )}
               </div>
             </div>
+
+            <div className="pt-4 border-t border-fouzar-border/30 flex-1 flex flex-col overflow-hidden">
+              <span className="font-mono text-[7px] uppercase tracking-widest text-fouzar-text-secondary flex items-center gap-1 mb-3">
+                <FileText className="w-3 h-3" /> Space Explorer
+              </span>
+              <div className="flex-1 overflow-y-auto scrollbar-none min-h-[200px]">
+                <FileExplorer
+                  isCompact={true}
+                  rootFolderId={activeFolderId}
+                  onOpenFile={(doc) => {
+                    setActiveDoc(doc);
+                  }}
+                />
+              </div>
+            </div>
           </motion.aside>
 
           <ResizablePanel 
@@ -613,12 +652,145 @@ export default function PersonalSanctuaryPage() {
                     isInline={true}
                   />
                 </div>
-              ) : centerTab === 'slides' ? (
+              ) : centerTab === 'slides' && !showDemoSlides ? (
+                <div className="flex-1 min-h-[280px] lg:min-h-0 bg-fouzar-surface/40 backdrop-blur-xl border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-6 flex flex-col overflow-hidden">
+                  <div className="flex-1 flex flex-col min-h-0 overflow-y-auto scrollbar-none space-y-6">
+                    {/* Header */}
+                    <div className="flex justify-between items-center border-b border-fouzar-border/30 pb-4">
+                      <div>
+                        <h3 className="font-serif text-sm font-bold uppercase tracking-wider text-white">Slides Library</h3>
+                        <p className="text-[9px] text-fouzar-text-secondary uppercase mt-0.5 font-mono">
+                          {activeFolder?.name || 'General Space'} · Slides & Presentations
+                        </p>
+                      </div>
+                      
+                      {/* Upload slide trigger */}
+                      <button
+                        type="button"
+                        disabled={uploading}
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-3 py-1.5 bg-fouzar-accent text-fouzar-text-inverse font-mono text-[8px] uppercase font-bold rounded-[var(--fouzar-radius-md)] shadow-[var(--fouzar-glow-primary)] flex items-center gap-1.5 hover:opacity-90 transition-opacity cursor-pointer"
+                      >
+                        {uploading ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <>
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>Upload Slide (.pdf, .pptx)</span>
+                          </>
+                        )}
+                      </button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".pdf,.pptx"
+                        className="hidden"
+                        onChange={handleSlideUpload}
+                      />
+                    </div>
+
+                    {/* Slides grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {/* Interactive Demo Slides Card */}
+                      <div
+                        onClick={() => setShowDemoSlides(true)}
+                        className="p-4 rounded-[var(--fouzar-radius-md)] border border-fouzar-accent/30 hover:border-fouzar-accent/60 bg-fouzar-accent/5 hover:bg-fouzar-accent/10 text-left flex flex-col justify-between transition-all hover:scale-[1.02] cursor-pointer shadow-[var(--fouzar-shadow-sm)]"
+                      >
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-serif text-[11px] font-bold uppercase text-fouzar-accent">
+                              Demo Slides
+                            </span>
+                            <Sparkles className="w-4 h-4 text-fouzar-accent animate-pulse" />
+                          </div>
+                          <h4 className="font-sans text-xs font-bold text-fouzar-text-primary leading-snug mb-1">
+                            ML Foundations
+                          </h4>
+                          <p className="text-[9px] text-fouzar-text-secondary leading-relaxed">
+                            Learn loss functions, cross-entropy, backpropagation, and machine learning paradigms.
+                          </p>
+                        </div>
+                        <span className="font-mono text-[7px] text-fouzar-accent uppercase tracking-widest border border-fouzar-accent/20 px-2 py-0.5 rounded-[var(--fouzar-radius-sm)] inline-block w-fit mt-4">
+                          Open Presentation ↗
+                        </span>
+                      </div>
+
+                      {/* Filter repository files to show only slide-like files (pdf, pptx) in activeFolderId */}
+                      {filteredRepository
+                        .filter(
+                          (doc) =>
+                            doc.fileName.toLowerCase().endsWith('.pdf') ||
+                            doc.fileName.toLowerCase().endsWith('.pptx') ||
+                            doc.fileName.toLowerCase().endsWith('.ppt')
+                        )
+                        .map((doc) => {
+                          const isPpt = doc.fileName.toLowerCase().endsWith('.pptx') || doc.fileName.toLowerCase().endsWith('.ppt');
+                          return (
+                            <div
+                              key={doc.id}
+                              onClick={() => setActiveDoc(doc)}
+                              className="p-4 rounded-[var(--fouzar-radius-md)] border border-fouzar-border hover:border-fouzar-accent/40 bg-fouzar-elevated/20 hover:bg-fouzar-elevated/35 text-left flex flex-col justify-between transition-all hover:scale-[1.02] cursor-pointer shadow-[var(--fouzar-shadow-sm)]"
+                            >
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className={`font-mono text-[7px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${
+                                    isPpt 
+                                      ? 'bg-fouzar-amber/10 border-fouzar-amber/20 text-fouzar-amber' 
+                                      : 'bg-fouzar-signal/10 border-fouzar-signal/20 text-fouzar-signal'
+                                  }`}>
+                                    {isPpt ? 'PPTX Presentation' : 'PDF Document'}
+                                  </span>
+                                  <FileText className={`w-4 h-4 ${isPpt ? 'text-fouzar-amber' : 'text-fouzar-signal'}`} />
+                                </div>
+                                <h4 className="font-sans text-xs font-bold text-fouzar-text-primary leading-snug truncate" title={doc.fileName}>
+                                  {doc.fileName}
+                                </h4>
+                                <p className="text-[8px] font-mono text-fouzar-text-secondary uppercase mt-1">
+                                  Size: {doc.sizeLabel}
+                                </p>
+                              </div>
+                              <span className="font-mono text-[7px] text-fouzar-text-primary uppercase tracking-widest border border-fouzar-border/30 px-2 py-0.5 rounded-[var(--fouzar-radius-sm)] inline-block w-fit mt-4">
+                                View Slides ↗
+                              </span>
+                            </div>
+                          );
+                        })}
+                    </div>
+
+                    {filteredRepository.filter(
+                      (doc) =>
+                        doc.fileName.toLowerCase().endsWith('.pdf') ||
+                        doc.fileName.toLowerCase().endsWith('.pptx') ||
+                        doc.fileName.toLowerCase().endsWith('.ppt')
+                    ).length === 0 && (
+                      <div className="py-12 text-center border border-dashed border-fouzar-border rounded-[var(--fouzar-radius-lg)] bg-fouzar-elevated/10 flex flex-col items-center justify-center">
+                        <FileText className="w-8 h-8 text-fouzar-text-tertiary mb-2" />
+                        <p className="font-mono text-[9px] text-fouzar-text-secondary uppercase">
+                          No presentations uploaded yet
+                        </p>
+                        <p className="text-[7.5px] font-mono text-fouzar-text-tertiary uppercase mt-1">
+                          Upload slide decks for this space above or drag them to the explorer.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : centerTab === 'slides' && showDemoSlides ? (
                 <div className="flex-1 min-h-[280px] lg:min-h-0 bg-fouzar-surface/40 backdrop-blur-xl border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-6 flex flex-col overflow-hidden">
                   <div className="flex flex-col flex-1 justify-between h-full">
-                    <div className="flex justify-between items-start text-[8px] font-mono border-b border-fouzar-border/30 pb-3">
-                      <span className="text-fouzar-accent uppercase tracking-widest">{activeSlide.topic}</span>
-                      <span className="text-fouzar-text-secondary uppercase">PAGE {currentSlideIndex + 1} OF {dummySlides.length}</span>
+                    <div className="flex justify-between items-center border-b border-fouzar-border/30 pb-3">
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setShowDemoSlides(false)}
+                          className="flex items-center gap-1 font-mono text-[8px] uppercase text-fouzar-text-secondary hover:text-fouzar-text-primary border border-fouzar-border/30 px-2 py-1 rounded-[var(--fouzar-radius-sm)] cursor-pointer bg-fouzar-elevated/30"
+                        >
+                          <ArrowLeft className="w-3.5 h-3.5" /> Back to Library
+                        </button>
+                        <span className="w-[1px] h-4 bg-fouzar-border" />
+                        <span className="text-fouzar-accent uppercase tracking-widest text-[8px] font-mono">{activeSlide.topic}</span>
+                      </div>
+                      <span className="text-fouzar-text-secondary uppercase text-[8px] font-mono">PAGE {currentSlideIndex + 1} OF {dummySlides.length}</span>
                     </div>
 
                     <div className="my-auto py-8">

@@ -9,6 +9,7 @@ import {
   revokeObjectUrl,
   isViewableInBrowser,
   updateDocumentPdfPreview,
+  convertStoredDocumentToPdf,
 } from '../../lib/documentStore';
 import { useFouzar } from '../../lib/FouzarContext';
 import type { LmsRepositoryItem } from '../../lib/FouzarContext';
@@ -67,8 +68,13 @@ export async function extractTextFromPdf(blob: Blob): Promise<{ fullText: string
  * In-app viewer for uploaded lecture slides and course files.
  * PDFs and images render inline; other formats offer download.
  */
+const formatFileSize = (bytes: number): string => {
+  if (bytes > 1_048_576) return `${(bytes / 1_048_576).toFixed(1)} MB`;
+  return `${Math.ceil(bytes / 1024)} KB`;
+};
+
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClose, isInline = false }) => {
-  const { setActiveDocText } = useFouzar();
+  const { setActiveDocText, updateRepositoryItem } = useFouzar();
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [textContent, setTextContent] = useState<string | null>(null);
@@ -175,8 +181,16 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
                     const byteArray = new Uint8Array(byteNumbers);
                     const pdfBlob = new Blob([byteArray], { type: 'application/pdf' });
                     
-                    // Save to IndexedDB
-                    await updateDocumentPdfPreview(stored.id, pdfBlob);
+                    // Convert original PowerPoint file to PDF permanently in IndexedDB
+                    const pdfName = document.fileName.replace(/\.pptx$/i, '.pdf');
+                    await convertStoredDocumentToPdf(stored.id, pdfBlob, pdfName);
+                    
+                    // Update document state in FouzarContext repository catalog
+                    updateRepositoryItem?.(document.id, {
+                      fileName: pdfName,
+                      mimeType: 'application/pdf',
+                      sizeLabel: formatFileSize(pdfBlob.size)
+                    });
                     
                     // Create object URL for preview
                     prvUrl = createObjectUrl(pdfBlob);

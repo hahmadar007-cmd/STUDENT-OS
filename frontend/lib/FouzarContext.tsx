@@ -135,6 +135,7 @@ export interface FouzarContextValue {
   repository: LmsRepositoryItem[];
   addRepositoryItem: (item: Omit<LmsRepositoryItem, 'id' | 'uploadedAt'>) => void;
   removeRepositoryItem: (id: string) => void;
+  updateRepositoryItem: (id: string, patch: Partial<LmsRepositoryItem>) => void;
   activeDoc: LmsRepositoryItem | null;
   setActiveDoc: (doc: LmsRepositoryItem | null) => void;
   openDocs: LmsRepositoryItem[];
@@ -564,6 +565,22 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     });
   }, []);
 
+  const updateRepositoryItem = useCallback(
+    (id: string, patch: Partial<LmsRepositoryItem>) => {
+      setRepository((prev) => {
+        const next = prev.map((doc) => (doc.id === id ? { ...doc, ...patch } : doc));
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(STORAGE_KEYS.repository, JSON.stringify(next));
+        }
+        return next;
+      });
+      setOpenDocs((prev) => {
+        return prev.map((doc) => (doc.id === id ? { ...doc, ...patch } : doc));
+      });
+    },
+    [],
+  );
+
   const setAiModel = useCallback((model: string) => {
     setAiModelState(model);
     if (typeof window !== 'undefined') {
@@ -687,6 +704,7 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       repository,
       addRepositoryItem,
       removeRepositoryItem,
+      updateRepositoryItem,
       isOrbOpen,
       setIsOrbOpen,
       aiModel,
@@ -738,6 +756,7 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       repository,
       addRepositoryItem,
       removeRepositoryItem,
+      updateRepositoryItem,
       isOrbOpen,
       aiModel,
       setAiModel,

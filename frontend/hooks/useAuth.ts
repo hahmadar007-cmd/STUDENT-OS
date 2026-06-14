@@ -42,7 +42,7 @@ export const useAuth = () => {
       try {
         const { getAiProviders } = await import('../lib/api');
         const providers = await getAiProviders();
-        if (Array.isArray(providers) && providers.length > 0) {
+        if (Array.isArray(providers)) {
           // Map backend provider schema to frontend storage schema
           const mappedProviders = providers.map((p: any, index: number) => ({
             id: p.id,
@@ -50,7 +50,7 @@ export const useAuth = () => {
             apiKeyRaw: p.apiKey, // Note: For real prod this shouldn't be sent back raw unless encrypted, assuming backend sends it
             baseUrl: p.baseUrl || null,
             providerType: p.providerType || 'CUSTOM',
-            isActive: p.isActive !== false,
+            isActive: p.isActive === true,
             createdAt: p.createdAt || new Date().toISOString(),
             colorIndex: index
           }));

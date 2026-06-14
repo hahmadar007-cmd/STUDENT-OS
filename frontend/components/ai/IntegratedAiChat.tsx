@@ -184,7 +184,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
   const [error, setError] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
   const engines = useConfiguredEngines();
-  const activeEngine = engines.find(e => e.isActive) ?? engines[0] ?? null;
+  const activeEngine = engines.find(e => e.isActive) ?? null;
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [attachedFile, setAttachedFile] = useState<{ name: string; text: string; id: string } | null>(null);
@@ -231,7 +231,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
   }, [messages, isLoading]);
 
 
-  const activeModelLabel = activeEngine?.name ?? 'No Engine';
+  const activeModelLabel = activeEngine?.name ?? (aiModel === 'deepseek' ? 'DeepSeek (Free)' : 'No Engine');
 
   // Automatically trigger AI document summary/welcome message when a new document is opened
   const lastOpenedDocIdRef = useRef<string | null>(null);
@@ -646,11 +646,11 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
               } catch {}
             }
           }}
-          className="bg-fouzar-elevated border border-fouzar-border text-[8px] font-mono uppercase px-2 py-1 rounded-[var(--fouzar-radius-sm)] text-fouzar-text-primary focus:outline-none max-w-[130px] truncate cursor-pointer"
+          className="bg-[#0f0f1a] border border-fouzar-border text-[8px] font-mono uppercase px-2 py-1 rounded-[var(--fouzar-radius-sm)] text-fouzar-text-primary focus:outline-none max-w-[130px] truncate cursor-pointer"
         >
-          <option value="deepseek">DeepSeek (Free)</option>
+          <option value="deepseek" className="bg-[#0f0f1a] text-white">DeepSeek (Free)</option>
           {engines.map((e) => (
-            <option key={e.id} value={e.id}>{e.name}</option>
+            <option key={e.id} value={e.id} className="bg-[#0f0f1a] text-white">{e.name}</option>
           ))}
         </select>
       </div>

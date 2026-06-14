@@ -135,6 +135,13 @@ export const getAiProviders = () => apiRequest('/ai-providers', 'GET');
 export const addAiProvider = (name: string, providerType: string, apiKey: string, baseUrl?: string) => 
   apiRequest('/ai-providers', 'POST', { name, providerType, apiKey, baseUrl });
 
+export const deleteAiProvider = (id: string) =>
+  apiRequest(`/ai-providers/${id}`, 'DELETE');
+
+export const toggleAiProviderActive = (id: string) =>
+  apiRequest(`/ai-providers/${id}/toggle`, 'PATCH');
+
+
 export const askAi = (
   prompt: string,
   slideId: string | null,
