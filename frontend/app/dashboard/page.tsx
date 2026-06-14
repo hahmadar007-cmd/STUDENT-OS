@@ -124,7 +124,6 @@ export default function DashboardPage() {
   const [pendingGroupRequests, setPendingGroupRequests] = useState<Record<string, any[]>>({});
   const [contextMenuFriend, setContextMenuFriend] = useState<StudyCirclePeer | null>(null);
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [isThemeCustomizerOpen, setIsThemeCustomizerOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   const router = useRouter();
@@ -218,7 +217,6 @@ export default function DashboardPage() {
     const handleCloseMenus = () => {
       setActiveMenuNodeId(null);
       setContextMenuFriend(null);
-      setIsThemeCustomizerOpen(false);
     };
     window.addEventListener('click', handleCloseMenus);
     return () => window.removeEventListener('click', handleCloseMenus);
@@ -1091,110 +1089,6 @@ export default function DashboardPage() {
         {/* 3. RIGHT PANEL: Workspace central Central Core controls                   */}
         {/* ========================================================================= */}
         <main className="w-full h-full p-6 md:p-8 flex flex-col overflow-y-auto scrollbar-none space-y-12">
-          
-          {/* Workspace Core Header bar */}
-          <div className="flex items-center justify-between border-b border-[#2a2a3a]/40 pb-4 shrink-0">
-            <div>
-              <h2 className="font-serif text-lg font-bold tracking-[0.05em] text-[#f0f0ff] uppercase">
-                My Study Dashboard
-              </h2>
-              <p className="text-[9px] font-mono text-[#6b6b8a] uppercase tracking-wider mt-0.5">
-                Your private, distraction-free space
-              </p>
-            </div>
-            <div className="flex items-center gap-2 relative">
-              {/* UI Customizer Palette Trigger */}
-              <div onClick={(e) => e.stopPropagation()}>
-                <button
-                  type="button"
-                  onClick={() => setIsThemeCustomizerOpen(!isThemeCustomizerOpen)}
-                  className="w-8 h-8 rounded border border-[#2a2a3a] bg-[#14141c] hover:bg-[#1e1e2a] text-[#6b6b8a] hover:text-[#f0f0ff] flex items-center justify-center transition-colors cursor-pointer"
-                  title="Customize Theme"
-                >
-                  <Palette className="w-3.5 h-3.5" />
-                </button>
-                <AnimatePresence>
-                  {isThemeCustomizerOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95, y: 8 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95, y: 8 }}
-                      className="absolute right-0 top-10 mt-1 w-64 bg-[#14141c]/95 border border-[#2a2a3a] rounded-[6px] shadow-2xl p-4 z-50 text-left backdrop-blur-xl"
-                    >
-                      <h4 className="text-[10px] font-mono uppercase tracking-widest text-[#f0f0ff] mb-4 border-b border-[#2a2a3a]/40 pb-2 flex items-center gap-2">
-                        <Palette className="w-3 h-3 text-fouzar-accent" /> UI Theme
-                      </h4>
-                      <div className="space-y-4">
-                        <div>
-                          <span className="text-[8px] font-mono uppercase tracking-wider text-[#6b6b8a] block mb-2">Accent Color</span>
-                          <div className="flex flex-wrap gap-2">
-                            {[
-                              { name: 'violet', value: '#818cf8' },
-                              { name: 'emerald', value: '#34d399' },
-                              { name: 'amber', value: '#fbbf24' },
-                              { name: 'rose', value: '#fb7185' },
-                              { name: 'cyan', value: '#22d3ee' }
-                            ].map((preset) => (
-                              <button
-                                key={preset.name}
-                                type="button"
-                                onClick={() => {
-                                  // Simplified color update - in a real app this would update a CSS variable context
-                                  document.documentElement.style.setProperty('--fouzar-accent', preset.value);
-                                  document.documentElement.style.setProperty('--fouzar-accent-glow', `${preset.value}33`);
-                                  setIsThemeCustomizerOpen(false);
-                                  toast(`Theme set to ${preset.name}`, 'violet');
-                                }}
-                                style={{ backgroundColor: preset.value }}
-                                className="w-4 h-4 rounded-full border border-transparent hover:border-white transition-all cursor-pointer shadow-[0_0_8px_rgba(0,0,0,0.5)]"
-                                title={preset.name}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                        <div>
-                          <span className="text-[8px] font-mono uppercase tracking-wider text-[#6b6b8a] block mb-2">Background Texture</span>
-                          <div className="grid grid-cols-2 gap-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                document.documentElement.style.setProperty('--fouzar-bg', '#0a0a0f');
-                                document.documentElement.style.setProperty('--fouzar-surface', '#101015');
-                                setIsThemeCustomizerOpen(false);
-                              }}
-                              className="px-2 py-1.5 text-[8px] font-mono uppercase bg-[#16161f] border border-[#2a2a3a] hover:border-fouzar-accent rounded text-[#f0f0ff] transition-colors cursor-pointer"
-                            >
-                              Obsidian Void
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                document.documentElement.style.setProperty('--fouzar-bg', '#0f1115');
-                                document.documentElement.style.setProperty('--fouzar-surface', '#15171c');
-                                setIsThemeCustomizerOpen(false);
-                              }}
-                              className="px-2 py-1.5 text-[8px] font-mono uppercase bg-[#16161f] border border-[#2a2a3a] hover:border-fouzar-accent rounded text-[#f0f0ff] transition-colors cursor-pointer"
-                            >
-                              Deep Navy
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              <FascaButton variant="ghost" onClick={() => handleNavClick('ai-engines-section')} className="hidden sm:flex group bg-[#14141c]/40 hover:bg-[#1a1a24] border-[#2a2a3a] text-[#818cf8]">
-                <Settings className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform duration-300" /> AI Settings
-              </FascaButton>
-              <FascaButton variant="solid" onClick={() => handleNavClick('timeline-section')} className="shadow-[0_0_15px_rgba(129,140,248,0.2)] hover:shadow-[0_0_20px_rgba(129,140,248,0.4)]">
-                <Shield className="w-3.5 h-3.5" /> Force Shield
-              </FascaButton>
-            </div>
-          </div>
-
-
 
         {/* 1. Horizontal Friends Social Bar (Top) */}
         <div className="space-y-3 shrink-0">
