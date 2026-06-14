@@ -1236,7 +1236,14 @@ export default function DashboardPage() {
                     <Plug className="w-3.5 h-3.5 text-[#34d399]" /> Connected Systems
                   </span>
                 </div>
-                <LmsBridgePanel isOpen={true} onClose={() => {}} />
+                <div 
+                  onClick={() => setIsLmsOpen(true)}
+                  className="w-full p-6 border border-dashed border-[#2a2a3a] hover:border-[#7c5cfc]/50 rounded-[var(--fouzar-radius-md)] flex flex-col items-center justify-center cursor-pointer transition-all group bg-[#0e0e16]"
+                >
+                  <Plug className="w-6 h-6 text-[#6b6b8a] group-hover:text-[#7c5cfc] mb-2 transition-colors" />
+                  <span className="text-xs font-bold text-[#f0f0ff] mb-1">My Campus Gateway</span>
+                  <span className="text-[9px] font-mono text-[#6b6b8a]">Click to manage your university LMS</span>
+                </div>
               </div>
 
               {/* AI Models Panel */}
