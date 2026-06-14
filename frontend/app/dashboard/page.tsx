@@ -87,6 +87,7 @@ interface StudyCirclePeer {
   group?: string;
   duration?: string;
   fouzarId?: string;
+  avatarUrl?: string;
 }
 
 interface GardenNode {
@@ -122,7 +123,7 @@ export default function DashboardPage() {
   const [pendingGroupRequests, setPendingGroupRequests] = useState<Record<string, any[]>>({});
   const [contextMenuFriend, setContextMenuFriend] = useState<StudyCirclePeer | null>(null);
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [isThemeCustomizerOpen, setIsThemeCustomizerOpen] = useState(false);
+  const [isUiCustomizerOpen, setIsUiCustomizerOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   const router = useRouter();
@@ -216,12 +217,11 @@ export default function DashboardPage() {
     const handleCloseMenus = () => {
       setActiveMenuNodeId(null);
       setContextMenuFriend(null);
-      setIsThemeCustomizerOpen(false);
+      setIsUiCustomizerOpen(false);
     };
     window.addEventListener('click', handleCloseMenus);
     return () => window.removeEventListener('click', handleCloseMenus);
   }, []);
-
   const COLOR_PRESETS = [
     { name: 'violet', value: '#7c5cfc' },
     { name: 'crimson', value: '#ff2d55' },
@@ -1184,10 +1184,10 @@ export default function DashboardPage() {
                 </AnimatePresence>
               </div>
 
-              <FascaButton variant="outline" size="sm" onClick={() => handleNavClick('ai')} className="hidden sm:flex group bg-[#14141c]/40 hover:bg-[#1a1a24] border-[#2a2a3a] text-[#818cf8]">
+              <FascaButton variant="ghost" onClick={() => handleNavClick('ai-engines-section')} className="hidden sm:flex group bg-[#14141c]/40 hover:bg-[#1a1a24] border-[#2a2a3a] text-[#818cf8]">
                 <Settings className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform duration-300" /> AI Settings
               </FascaButton>
-              <FascaButton variant="primary" size="sm" onClick={() => handleNavClick('shield')} className="shadow-[0_0_15px_rgba(129,140,248,0.2)] hover:shadow-[0_0_20px_rgba(129,140,248,0.4)]">
+              <FascaButton variant="solid" onClick={() => handleNavClick('timeline-section')} className="shadow-[0_0_15px_rgba(129,140,248,0.2)] hover:shadow-[0_0_20px_rgba(129,140,248,0.4)]">
                 <Shield className="w-3.5 h-3.5" /> Force Shield
               </FascaButton>
             </div>
@@ -1213,7 +1213,7 @@ export default function DashboardPage() {
                   Interactive cluster visualization
                 </p>
               </div>
-              <StudyNodesGraph nodes={gardenNodes} />
+              <StudyNodesGraph nodesData={gardenNodes} />
             </div>
           </div>
 
@@ -1224,7 +1224,7 @@ export default function DashboardPage() {
               <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a] flex items-center gap-2">
                 <Clock className="w-3.5 h-3.5 text-fouzar-amber" /> Social Timeline
               </span>
-              <FascaTimeline friends={friends} />
+              <FascaTimeline />
             </div>
 
             {/* AI Core / LMS Bridge Container */}
@@ -1236,7 +1236,7 @@ export default function DashboardPage() {
                     <Plug className="w-3.5 h-3.5 text-[#34d399]" /> Connected Systems
                   </span>
                 </div>
-                <LmsBridgePanel isInline={true} />
+                <LmsBridgePanel isOpen={true} onClose={() => {}} />
               </div>
 
               {/* AI Models Panel */}
@@ -1244,7 +1244,7 @@ export default function DashboardPage() {
                 <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a] flex items-center gap-2">
                   <Cpu className="w-3.5 h-3.5 text-[#818cf8]" /> Intelligence Engines
                 </span>
-                <AiControlCenter isInline={true} />
+                <AiControlCenter />
               </div>
             </div>
 
@@ -1304,21 +1304,11 @@ export default function DashboardPage() {
             </div>
           </div>
 
-        </main>
-      </ResizablePanel>
 
       {/* Global Modals overlay... (unchanged) */}
       <AnimatePresence>
         {isShieldOpen && (
-          <FocusShieldPanel
-            sessionMinutes={sessionMinutes}
-            setSessionMinutes={setSessionMinutes}
-            secondsLeft={secondsLeft}
-            isFlowActive={isFlowActive}
-            onTriggerFlow={handleTriggerFlow}
-            onClose={handleCloseShield}
-            onOpenSettings={() => setActiveNav('ai')}
-          />
+          <FocusShieldPanel isOpen={isShieldOpen} onClose={handleCloseShield} />
         )}
       </AnimatePresence>
 
@@ -1357,7 +1347,7 @@ export default function DashboardPage() {
                 </button>
               </div>
 
-              <form onSubmit={handleCreateGroup}>
+              <form onSubmit={handleCreateGroupSubmit}>
                 <div className="space-y-4">
                   <div className="flex flex-col">
                     <span className="text-[7.5px] font-mono uppercase text-fouzar-text-secondary tracking-wider mb-1 flex items-center gap-1">
@@ -1407,129 +1397,6 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
 
-      {/* Friend Context Menu Dropdown */}
-      <AnimatePresence>
-        {contextMenuFriend && (
-          <div
-            className="fixed inset-0 z-50 cursor-default"
-            onClick={() => setContextMenuFriend(null)}
-            onContextMenu={(e) => {
-              e.preventDefault();
-              setContextMenuFriend(null);
-            }}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="fixed z-50 bg-fouzar-surface/95 border border-fouzar-accent/60 shadow-2xl p-2 rounded-[6px] w-48 text-left backdrop-blur-md"
-              style={{ left: contextMenuPos.x, top: contextMenuPos.y }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="px-2 py-1 text-[7px] font-mono uppercase text-fouzar-text-secondary tracking-wider mb-1">
-                Invite to Study Group
-              </div>
-              <div className="space-y-0.5 max-h-40 overflow-y-auto scrollbar-none">
-                {gardenNodes.length === 0 ? (
-                  <div className="px-2 py-1.5 text-[8px] font-mono text-fouzar-text-secondary uppercase">
-                    No active study groups
-                  </div>
-                ) : (
-                  gardenNodes.map((node) => (
-                    <button
-                      key={node.id}
-                      type="button"
-                      onClick={async () => {
-                        const peer = contextMenuFriend;
-                        setContextMenuFriend(null);
-                        try {
-                          await inviteMemberToGroup(node.id, peer.fouzarId || peer.id);
-                          const isAdmin = user && user.id === node.creatorId;
-                          if (isAdmin) {
-                            toast(`Successfully added ${peer.name} to ${node.roomName}!`, 'violet');
-                          } else {
-                            toast(`Invite sent to ${peer.name}! Pending admin approval.`, 'violet');
-                          }
-              
-              <AnimatePresence>
-                {isThemeCustomizerOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95, y: 5 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: 5 }}
-                    transition={{ duration: 0.15, ease: 'easeOut' }}
-                    className="absolute right-0 mt-2 z-50 w-52 bg-fouzar-surface/95 border border-fouzar-accent/60 p-4 rounded-[6px] shadow-2xl text-left backdrop-blur-md space-y-4"
-                  >
-                    {/* Theme chassis */}
-                    <div className="space-y-1.5">
-                      <span className="text-[7.5px] font-mono uppercase text-fouzar-text-secondary tracking-wider block font-bold">
-                        Visual Chassis Theme
-                      </span>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => setMode('onyx')}
-                          className={`py-1 px-1.5 text-[7px] font-mono uppercase rounded-[4px] border text-center transition-colors cursor-pointer ${
-                            mode === 'onyx'
-                              ? 'border-fouzar-accent bg-fouzar-accent/10 text-fouzar-accent font-bold'
-                              : 'border-fouzar-border text-fouzar-text-secondary hover:text-fouzar-text-primary'
-                          }`}
-                        >
-                          Onyx
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setMode('greenhouse')}
-                          className={`py-1 px-1.5 text-[7px] font-mono uppercase rounded-[4px] border text-center transition-colors cursor-pointer ${
-                            mode === 'greenhouse'
-                              ? 'border-fouzar-accent bg-fouzar-accent/10 text-fouzar-accent font-bold'
-                              : 'border-fouzar-border text-fouzar-text-secondary hover:text-fouzar-text-primary'
-                          }`}
-                        >
-                          Greenhouse
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Accent Color picker */}
-                    <div className="space-y-1.5">
-                      <span className="text-[7.5px] font-mono uppercase text-[#6b6b8a] tracking-wider block font-bold">
-                        Workspace Accent Color
-                      </span>
-                      <div className="flex gap-2 justify-between">
-                        {[
-                          { id: 'violet' as const, name: 'Violet', color: '#7c5cfc' },
-                          { id: 'emerald' as const, name: 'Emerald', color: '#3dd68c' },
-                          { id: 'ice' as const, name: 'Ice', color: '#5ce1ff' },
-                          { id: 'amber' as const, name: 'Amber', color: '#f5a623' },
-                          { id: 'signal' as const, name: 'Crimson', color: '#ff2d55' },
-                        ].map((accent) => {
-                          const isSelected = accentColor === accent.id;
-                          return (
-                            <button
-                              key={accent.id}
-                              type="button"
-                              onClick={() => setAccentColor(accent.id)}
-                              style={{ backgroundColor: accent.color }}
-                              className={`w-3.5 h-3.5 rounded-full border cursor-pointer transition-transform hover:scale-110 ${
-                                isSelected ? 'border-[#f0f0ff] scale-110' : 'border-transparent'
-                              }`}
-                              title={`Set ${accent.name} accent`}
-                            />
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            <span className="px-2.5 py-0.5 bg-fouzar-accent/10 border border-fouzar-accent/20 text-fouzar-accent font-mono text-[8px] uppercase tracking-wider rounded">
-              V1.0
-            </span>
-          </div>
-        </div>
 
         {/* 1. Horizontal Friends Social Bar (Top) */}
         <div className="space-y-3 shrink-0">
@@ -1710,6 +1577,7 @@ export default function DashboardPage() {
         </div>
 
       </main>
+      </ResizablePanel>
 
       {/* ========================================================================= */}
       {/* 4. BOTTOM NAVIGATION BAR: Under 768px view                                */}

@@ -50,7 +50,7 @@ export class GroupsController {
     const token = authHeader.split(' ')[1];
     try {
       const decoded = this.jwtService.verify(token);
-      return this.groupsService.addMember(groupId, body.userId, decoded.sub);
+      return this.groupsService.addGroupMember(groupId, body.userId, decoded.sub);
     } catch (e: any) {
       throw new UnauthorizedException(e.message || 'Authentication failed');
     }
@@ -68,7 +68,7 @@ export class GroupsController {
     const token = authHeader.split(' ')[1];
     try {
       const decoded = this.jwtService.verify(token);
-      return this.groupsService.removeMember(groupId, userId, decoded.sub);
+      return this.groupsService.rejectMembership(groupId, userId, decoded.sub);
     } catch (e: any) {
       throw new UnauthorizedException(e.message || 'Authentication failed');
     }
@@ -103,7 +103,7 @@ export class GroupsController {
     const token = authHeader.split(' ')[1];
     try {
       const decoded = this.jwtService.verify(token);
-      return this.groupsService.updateGroup(groupId, body.name, decoded.sub);
+      return this.groupsService.renameGroup(groupId, body.name, decoded.sub);
     } catch (e: any) {
       throw new UnauthorizedException(e.message || 'Authentication failed');
     }
@@ -178,7 +178,7 @@ export class GroupsController {
     const token = authHeader.split(' ')[1];
     try {
       const decoded = this.jwtService.verify(token);
-      return this.groupsService.requestOrInviteMember(groupId, decoded.sub, body.targetUserId);
+      return this.groupsService.addGroupMember(groupId, body.targetUserId, decoded.sub);
     } catch (e: any) {
       throw new UnauthorizedException(e.message || 'Authentication failed');
     }

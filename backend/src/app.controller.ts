@@ -447,9 +447,9 @@ export class AppController {
     const token = authHeader.split(' ')[1];
 
     const demoDeadlines = [
-      { id: 'dl-1', course: 'CS-229', title: 'Neural Networks Lab 3', timeLeftHours: 14, timeLeftLabel: '14 hours left' },
-      { id: 'dl-2', course: 'CS-109', title: 'Probability Problem Set 4', timeLeftHours: 36, timeLeftLabel: '36 hours left' },
-      { id: 'dl-3', course: 'PHY-201', title: 'Quantum Wave Equation Writeup', timeLeftHours: 72, timeLeftLabel: '3 days remaining' },
+      { id: 'dl-1', course: 'DEMO', title: 'Connect LMS to see real deadlines', timeLeftHours: 14, timeLeftLabel: '14 hours left' },
+      { id: 'dl-2', course: 'DEMO', title: 'Example Assignment', timeLeftHours: 36, timeLeftLabel: '36 hours left' },
+      { id: 'dl-3', course: 'DEMO', title: 'Example Quiz', timeLeftHours: 72, timeLeftLabel: '3 days remaining' },
     ];
 
     try {

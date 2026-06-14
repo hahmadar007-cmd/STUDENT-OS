@@ -107,7 +107,7 @@ export const ResizablePanel: React.FC<ResizablePanelProps> = ({
       className={`flex ${isHorizontal ? 'flex-row' : 'flex-col'} w-full h-full overflow-hidden ${className}`}
     >
       <div 
-        style={isHorizontal ? { width: \`\${currentSize}px\`, opacity: collapsed ? 0 : 1, transition: 'width 0.5s ease, opacity 0.5s ease' } : { flex: 'none', display: collapsed ? 'none' : 'flex' }}
+        style={isHorizontal ? { width: `${currentSize}px`, opacity: collapsed ? 0 : 1, transition: 'width 0.5s ease, opacity 0.5s ease' } : { flex: 'none', display: collapsed ? 'none' : 'flex' }}
         className="shrink-0 flex flex-col min-h-0 min-w-0"
       >
         {children[0]}

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ExternalLink, Calendar, Plus, X, Trash2 } from 'lucide-react';
 import { FascaCard } from '../ui/FascaCard';
 import { getDeadlines } from '../../lib/api';
+import { useAuth } from '../../hooks/useAuth';
 
 interface TimelineEvent {
   id: string;
@@ -19,6 +20,7 @@ interface TimelineEvent {
 }
 
 export const FascaTimeline: React.FC = () => {
+  const { user } = useAuth();
   const [hoveredEventId, setHoveredEventId] = useState<string | null>(null);
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [loading, setLoading] = useState(false);
@@ -32,6 +34,7 @@ export const FascaTimeline: React.FC = () => {
   const [newDaysOffset, setNewDaysOffset] = useState(1);
 
   const loadTimelineEvents = async () => {
+    if (!user?.id) return;
     setLoading(true);
     try {
       // 1. Fetch LMS Deadlines
@@ -64,7 +67,7 @@ export const FascaTimeline: React.FC = () => {
       // 2. Load custom events from localStorage
       let customEvents: TimelineEvent[] = [];
       if (typeof window !== 'undefined') {
-        const saved = localStorage.getItem('circle-custom-events');
+        const saved = localStorage.getItem(`circle-custom-events-${user?.id}`);
         if (saved) {
           try {
             customEvents = JSON.parse(saved);
@@ -127,8 +130,10 @@ export const FascaTimeline: React.FC = () => {
   };
 
   useEffect(() => {
-    loadTimelineEvents();
-  }, []);
+    if (user?.id) {
+      loadTimelineEvents();
+    }
+  }, [user?.id]);
 
   const handleAddCustomEvent = (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,7 +159,7 @@ export const FascaTimeline: React.FC = () => {
     };
 
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('circle-custom-events');
+      const saved = localStorage.getItem(`circle-custom-events-${user?.id}`);
       let customEventsList: TimelineEvent[] = [];
       if (saved) {
         try {
@@ -164,7 +169,7 @@ export const FascaTimeline: React.FC = () => {
         }
       }
       customEventsList.push(newEvent);
-      localStorage.setItem('circle-custom-events', JSON.stringify(customEventsList));
+      localStorage.setItem(`circle-custom-events-${user?.id}`, JSON.stringify(customEventsList));
     }
 
     // Reset and reload
@@ -178,12 +183,12 @@ export const FascaTimeline: React.FC = () => {
 
   const handleDeleteCustomEvent = (eventId: string) => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('circle-custom-events');
+      const saved = localStorage.getItem(`circle-custom-events-${user?.id}`);
       if (saved) {
         try {
           let customEventsList: TimelineEvent[] = JSON.parse(saved);
           customEventsList = customEventsList.filter((ev) => ev.id !== eventId);
-          localStorage.setItem('circle-custom-events', JSON.stringify(customEventsList));
+          localStorage.setItem(`circle-custom-events-${user?.id}`, JSON.stringify(customEventsList));
         } catch (e) {
           console.error(e);
         }
