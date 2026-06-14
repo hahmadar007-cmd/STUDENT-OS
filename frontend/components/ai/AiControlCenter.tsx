@@ -33,6 +33,15 @@ function maskKey(key: string): string {
   return `••••••••${key.slice(-4)}`;
 }
 
+function inferProviderType(name: string, key: string): string {
+  const n = name.trim().toUpperCase();
+  const k = key.trim();
+  if (k.startsWith('sk-ant-') || n.includes('ANTHROPIC') || n.includes('CLAUDE')) return 'ANTHROPIC';
+  if (k.startsWith('sk-') || n.includes('OPENAI') || n.includes('GPT')) return 'OPENAI';
+  if (k.startsWith('AIza') || n.includes('GEMINI') || n.includes('GOOGLE')) return 'GEMINI';
+  return 'CUSTOM';
+}
+
 interface AddModalProps {
   onClose: () => void;
   onAdded: (p: AiProvider) => void;
@@ -45,6 +54,11 @@ function AddProviderModal({ onClose, onAdded, nextColorIndex }: AddModalProps) {
   const [baseUrl, setBaseUrl] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [error, setError] = useState('');
+  const [providerType, setProviderType] = useState('CUSTOM');
+
+  useEffect(() => {
+    setProviderType(inferProviderType(name, apiKey));
+  }, [name, apiKey]);
 
   const palette = CARD_COLORS[nextColorIndex % CARD_COLORS.length];
 
@@ -59,7 +73,7 @@ function AddProviderModal({ onClose, onAdded, nextColorIndex }: AddModalProps) {
       name: name.trim(),
       apiKeyRaw: apiKey.trim(),
       baseUrl: baseUrl.trim() || null,
-      providerType: 'CUSTOM',
+      providerType: providerType,
       isActive: false,
       createdAt: new Date().toISOString(),
       colorIndex: nextColorIndex % CARD_COLORS.length,
@@ -150,6 +164,20 @@ function AddProviderModal({ onClose, onAdded, nextColorIndex }: AddModalProps) {
               placeholder="https://openrouter.ai/api/v1"
               className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white/90 placeholder-white/20 font-mono focus:outline-none focus:border-white/25 transition-colors"
             />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/40">Provider Type</label>
+            <select
+              value={providerType}
+              onChange={e => setProviderType(e.target.value)}
+              className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white/90 font-mono focus:outline-none focus:border-white/25 transition-colors cursor-pointer"
+            >
+              <option value="OPENAI" className="bg-[#0f0f1a]">OPENAI</option>
+              <option value="GEMINI" className="bg-[#0f0f1a]">GEMINI</option>
+              <option value="ANTHROPIC" className="bg-[#0f0f1a]">ANTHROPIC</option>
+              <option value="CUSTOM" className="bg-[#0f0f1a]">CUSTOM</option>
+            </select>
           </div>
 
           <AnimatePresence>

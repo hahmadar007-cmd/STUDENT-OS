@@ -16,6 +16,15 @@ interface EngineEntry {
 
 const STORAGE_KEY = 'fasca_ai_providers_v1';
 
+function inferProviderType(name: string, key: string): string {
+  const n = name.trim().toUpperCase();
+  const k = key.trim();
+  if (k.startsWith('sk-ant-') || n.includes('ANTHROPIC') || n.includes('CLAUDE')) return 'ANTHROPIC';
+  if (k.startsWith('sk-') || n.includes('OPENAI') || n.includes('GPT')) return 'OPENAI';
+  if (k.startsWith('AIza') || n.includes('GEMINI') || n.includes('GOOGLE')) return 'GEMINI';
+  return 'CUSTOM';
+}
+
 const CARD_COLORS = [
   { color: '#7c5cfc', glow: 'rgba(124,92,252,0.35)' },
   { color: '#06b6d4', glow: 'rgba(6,182,212,0.35)' },
@@ -53,7 +62,7 @@ export const AiOnboardingModal: React.FC<AiOnboardingModalProps> = ({ onClose })
       name: e.name.trim(),
       apiKeyRaw: e.apiKey.trim(),
       baseUrl: null,
-      providerType: 'CUSTOM',
+      providerType: inferProviderType(e.name, e.apiKey),
       isActive: i === 0,
       createdAt: new Date().toISOString(),
       colorIndex: i % CARD_COLORS.length,
