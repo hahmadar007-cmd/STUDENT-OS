@@ -72,6 +72,70 @@ export default function PersonalSanctuaryPage() {
 
   const [semester, setSemester] = useState('Spring 2026');
   const [notes, setNotes] = useState('');
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+
+  const dummySlides = [
+    {
+      id: '1',
+      title: 'Course Overview & Setup',
+      topic: 'Introduction to Machine Learning',
+      bullets: [
+        'Course logistics, grading policies, and prerequisites.',
+        'Core paradigm: fitting functions to data rather than manual rules.',
+        'Setup environment: Python 3.10+, NumPy, and PyTorch.',
+      ],
+    },
+    {
+      id: '2',
+      title: 'Supervised vs Unsupervised Learning',
+      topic: 'Core Machine Learning Paradigms',
+      bullets: [
+        'Supervised learning: datasets contain inputs (x) and correct outputs (y).',
+        'Unsupervised learning: datasets contain inputs only; looking for hidden clusters.',
+        'Reinforcement learning: agent acts in environment to maximize reward.',
+      ],
+    },
+    {
+      id: '3',
+      title: 'Deep Neural Networks Foundations',
+      topic: 'Neural Network Architectures',
+      bullets: [
+        'Structure: Input layer, multiple Hidden layers, and an Output layer.',
+        'Neurons: Compute weighted sum of inputs and apply non-linear activations.',
+        'Common activation functions: ReLU, Sigmoid, and Tanh.',
+      ],
+    },
+    {
+      id: '4',
+      title: 'Gradient Descent & Backpropagation',
+      topic: 'Mathematical Training & Optimization',
+      bullets: [
+        'Loss function: measures average error between predicted and target values.',
+        'Gradient descent: update weights in the direction of steepest loss descent.',
+        'Backpropagation: use Chain Rule of Calculus to compute local derivatives.',
+      ],
+    },
+    {
+      id: '5',
+      title: 'Loss Functions & Cross Entropy',
+      topic: 'Optimization Target Formulations',
+      bullets: [
+        'Mean Squared Error (MSE): used for regression tasks.',
+        'Binary Cross Entropy: used for two-class categorization.',
+        'Categorical Cross Entropy: used for multi-class classification.',
+      ],
+    },
+  ];
+
+  const handleSlideChange = (dir: 'next' | 'prev') => {
+    if (dir === 'next' && currentSlideIndex < dummySlides.length - 1) {
+      setCurrentSlideIndex(prev => prev + 1);
+    } else if (dir === 'prev' && currentSlideIndex > 0) {
+      setCurrentSlideIndex(prev => prev - 1);
+    }
+  };
+
+  const activeSlide = dummySlides[currentSlideIndex];
   const [sanctuaryName, setSanctuaryName] = useState('My Sanctuary');
   const [groups, setGroups] = useState<{ id: string; name: string }[]>([]);
   const [deadlines, setDeadlines] = useState<
@@ -500,6 +564,17 @@ export default function PersonalSanctuaryPage() {
                   ))}
 
                   <button
+                    onClick={() => setCenterTab('slides')}
+                    className={`px-4 py-2 rounded-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all whitespace-nowrap ${
+                      centerTab === 'slides'
+                        ? 'bg-fouzar-accent text-fouzar-text-inverse shadow-[0_0_12px_var(--fouzar-accent-glow)]'
+                        : 'text-fouzar-text-tertiary hover:text-fouzar-text-primary hover:bg-fouzar-accent/5'
+                    }`}
+                  >
+                    Slides
+                  </button>
+
+                  <button
                     onClick={() => setCenterTab('web')}
                     className={`px-4 py-2 rounded-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all whitespace-nowrap ${
                       centerTab === 'web'
@@ -537,6 +612,69 @@ export default function PersonalSanctuaryPage() {
                     }}
                     isInline={true}
                   />
+                </div>
+              ) : centerTab === 'slides' ? (
+                <div className="flex-1 min-h-[280px] lg:min-h-0 bg-fouzar-surface/40 backdrop-blur-xl border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-6 flex flex-col overflow-hidden">
+                  <div className="flex flex-col flex-1 justify-between h-full">
+                    <div className="flex justify-between items-start text-[8px] font-mono border-b border-fouzar-border/30 pb-3">
+                      <span className="text-fouzar-accent uppercase tracking-widest">{activeSlide.topic}</span>
+                      <span className="text-fouzar-text-secondary uppercase">PAGE {currentSlideIndex + 1} OF {dummySlides.length}</span>
+                    </div>
+
+                    <div className="my-auto py-8">
+                      <AnimatePresence mode="wait">
+                        <motion.div
+                          key={activeSlide.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.25 }}
+                          className="space-y-6 max-w-xl mx-auto"
+                        >
+                          <h2 className="font-sans text-2xl font-light text-fouzar-text-primary tracking-wide leading-snug text-glow-accent">
+                            {activeSlide.title}
+                          </h2>
+                          <ul className="space-y-4">
+                            {activeSlide.bullets.map((bullet, idx) => (
+                              <li key={idx} className="text-fouzar-text-secondary text-[11px] flex items-start gap-3 leading-relaxed">
+                                <span className="w-1 h-1 bg-fouzar-accent shrink-0 mt-2 rounded-full" />
+                                <span>{bullet}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </motion.div>
+                      </AnimatePresence>
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-fouzar-border/30 pt-4 mt-auto">
+                      <button
+                        disabled={currentSlideIndex === 0}
+                        onClick={() => handleSlideChange('prev')}
+                        className="flex items-center gap-1 text-[9px] font-mono uppercase tracking-wider text-fouzar-text-secondary hover:text-fouzar-text-primary disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5" /> Previous
+                      </button>
+
+                      <div className="flex gap-1.5">
+                        {dummySlides.map((_, idx) => (
+                          <span 
+                            key={idx}
+                            className={`block h-1 rounded-full transition-all duration-300 ${
+                              idx === currentSlideIndex ? 'w-4 bg-fouzar-accent' : 'w-1.5 bg-fouzar-border'
+                            }`}
+                          />
+                        ))}
+                      </div>
+
+                      <button
+                        disabled={currentSlideIndex === dummySlides.length - 1}
+                        onClick={() => handleSlideChange('next')}
+                        className="flex items-center gap-1 text-[9px] font-mono uppercase tracking-wider text-fouzar-text-secondary hover:text-fouzar-text-primary disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                      >
+                        Next <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ) : centerTab === 'web' ? (
                 <div className="flex-1 min-h-[280px] lg:min-h-0 bg-fouzar-surface/40 backdrop-blur-xl border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-6 flex flex-col overflow-hidden">

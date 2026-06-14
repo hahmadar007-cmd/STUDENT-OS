@@ -38,6 +38,9 @@ export default function StudyGroupRoom() {
   const [syncSlides, setSyncSlides] = useState(true);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [memberCount, setMemberCount] = useState(4);
+  const [centerTab, setCenterTab] = useState<'slides' | 'notepad'>('slides');
+  const [notes, setNotes] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const socketRef = useRef<any>(null);
 
   const slides: SlideData[] = [
@@ -150,6 +153,22 @@ export default function StudyGroupRoom() {
     });
   };
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const savedNotes = localStorage.getItem(`fouzar-group-notes-${groupId}`);
+    if (savedNotes) setNotes(savedNotes);
+  }, [groupId]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setIsSaving(true);
+    const t = setTimeout(() => {
+      localStorage.setItem(`fouzar-group-notes-${groupId}`, notes);
+      setIsSaving(false);
+    }, 1000);
+    return () => clearTimeout(t);
+  }, [notes, groupId]);
+
   const activeSlide = slides[currentSlideIndex];
 
   return (
@@ -255,68 +274,109 @@ export default function StudyGroupRoom() {
           isChatOpen ? 'w-[65%]' : 'w-full'
         } ${isFlowActive ? 'deep-flow-blur' : ''}`}>
           
-          <div className="flex-1 flex flex-col justify-between p-8 bg-fouzar-surface/40 backdrop-blur-md border border-fouzar-border/60 rounded-[8px] relative overflow-hidden shadow-2xl">
-            {/* Slide Header */}
-            <div className="flex justify-between items-start text-[8px] font-mono border-b border-fouzar-border/30 pb-3">
-              <span className="text-fouzar-accent uppercase tracking-widest">{activeSlide.topic}</span>
-              <span className="text-fouzar-text-secondary uppercase">PAGE {currentSlideIndex + 1} OF {slides.length}</span>
-            </div>
-
-            {/* Slide Body */}
-            <div className="my-auto py-8">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeSlide.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.25 }}
-                  className="space-y-6 max-w-xl mx-auto"
+          <div className="flex-1 flex flex-col p-8 bg-fouzar-surface/40 backdrop-blur-md border border-fouzar-border/60 rounded-[8px] relative overflow-hidden shadow-2xl">
+            
+            {/* Tabs */}
+            <div className="flex items-center justify-between mb-4 pb-2 border-b border-fouzar-border/30">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCenterTab('slides')}
+                  className={`px-3 py-1 text-[9px] font-mono uppercase tracking-wider rounded-[4px] transition-colors ${
+                    centerTab === 'slides' ? 'bg-fouzar-accent text-white' : 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-fouzar-accent/10'
+                  }`}
                 >
-                  <h2 className="font-sans text-2xl font-light text-fouzar-text-primary tracking-wide leading-snug text-glow-accent">
-                    {activeSlide.title}
-                  </h2>
-                  <ul className="space-y-4">
-                    {activeSlide.bullets.map((bullet, idx) => (
-                      <li key={idx} className="text-fouzar-text-secondary text-[11px] flex items-start gap-3 leading-relaxed">
-                        <span className="w-1 h-1 bg-fouzar-accent shrink-0 mt-2 rounded-full" />
-                        <span>{bullet}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-
-            {/* Slide navigations */}
-            <div className="flex items-center justify-between border-t border-fouzar-border/30 pt-4">
-              <button
-                disabled={currentSlideIndex === 0}
-                onClick={() => handleSlideChange('prev')}
-                className="flex items-center gap-1 text-[9px] font-mono uppercase tracking-wider text-fouzar-text-secondary hover:text-fouzar-text-primary disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" /> Previous
-              </button>
-
-              <div className="flex gap-1.5">
-                {slides.map((s, idx) => (
-                  <div
-                    key={s.id}
-                    className={`w-1.5 h-1.5 rounded-full transition-all ${
-                      idx === currentSlideIndex ? 'bg-fouzar-accent w-3' : 'bg-fouzar-border/40'
-                    }`}
-                  />
-                ))}
+                  Slides
+                </button>
+                <button
+                  onClick={() => setCenterTab('notepad')}
+                  className={`px-3 py-1 text-[9px] font-mono uppercase tracking-wider rounded-[4px] transition-colors ${
+                    centerTab === 'notepad' ? 'bg-fouzar-accent text-white' : 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-fouzar-accent/10'
+                  }`}
+                >
+                  Notepad
+                </button>
               </div>
-
-              <button
-                disabled={currentSlideIndex === slides.length - 1}
-                onClick={() => handleSlideChange('next')}
-                className="flex items-center gap-1 text-[9px] font-mono uppercase tracking-wider text-fouzar-text-secondary hover:text-fouzar-text-primary disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
-              >
-                Next <ChevronRight className="w-3.5 h-3.5" />
-              </button>
+              {centerTab === 'notepad' && (
+                <span className="text-[8px] font-mono text-fouzar-text-tertiary uppercase">
+                  {isSaving ? 'Saving...' : 'Saved to local storage'}
+                </span>
+              )}
             </div>
+
+            {centerTab === 'slides' ? (
+              <div className="flex flex-col flex-1 justify-between h-full">
+                {/* Slide Header */}
+                <div className="flex justify-between items-start text-[8px] font-mono border-b border-transparent pb-3">
+                  <span className="text-fouzar-accent uppercase tracking-widest">{activeSlide.topic}</span>
+                  <span className="text-fouzar-text-secondary uppercase">PAGE {currentSlideIndex + 1} OF {slides.length}</span>
+                </div>
+
+                {/* Slide Body */}
+                <div className="my-auto py-8">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={activeSlide.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.25 }}
+                      className="space-y-6 max-w-xl mx-auto"
+                    >
+                      <h2 className="font-sans text-2xl font-light text-fouzar-text-primary tracking-wide leading-snug text-glow-accent">
+                        {activeSlide.title}
+                      </h2>
+                      <ul className="space-y-4">
+                        {activeSlide.bullets.map((bullet, idx) => (
+                          <li key={idx} className="text-fouzar-text-secondary text-[11px] flex items-start gap-3 leading-relaxed">
+                            <span className="w-1 h-1 bg-fouzar-accent shrink-0 mt-2 rounded-full" />
+                            <span>{bullet}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+
+                {/* Slide navigations */}
+                <div className="flex items-center justify-between border-t border-fouzar-border/30 pt-4 mt-auto">
+                  <button
+                    disabled={currentSlideIndex === 0}
+                    onClick={() => handleSlideChange('prev')}
+                    className="flex items-center gap-1 text-[9px] font-mono uppercase tracking-wider text-fouzar-text-secondary hover:text-fouzar-text-primary disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" /> Previous
+                  </button>
+
+                  <div className="flex gap-1.5">
+                    {slides.map((_, idx) => (
+                      <span 
+                        key={idx}
+                        className={`block h-1 rounded-full transition-all duration-300 ${
+                          idx === currentSlideIndex ? 'w-4 bg-fouzar-accent' : 'w-1.5 bg-fouzar-border'
+                        }`}
+                      />
+                    ))}
+                  </div>
+
+                  <button
+                    disabled={currentSlideIndex === slides.length - 1}
+                    onClick={() => handleSlideChange('next')}
+                    className="flex items-center gap-1 text-[9px] font-mono uppercase tracking-wider text-fouzar-text-secondary hover:text-fouzar-text-primary disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                  >
+                    Next <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col h-full min-h-[300px]">
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder={`Your personal scratchpad for the ${groupId} study session...`}
+                  className="flex-1 bg-transparent text-fouzar-text-primary font-mono text-[11px] leading-relaxed resize-none focus:outline-none placeholder:text-fouzar-text-tertiary"
+                />
+              </div>
+            )}
           </div>
         </div>
 

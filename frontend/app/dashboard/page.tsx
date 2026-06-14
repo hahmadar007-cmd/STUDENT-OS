@@ -24,7 +24,8 @@ import {
   MoreVertical,
   Edit2,
   Trash2,
-  Palette
+  Palette,
+  ChevronRight
 } from 'lucide-react';
 import { useFouzar } from '../../lib/FouzarContext';
 import { FascaLogo } from '../../components/logo/FascaLogo';
@@ -133,6 +134,24 @@ export default function DashboardPage() {
   const [newGroupCourse, setNewGroupCourse] = useState('');
   const [createGroupError, setCreateGroupError] = useState<string | null>(null);
   const [createGroupLoading, setCreateGroupLoading] = useState(false);
+  
+  const [dashboardDeadlines, setDashboardDeadlines] = useState<any[]>([]);
+  const [deadlinesLoading, setDeadlinesLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchDashboardDeadlines() {
+      try {
+        const { getDeadlines } = await import('../../lib/api');
+        const res = await getDeadlines();
+        setDashboardDeadlines((res.deadlines || []).slice(0, 3));
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setDeadlinesLoading(false);
+      }
+    }
+    fetchDashboardDeadlines();
+  }, []);
 
   const handleCreateGroupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1238,11 +1257,51 @@ export default function DashboardPage() {
                 </div>
                 <div 
                   onClick={() => setIsLmsOpen(true)}
-                  className="w-full p-6 border border-dashed border-[#2a2a3a] hover:border-[#7c5cfc]/50 rounded-[var(--fouzar-radius-md)] flex flex-col items-center justify-center cursor-pointer transition-all group bg-[#0e0e16]"
+                  className="w-full relative group cursor-pointer overflow-hidden rounded-[var(--fouzar-radius-lg)] border border-[#2a2a3a]/80 bg-gradient-to-br from-[#101015] to-[#0a0a0f] shadow-lg transition-all hover:border-[#34d399]/50 hover:shadow-[0_0_20px_rgba(52,211,153,0.1)]"
                 >
-                  <Plug className="w-6 h-6 text-[#6b6b8a] group-hover:text-[#7c5cfc] mb-2 transition-colors" />
-                  <span className="text-xs font-bold text-[#f0f0ff] mb-1">My Campus Gateway</span>
-                  <span className="text-[9px] font-mono text-[#6b6b8a]">Click to manage your university LMS</span>
+                  {/* Subtle background glow */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#34d399]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  
+                  <div className="relative p-5">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-[6px] bg-[#34d399]/10 border border-[#34d399]/20 flex items-center justify-center">
+                          <Plug className="w-4 h-4 text-[#34d399]" />
+                        </div>
+                        <div>
+                          <h3 className="text-xs font-bold text-[#f0f0ff]">My Campus Gateway</h3>
+                          <p className="text-[8.5px] font-mono text-[#6b6b8a] uppercase tracking-wider mt-0.5">University LMS Bridge</p>
+                        </div>
+                      </div>
+                      <div className="h-6 w-6 rounded-full border border-[#2a2a3a] bg-[#16161f] flex items-center justify-center group-hover:bg-[#34d399]/10 group-hover:border-[#34d399]/30 transition-colors">
+                        <ChevronRight className="w-3.5 h-3.5 text-[#6b6b8a] group-hover:text-[#34d399]" />
+                      </div>
+                    </div>
+
+                    {deadlinesLoading ? (
+                      <div className="animate-pulse space-y-2 mt-4">
+                        <div className="h-2 w-2/3 bg-[#2a2a3a] rounded" />
+                        <div className="h-2 w-1/2 bg-[#2a2a3a] rounded" />
+                      </div>
+                    ) : dashboardDeadlines.length > 0 ? (
+                      <div className="space-y-2.5 mt-2 border-t border-[#2a2a3a]/40 pt-4">
+                        <span className="text-[8px] font-mono uppercase tracking-[0.2em] text-[#34d399]">Upcoming Deadlines</span>
+                        {dashboardDeadlines.map((dl, idx) => (
+                          <div key={idx} className="flex items-center justify-between bg-[#16161f]/50 p-2 rounded-[6px] border border-[#2a2a3a]/40">
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-[9.5px] font-bold text-[#e2e8f0] truncate">{dl.title}</span>
+                              <span className="text-[8px] font-mono text-[#6b6b8a] uppercase mt-0.5">{dl.course}</span>
+                            </div>
+                            <span className="text-[8.5px] font-mono text-[#f5a623] shrink-0 ml-3 bg-[#f5a623]/10 px-1.5 py-0.5 rounded border border-[#f5a623]/20">{dl.timeLeftLabel}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="mt-2 border-t border-[#2a2a3a]/40 pt-4 text-center pb-2">
+                        <span className="text-[9.5px] font-mono text-[#6b6b8a]">Click to connect & sync your deadlines</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
