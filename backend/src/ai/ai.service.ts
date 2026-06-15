@@ -153,23 +153,34 @@ Student's Query: "${prompt}"`;
       }
     }
 
-    // Google Gemini
     if (modelName === 'gemini-1.5-pro' && geminiKey) {
       try {
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=${geminiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: fullPrompt }] }],
-            }),
-          },
-        );
+        const callGemini = async (model: string) => {
+          return await fetch(
+            `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${geminiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: fullPrompt }] }],
+              }),
+            },
+          );
+        };
+
+        let response = await callGemini('gemini-1.5-pro');
+        let activeModel = 'Gemini 1.5 Pro';
+
+        // Auto-fallback to gemini-1.5-flash if 404 Not Found or not supported
+        if (response.status === 404) {
+          response = await callGemini('gemini-1.5-flash');
+          activeModel = 'Gemini 1.5 Flash';
+        }
+
         if (response.ok) {
           const data = await response.json();
           const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (text) return { text, model: 'Gemini 1.5 Pro' };
+          if (text) return { text, model: activeModel };
         } else {
           const data = await response.json().catch(() => ({}));
           return {
