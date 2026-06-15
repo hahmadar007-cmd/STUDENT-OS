@@ -30,7 +30,7 @@ export class AiProvidersController {
     const token = authHeader.split(' ')[1];
     try {
       const decoded = this.jwtService.verify(token);
-      return decoded.userId;
+      return decoded.sub || decoded.userId;
     } catch {
       throw new UnauthorizedException('Invalid token');
     }
