@@ -441,7 +441,7 @@ export default function PersonalSanctuaryPage() {
                 <Layers className="w-3 h-3" /> Spaces
               </span>
               <div className="space-y-1.5">
-                {folders.map((folder) => (
+                {folders.filter(f => !f.parentFolderId || f.parentFolderId === 'general' || f.id === 'general').map((folder) => (
                   <div key={folder.id} className="relative group">
                     <button
                       type="button"

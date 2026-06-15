@@ -162,6 +162,7 @@ export interface FouzarContextValue {
   setActiveFolderId: (id: string) => void;
   addFolder: (name: string, code: string, parentFolderId?: string | null) => void;
   deleteFolder: (id: string) => void;
+  updateFolder: (id: string, patch: Partial<FouzarFolder>) => void;
   currentFolderId: string | null;
   setCurrentFolderId: (id: string | null) => void;
 }
@@ -376,6 +377,21 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     });
     setActiveFolderIdState((prev) => (prev === id ? 'general' : prev));
     setCurrentFolderIdState((prev) => (prev === id ? null : prev));
+  }, []);
+
+  const updateFolder = useCallback((id: string, patch: Partial<FouzarFolder>) => {
+    setFolders((prev) => {
+      const next = prev.map((f) => {
+        if (f.id === id) {
+          return { ...f, ...patch };
+        }
+        return f;
+      });
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEYS.folders, JSON.stringify(next));
+      }
+      return next;
+    });
   }, []);
 
   const bypassTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -716,6 +732,7 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setActiveFolderId,
       addFolder,
       deleteFolder,
+      updateFolder,
       currentFolderId,
       setCurrentFolderId,
       accentColor,
@@ -767,6 +784,7 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setActiveFolderId,
       addFolder,
       deleteFolder,
+      updateFolder,
       currentFolderId,
       setCurrentFolderId,
       accentColor,
