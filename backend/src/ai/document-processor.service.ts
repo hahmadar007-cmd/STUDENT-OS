@@ -66,6 +66,90 @@ export class DocumentProcessorService {
     }
   }
 
+  // Extract text content paragraph-by-paragraph from a Word (.docx) file buffer
+  extractDocxText(buffer: Buffer): { text: string; pageNum: number }[] {
+    try {
+      const zip = new AdmZip(buffer);
+      const docEntry = zip.getEntry('word/document.xml');
+      if (!docEntry) {
+        throw new Error('No word/document.xml found in .docx archive.');
+      }
+
+      const docXml = docEntry.getData().toString('utf8');
+
+      // Extract text from paragraph run elements (<w:t ...>...</w:t>)
+      // Group by paragraphs (<w:p>...</w:p>)
+      const paragraphs = docXml.match(/<w:p[ >][\s\S]*?<\/w:p>/g) || [];
+      const lines: string[] = [];
+
+      for (const para of paragraphs) {
+        const textMatches = para.match(/<w:t[^>]*>([^<]*)<\/w:t>/g);
+        if (textMatches) {
+          const paraText = textMatches
+            .map((tag: string) => tag.replace(/<w:t[^>]*>/, '').replace(/<\/w:t>/, '').trim())
+            .join('');
+          if (paraText.trim()) {
+            lines.push(paraText.trim());
+          }
+        }
+      }
+
+      // Group into page-sized chunks (~40 lines per "page") for consistent chunk interface
+      const LINES_PER_PAGE = 40;
+      const chunks: { text: string; pageNum: number }[] = [];
+      for (let i = 0; i < lines.length; i += LINES_PER_PAGE) {
+        const pageLines = lines.slice(i, i + LINES_PER_PAGE);
+        chunks.push({
+          text: pageLines.join('\n'),
+          pageNum: Math.floor(i / LINES_PER_PAGE) + 1,
+        });
+      }
+
+      if (chunks.length === 0) {
+        chunks.push({ text: '[Empty document]', pageNum: 1 });
+      }
+
+      console.log(`DocumentProcessorService: Successfully extracted DOCX text. Pages: ${chunks.length}`);
+      return chunks;
+    } catch (err) {
+      console.error('Failed to parse DOCX file:', err);
+      throw new Error('Invalid or corrupted DOCX file. Failed to extract document text.');
+    }
+  }
+
+  // Convert DOCX buffer to PDF buffer using LibreOffice CLI
+  async convertDocxToPdf(buffer: Buffer): Promise<Buffer | null> {
+    const tempDir = os.tmpdir();
+    const uniqueId = Math.random().toString(36).substring(2, 9);
+    const tempInputPath = path.join(tempDir, `input-${uniqueId}.docx`);
+
+    try {
+      fs.writeFileSync(tempInputPath, buffer);
+
+      console.log(`DocumentProcessorService: Converting DOCX to PDF via LibreOffice...`);
+      await execAsync(`soffice --headless --convert-to pdf --outdir "${tempDir}" "${tempInputPath}"`);
+
+      const tempOutputPath = path.join(tempDir, `input-${uniqueId}.pdf`);
+
+      if (fs.existsSync(tempOutputPath)) {
+        const pdfBuffer = fs.readFileSync(tempOutputPath);
+        fs.unlinkSync(tempOutputPath);
+        console.log(`DocumentProcessorService: DOCX successfully converted to PDF (${pdfBuffer.length} bytes)`);
+        return pdfBuffer;
+      } else {
+        console.warn('DocumentProcessorService: Converted PDF file not found at output path.');
+        return null;
+      }
+    } catch (err) {
+      console.warn('DocumentProcessorService: Failed to convert DOCX to PDF. (Ignore if running locally without LibreOffice):', err);
+      return null;
+    } finally {
+      if (fs.existsSync(tempInputPath)) {
+        fs.unlinkSync(tempInputPath);
+      }
+    }
+  }
+
   // Convert PPTX buffer to PDF buffer using LibreOffice CLI
   async convertPptxToPdf(buffer: Buffer): Promise<Buffer | null> {
     const tempDir = os.tmpdir();

@@ -43,17 +43,33 @@ export class AiController {
     let pdfBase64: string | undefined = undefined;
 
     if (file) {
-      // PPTX file upload parsed in backend
-      chunks = this.documentProcessorService.extractPptxText(file.buffer);
-      
-      // Convert PPTX to PDF for preview purposes
-      try {
-        const pdfBuffer = await this.documentProcessorService.convertPptxToPdf(file.buffer);
-        if (pdfBuffer) {
-          pdfBase64 = pdfBuffer.toString('base64');
+      const fileName = (file.originalname || '').toLowerCase();
+      if (fileName.endsWith('.docx') || fileName.endsWith('.doc')) {
+        // Word document upload parsed in backend
+        chunks = this.documentProcessorService.extractDocxText(file.buffer);
+
+        // Convert DOCX to PDF for preview purposes
+        try {
+          const pdfBuffer = await this.documentProcessorService.convertDocxToPdf(file.buffer);
+          if (pdfBuffer) {
+            pdfBase64 = pdfBuffer.toString('base64');
+          }
+        } catch (err) {
+          console.warn('Failed to convert DOCX to PDF during indexing:', err);
         }
-      } catch (err) {
-        console.warn('Failed to convert PPTX to PDF during indexing:', err);
+      } else {
+        // PPTX file upload parsed in backend
+        chunks = this.documentProcessorService.extractPptxText(file.buffer);
+
+        // Convert PPTX to PDF for preview purposes
+        try {
+          const pdfBuffer = await this.documentProcessorService.convertPptxToPdf(file.buffer);
+          if (pdfBuffer) {
+            pdfBase64 = pdfBuffer.toString('base64');
+          }
+        } catch (err) {
+          console.warn('Failed to convert PPTX to PDF during indexing:', err);
+        }
       }
     } else if (body.chunks) {
       // Pre-parsed chunks (e.g. from PDF client-side)

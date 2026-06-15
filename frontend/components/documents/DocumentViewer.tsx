@@ -209,6 +209,79 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
               setIsConverting(false);
             }
           }
+        } else if (document.fileName.toLowerCase().endsWith('.docx') || document.fileName.toLowerCase().endsWith('.doc')) {
+          setActiveDocText(metaText);
+
+          // Check if we already have the converted PDF preview cached locally
+          if (stored.pdfPreviewBlob) {
+            prvUrl = createObjectUrl(stored.pdfPreviewBlob);
+            setPreviewUrl(prvUrl);
+            
+            // Extract text for activeDocText
+            try {
+              const res = await indexDocumentFile(document.courseCode || 'general', document.id || document.storageId || 'docx-doc', stored.blob, document.fileName);
+              if (res && res.chunks) {
+                const fullText = res.chunks.map((c: any) => `--- Page ${c.pageNum} ---\n${c.text}`).join('\n\n');
+                setActiveDocText(`${metaText}\n\n[Extracted Word Content]:\n${fullText}`);
+                setTextContent(fullText);
+              }
+            } catch (e) {
+              console.error('Failed to retrieve DOCX chunks for cached preview:', e);
+            }
+          } else {
+            // No cached PDF, call backend to parse and convert
+            setIsConverting(true);
+            try {
+              const res = await indexDocumentFile(
+                document.courseCode || 'general',
+                document.id || document.storageId || 'docx-doc',
+                stored.blob,
+                document.fileName
+              );
+              if (res && res.chunks && res.chunks.length > 0) {
+                const fullText = res.chunks.map((c: any) => `--- Page ${c.pageNum} ---\n${c.text}`).join('\n\n');
+                setActiveDocText(`${metaText}\n\n[Extracted Word Content]:\n${fullText}`);
+                setTextContent(fullText);
+
+                // If backend returned converted PDF base64 string, decode and cache it
+                if (res.pdfBase64) {
+                  try {
+                    const byteCharacters = atob(res.pdfBase64);
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {
+                      byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const pdfBlob = new Blob([byteArray], { type: 'application/pdf' });
+                    
+                    // Convert original Word file to PDF permanently in IndexedDB
+                    const pdfName = document.fileName.replace(/\.docx?$/i, '.pdf');
+                    await convertStoredDocumentToPdf(stored.id, pdfBlob, pdfName);
+                    
+                    // Update document state in FouzarContext repository catalog
+                    updateRepositoryItem?.(document.id, {
+                      fileName: pdfName,
+                      mimeType: 'application/pdf',
+                      sizeLabel: formatFileSize(pdfBlob.size)
+                    });
+                    
+                    // Create object URL for preview
+                    prvUrl = createObjectUrl(pdfBlob);
+                    setPreviewUrl(prvUrl);
+                  } catch (e) {
+                    console.error('Failed to decode and save DOCX PDF preview:', e);
+                  }
+                }
+              } else {
+                setError('Failed to extract text. No content could be read from this Word file.');
+              }
+            } catch (e: any) {
+              console.error('DOCX text indexing/extraction error:', e);
+              setError(`Failed to process Word document: ${e.message || 'API is offline or unreachable'}. Please make sure the backend is running.`);
+            } finally {
+              setIsConverting(false);
+            }
+          }
         } else {
           setActiveDocText(`${metaText}\nType: ${stored.mimeType}`);
         }
@@ -225,17 +298,20 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
 
   if (!document) return null;
 
+  const fnLower = document.fileName.toLowerCase();
   const isPdf =
     document.mimeType === 'application/pdf' || 
-    document.fileName.toLowerCase().endsWith('.pdf') ||
-    (document.fileName.toLowerCase().endsWith('.pptx') && previewUrl !== null);
+    fnLower.endsWith('.pdf') ||
+    (fnLower.endsWith('.pptx') && previewUrl !== null) ||
+    ((fnLower.endsWith('.docx') || fnLower.endsWith('.doc')) && previewUrl !== null);
 
   const isImage = document.mimeType?.startsWith('image/');
 
   const canPreview =
     document.storageId &&
     (isViewableInBrowser(document.mimeType ?? '', document.fileName) ||
-      (document.fileName.toLowerCase().endsWith('.pptx') && (textContent !== null || previewUrl !== null)));
+      (fnLower.endsWith('.pptx') && (textContent !== null || previewUrl !== null)) ||
+      ((fnLower.endsWith('.docx') || fnLower.endsWith('.doc')) && (textContent !== null || previewUrl !== null)));
 
   // If in inline mode and NOT expanded to fullscreen
   if (isInline && !isFullscreen) {
@@ -316,7 +392,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
           {loading && (
             <div className="flex-1 flex flex-col items-center justify-center gap-2 p-6 text-center">
               <span className="font-mono text-[9px] text-fouzar-accent animate-pulse uppercase font-bold tracking-wider">
-                {isConverting ? 'Converting PPT to PDF...' : 'Loading document...'}
+                {isConverting ? 'Converting document to PDF...' : 'Loading document...'}
               </span>
               {isConverting && (
                 <span className="font-mono text-[7.5px] text-fouzar-text-secondary uppercase">
@@ -479,7 +555,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
           {loading && (
             <div className="flex-1 flex flex-col items-center justify-center gap-2 text-center p-6">
               <span className="font-mono text-[10px] text-fouzar-accent animate-pulse uppercase font-bold tracking-wider">
-                {isConverting ? 'Converting PPT to PDF...' : 'Loading document...'}
+                {isConverting ? 'Converting document to PDF...' : 'Loading document...'}
               </span>
               {isConverting && (
                 <span className="font-mono text-[8px] text-fouzar-text-secondary uppercase">
