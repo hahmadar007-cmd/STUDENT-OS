@@ -40,4 +40,4 @@ ENV NODE_ENV=production
 ENV PORT=7860
 EXPOSE 7860
 
-CMD ["npm", "run", "start:prod"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npm run start:prod"]
