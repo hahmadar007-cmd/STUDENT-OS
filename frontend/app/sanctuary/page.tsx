@@ -27,6 +27,7 @@ import { IntegratedAiChat } from '../../components/ai/IntegratedAiChat';
 import { DocumentViewer } from '../../components/documents/DocumentViewer';
 import { FileExplorer } from '../../components/documents/FileExplorer';
 import { useFouzar, LmsRepositoryItem } from '../../lib/FouzarContext';
+import { MediaHubStandalone } from '../../components/sanctuary/MediaHubStandalone';
 import { FolderSelector } from '../../components/ui/FolderSelector';
 import { useAuth } from '../../hooks/useAuth';
 import { buildRepositoryEntryFromFile } from '../../lib/repositoryUpload';
@@ -36,6 +37,8 @@ import {
   getMyGroups,
   getDeadlines,
   updateFocusState,
+  addSubjectVideo,
+  getSubjectVideos,
 } from '../../lib/api';
 
 /**
@@ -144,9 +147,15 @@ export default function PersonalSanctuaryPage() {
   >([]);
   const [lmsSource, setLmsSource] = useState<'live' | 'demo' | 'error'>('demo');
   const [lmsError, setLmsError] = useState<string | null>(null);
-  const [centerTab, setCenterTab] = useState<string>('notes');
+  const [centerTab, setCenterTab] = useState<string>('notes'); // notes | slides | web | media
   const [uploading, setUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Media Theater
+  const [videos, setVideos] = useState<{ id: string; url: string; title: string }[]>([]);
+  const [newVideoUrl, setNewVideoUrl] = useState('');
+  const [newVideoTitle, setNewVideoTitle] = useState('');
+  const [isAddingVideo, setIsAddingVideo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedSidebarDocId, setSelectedSidebarDocId] = useState<string | null>(null);
   const [showDemoSlides, setShowDemoSlides] = useState(false);
@@ -324,6 +333,13 @@ export default function PersonalSanctuaryPage() {
     };
     init();
   }, [user, loading, router]);
+
+  useEffect(() => {
+    if (!user || !activeFolderId) return;
+    getSubjectVideos(activeFolderId).then(data => {
+      setVideos(data || []);
+    }).catch(() => setVideos([]));
+  }, [activeFolderId, user]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -623,9 +639,31 @@ export default function PersonalSanctuaryPage() {
                   >
                     Web Hub
                   </button>
+
+                  <button
+                    onClick={() => setCenterTab('media')}
+                    className={`px-4 py-2 rounded-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all whitespace-nowrap ${
+                      centerTab === 'media'
+                        ? 'bg-fouzar-accent text-fouzar-text-inverse shadow-[0_0_12px_var(--fouzar-accent-glow)]'
+                        : 'text-fouzar-text-tertiary hover:text-fouzar-text-primary hover:bg-fouzar-accent/5'
+                    }`}
+                  >
+                    Media Hub
+                  </button>
+
+                  <button
+                    onClick={() => setCenterTab('youtube')}
+                    className={`px-4 py-2 rounded-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all whitespace-nowrap ${
+                      centerTab === 'youtube'
+                        ? 'bg-red-500 text-white shadow-[0_0_12px_rgba(239,68,68,0.5)]'
+                        : 'text-fouzar-text-tertiary hover:text-white hover:bg-red-500/10'
+                    }`}
+                  >
+                    YT Search
+                  </button>
                 </div>
                 <span className="font-mono text-[7px] text-fouzar-text-secondary uppercase">
-                  {centerTab === 'notes' ? (isSaving ? 'Saving...' : 'Saved locally') : centerTab === 'slides' ? 'Click a file to open' : 'Quick launch links'}
+                  {centerTab === 'notes' ? (isSaving ? 'Saving...' : 'Saved locally') : centerTab === 'slides' ? 'Click a file to open' : centerTab === 'media' ? 'YouTube Theater' : 'Quick launch links'}
                 </span>
               </div>
 
@@ -1002,6 +1040,128 @@ export default function PersonalSanctuaryPage() {
                       </div>
                     </div>
                   </div>
+                </div>
+              ) : centerTab === 'media' ? (
+                <div className="flex-1 min-h-[280px] lg:min-h-0 bg-fouzar-surface/40 backdrop-blur-xl border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-6 flex flex-col overflow-hidden">
+                  <div className="flex flex-col h-full overflow-y-auto scrollbar-none space-y-6">
+                    <div className="flex justify-between items-center border-b border-fouzar-border/30 pb-4">
+                      <div>
+                        <h3 className="font-serif text-sm font-bold uppercase tracking-wider text-white">Media Theater</h3>
+                        <p className="text-[9px] text-fouzar-text-secondary uppercase mt-0.5 font-mono">
+                          {activeFolder?.name || 'General Space'} · YouTube & Video Resources
+                        </p>
+                      </div>
+                      
+                      {/* Add Video Trigger */}
+                      <button
+                        type="button"
+                        onClick={() => setIsAddingVideo(!isAddingVideo)}
+                        className="px-3 py-1.5 bg-fouzar-accent text-fouzar-text-inverse font-mono text-[8px] uppercase font-bold rounded-[var(--fouzar-radius-md)] shadow-[var(--fouzar-glow-primary)] flex items-center gap-1.5 hover:opacity-90 transition-opacity cursor-pointer"
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>{isAddingVideo ? 'Cancel' : 'Add Video Link'}</span>
+                      </button>
+                    </div>
+
+                    {isAddingVideo && (
+                      <div className="p-4 bg-fouzar-elevated/30 border border-fouzar-accent/40 rounded-[var(--fouzar-radius-md)]">
+                        <form
+                          onSubmit={async (e) => {
+                            e.preventDefault();
+                            if (!newVideoUrl || !activeFolderId) return;
+                            try {
+                              // basic youtube parser
+                              let embedUrl = newVideoUrl;
+                              if (newVideoUrl.includes('youtube.com/watch?v=')) {
+                                const v = new URL(newVideoUrl).searchParams.get('v');
+                                if (v) embedUrl = `https://www.youtube.com/embed/${v}`;
+                              } else if (newVideoUrl.includes('youtu.be/')) {
+                                const v = newVideoUrl.split('youtu.be/')[1].split('?')[0];
+                                if (v) embedUrl = `https://www.youtube.com/embed/${v}`;
+                              }
+                              
+                              const vid = await addSubjectVideo(embedUrl, newVideoTitle || 'Untitled Video', activeFolderId);
+                              setVideos(prev => [vid, ...prev]);
+                              setNewVideoUrl('');
+                              setNewVideoTitle('');
+                              setIsAddingVideo(false);
+                            } catch (err) {
+                              console.error('Failed to add video', err);
+                            }
+                          }}
+                          className="space-y-3"
+                        >
+                          <input
+                            type="text"
+                            required
+                            placeholder="Video Title (e.g. Backpropagation Explained)"
+                            value={newVideoTitle}
+                            onChange={(e) => setNewVideoTitle(e.target.value)}
+                            className="w-full bg-fouzar-bg border border-fouzar-border px-3 py-2 text-[10px] font-mono rounded-[var(--fouzar-radius-sm)] focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
+                          />
+                          <input
+                            type="url"
+                            required
+                            placeholder="YouTube URL (e.g. https://youtube.com/watch?v=...)"
+                            value={newVideoUrl}
+                            onChange={(e) => setNewVideoUrl(e.target.value)}
+                            className="w-full bg-fouzar-bg border border-fouzar-border px-3 py-2 text-[10px] font-mono rounded-[var(--fouzar-radius-sm)] focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
+                          />
+                          <div className="flex justify-end">
+                            <button
+                              type="submit"
+                              className="px-4 py-2 bg-fouzar-accent text-fouzar-text-inverse rounded-[var(--fouzar-radius-sm)] font-mono text-[9px] uppercase font-bold hover:opacity-90 cursor-pointer"
+                            >
+                              Save to Library
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {videos.map(video => (
+                        <div key={video.id} className="flex flex-col gap-2 p-3 bg-fouzar-elevated/20 border border-fouzar-border rounded-[var(--fouzar-radius-md)] hover:border-fouzar-accent/40 transition-colors">
+                          <div className="aspect-video w-full rounded overflow-hidden border border-fouzar-border/30">
+                            <iframe 
+                              src={video.url}
+                              className="w-full h-full"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                            />
+                          </div>
+                          <div className="flex justify-between items-center px-1">
+                            <span className="font-sans font-bold text-xs truncate max-w-[80%] text-fouzar-text-primary">{video.title}</span>
+                            <span className="text-[7px] font-mono uppercase text-fouzar-text-tertiary">YouTube</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {videos.length === 0 && !isAddingVideo && (
+                      <div className="py-12 text-center border border-dashed border-fouzar-border rounded-[var(--fouzar-radius-lg)] bg-fouzar-elevated/10 flex flex-col items-center justify-center">
+                        <Loader2 className="w-8 h-8 text-fouzar-text-tertiary mb-2" />
+                        <p className="font-mono text-[9px] text-fouzar-text-secondary uppercase">
+                          No Videos Available
+                        </p>
+                        <p className="text-[7.5px] font-mono text-fouzar-text-tertiary uppercase mt-1">
+                          Click "Add Video Link" to save a YouTube tutorial to this space.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : centerTab === 'youtube' ? (
+                <div className="flex-1 min-h-[280px] lg:min-h-0 bg-fouzar-surface/40 backdrop-blur-xl border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-6 flex flex-col overflow-hidden">
+                  <MediaHubStandalone 
+                    folderId={activeFolderId} 
+                    onVideoSelect={(url) => {
+                      setCenterTab('media');
+                      // Refresh videos or simply switch back to media tab to play
+                      if (activeFolderId) {
+                        getSubjectVideos(activeFolderId).then(setVideos);
+                      }
+                    }}
+                  />
                 </div>
               ) : null}
             </main>

@@ -17,8 +17,9 @@ import { useFouzar } from '../../../lib/FouzarContext';
 import { ChatPanel } from '../../../components/chat/ChatPanel';
 import { AiOrb } from '../../../components/ai/AiOrb';
 import { FocusFrame } from '../../../components/focus/FocusFrame';
-import { getSocket } from '../../../lib/socket';
+import { getSocket, useOnGroupNotesSync, syncGroupNotes } from '../../../lib/socket';
 import { FouzarLogo } from '../../../components/logo/FouzarLogo';
+import { GroupWatchParty } from '../../../components/groups/GroupWatchParty';
 
 interface SlideData {
   id: string;
@@ -38,7 +39,7 @@ export default function StudyGroupRoom() {
   const [syncSlides, setSyncSlides] = useState(true);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [memberCount, setMemberCount] = useState(4);
-  const [centerTab, setCenterTab] = useState<'slides' | 'notepad'>('slides');
+  const [centerTab, setCenterTab] = useState<'slides' | 'notepad' | 'watch'>('slides');
   const [notes, setNotes] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const socketRef = useRef<any>(null);
@@ -159,15 +160,24 @@ export default function StudyGroupRoom() {
     if (savedNotes) setNotes(savedNotes);
   }, [groupId]);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
+  useOnGroupNotesSync((data) => {
+    if (data.groupId === groupId) {
+      setNotes(data.notes);
+      localStorage.setItem(`fouzar-group-notes-${groupId}`, data.notes);
+    }
+  });
+
+  const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setNotes(val);
+    syncGroupNotes(groupId, val);
+    
     setIsSaving(true);
-    const t = setTimeout(() => {
-      localStorage.setItem(`fouzar-group-notes-${groupId}`, notes);
+    setTimeout(() => {
+      localStorage.setItem(`fouzar-group-notes-${groupId}`, val);
       setIsSaving(false);
     }, 1000);
-    return () => clearTimeout(t);
-  }, [notes, groupId]);
+  };
 
   const activeSlide = slides[currentSlideIndex];
 
@@ -295,6 +305,14 @@ export default function StudyGroupRoom() {
                 >
                   Notepad
                 </button>
+                <button
+                  onClick={() => setCenterTab('watch')}
+                  className={`px-3 py-1 text-[9px] font-mono uppercase tracking-wider rounded-[4px] transition-colors ${
+                    centerTab === 'watch' ? 'bg-red-500 text-white shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'text-fouzar-text-secondary hover:text-white hover:bg-red-500/10'
+                  }`}
+                >
+                  Watch Party
+                </button>
               </div>
               {centerTab === 'notepad' && (
                 <span className="text-[8px] font-mono text-fouzar-text-tertiary uppercase">
@@ -367,12 +385,16 @@ export default function StudyGroupRoom() {
                   </button>
                 </div>
               </div>
+            ) : centerTab === 'watch' ? (
+              <div className="flex-1 flex flex-col h-full min-h-[300px]">
+                <GroupWatchParty groupId={groupId as string} />
+              </div>
             ) : (
               <div className="flex-1 flex flex-col h-full min-h-[300px]">
                 <textarea
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder={`Your personal scratchpad for the ${groupId} study session...`}
+                  onChange={handleNotesChange}
+                  placeholder={`Collaborative Group Scratchpad for ${groupId}...`}
                   className="flex-1 bg-transparent text-fouzar-text-primary font-mono text-[11px] leading-relaxed resize-none focus:outline-none placeholder:text-fouzar-text-tertiary"
                 />
               </div>

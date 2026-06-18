@@ -57,6 +57,11 @@ export const syncSlide = (groupId: string, slideId: string) => {
   s.emit('syncSlide', { groupId, slideId });
 };
 
+export const syncGroupNotes = (groupId: string, notes: string) => {
+  const s = getSocket();
+  s.emit('group_notes_update', { groupId, notes });
+};
+
 export const updateFocusState = (isFocusing: boolean) => {
   const s = getSocket();
   s.emit('updateFocusState', { isFocusing });
@@ -110,6 +115,16 @@ export const useOnSignalReceived = (callback: (data: any) => void) => {
     s.on('signalReceived', callback);
     return () => {
       s.off('signalReceived', callback);
+    };
+  }, [callback]);
+};
+
+export const useOnGroupNotesSync = (callback: (data: { groupId: string; notes: string }) => void) => {
+  useEffect(() => {
+    const s = getSocket();
+    s.on('onGroupNotesUpdate', callback);
+    return () => {
+      s.off('onGroupNotesUpdate', callback);
     };
   }, [callback]);
 };

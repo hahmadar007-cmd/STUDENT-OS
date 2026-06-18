@@ -259,6 +259,16 @@ export const indexDocumentFile = (
   });
 };
 
+// ─── Sanctuary Media Theater ────────────────────────────────────────────────
+
+export const addSubjectVideo = (url: string, title: string, folderId: string) => {
+  return apiRequest('/videos', 'POST', { url, title, folderId });
+};
+
+export const getSubjectVideos = (folderId: string) => {
+  return apiRequest(`/videos/${folderId}`, 'GET');
+};
+
 export const updateFocusState = (isFocusing: boolean) => {
   return apiRequest('/users/focus', 'POST', { isFocusing });
 };
