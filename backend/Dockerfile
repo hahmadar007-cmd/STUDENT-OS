@@ -7,6 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies including devDependencies for build
+RUN apk add --no-cache openssl
 RUN npm install
 
 # Copy source code and prisma
@@ -21,8 +22,8 @@ RUN npm run build
 # Production execution stage
 FROM node:20-alpine AS runner
 
-# Install LibreOffice and fonts for PowerPoint to PDF conversion
-RUN apk add --no-cache libreoffice ttf-dejavu font-noto
+# Install LibreOffice, fonts, and openssl for Prisma
+RUN apk add --no-cache libreoffice ttf-dejavu font-noto openssl
 
 WORKDIR /app
 
