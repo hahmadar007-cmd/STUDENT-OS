@@ -1,5 +1,5 @@
 # Base build stage
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
 
 WORKDIR /app
 
@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies including devDependencies for build
-RUN apk add --no-cache openssl
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 RUN npm install
 
 # Copy source code and prisma
@@ -20,10 +20,10 @@ RUN npx prisma generate
 RUN npm run build
 
 # Production execution stage
-FROM node:20-alpine AS runner
+FROM node:20-slim AS runner
 
 # Install LibreOffice, fonts, and openssl for Prisma
-RUN apk add --no-cache libreoffice ttf-dejavu font-noto openssl
+RUN apt-get update && apt-get install -y libreoffice fonts-dejavu fonts-noto-core openssl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
