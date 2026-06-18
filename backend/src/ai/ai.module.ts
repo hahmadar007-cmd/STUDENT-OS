@@ -5,10 +5,11 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { VectorService } from './vector.service';
 import { DocumentProcessorService } from './document-processor.service';
 import { YoutubeService } from './youtube.service';
+import { YoutubeStandaloneController } from './youtube-standalone.controller';
 
 @Module({
   imports: [PrismaModule],
-  controllers: [AiController],
+  controllers: [AiController, YoutubeStandaloneController],
   providers: [AiService, VectorService, DocumentProcessorService, YoutubeService],
   exports: [AiService, VectorService, DocumentProcessorService, YoutubeService],
 })

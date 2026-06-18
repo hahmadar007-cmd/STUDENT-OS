@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, ValidateIf } from 'class-validator';
 
 // Keep in sync with schema.prisma ProviderType enum
 export enum ProviderType {
@@ -21,6 +21,7 @@ export class CreateAiProviderDto {
   apiKey: string;
 
   @IsOptional()
+  @ValidateIf((object, value) => value !== null)
   @IsString()
   baseUrl?: string;
 }

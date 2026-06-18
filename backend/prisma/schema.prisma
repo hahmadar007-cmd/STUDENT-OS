@@ -64,6 +64,7 @@ model User {
 
   // AI Provider credentials
   aiProviders          AiProvider[]
+  subjectVideos        SubjectVideo[]
 
   // Student Portal Integration
   portalProfile        StudentPortalProfile?
@@ -90,6 +91,7 @@ model Group {
   creatorId    String
   creator      User          @relation("GroupCreator", fields: [creatorId], references: [id])
   currentSlide String?
+  sharedNotes  String?       @db.Text
   memberships  Membership[]
   messages     ChatMessage[]
   files        GroupFile[]
@@ -166,6 +168,19 @@ model GroupFile {
   createdAt   DateTime @default(now())
 
   @@index([groupId])
+}
+
+model SubjectVideo {
+  id        String   @id @default(uuid())
+  url       String
+  title     String
+  folderId  String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([folderId])
 }
 
 model AiProvider {

@@ -116,6 +116,28 @@ export class GroupsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server.to(data.groupId).emit('onMessage', message);
   }
 
+  @SubscribeMessage('group_notes_update')
+  async handleGroupNotesUpdate(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { groupId: string; notes: string },
+  ) {
+    try {
+      // Broadcast to everyone else in the room
+      client.to(data.groupId).emit('onGroupNotesUpdate', {
+        groupId: data.groupId,
+        notes: data.notes,
+      });
+
+      // Persist to DB
+      await this.prisma.group.update({
+        where: { id: data.groupId },
+        data: { sharedNotes: data.notes },
+      });
+    } catch (err) {
+      console.error('Failed to save group notes:', err);
+    }
+  }
+
   @SubscribeMessage('syncSlide')
   async handleSyncSlide(
     @ConnectedSocket() client: Socket,
