@@ -10,7 +10,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
   constructor() {
     // 1. Create a raw connection pool using your Supabase DATABASE_URL
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const pool = new Pool({ 
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    });
     
     // 2. Wrap it in the Prisma Postgres adapter
     const adapter = new PrismaPg(pool);
