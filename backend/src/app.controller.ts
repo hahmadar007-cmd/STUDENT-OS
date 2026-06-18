@@ -77,9 +77,20 @@ export class AppController {
     try {
       await this.prisma.$queryRaw`SELECT 1`;
       return { status: 'ok', database: 'connected' };
-    } catch {
-      return { status: 'degraded', database: 'disconnected' };
+    } catch (e) {
+      return { status: 'degraded', database: 'disconnected', error: String(e) };
     }
+  }
+
+  @Get('debug/env')
+  debugEnv() {
+    return {
+      hasDb: !!process.env.DATABASE_URL,
+      dbPrefix: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 15) : null,
+      hasDirect: !!process.env.DIRECT_URL,
+      nodeEnv: process.env.NODE_ENV,
+      port: process.env.PORT
+    };
   }
 
   @Get('test/db')
