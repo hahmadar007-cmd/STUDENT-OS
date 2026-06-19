@@ -18,7 +18,7 @@ export function MediaHubStandalone({
   onVideoSelect,
 }: {
   folderId: string | null;
-  onVideoSelect: (url: string) => void;
+  onVideoSelect: (url: string, videoId: string, title: string) => void;
 }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -70,7 +70,7 @@ export function MediaHubStandalone({
         console.error("Failed to save video to folder", err);
       }
     }
-    onVideoSelect(videoUrl);
+    onVideoSelect(videoUrl, video.videoId, video.title);
   };
 
   return (
