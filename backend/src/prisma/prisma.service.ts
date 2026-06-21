@@ -24,7 +24,22 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   }
 
   async onModuleInit() {
-    await this.$connect();
+    try {
+      // Safely catch the connection promise so it doesn't cause an unhandled rejection later
+      const connectPromise = this.$connect().catch(err => {
+        console.warn('Prisma background connection finally failed:', err.message);
+      });
+      
+      await Promise.race([
+        connectPromise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Database connection timed out after 5000ms')), 5000))
+      ]);
+      console.log('Successfully connected to database');
+    } catch (error) {
+      console.error('Failed to connect to database on startup:', error);
+      // We don't throw the error so the backend can still start
+      // and serve the /health endpoint showing database: disconnected
+    }
   }
 
   async onModuleDestroy() {

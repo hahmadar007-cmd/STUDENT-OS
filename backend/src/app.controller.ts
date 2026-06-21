@@ -89,7 +89,8 @@ export class AppController {
       dbPrefix: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 15) : null,
       hasDirect: !!process.env.DIRECT_URL,
       nodeEnv: process.env.NODE_ENV,
-      port: process.env.PORT
+      port: process.env.PORT,
+      keys: Object.keys(process.env)
     };
   }
 

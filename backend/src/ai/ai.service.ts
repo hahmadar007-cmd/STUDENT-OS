@@ -331,41 +331,9 @@ Student's Query: "${prompt}"`;
       }
     }
 
-    // 3. Fallback to existing mock simulations but with live context
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    // Handle common greetings in simulated mode
-    const greetings = ['hi', 'hello', 'hey', 'greetings', 'yo', 'sup'];
-    if (greetings.includes(lowercasePrompt.trim().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g,""))) {
-      return {
-        text: `### FASCA Core Intelligence (Simulated Partner)\n\nHello! I am Fasca AI, your virtual study assistant. I'm currently running in **offline simulated mode** because no live API keys are active in the backend.\n\nIf you started your backend server *before* adding the keys to the \`.env\` file, please **restart your backend command terminal**! Alternatively, you can link your custom API key in the Profile Settings page to enable live responses immediately.`,
-        model: `${modelName} (Simulated)`,
-      };
-    }
-
-    let responseText = '';
-    
-    // Check if we have active slide text to answer from
-    if (currentSlideText && currentSlideText.trim()) {
-      responseText = `### FASCA Core Intelligence (Context Simulation)
-I detected active study content:
-"${currentSlideText.substring(0, 150)}..."
-
-Regarding your query **"${prompt}"**:
-Based on this context, this is related to your active learning material. Note that I am currently running in offline simulated mode. If you have API keys, please make sure they are written in \`backend/.env\` and that you have **restarted your backend server**. You can also enter a key in the settings panel to activate live responses!`;
-    } else if (slideId === '4' || lowercasePrompt.includes('backprop') || lowercasePrompt.includes('chain rule') || lowercasePrompt.includes('gradient')) {
-      responseText = `### Slide 4 Context: Gradient Descent & Backpropagation\n\nTo compute the local gradients for neural network training, we utilize the **Chain Rule of Calculus**.\n\nLet $z = wx + b$ and $a = \\sigma(z)$. The loss derivative with respect to weight $w$ is calculated as:\n$$\\frac{\\partial L}{\\partial w} = \\frac{\\partial L}{\\partial a} \\cdot \\frac{\\partial a}{\\partial z} \\cdot \\frac{\\partial z}{\\partial w}$$\n\nWhere:\n1. $\\frac{\\partial z}{\\partial w} = x$\n2. $\\frac{\\partial a}{\\partial z} = \\sigma'(z)$\n\nTherefore, we propagate the error gradient backward through the graph: $\\delta = \\frac{\\partial L}{\\partial z} = \\frac{\\partial L}{\\partial a} \\cdot \\sigma'(z)$.\n\nWould you like me to write a PyTorch snippet demonstrating this manual backward pass?`;
-    } else if (slideId === '3' || lowercasePrompt.includes('neural network') || lowercasePrompt.includes('relu') || lowercasePrompt.includes('activation')) {
-      responseText = `### Slide 3 Context: Deep Neural Networks Foundations\n\nDeep neural networks consist of nested linear mappings followed by element-wise non-linear activation functions:\n$$f(x) = \\sigma(W_L \\sigma(... \\sigma(W_1 x + b_1)...) + b_L)$$\n\n**Common Activation Functions**:\n*   **ReLU (Rectified Linear Unit)**: $\\text{ReLU}(x) = \\max(0, x)$. It resolves the vanishing gradient problem in deep architectures but can suffer from "dying ReLU" if weights update such that neurons never activate.\n*   **Sigmoid**: $\\sigma(x) = \\frac{1}{1 + e^{-x}}$. Maps values to $(0, 1)$, useful for binary classification output layers.`;
-    } else if (slideId === '2' || lowercasePrompt.includes('supervised') || lowercasePrompt.includes('unsupervised') || lowercasePrompt.includes('learning')) {
-      responseText = `### Slide 2 Context: Supervised vs Unsupervised Learning\n\n*   **Supervised Learning**: Learn mapping $f: X \\to Y$ from labeled dataset $\\mathcal{D} = \\{(x_i, y_i)\\}_{i=1}^N$. Used for classification (discrete $Y$) and regression (continuous $Y$).\n*   **Unsupervised Learning**: Learn structure/density of input space $X$ from unlabeled dataset $\\mathcal{D} = \\{x_i\\}_{i=1}^N$. Used for clustering (K-Means, GMM), dimensionality reduction (PCA, t-SNE), and density estimation.`;
-    } else {
-      responseText = `### FASCA Core Intelligence Response (${modelName})\n\nRegarding your query about **"${prompt}"**:\n\nI am currently running in offline simulated mode, so I can only respond to preset course concepts like neural networks, activation functions, and gradient descent. Link your Google Gemini or OpenAI API token in settings or restart your backend server to enable real-time AI responses!`;
-    }
-
     return {
-      text: responseText,
-      model: `${modelName} (Simulated)`,
+      text: `### Configuration Error\n\nThe requested model \`${modelName}\` is missing its required API key or is unsupported. Please check your AI Engines settings or environment variables.`,
+      model: 'System',
     };
   }
 

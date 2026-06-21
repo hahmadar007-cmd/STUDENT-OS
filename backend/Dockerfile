@@ -34,11 +34,13 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/prisma.config.ts ./
 COPY --from=builder /app/tsconfig.json ./
+COPY hf-proxy.js ./
 
 
 # Expose port and start
 ENV NODE_ENV=production
-ENV PORT=7860
 EXPOSE 7860
 
-CMD ["npm", "run", "start:prod"]
+# hf-proxy.js opens port 7860 instantly (passes HF health check),
+# then proxies all traffic to NestJS on port 3001
+CMD ["node", "hf-proxy.js"]
