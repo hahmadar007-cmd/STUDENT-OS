@@ -182,7 +182,10 @@ export const askAi = (
 
         const active = providers.find((p) => p.isActive);
         if (active) {
-          const pType = active.providerType || (typeof active.name === 'string' ? active.name.trim().toUpperCase() : '');
+          let pType = active.providerType || (typeof active.name === 'string' ? active.name.trim().toUpperCase() : '');
+          if (pType === 'OPENAI' && active.name.toUpperCase().includes('DEEPSEEK')) {
+            pType = 'DEEPSEEK';
+          }
           if (pType === 'OPENAI') {
             resolvedModel = modelName.startsWith('gpt') || modelName.startsWith('o1') || modelName.startsWith('o3') ? modelName : 'gpt-4o';
             aiHeaders['x-openai-key'] = active.apiKeyRaw;
@@ -192,6 +195,9 @@ export const askAi = (
           } else if (pType === 'GEMINI') {
             resolvedModel = modelName.startsWith('gemini') ? modelName : 'gemini-1.5-pro';
             aiHeaders['x-gemini-key'] = active.apiKeyRaw;
+          } else if (pType === 'DEEPSEEK') {
+            resolvedModel = 'deepseek';
+            aiHeaders['x-deepseek-key'] = active.apiKeyRaw;
           } else if (pType === 'CUSTOM') {
             resolvedModel = 'custom-endpoint';
             aiHeaders['x-custom-key'] = active.apiKeyRaw;

@@ -38,6 +38,7 @@ function inferProviderType(name: string, key: string): string {
   const n = name.trim().toUpperCase();
   const k = key.trim();
   if (k.startsWith('sk-ant-') || n.includes('ANTHROPIC') || n.includes('CLAUDE')) return 'ANTHROPIC';
+  if (n.includes('DEEPSEEK')) return 'DEEPSEEK';
   if (k.startsWith('sk-') || n.includes('OPENAI') || n.includes('GPT')) return 'OPENAI';
   if (k.startsWith('AIza') || n.includes('GEMINI') || n.includes('GOOGLE')) return 'GEMINI';
   return 'CUSTOM';
