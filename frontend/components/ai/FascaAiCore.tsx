@@ -14,7 +14,7 @@ interface ModelCard {
 }
 
 const MODEL_API_IDS: Record<string, string> = {
-  gemini: 'gemini',
+  gemini: 'gemini-1.5-pro',
   claude: 'claude-3-5-sonnet',
   gpt4: 'gpt-4o',
   custom: 'custom-endpoint',

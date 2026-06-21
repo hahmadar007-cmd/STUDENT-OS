@@ -526,17 +526,8 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
           model: res.model ?? activeModelLabel,
         },
       ]);
-    } catch {
-      setError('AI unreachable. Ensure the backend is running.');
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `err-${Date.now()}`,
-          role: 'assistant',
-          content: 'Connection failed. Start the backend with npm run dev:backend and try again.',
-          model: 'System',
-        },
-      ]);
+    } catch (err: any) {
+      setError(`API Error: ${err.message || 'Connection failed. Ensure the backend is running.'}`);
     } finally {
       setIsLoading(false);
     }

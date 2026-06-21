@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bot, Send, Sparkles, Hash, ChevronDown, X } from 'lucide-react';
-import { getBackendUrl } from '../../lib/api';
+import { askAi } from '../../lib/api';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -25,22 +25,15 @@ export const AiPanel: React.FC<AiPanelProps> = ({
   userId,
   onClose,
 }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      role: 'assistant',
-      content: 'FASCA AI connection initialized. Slide context successfully parsed. Ask your query.',
-      model: 'deepseek',
-      responseTime: '45ms',
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
-  const [selectedModel, setSelectedModel] = useState('deepseek');
+  const [selectedModel, setSelectedModel] = useState('gemini-1.5-pro');
   const [isLoading, setIsLoading] = useState(false);
   const [showModels, setShowModels] = useState(false);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
   const models = [
-    { id: 'deepseek', name: 'DeepSeek Chat', provider: 'DeepSeek', isDefault: true },
+    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', provider: 'Google', isDefault: true },
     { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', isDefault: false },
     { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI', isDefault: false },
   ];
@@ -61,36 +54,20 @@ export const AiPanel: React.FC<AiPanelProps> = ({
     const startTime = Date.now();
 
     try {
-      const apiBase = getBackendUrl();
-      const response = await fetch(`${apiBase}/ai/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          prompt: userPrompt,
-          slideId: currentSlideId,
-          modelName: selectedModel,
-        }),
+      const res = await askAi(userPrompt, currentSlideId, selectedModel, {
+        currentSlideText: undefined,
       });
 
       const responseTimeMs = `${Date.now() - startTime}ms`;
 
-      if (response.ok) {
-        const data = await response.json();
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: data.text, model: selectedModel, responseTime: responseTimeMs },
-        ]);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: 'SYSTEM ERROR: Connection failed. Verify provider configs.', model: selectedModel, responseTime: '0ms' },
-        ]);
-      }
-    } catch (err) {
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: 'SYSTEM TIMEOUT: Verify your local backend server status.', model: selectedModel, responseTime: '0ms' },
+        { role: 'assistant', content: res.text ?? 'No response received.', model: res.model ?? selectedModel, responseTime: responseTimeMs },
+      ]);
+    } catch (err: any) {
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', content: `API Error: ${err.message || 'Connection failed.'}`, model: selectedModel, responseTime: '0ms' },
       ]);
     } finally {
       setIsLoading(false);
@@ -175,7 +152,7 @@ export const AiPanel: React.FC<AiPanelProps> = ({
         <div className="flex items-center gap-2 px-2.5 py-1.5 bg-emerald-500/5 border border-emerald-500/15 rounded-[4px]">
           <Sparkles className="w-3 h-3 text-emerald-400" />
           <span className="text-[9px] font-mono text-emerald-400/80">
-            Default AI core active: <strong>DeepSeek Chat</strong> — or link your own key
+            Default AI core active: <strong>Gemini 1.5 Pro</strong> — or link your own key
           </span>
         </div>
       </div>

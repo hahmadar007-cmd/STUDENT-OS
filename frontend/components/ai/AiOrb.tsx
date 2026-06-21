@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, ChevronDown, X, Sparkles, Cpu } from 'lucide-react';
 import { useFouzar } from '../../lib/FouzarContext';
-import { getBackendUrl } from '../../lib/api';
+import { askAi } from '../../lib/api';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -15,21 +15,14 @@ interface ChatMessage {
 
 export const AiOrb: React.FC = () => {
   const { isOrbOpen, setIsOrbOpen, aiModel, setAiModel, space } = useFouzar();
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      role: 'assistant',
-      content: 'Fouzar AI companion active. Adjust configuration in header settings. Ask anything.',
-      model: 'deepseek',
-      responseTime: '22ms',
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showModels, setShowModels] = useState(false);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
   const models = [
-    { id: 'deepseek', name: 'DeepSeek Chat', provider: 'DeepSeek' },
+    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', provider: 'Google' },
     { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'Anthropic' },
     { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI' },
   ];
@@ -61,36 +54,18 @@ export const AiOrb: React.FC = () => {
     const startTime = Date.now();
 
     try {
-      const apiBase = getBackendUrl();
-      const response = await fetch(`${apiBase}/ai/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: 'user-1',
-          prompt: userPrompt,
-          slideId: space === 'study' ? '4' : null,
-          modelName: aiModel,
-        }),
-      });
+      const res = await askAi(userPrompt, space === 'study' ? '4' : null, aiModel);
 
       const responseTimeMs = `${Date.now() - startTime}ms`;
 
-      if (response.ok) {
-        const data = await response.json();
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: data.text, model: aiModel, responseTime: responseTimeMs },
-        ]);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: 'SYSTEM ERROR: Connection failed. Verify provider configs.', model: aiModel, responseTime: '0ms' },
-        ]);
-      }
-    } catch (err) {
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: 'SYSTEM TIMEOUT: Verify your local backend server status.', model: aiModel, responseTime: '0ms' },
+        { role: 'assistant', content: res.text ?? 'No response received.', model: res.model ?? aiModel, responseTime: responseTimeMs },
+      ]);
+    } catch (err: any) {
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', content: `API Error: ${err.message || 'Connection failed.'}`, model: aiModel, responseTime: '0ms' },
       ]);
     } finally {
       setIsLoading(false);

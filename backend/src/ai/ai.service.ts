@@ -153,11 +153,12 @@ Student's Query: "${prompt}"`;
       }
     }
 
-    if (modelName === 'gemini-1.5-pro' && geminiKey) {
+    if (modelName.startsWith('gemini') && geminiKey) {
       try {
+        const actualModel = modelName === 'gemini' ? 'gemini-1.5-pro' : modelName;
         const callGemini = async (model: string) => {
           return await fetch(
-            `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${geminiKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
             {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -168,14 +169,8 @@ Student's Query: "${prompt}"`;
           );
         };
 
-        let response = await callGemini('gemini-1.5-pro');
-        let activeModel = 'Gemini 1.5 Pro';
-
-        // Auto-fallback to gemini-1.5-flash if 404 Not Found or not supported
-        if (response.status === 404) {
-          response = await callGemini('gemini-1.5-flash');
-          activeModel = 'Gemini 1.5 Flash';
-        }
+        const response = await callGemini(actualModel);
+        let activeModel = actualModel === 'gemini-1.5-flash' ? 'Gemini 1.5 Flash' : 'Gemini 1.5 Pro';
 
         if (response.ok) {
           const data = await response.json();
@@ -183,14 +178,20 @@ Student's Query: "${prompt}"`;
           if (text) return { text, model: activeModel };
         } else {
           const data = await response.json().catch(() => ({}));
+          if (response.status === 404) {
+            return {
+              text: `### Gemini Model Unavailable\n\nThe selected model \`${actualModel}\` was not found. Please check if this model is supported in your region or update your API key permissions.`,
+              model: `Gemini (Error 404)`,
+            };
+          }
           return {
-            text: `### FASCA Core Intelligence Error\n\nThe Google Gemini API returned an error.\n\nStatus: ${response.status}\nMessage: ${data.error?.message || 'Unknown error'}\n\nPlease try again shortly, check your billing details, or link a personal key in settings.`,
+            text: `### Gemini API Error\n\nThe Google Gemini API returned an error.\n\nStatus: ${response.status}\nMessage: ${data.error?.message || 'Unknown error'}\n\nPlease try again shortly, check your billing details, or link a personal key in settings.`,
             model: `Gemini (API Error ${response.status})`,
           };
         }
       } catch (err: any) {
         return {
-          text: `### FASCA Core Intelligence Error\n\nFailed to communicate with the Google Gemini API.\n\nError: ${err.message || err}\n\nPlease verify your internet connection or check your API key in settings.`,
+          text: `### Gemini API Error\n\nFailed to communicate with the Google Gemini API.\n\nError: ${err.message || err}\n\nPlease verify your internet connection or check your API key in settings.`,
           model: 'Gemini (Network Error)',
         };
       }
@@ -217,13 +218,13 @@ Student's Query: "${prompt}"`;
         } else {
           const data = await response.json().catch(() => ({}));
           return {
-            text: `### FASCA Core Intelligence Error\n\nThe OpenAI API returned an error.\n\nStatus: ${response.status}\nMessage: ${data.error?.message || 'Unknown error'}\n\nPlease check your billing details, link a personal key in settings, or switch connection mode.`,
+            text: `### OpenAI API Error\n\nThe OpenAI API returned an error.\n\nStatus: ${response.status}\nMessage: ${data.error?.message || 'Unknown error'}\n\nPlease check your billing details, link a personal key in settings, or switch connection mode.`,
             model: `GPT-4o (API Error ${response.status})`,
           };
         }
       } catch (err: any) {
         return {
-          text: `### FASCA Core Intelligence Error\n\nFailed to communicate with the OpenAI API.\n\nError: ${err.message || err}\n\nPlease check your internet connection or key status.`,
+          text: `### OpenAI API Error\n\nFailed to communicate with the OpenAI API.\n\nError: ${err.message || err}\n\nPlease check your internet connection or key status.`,
           model: 'GPT-4o (Network Error)',
         };
       }
@@ -252,13 +253,13 @@ Student's Query: "${prompt}"`;
         } else {
           const data = await response.json().catch(() => ({}));
           return {
-            text: `### FASCA Core Intelligence Error\n\nThe Anthropic API returned an error.\n\nStatus: ${response.status}\nMessage: ${data.error?.message || 'Unknown error'}`,
+            text: `### Anthropic API Error\n\nThe Anthropic API returned an error.\n\nStatus: ${response.status}\nMessage: ${data.error?.message || 'Unknown error'}`,
             model: `Claude (API Error ${response.status})`,
           };
         }
       } catch (err: any) {
         return {
-          text: `### FASCA Core Intelligence Error\n\nFailed to communicate with the Anthropic API.\n\nError: ${err.message || err}`,
+          text: `### Anthropic API Error\n\nFailed to communicate with the Anthropic API.\n\nError: ${err.message || err}`,
           model: 'Claude (Network Error)',
         };
       }
@@ -285,13 +286,13 @@ Student's Query: "${prompt}"`;
         } else {
           const data = await response.json().catch(() => ({}));
           return {
-            text: `### FASCA Core Intelligence Error\n\nThe DeepSeek API returned an error.\n\nStatus: ${response.status}\nMessage: ${data.error?.message || 'Unknown error'}\n\nPlease try again or switch to another model.`,
+            text: `### DeepSeek API Error\n\nThe DeepSeek API returned an error.\n\nStatus: ${response.status}\nMessage: ${data.error?.message || 'Unknown error'}\n\nPlease try again or switch to another model.`,
             model: `DeepSeek (API Error ${response.status})`,
           };
         }
       } catch (err: any) {
         return {
-          text: `### FASCA Core Intelligence Error\n\nFailed to communicate with the DeepSeek API.\n\nError: ${err.message || err}`,
+          text: `### DeepSeek API Error\n\nFailed to communicate with the DeepSeek API.\n\nError: ${err.message || err}`,
           model: 'DeepSeek (Network Error)',
         };
       }
