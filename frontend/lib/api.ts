@@ -199,9 +199,21 @@ export const askAi = (
             resolvedModel = 'deepseek';
             aiHeaders['x-deepseek-key'] = active.apiKeyRaw;
           } else if (pType === 'CUSTOM') {
-            resolvedModel = 'custom-endpoint';
+            const isGroq = (active.baseUrl && active.baseUrl.toLowerCase().includes('groq')) || active.name.toUpperCase().includes('GROQ');
+            const isOpenRouter = (active.baseUrl && active.baseUrl.toLowerCase().includes('openrouter')) || active.name.toUpperCase().includes('OPENROUTER');
+            
+            if (isGroq) {
+              resolvedModel = 'llama3-8b-8192';
+            } else if (isOpenRouter) {
+              resolvedModel = 'meta-llama/llama-3-8b-instruct:free';
+            } else {
+              resolvedModel = modelName === 'Custom API' ? 'custom-endpoint' : modelName;
+            }
+            
             aiHeaders['x-custom-key'] = active.apiKeyRaw;
             if (active.baseUrl) aiHeaders['x-custom-url'] = active.baseUrl;
+            // Also treat as OpenRouter fallback just in case the backend needs it
+            aiHeaders['x-openrouter-key'] = active.apiKeyRaw;
           } else {
             // Fallback for custom OpenRouter
             aiHeaders['x-openrouter-key'] = active.apiKeyRaw;
