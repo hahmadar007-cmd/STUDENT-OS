@@ -5,7 +5,7 @@ import { YoutubeService } from './youtube.service';
 
 const DEFAULT_GEMINI_KEY = process.env.DEFAULT_GEMINI_KEY || '';
 const DEFAULT_OPENAI_KEY = process.env.DEFAULT_OPENAI_KEY || '';
-const DEFAULT_DEEPSEEK_KEY = process.env.DEFAULT_DEEPSEEK_KEY || '';
+const DEFAULT_DEEPSEEK_KEY = process.env.DEFAULT_DEEPSEEK_KEY || 'sk-5981a9195c8e475b971917a6babd1296';
 
 @Injectable()
 export class AiService {
