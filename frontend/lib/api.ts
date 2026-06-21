@@ -184,13 +184,13 @@ export const askAi = (
         if (active) {
           const pType = active.providerType || (typeof active.name === 'string' ? active.name.trim().toUpperCase() : '');
           if (pType === 'OPENAI') {
-            resolvedModel = 'gpt-4o';
+            resolvedModel = modelName.startsWith('gpt') || modelName.startsWith('o1') || modelName.startsWith('o3') ? modelName : 'gpt-4o';
             aiHeaders['x-openai-key'] = active.apiKeyRaw;
           } else if (pType === 'ANTHROPIC') {
-            resolvedModel = 'claude-3-5-sonnet';
+            resolvedModel = modelName.startsWith('claude') ? modelName : 'claude-3-5-sonnet';
             aiHeaders['x-anthropic-key'] = active.apiKeyRaw;
           } else if (pType === 'GEMINI') {
-            resolvedModel = 'gemini-1.5-pro';
+            resolvedModel = modelName.startsWith('gemini') ? modelName : 'gemini-1.5-pro';
             aiHeaders['x-gemini-key'] = active.apiKeyRaw;
           } else if (pType === 'CUSTOM') {
             resolvedModel = 'custom-endpoint';
