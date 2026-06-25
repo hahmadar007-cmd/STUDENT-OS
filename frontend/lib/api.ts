@@ -182,7 +182,7 @@ export const askAi = (
 
         const active = providers.find((p) => p.isActive);
         if (active) {
-          let pType = active.providerType || (typeof active.name === 'string' ? active.name.trim().toUpperCase() : '');
+          let pType: string = active.providerType || (typeof active.name === 'string' ? active.name.trim().toUpperCase() : '');
           if (pType === 'OPENAI' && active.name.toUpperCase().includes('DEEPSEEK')) {
             pType = 'DEEPSEEK';
           }
