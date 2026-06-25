@@ -7,6 +7,7 @@ import { useFouzar, LmsRepositoryItem } from '../../lib/FouzarContext';
 import { getBackendUrl } from '../../lib/api';
 import { NavRail } from './workspace/NavRail';
 import { SocialColumn } from './workspace/SocialColumn';
+import { ResizablePanel } from '../ui/ResizablePanel';
 import { SanctuaryCanvas } from './workspace/SanctuaryCanvas';
 
 /* =============================================================================
@@ -126,6 +127,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
     clearBypass,
   } = useFouzar();
 
+  const [isSocialMinimized, setIsSocialMinimized] = useState(false);
   const [mobilePanel, setMobilePanel] = useState<'nav' | 'social' | 'canvas'>('canvas');
 
   const syncBypassToBackend = useCallback(async (isBypassed: boolean, durationMinutes?: number) => {
@@ -191,7 +193,9 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
         />
       </div>
 
-      {/* Column 2 — Unified sanctuary canvas */}
+            <div className="flex-1 flex overflow-hidden">
+        <ResizablePanel direction="horizontal" initialSize={700} minSize={400} collapsed={isSocialMinimized}>
+{/* Column 2 — Unified sanctuary canvas */}
       <div
         className={`flex-1 min-w-0 ${
           mobilePanel === 'canvas' ? 'flex' : 'hidden md:flex'
@@ -218,9 +222,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
 
       {/* Column 3 — Social + LMS hub (Moved to the Right) */}
       <motion.div
-        className={`fouzar-chrome shrink-0 overflow-hidden ${
-          mobilePanel === 'social' ? 'flex w-full md:w-72 lg:w-80' : 'hidden md:flex md:w-72 lg:w-80'
-        } ${isFlowActive ? 'md:w-0 md:opacity-0 md:pointer-events-none' : ''}`}
+        className="fouzar-chrome h-full w-full flex flex-col"
         animate={{
           opacity: isFlowActive ? 0 : 1,
           width: isFlowActive ? 0 : undefined,
@@ -239,8 +241,11 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
           chatEndRef={chatEndRef}
           currentSlide={currentSlide}
           slides={slides}
+          onMinimize={() => setIsSocialMinimized(true)}
         />
       </motion.div>
+        </ResizablePanel>
+      </div>
 
       {/* Pillar 2 — Deep Flow shield overlay */}
       <AnimatePresence>

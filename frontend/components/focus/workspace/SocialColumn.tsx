@@ -15,6 +15,7 @@ import {
   User,
   Send,
   MessageSquare,
+  Minus,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useFouzar, FouzarFriendProfile, deriveInitials } from '../../../lib/FouzarContext';
@@ -83,6 +84,7 @@ interface SocialColumnProps {
   slides?: SlideData[];
   /** Bubbles up to WorkspaceLayout to start a live presentation via useLivePresentation */
   onPresentFile?: (fileId: string, fileName: string) => void;
+  onMinimize?: () => void;
 }
 
 /**
@@ -102,6 +104,7 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
   currentSlide,
   slides,
   onPresentFile,
+  onMinimize,
 }) => {
   const router = useRouter();
   const {
@@ -354,7 +357,7 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
       } ${className}`}
     >
       {/* User identity strip */}
-      <div className="px-4 py-3 border-b border-fouzar-border shrink-0">
+      <div className="px-4 py-3 border-b border-fouzar-border shrink-0 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-full bg-fouzar-elevated border border-fouzar-border flex items-center justify-center font-mono text-[10px] font-bold">
             {user?.avatarInitials ?? 'FZ'}
@@ -366,9 +369,14 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
             </p>
           </div>
         </div>
+        {onMinimize && (
+          <button onClick={onMinimize} className="text-fouzar-text-tertiary hover:text-white cursor-pointer p-1" title="Minimize Panel">
+            <Minus className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
-      <div className="px-4 py-3 border-b border-fouzar-border shrink-0">
+      <div className="px-4 py-3 border-b border-fouzar-border shrink-0 flex items-center justify-between">
         <FolderSelector />
       </div>
 

@@ -1,210 +1,19 @@
-'use client';
+import os
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  ChevronLeft,
-  ChevronRight,
-  Send,
-  Play,
-  Lock,
-  Unlock,
-  MessageSquare,
-  BookOpen,
-  MonitorPlay,
-  Globe,
-  ExternalLink,
-  Search,
-  Sparkles,
-  X,
-} from 'lucide-react';
-import { useFouzar } from '../../../lib/FouzarContext';
-import { DocumentViewer } from '../../documents/DocumentViewer';
-import { FolderSelector } from '../../ui/FolderSelector';
-import { ResizablePanel } from '../../ui/ResizablePanel';
-import { FileExplorer } from '../../documents/FileExplorer';
-import { useLivePresentation } from '../../../hooks/useLivePresentation';
-import { PresenterToast } from '../../groups/PresenterToast';
-import { MediaHubStandalone } from '../../sanctuary/MediaHubStandalone';
+path = "frontend/components/focus/workspace/SanctuaryCanvas.tsx"
 
-interface SlideData {
-  number: number;
-  title: string;
-  subtitle: string;
-  content: string;
-}
+with open(path, 'r', encoding='utf-8') as f:
+    code = f.read()
 
-interface ChatMessage {
-  id: string;
-  senderName: string;
-  content: string;
-  timestamp: string;
-  slideContext: string | null;
-}
+# I need to refactor from:
+#       {/* Main canvas grid */}
+#       <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative z-10">
+# ... to end of component
 
-interface SanctuaryCanvasProps {
-  roomId: string;
-  currentSlide: number;
-  syncMode: boolean;
-  isLeader: boolean;
-  setIsLeader: (leader: boolean) => void;
-  setSyncMode: (sync: boolean) => void;
-  slides: SlideData[];
-  chatMessages: ChatMessage[];
-  chatInput: string;
-  setChatInput: (input: string) => void;
-  handleSendChat: (e: React.FormEvent) => void;
-  chatEndRef: React.RefObject<HTMLDivElement | null>;
-  handleNavigateSlide: (direction: 'prev' | 'next') => void;
-  activeDoc: any | null;
-  setActiveDoc: (doc: any | null) => void;
-  /** Triggered from the SocialColumn Drive tab to start a live presentation */
-  onPresentFile?: (fileId: string, fileName: string) => void;
-}
+main_canvas_grid_start = code.find('{/* Main canvas grid */}')
 
-type CanvasView = 'material' | 'split' | 'media' | 'web';
-
-/**
- * Column 3 — Unified Live Sanctuary Canvas (Pillar 1).
- * Fuses Material Hub, Embedded Media Sandbox, and Contextual Peer Chat
- * into a single closed-loop workspace — no external browser tabs required.
- */
-export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
-  roomId,
-  currentSlide,
-  syncMode,
-  isLeader,
-  setIsLeader,
-  setSyncMode,
-  slides,
-  chatMessages,
-  chatInput,
-  setChatInput,
-  handleSendChat,
-  chatEndRef,
-  handleNavigateSlide,
-  activeDoc,
-  setActiveDoc,
-  onPresentFile,
-}) => {
-  const { mode, isFlowActive, activeFolderId, setActiveVideoUrl, setActiveVideoTimestamp, setActiveDocText, setAiTriggerQuery, user, openDocs, closeDoc } = useFouzar();
-  const isGreenhouse = mode === 'greenhouse';
-
-  // ── Feature B: Live Presentation Engine ────────────────────────────────────
-  const livePresentation = useLivePresentation(user?.id);
-
-  // When this component receives an onPresentFile call (from the Drive tab),
-  // start a presenter session for that file.
-  const handleStartPresenting = useCallback(
-    (fileId: string, fileName: string) => {
-      livePresentation.startPresenting(roomId, fileId, fileName);
-    },
-    [livePresentation, roomId],
-  );
-
-  // Expose the start handler up through onPresentFile prop
-  useEffect(() => {
-    // Bind external trigger: when parent calls onPresentFile, route it here
-  }, []);
-
-  // Expose combined onPresentFile: both internal handler + prop passthrough
-  const combinedOnPresentFile = useCallback(
-    (fileId: string, fileName: string) => {
-      handleStartPresenting(fileId, fileName);
-      onPresentFile?.(fileId, fileName);
-    },
-    [handleStartPresenting, onPresentFile],
-  );
-
-  const [activeSplitTabs, setActiveSplitTabs] = useState<{ left: string; right: string | null }>({ left: 'material', right: 'media' });
-  const [videoInput, setVideoInput] = useState('');
-  const [embedUrl, setEmbedUrl] = useState('https://www.youtube.com/embed/jfKfPfyJRdk?rel=0&modestbranding=1&enablejsapi=1');
-  const [notes, setNotes] = useState('');
-  const [chatExpanded, setChatExpanded] = useState(true);
-
-  const [searchResults, setSearchResults] = useState<{ title: string; link: string; snippet: string }[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [fedUrls, setFedUrls] = useState<Record<string, boolean>>({});
-
-  const handleWebSearchSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
-    setIsSearching(true);
-    try {
-      const { webSearch } = await import('../../../lib/api');
-      const results = await webSearch(searchQuery);
-      setSearchResults(results || []);
-    } catch (err) {
-      console.error('Failed to query search:', err);
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const notesKey = `fouzar-notes-${roomId}-${activeFolderId}`;
-
-  useEffect(() => {
-    setActiveVideoUrl(embedUrl);
-  }, [embedUrl, setActiveVideoUrl]);
-
-  useEffect(() => {
-    const handleYoutubeMessage = (event: MessageEvent) => {
-      let data = event.data;
-      if (typeof data === 'string') {
-        try {
-          data = JSON.parse(data);
-        } catch {
-          return;
-        }
-      }
-
-      if (data && data.event === 'infoDelivery' && data.info && typeof data.info.currentTime === 'number') {
-        setActiveVideoTimestamp(Math.round(data.info.currentTime));
-      }
-    };
-
-    window.addEventListener('message', handleYoutubeMessage);
-    return () => window.removeEventListener('message', handleYoutubeMessage);
-  }, [setActiveVideoTimestamp]);
-
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const saved = localStorage.getItem(notesKey);
-    setNotes(saved || '');
-  }, [notesKey]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const currentSaved = localStorage.getItem(notesKey) || '';
-    if (notes === currentSaved) return;
-
-    const t = setTimeout(() => localStorage.setItem(notesKey, notes), 1200);
-    return () => clearTimeout(t);
-  }, [notes, notesKey]);
-
-  useEffect(() => {
-    if (isFlowActive) setActiveSplitTabs({ left: 'material', right: null });
-  }, [isFlowActive]);
-
-  const handleSetVideo = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!videoInput.trim()) return;
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#&?]*).*/;
-    const match = videoInput.match(regExp);
-    if (match && match[2].length === 11) {
-      setEmbedUrl(`https://www.youtube.com/embed/${match[2]}?rel=0&modestbranding=1&iv_load_policy=3&enablejsapi=1`);
-    } else {
-      const separator = videoInput.includes('?') ? '&' : '?';
-      setEmbedUrl(`${videoInput}${videoInput.includes('enablejsapi=1') ? '' : `${separator}enablejsapi=1`}`);
-    }
-    setVideoInput('');
-  };
-
-
-    const renderTabContent = (tab: string | null) => {
+render_fn = """
+  const renderTabContent = (tab: string | null) => {
     if (!tab) return null;
     
     if (tab === 'material') {
@@ -431,9 +240,9 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
                         <button
                           type="button"
                           onClick={() => {
-                             setActiveDocText(`[Web Search context]\nSource Title: ${res.title}\nSource Link: ${res.link}\nContent:\n${res.snippet}`);
+                             setActiveDocText(`[Web Search context]\\nSource Title: ${res.title}\\nSource Link: ${res.link}\\nContent:\\n${res.snippet}`);
                              setAiTriggerQuery({
-                               text: `Please analyze this search result context:\n\nTitle: ${res.title}\nLink: ${res.link}\nSnippet: ${res.snippet}`,
+                               text: `Please analyze this search result context:\\n\\nTitle: ${res.title}\\nLink: ${res.link}\\nSnippet: ${res.snippet}`,
                                id: Date.now().toString()
                              });
                              setFedUrls((prev) => ({ ...prev, [res.link]: true }));
@@ -460,139 +269,11 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
       );
     }
     
-        if (tab === 'youtube') {
-      return (
-        <section className={`flex flex-col overflow-hidden border-fouzar-border flex-1 h-full w-full ${isGreenhouse ? 'fouzar-glass m-2 rounded-[var(--fouzar-radius-lg)]' : ''}`}>
-          <div className="flex-1 min-h-[280px] lg:min-h-0 bg-fouzar-surface/40 backdrop-blur-xl border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-6 flex flex-col overflow-hidden">
-            <MediaHubStandalone
-              folderId={activeFolderId}
-              onVideoSelect={(url, videoId, title) => {
-                // Video selected
-                setEmbedUrl(`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`);
-                setActiveSplitTabs(prev => ({ ...prev, left: 'media' }));
-              }}
-            />
-          </div>
-        </section>
-      );
-    }
-    
     return null;
   };
+"""
 
-  return (
-    <div className="fouzar-canvas flex flex-col h-full overflow-hidden bg-fouzar-bg relative">
-      {/* Ambient glow */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div
-          className={`absolute -top-1/4 -left-1/4 w-1/2 h-1/2 rounded-full blur-[120px] opacity-[0.07] ${
-            isGreenhouse ? 'bg-fouzar-accent' : 'bg-fouzar-accent'
-          }`}
-        />
-      </div>
-
-      {/* Feature B — Presenter Toast (absolutely positioned, non-intrusive) */}
-      <PresenterToast
-        activeBroadcast={livePresentation.activeBroadcast}
-        isFollowingPresenter={livePresentation.isFollowingPresenter}
-        onFollow={livePresentation.followPresenter}
-        onIgnore={livePresentation.ignorePresenter}
-        onLeave={livePresentation.leavePresenterFeed}
-      />
-
-      {/* Canvas toolbar */}
-      <div
-        className={`fouzar-chrome relative z-10 flex items-center justify-between px-4 py-2.5 border-b border-fouzar-border shrink-0 ${
-          isGreenhouse ? 'bg-fouzar-surface-glass backdrop-blur-xl' : 'bg-fouzar-surface'
-        }`}
-      >
-        <div className="flex items-center gap-2">
-          <span className="font-serif text-[11px] font-bold tracking-wider uppercase">
-            Sanctuary Canvas
-          </span>
-          <span className="font-mono text-[7px] text-fouzar-text-secondary border border-fouzar-border px-1.5 py-0.5 rounded-[var(--fouzar-radius-sm)] uppercase">
-            {roomId}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-1">
-          {[
-            { id: 'material', icon: BookOpen, label: 'Materials' },
-            { id: 'media', icon: Play, label: 'Media' },
-            { id: 'web', icon: Globe, label: 'Web Hub' },
-            { id: 'youtube', icon: MonitorPlay, label: 'YT Search' },
-          ].map((v) => {
-            const Icon = v.icon;
-            return (
-              <button
-                key={v.id}
-                type="button"
-                onClick={() => setActiveSplitTabs(prev => ({ ...prev, left: v.id }))}
-                disabled={isFlowActive && v.id !== 'material'}
-                className={`px-2.5 py-1 flex items-center gap-1 font-mono text-[7px] uppercase tracking-wider rounded-[var(--fouzar-radius-sm)] transition-colors ${
-                  activeSplitTabs.left === v.id
-                    ? 'bg-fouzar-accent/15 text-fouzar-accent'
-                    : 'text-fouzar-text-secondary hover:text-fouzar-text-primary'
-                } disabled:opacity-30`}
-              >
-                <Icon className="w-3 h-3" />
-                {v.label}
-              </button>
-            );
-          })}
-          <div className="w-[1px] h-4 bg-fouzar-border mx-1" />
-          <button
-            onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: prev.right ? null : (prev.left === 'media' ? 'material' : 'media') }))}
-            disabled={isFlowActive}
-            className={`px-2.5 py-1 flex items-center gap-1 font-mono text-[7px] uppercase tracking-wider rounded-[var(--fouzar-radius-sm)] transition-colors ${
-              activeSplitTabs.right
-                ? 'bg-indigo-500/20 text-indigo-400'
-                : 'text-fouzar-text-secondary hover:text-fouzar-text-primary'
-            } disabled:opacity-30`}
-          >
-            <MonitorPlay className="w-3 h-3" />
-            Split
-          </button>
-          {activeSplitTabs.right && !isFlowActive && (
-            <select
-              value={activeSplitTabs.right}
-              onChange={(e) => setActiveSplitTabs(prev => ({ ...prev, right: e.target.value }))}
-              className="bg-transparent border border-fouzar-border rounded-[var(--fouzar-radius-sm)] text-[7px] font-mono p-1 outline-none text-fouzar-text-primary uppercase cursor-pointer"
-            >
-              <option value="material">Materials</option>
-              <option value="media">Media</option>
-              <option value="web">Web Hub</option>
-              <option value="youtube">YT Search</option>
-            </select>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setIsLeader(!isLeader)}
-            disabled={isFlowActive}
-            className={`px-2 py-0.5 font-mono text-[7px] uppercase border rounded-[var(--fouzar-radius-sm)] ${
-              isLeader
-                ? 'border-fouzar-ice/40 text-fouzar-ice bg-fouzar-ice/5'
-                : 'border-fouzar-border text-fouzar-text-secondary'
-            }`}
-          >
-            {isLeader ? 'Leader' : 'Follow'}
-          </button>
-          <button
-            type="button"
-            onClick={() => setSyncMode(!syncMode)}
-            disabled={isFlowActive}
-            className="p-1 text-fouzar-text-secondary hover:text-fouzar-accent disabled:opacity-30"
-          >
-            {syncMode ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
-          </button>
-        </div>
-      </div>
-
-      
-      {/* Main canvas grid */}
+grid_code = """      {/* Main canvas grid */}
       <div className="flex-1 flex flex-col overflow-hidden relative z-10">
         {activeSplitTabs.right ? (
           <ResizablePanel direction="horizontal" initialSize={500} minSize={300}>
@@ -610,3 +291,12 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
     </div>
   );
 }
+"""
+
+if main_canvas_grid_start != -1:
+    new_code = code[:main_canvas_grid_start] + render_fn + grid_code
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(new_code)
+    print("Replaced!")
+else:
+    print("Could not find Main canvas grid")
