@@ -21,6 +21,9 @@ import {
   Globe,
   ExternalLink,
   Search,
+  Minus,
+  PanelLeft,
+  PanelRight,
 } from 'lucide-react';
 import Link from 'next/link';
 import { FouzarLogo } from '../../components/logo/FouzarLogo';
@@ -149,9 +152,9 @@ export default function PersonalSanctuaryPage() {
   const [lmsSource, setLmsSource] = useState<'live' | 'demo' | 'error'>('demo');
   const [lmsError, setLmsError] = useState<string | null>(null);
   const [centerTab, setCenterTab] = useState<string>('notes');
-  const [isSplitMode, setIsSplitMode] = useState(false);
-  const [splitLeftTab, setSplitLeftTab] = useState<string>('youtube');
-  const [splitRightTab, setSplitRightTab] = useState<string>('notes'); // notes | slides | web | media
+  const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
+  const [isAiPanelMinimized, setIsAiPanelMinimized] = useState(false);
+  const [activeSplitTabs, setActiveSplitTabs] = useState<{ left: string; right: string | null }>({ left: 'notes', right: null });
   const [uploading, setUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
@@ -179,7 +182,7 @@ export default function PersonalSanctuaryPage() {
 
   useEffect(() => {
     if (activeDoc?.id) {
-      setCenterTab(activeDoc.id);
+      setActiveSplitTabs(prev => ({ ...prev, left: activeDoc.id }));
     }
   }, [activeDoc?.id]);
 
@@ -408,8 +411,8 @@ export default function PersonalSanctuaryPage() {
                   <DocumentViewer
                     document={openDocs.find(d => d.id === tabId)!}
                     onClose={() => {
-                      closeDoc(centerTab);
-                      setCenterTab('notes');
+                      closeDoc(activeSplitTabs.left);
+                      setActiveSplitTabs(prev => ({ ...prev, left: 'notes' }));
                     }}
                     isInline={true}
                   />
@@ -968,7 +971,7 @@ export default function PersonalSanctuaryPage() {
           initialSize={280} 
           minSize={200} 
           maxSize={400} 
-          collapsed={isShielded}
+          collapsed={isSidebarMinimized || isShielded}
         >
           {/* Left — Subject Spaces */}
           <motion.aside
@@ -982,9 +985,17 @@ export default function PersonalSanctuaryPage() {
             transition={{ duration: 0.68, ease: [0.16, 1, 0.3, 1] }}
           >
             <div>
-              <span className="font-mono text-[7px] uppercase tracking-widest text-fouzar-text-secondary flex items-center gap-1 mb-3">
-                <Layers className="w-3 h-3" /> Spaces
-              </span>
+              <div className="flex items-center justify-between w-full mb-3 shrink-0">
+                <div className="flex items-center gap-2">
+                  <Layers className="w-3 h-3 text-fouzar-accent" />
+                  <h2 className="font-mono text-[9px] uppercase tracking-widest text-fouzar-text-secondary">
+                    Spaces
+                  </h2>
+                </div>
+                <button onClick={() => setIsSidebarMinimized(true)} className="text-fouzar-text-tertiary hover:text-white">
+                  <Minus className="w-4 h-4" />
+                </button>
+              </div>
               <div className="space-y-1.5">
                 {folders.filter(f => !f.parentFolderId || f.parentFolderId === 'general' || f.id === 'general').map((folder) => (
                   <div key={folder.id} className="relative group">
@@ -1098,180 +1109,197 @@ export default function PersonalSanctuaryPage() {
             </div>
           </motion.aside>
 
-          <ResizablePanel 
-            direction="horizontal" 
-            initialSize={600} 
-            minSize={400} 
-            maxSize={1200}
-          >
+          <ResizablePanel direction="horizontal" initialSize={700} minSize={400} collapsed={isAiPanelMinimized}>
             {/* Center — Notes + lecture viewer */}
             <main className="flex-1 flex flex-col min-w-0 p-4 md:p-6 overflow-hidden h-full">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex gap-1 overflow-x-auto scrollbar-none">
-                  <button
-                    onClick={() => setCenterTab('notes')}
-                    className={`px-4 py-2 rounded-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all whitespace-nowrap ${
-                      centerTab === 'notes'
-                        ? 'bg-fouzar-accent text-fouzar-text-inverse shadow-[0_0_12px_var(--fouzar-accent-glow)]'
-                        : 'text-fouzar-text-tertiary hover:text-fouzar-text-primary hover:bg-fouzar-accent/5'
-                    }`}
-                  >
-                    Notebook
-                  </button>
-                  
-                  {openDocs.map((doc) => (
-                    <div key={doc.id} className="flex items-center">
-                      <button
-                        onClick={() => setCenterTab(doc.id)}
-                        className={`pl-4 pr-2 py-2 rounded-l-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all whitespace-nowrap max-w-[150px] truncate ${
-                          centerTab === doc.id
-                            ? 'bg-fouzar-accent text-fouzar-text-inverse shadow-[0_0_12px_var(--fouzar-accent-glow)]'
-                            : 'text-fouzar-text-tertiary hover:text-fouzar-text-primary bg-fouzar-accent/5 hover:bg-fouzar-accent/10 border border-transparent border-r-fouzar-border/30'
-                        }`}
-                      >
-                        {doc.fileName}
-                      </button>
-                      <button
-                        onClick={() => {
-                          closeDoc(doc.id);
-                          if (centerTab === doc.id) setCenterTab('notes');
-                        }}
-                        className={`pr-3 pl-1 py-2 rounded-r-[var(--fouzar-radius-md)] text-[9px] font-mono transition-all ${
-                          centerTab === doc.id
-                            ? 'bg-fouzar-accent text-fouzar-text-inverse shadow-[0_0_12px_var(--fouzar-accent-glow)] hover:text-red-300'
-                            : 'text-fouzar-text-tertiary hover:text-fouzar-signal bg-fouzar-accent/5 hover:bg-fouzar-accent/10 border border-transparent'
-                        }`}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex gap-1 overflow-x-auto scrollbar-none">
+                <button
+                  onClick={() => setActiveSplitTabs(prev => ({ ...prev, left: 'notes' }))}
+                  className={`px-4 py-2 rounded-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all whitespace-nowrap ${
+                    activeSplitTabs.left === 'notes'
+                      ? 'bg-fouzar-accent text-fouzar-text-inverse shadow-[0_0_12px_var(--fouzar-accent-glow)]'
+                      : 'text-fouzar-text-tertiary hover:text-fouzar-text-primary hover:bg-fouzar-accent/5'
+                  }`}
+                >
+                  Notebook
+                </button>
+                
+                {openDocs.map((doc) => (
+                  <div key={doc.id} className="flex items-center">
+                    <button
+                      onClick={() => setActiveSplitTabs(prev => ({ ...prev, left: doc.id }))}
+                      className={`pl-4 pr-2 py-2 rounded-l-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all whitespace-nowrap max-w-[150px] truncate ${
+                        activeSplitTabs.left === doc.id
+                          ? 'bg-fouzar-accent text-fouzar-text-inverse shadow-[0_0_12px_var(--fouzar-accent-glow)]'
+                          : 'text-fouzar-text-tertiary hover:text-fouzar-text-primary bg-fouzar-accent/5 hover:bg-fouzar-accent/10 border border-transparent border-r-fouzar-border/30'
+                      }`}
+                    >
+                      {doc.fileName}
+                    </button>
+                    <button
+                      onClick={() => {
+                        closeDoc(doc.id);
+                        if (activeSplitTabs.left === doc.id) setActiveSplitTabs(prev => ({ ...prev, left: 'notes' }));
+                      }}
+                      className={`pr-3 pl-1 py-2 rounded-r-[var(--fouzar-radius-md)] text-[9px] font-mono transition-all ${
+                        activeSplitTabs.left === doc.id
+                          ? 'bg-fouzar-accent text-fouzar-text-inverse shadow-[0_0_12px_var(--fouzar-accent-glow)] hover:text-red-300'
+                          : 'text-fouzar-text-tertiary hover:text-fouzar-signal bg-fouzar-accent/5 hover:bg-fouzar-accent/10 border border-transparent'
+                      }`}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
 
-                  <button
-                    onClick={() => setCenterTab('slides')}
-                    className={`px-4 py-2 rounded-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all whitespace-nowrap ${
-                      centerTab === 'slides'
-                        ? 'bg-fouzar-accent text-fouzar-text-inverse shadow-[0_0_12px_var(--fouzar-accent-glow)]'
-                        : 'text-fouzar-text-tertiary hover:text-fouzar-text-primary hover:bg-fouzar-accent/5'
-                    }`}
-                  >
-                    Slides
-                  </button>
+                <button
+                  onClick={() => setActiveSplitTabs(prev => ({ ...prev, left: 'slides' }))}
+                  className={`px-4 py-2 rounded-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all whitespace-nowrap ${
+                    activeSplitTabs.left === 'slides'
+                      ? 'bg-fouzar-accent text-fouzar-text-inverse shadow-[0_0_12px_var(--fouzar-accent-glow)]'
+                      : 'text-fouzar-text-tertiary hover:text-fouzar-text-primary hover:bg-fouzar-accent/5'
+                  }`}
+                >
+                  Slides
+                </button>
 
-                  <button
-                    onClick={() => setCenterTab('web')}
-                    className={`px-4 py-2 rounded-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all whitespace-nowrap ${
-                      centerTab === 'web'
-                        ? 'bg-fouzar-accent text-fouzar-text-inverse shadow-[0_0_12px_var(--fouzar-accent-glow)]'
-                        : 'text-fouzar-text-tertiary hover:text-fouzar-text-primary hover:bg-fouzar-accent/5'
-                    }`}
-                  >
-                    Web Hub
-                  </button>
+                <button
+                  onClick={() => setActiveSplitTabs(prev => ({ ...prev, left: 'web' }))}
+                  className={`px-4 py-2 rounded-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all whitespace-nowrap ${
+                    activeSplitTabs.left === 'web'
+                      ? 'bg-fouzar-accent text-fouzar-text-inverse shadow-[0_0_12px_var(--fouzar-accent-glow)]'
+                      : 'text-fouzar-text-tertiary hover:text-fouzar-text-primary hover:bg-fouzar-accent/5'
+                  }`}
+                >
+                  Web Hub
+                </button>
 
-                  <button
-                    onClick={() => setCenterTab('media')}
-                    className={`px-4 py-2 rounded-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all whitespace-nowrap ${
-                      centerTab === 'media'
-                        ? 'bg-fouzar-accent text-fouzar-text-inverse shadow-[0_0_12px_var(--fouzar-accent-glow)]'
-                        : 'text-fouzar-text-tertiary hover:text-fouzar-text-primary hover:bg-fouzar-accent/5'
-                    }`}
-                  >
-                    Media Hub
-                  </button>
+                <button
+                  onClick={() => setActiveSplitTabs(prev => ({ ...prev, left: 'media' }))}
+                  className={`px-4 py-2 rounded-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all whitespace-nowrap ${
+                    activeSplitTabs.left === 'media'
+                      ? 'bg-fouzar-accent text-fouzar-text-inverse shadow-[0_0_12px_var(--fouzar-accent-glow)]'
+                      : 'text-fouzar-text-tertiary hover:text-fouzar-text-primary hover:bg-fouzar-accent/5'
+                  }`}
+                >
+                  Media Hub
+                </button>
 
-                  <button
-                    onClick={() => setCenterTab('youtube')}
-                    className={`px-4 py-2 rounded-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all whitespace-nowrap ${
-                      centerTab === 'youtube'
-                        ? 'bg-red-500 text-white shadow-[0_0_12px_rgba(239,68,68,0.5)]'
-                        : 'text-fouzar-text-tertiary hover:text-white hover:bg-red-500/10'
-                    }`}
-                  >
-                    YT Search
-                  </button>
+                <button
+                  onClick={() => setActiveSplitTabs(prev => ({ ...prev, left: 'youtube' }))}
+                  className={`px-4 py-2 rounded-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all whitespace-nowrap ${
+                    activeSplitTabs.left === 'youtube'
+                      ? 'bg-red-500 text-white shadow-[0_0_12px_rgba(239,68,68,0.5)]'
+                      : 'text-fouzar-text-tertiary hover:text-white hover:bg-red-500/10'
+                  }`}
+                >
+                  YT Search
+                </button>
 
-                  <div className="w-[1px] h-6 bg-fouzar-border/40 mx-2 self-center" />
-                  <button
-                    onClick={() => setIsSplitMode(!isSplitMode)}
-                    className={`px-4 py-2 rounded-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all flex items-center gap-2 ${
-                      isSplitMode
-                        ? 'bg-indigo-500 text-white shadow-[0_0_12px_rgba(99,102,241,0.5)]'
-                        : 'text-indigo-400 hover:text-white bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30'
-                    }`}
-                  >
-                    <Columns className="w-3.5 h-3.5" />
-                    {isSplitMode ? 'Exit Split' : 'Split View'}
-                  </button>
-                  {isSplitMode && (
-                    <div className="flex items-center gap-2 ml-2 bg-fouzar-elevated/20 p-1 rounded-[var(--fouzar-radius-md)] border border-fouzar-border/50">
-                      <select
-                        value={splitLeftTab}
-                        onChange={(e) => setSplitLeftTab(e.target.value)}
-                        className="bg-transparent text-[9px] font-mono p-1 outline-none text-fouzar-text-primary uppercase cursor-pointer"
-                      >
-                        <option value="notes">Notebook</option>
-                        <option value="slides">Slides</option>
-                        <option value="youtube">YT Search</option>
-                        <option value="web">Web Hub</option>
-                        <option value="media">Media</option>
-                        {openDocs.map(d => <option key={d.id} value={d.id} className="text-fouzar-bg">{d.fileName}</option>)}
-                      </select>
-                      <span className="text-fouzar-text-tertiary">|</span>
-                      <select
-                        value={splitRightTab}
-                        onChange={(e) => setSplitRightTab(e.target.value)}
-                        className="bg-transparent text-[9px] font-mono p-1 outline-none text-fouzar-text-primary uppercase cursor-pointer"
-                      >
-                        <option value="notes">Notebook</option>
-                        <option value="slides">Slides</option>
-                        <option value="youtube">YT Search</option>
-                        <option value="web">Web Hub</option>
-                        <option value="media">Media</option>
-                        {openDocs.map(d => <option key={d.id} value={d.id} className="text-fouzar-bg">{d.fileName}</option>)}
-                      </select>
-                    </div>
-                  )}
-                </div>
-                <span className="font-mono text-[7px] text-fouzar-text-secondary uppercase">
-                  {isSplitMode ? 'Split View Active' : centerTab === 'notes' ? (isSaving ? 'Saving...' : 'Saved locally') : centerTab === 'slides' ? 'Click a file to open' : centerTab === 'media' ? 'YouTube Theater' : 'Quick launch links'}
-                </span>
+                <div className="w-[1px] h-6 bg-fouzar-border/40 mx-2 self-center" />
+                <button
+                  onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: prev.right ? null : 'youtube' }))}
+                  className={`px-4 py-2 rounded-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all flex items-center gap-2 ${
+                    activeSplitTabs.right
+                      ? 'bg-indigo-500 text-white shadow-[0_0_12px_rgba(99,102,241,0.5)]'
+                      : 'text-indigo-400 hover:text-white bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30'
+                  }`}
+                >
+                  <Columns className="w-3.5 h-3.5" />
+                  {activeSplitTabs.right ? 'Exit Split' : 'Split View'}
+                </button>
+                {activeSplitTabs.right && (
+                  <div className="flex items-center gap-2 ml-2 bg-fouzar-elevated/20 p-1 rounded-[var(--fouzar-radius-md)] border border-fouzar-border/50">
+                    <select
+                      value={activeSplitTabs.left}
+                      onChange={(e) => setActiveSplitTabs(prev => ({ ...prev, left: e.target.value }))}
+                      className="bg-transparent text-[9px] font-mono p-1 outline-none text-fouzar-text-primary uppercase cursor-pointer"
+                    >
+                      <option value="notes">Notebook</option>
+                      <option value="slides">Slides</option>
+                      <option value="youtube">YT Search</option>
+                      <option value="web">Web Hub</option>
+                      <option value="media">Media</option>
+                      {openDocs.map(d => <option key={d.id} value={d.id} className="text-fouzar-bg">{d.fileName}</option>)}
+                    </select>
+                    <span className="text-fouzar-text-tertiary">|</span>
+                    <select
+                      value={activeSplitTabs.right}
+                      onChange={(e) => setActiveSplitTabs(prev => ({ ...prev, right: e.target.value }))}
+                      className="bg-transparent text-[9px] font-mono p-1 outline-none text-fouzar-text-primary uppercase cursor-pointer"
+                    >
+                      <option value="notes">Notebook</option>
+                      <option value="slides">Slides</option>
+                      <option value="youtube">YT Search</option>
+                      <option value="web">Web Hub</option>
+                      <option value="media">Media</option>
+                      {openDocs.map(d => <option key={d.id} value={d.id} className="text-fouzar-bg">{d.fileName}</option>)}
+                    </select>
+                  </div>
+                )}
               </div>
+              <span className="font-mono text-[7px] text-fouzar-text-secondary uppercase">
+                {activeSplitTabs.right ? 'Split View Active' : activeSplitTabs.left === 'notes' ? (isSaving ? 'Saving...' : 'Saved locally') : activeSplitTabs.left === 'slides' ? 'Click a file to open' : activeSplitTabs.left === 'media' ? 'YouTube Theater' : 'Quick launch links'}
+              </span>
+            </div>
 
-              {isSplitMode ? (
-                <div className="flex-1 min-h-[280px] lg:min-h-0 flex flex-col overflow-hidden relative">
-                  <ResizablePanel direction="horizontal" initialSize={500} minSize={300}>
-                    <div className="h-full w-full flex flex-col p-1 overflow-y-auto">{renderTabContent(splitLeftTab)}</div>
-                    <div className="h-full w-full flex flex-col p-1 overflow-y-auto">{renderTabContent(splitRightTab)}</div>
-                  </ResizablePanel>
-                </div>
-              ) : (
-                renderTabContent(centerTab)
-              )}
-            </main>
+            {activeSplitTabs.right ? (
+              <div className="flex-1 min-h-[280px] lg:min-h-0 flex flex-col overflow-hidden relative">
+                <ResizablePanel direction="horizontal" initialSize={500} minSize={300}>
+                  <div className="h-full w-full flex flex-col p-1 overflow-y-auto scrollbar-none">{renderTabContent(activeSplitTabs.left)}</div>
+                  <div className="h-full w-full flex flex-col p-1 overflow-y-auto scrollbar-none">{renderTabContent(activeSplitTabs.right)}</div>
+                </ResizablePanel>
+              </div>
+            ) : (
+              renderTabContent(activeSplitTabs.left)
+            )}
+          </main>
 
-            {/* Right — Integrated AI */}
-            <aside
-              className="border-t lg:border-t-0 lg:border-l border-fouzar-border p-4 flex flex-col shrink-0 min-h-[360px] lg:min-h-0 h-full overflow-hidden"
-            >
-              <div className="flex items-center gap-2 mb-3 shrink-0">
+          {/* Right — Integrated AI */}
+          <aside
+            className="border-t lg:border-t-0 lg:border-l border-fouzar-border p-4 flex flex-col shrink-0 min-h-[360px] lg:min-h-0 h-full overflow-hidden"
+          >
+            <div className="flex items-center justify-between w-full mb-3 shrink-0">
+              <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-fouzar-accent" />
                 <h2 className="font-mono text-[9px] uppercase tracking-widest text-fouzar-text-secondary">
                   AI Study Partner
                 </h2>
               </div>
-              <div className="flex-1 min-h-[300px]">
-                <IntegratedAiChat
-                  contextLabel={`${semester} · Personal`}
-                  slideId={null}
-                  storageKey={aiStorageKey}
-                  placeholder="Ask AI to explain concepts, plan your week, or summarize notes..."
-                />
-              </div>
-            </aside>
+              <button onClick={() => setIsAiPanelMinimized(true)} className="text-fouzar-text-tertiary hover:text-white">
+                <Minus className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex-1 min-h-[300px]">
+              <IntegratedAiChat
+                contextLabel={`${semester} · Personal`}
+                slideId={null}
+                storageKey={aiStorageKey}
+                placeholder="Ask AI to explain concepts, plan your week, or summarize notes..."
+              />
+            </div>
+          </aside>
           </ResizablePanel>
         </ResizablePanel>
       </div>
+
+      {isSidebarMinimized && (
+        <button
+          onClick={() => setIsSidebarMinimized(false)}
+          className="fixed left-0 top-1/2 -translate-y-1/2 z-50 p-2 bg-fouzar-elevated/80 border border-l-0 border-fouzar-border rounded-r-md hover:bg-fouzar-accent/20"
+        >
+          <PanelLeft className="w-5 h-5 text-fouzar-text-primary" />
+        </button>
+      )}
+      {isAiPanelMinimized && (
+        <button
+          onClick={() => setIsAiPanelMinimized(false)}
+          className="fixed right-0 top-1/2 -translate-y-1/2 z-50 p-2 bg-fouzar-elevated/80 border border-r-0 border-fouzar-border rounded-l-md hover:bg-fouzar-accent/20"
+        >
+          <PanelRight className="w-5 h-5 text-fouzar-text-primary" />
+        </button>
+      )}
 
       {/* Mobile quick nav */}
       <nav className="lg:hidden fixed bottom-0 inset-x-0 h-14 bg-fouzar-bg/95 backdrop-blur-xl border-t border-fouzar-border flex items-center justify-around z-30">
