@@ -1109,7 +1109,7 @@ export default function PersonalSanctuaryPage() {
             </div>
           </motion.aside>
 
-          <ResizablePanel direction="horizontal" initialSize={700} minSize={400} collapsed={isAiPanelMinimized}>
+          <ResizablePanel direction="horizontal" initialSize={350} minSize={300} collapsed={isAiPanelMinimized} fixedPanel={1}>
             {/* Center — Notes + lecture viewer */}
             <main className="flex-1 flex flex-col min-w-0 p-4 md:p-6 overflow-hidden h-full">
             <div className="flex items-center justify-between mb-3">

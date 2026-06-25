@@ -10,6 +10,7 @@ interface ResizablePanelProps {
   children: [React.ReactNode, React.ReactNode];
   className?: string;
   collapsed?: boolean;
+  fixedPanel?: 0 | 1;
 }
 
 export const ResizablePanel: React.FC<ResizablePanelProps> = ({
@@ -20,6 +21,7 @@ export const ResizablePanel: React.FC<ResizablePanelProps> = ({
   children,
   className = '',
   collapsed = false,
+  fixedPanel = 0,
 }) => {
   const [size, setSize] = useState(initialSize);
   const [isDragging, setIsDragging] = useState(false);
@@ -42,16 +44,23 @@ export const ResizablePanel: React.FC<ResizablePanelProps> = ({
     
     frameRef.current = requestAnimationFrame(() => {
       const bounds = containerRef.current!.getBoundingClientRect();
-      let newSize = direction === 'horizontal' 
-        ? e.clientX - bounds.left 
-        : e.clientY - bounds.top;
+      let newSize;
+      if (direction === 'horizontal') {
+        newSize = fixedPanel === 0 
+          ? e.clientX - bounds.left 
+          : bounds.width - (e.clientX - bounds.left);
+      } else {
+        newSize = fixedPanel === 0 
+          ? e.clientY - bounds.top 
+          : bounds.height - (e.clientY - bounds.top);
+      }
         
       if (newSize < minSize) newSize = minSize;
       if (maxSize && newSize > maxSize) newSize = maxSize;
       
       setSize(newSize);
     });
-  }, [isDragging, direction, minSize, maxSize, collapsed]);
+  }, [isDragging, direction, minSize, maxSize, collapsed, fixedPanel]);
 
   const endDrag = useCallback(() => {
     if (frameRef.current) {
@@ -101,17 +110,31 @@ export const ResizablePanel: React.FC<ResizablePanelProps> = ({
   const isHorizontal = direction === 'horizontal' && !isMobile;
   const currentSize = collapsed ? 0 : size;
 
+  const renderPanel = (index: 0 | 1) => {
+    const isFixed = index === fixedPanel;
+    if (isFixed) {
+      return (
+        <div 
+          style={isHorizontal ? { width: `${currentSize}px`, opacity: collapsed ? 0 : 1, transition: 'width 0.5s ease, opacity 0.5s ease' } : { flex: 'none', display: collapsed ? 'none' : 'flex' }}
+          className="shrink-0 flex flex-col min-h-0 min-w-0"
+        >
+          {children[index]}
+        </div>
+      );
+    }
+    return (
+      <div className="flex-1 flex flex-col min-h-0 min-w-0">
+        {children[index]}
+      </div>
+    );
+  };
+
   return (
     <div 
       ref={containerRef}
       className={`flex ${isHorizontal ? 'flex-row' : 'flex-col'} w-full h-full overflow-hidden ${className}`}
     >
-      <div 
-        style={isHorizontal ? { width: `${currentSize}px`, opacity: collapsed ? 0 : 1, transition: 'width 0.5s ease, opacity 0.5s ease' } : { flex: 'none', display: collapsed ? 'none' : 'flex' }}
-        className="shrink-0 flex flex-col min-h-0 min-w-0"
-      >
-        {children[0]}
-      </div>
+      {renderPanel(0)}
       
       {!collapsed && (
         isHorizontal ? (
@@ -134,9 +157,7 @@ export const ResizablePanel: React.FC<ResizablePanelProps> = ({
         )
       )}
 
-      <div className="flex-1 flex flex-col min-h-0 min-w-0">
-        {children[1]}
-      </div>
+      {renderPanel(1)}
     </div>
   );
 };

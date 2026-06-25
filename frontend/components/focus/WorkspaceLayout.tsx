@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Clock, Bot } from 'lucide-react';
 import { useFouzar, LmsRepositoryItem } from '../../lib/FouzarContext';
 import { getBackendUrl } from '../../lib/api';
+import { MessageSquare } from 'lucide-react';
 import { NavRail } from './workspace/NavRail';
 import { SocialColumn } from './workspace/SocialColumn';
 import { ResizablePanel } from '../ui/ResizablePanel';
@@ -194,13 +195,22 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
       </div>
 
             <div className="flex-1 flex overflow-hidden">
-        <ResizablePanel direction="horizontal" initialSize={700} minSize={400} collapsed={isSocialMinimized}>
+        <ResizablePanel direction="horizontal" initialSize={320} minSize={250} maxSize={500} collapsed={isSocialMinimized} fixedPanel={1}>
 {/* Column 2 — Unified sanctuary canvas */}
       <div
         className={`flex-1 min-w-0 ${
           mobilePanel === 'canvas' ? 'flex' : 'hidden md:flex'
-        } flex-col`}
+        } flex-col relative`}
       >
+        {isSocialMinimized && (
+          <button
+            onClick={() => setIsSocialMinimized(false)}
+            className="absolute top-3 right-4 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full bg-fouzar-surface/90 border border-fouzar-border text-[10px] font-mono font-medium hover:bg-fouzar-surface-hover shadow-lg backdrop-blur text-fouzar-text-primary uppercase tracking-wider"
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>Show Hub</span>
+          </button>
+        )}
         <SanctuaryCanvas
           roomId={roomId}
           currentSlide={currentSlide}
