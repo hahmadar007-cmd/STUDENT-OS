@@ -193,7 +193,7 @@ export const askAi = (
             resolvedModel = modelName.startsWith('claude') ? modelName : 'claude-3-5-sonnet';
             aiHeaders['x-anthropic-key'] = active.apiKeyRaw;
           } else if (pType === 'GEMINI') {
-            resolvedModel = modelName.startsWith('gemini') ? modelName : 'gemini-1.5-pro';
+            resolvedModel = modelName.startsWith('gemini') ? modelName : 'gemini-2.5-pro';
             aiHeaders['x-gemini-key'] = active.apiKeyRaw;
           } else if (pType === 'DEEPSEEK') {
             resolvedModel = 'deepseek';

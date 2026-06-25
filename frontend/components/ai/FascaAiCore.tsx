@@ -14,7 +14,7 @@ interface ModelCard {
 }
 
 const MODEL_API_IDS: Record<string, string> = {
-  gemini: 'gemini-1.5-pro',
+  gemini: 'gemini-2.5-pro',
   claude: 'claude-3-5-sonnet',
   gpt4: 'gpt-4o',
   custom: 'custom-endpoint',
@@ -26,7 +26,7 @@ export const FascaAiCore: React.FC = () => {
   const models: ModelCard[] = [
     {
       id: 'gemini',
-      name: 'Gemini 1.5 Pro',
+      name: 'Gemini 2.5 Pro',
       provider: 'Google',
       latency: '28ms',
       icon: (

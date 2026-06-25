@@ -155,7 +155,7 @@ Student's Query: "${prompt}"`;
 
     if (modelName.startsWith('gemini') && geminiKey) {
       try {
-        const actualModel = modelName === 'gemini' ? 'gemini-1.5-pro' : modelName;
+        const actualModel = modelName === 'gemini' ? 'gemini-2.5-pro' : modelName;
         const callGemini = async (model: string) => {
           return await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
@@ -170,7 +170,7 @@ Student's Query: "${prompt}"`;
         };
 
         const response = await callGemini(actualModel);
-        let activeModel = actualModel === 'gemini-1.5-flash' ? 'Gemini 1.5 Flash' : 'Gemini 1.5 Pro';
+        let activeModel = actualModel === 'gemini-2.5-flash' ? 'Gemini 2.5 Flash' : 'Gemini 2.5 Pro';
 
         if (response.ok) {
           const data = await response.json();

@@ -27,13 +27,13 @@ export const AiPanel: React.FC<AiPanelProps> = ({
 }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
-  const [selectedModel, setSelectedModel] = useState('gemini-1.5-pro');
+  const [selectedModel, setSelectedModel] = useState('gemini-2.5-pro');
   const [isLoading, setIsLoading] = useState(false);
   const [showModels, setShowModels] = useState(false);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
   const models = [
-    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', provider: 'Google', isDefault: true },
+    { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', provider: 'Google', isDefault: true },
     { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', isDefault: false },
     { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI', isDefault: false },
   ];
@@ -152,7 +152,7 @@ export const AiPanel: React.FC<AiPanelProps> = ({
         <div className="flex items-center gap-2 px-2.5 py-1.5 bg-emerald-500/5 border border-emerald-500/15 rounded-[4px]">
           <Sparkles className="w-3 h-3 text-emerald-400" />
           <span className="text-[9px] font-mono text-emerald-400/80">
-            Default AI core active: <strong>Gemini 1.5 Pro</strong> — or link your own key
+            Default AI core active: <strong>Gemini 2.5 Pro</strong> — or link your own key
           </span>
         </div>
       </div>

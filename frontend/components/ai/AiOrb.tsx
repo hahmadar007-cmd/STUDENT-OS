@@ -22,7 +22,7 @@ export const AiOrb: React.FC = () => {
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
   const models = [
-    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', provider: 'Google' },
+    { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', provider: 'Google' },
     { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'Anthropic' },
     { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI' },
   ];
