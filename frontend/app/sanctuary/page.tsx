@@ -1044,6 +1044,26 @@ export default function PersonalSanctuaryPage() {
                 </div>
               ) : centerTab === 'media' ? (
                 <div className="flex-1 min-h-[280px] lg:min-h-0 bg-fouzar-surface/40 backdrop-blur-xl border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-6 flex flex-col overflow-hidden">
+                  {/* Full-size theater player — shows when a video is selected from YT Search or library */}
+                  {activePlayer ? (
+                    <div className="flex flex-col h-full gap-3">
+                      <div className="flex items-center justify-between shrink-0">
+                        <h3 className="font-sans font-semibold text-sm text-fouzar-text-primary truncate max-w-[80%]">{activePlayer.title}</h3>
+                        <button
+                          onClick={() => setActivePlayer(null)}
+                          className="text-xs font-mono text-fouzar-text-tertiary hover:text-fouzar-text-primary transition-colors px-2 py-1 border border-fouzar-border rounded cursor-pointer"
+                        >← Back to Library</button>
+                      </div>
+                      <div className="flex-1 rounded-xl overflow-hidden border border-fouzar-border/40">
+                        <iframe
+                          src={`https://www.youtube.com/embed/${activePlayer.videoId}?autoplay=1&rel=0&modestbranding=1`}
+                          className="w-full h-full"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                          allowFullScreen
+                        />
+                      </div>
+                    </div>
+                  ) : (
                   <div className="flex flex-col h-full overflow-y-auto scrollbar-none space-y-6">
                     <div className="flex justify-between items-center border-b border-fouzar-border/30 pb-4">
                       <div>
@@ -1150,41 +1170,19 @@ export default function PersonalSanctuaryPage() {
                       </div>
                     )}
                   </div>
+                  )}
                 </div>
               ) : centerTab === 'youtube' ? (
                 <div className="flex-1 min-h-[280px] lg:min-h-0 bg-fouzar-surface/40 backdrop-blur-xl border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-6 flex flex-col overflow-hidden">
-                  {/* Full-size theater player — shows when a video is selected */}
-                  {activePlayer ? (
-                    <div className="flex flex-col h-full gap-3">
-                      <div className="flex items-center justify-between shrink-0">
-                        <h3 className="font-sans font-semibold text-sm text-fouzar-text-primary truncate max-w-[80%]">{activePlayer.title}</h3>
-                        <button
-                          onClick={() => setActivePlayer(null)}
-                          className="text-xs font-mono text-fouzar-text-tertiary hover:text-fouzar-text-primary transition-colors px-2 py-1 border border-fouzar-border rounded"
-                        >← Back to Search</button>
-                      </div>
-                      <div className="flex-1 rounded-xl overflow-hidden border border-fouzar-border/40">
-                        <iframe
-                          src={`https://www.youtube.com/embed/${activePlayer.videoId}?autoplay=1&rel=0&modestbranding=1`}
-                          className="w-full h-full"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                          allowFullScreen
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <MediaHubStandalone
-                      folderId={activeFolderId}
-                      onVideoSelect={(url, videoId, title) => {
-                        // Play immediately in full-size theater
-                        setActivePlayer({ videoId, title });
-                        // Also save to library
-                        if (activeFolderId) {
-                          getSubjectVideos(activeFolderId).then(setVideos);
-                        }
-                      }}
-                    />
-                  )}
+                  <MediaHubStandalone
+                    folderId={activeFolderId}
+                    onVideoSelect={(url, videoId, title) => {
+                      // Save to library silently — player opens inline in this tab
+                      if (activeFolderId) {
+                        getSubjectVideos(activeFolderId).then(setVideos);
+                      }
+                    }}
+                  />
                 </div>
               ) : null}
             </main>
