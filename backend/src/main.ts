@@ -13,7 +13,11 @@ import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.enableCors(); // Enable CORS for frontend requests
+  app.enableCors({
+    origin: '*',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-gemini-key', 'x-openai-key', 'x-anthropic-key', 'x-deepseek-key', 'x-custom-key', 'x-custom-url', 'x-openrouter-key'],
+  });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
