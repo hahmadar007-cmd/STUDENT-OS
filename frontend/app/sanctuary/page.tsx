@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
+  Columns,
   BookOpen,
   Flame,
   Users,
@@ -147,7 +148,10 @@ export default function PersonalSanctuaryPage() {
   >([]);
   const [lmsSource, setLmsSource] = useState<'live' | 'demo' | 'error'>('demo');
   const [lmsError, setLmsError] = useState<string | null>(null);
-  const [centerTab, setCenterTab] = useState<string>('notes'); // notes | slides | web | media
+  const [centerTab, setCenterTab] = useState<string>('notes');
+  const [isSplitMode, setIsSplitMode] = useState(false);
+  const [splitLeftTab, setSplitLeftTab] = useState<string>('youtube');
+  const [splitRightTab, setSplitRightTab] = useState<string>('notes'); // notes | slides | web | media
   const [uploading, setUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
@@ -664,7 +668,7 @@ export default function PersonalSanctuaryPage() {
                   </button>
                 </div>
                 <span className="font-mono text-[7px] text-fouzar-text-secondary uppercase">
-                  {centerTab === 'notes' ? (isSaving ? 'Saving...' : 'Saved locally') : centerTab === 'slides' ? 'Click a file to open' : centerTab === 'media' ? 'YouTube Theater' : 'Quick launch links'}
+                  {isSplitMode ? 'Split View Active' : centerTab === 'notes' ? (isSaving ? 'Saving...' : 'Saved locally') : centerTab === 'slides' ? 'Click a file to open' : centerTab === 'media' ? 'YouTube Theater' : 'Quick launch links'}
                 </span>
               </div>
 

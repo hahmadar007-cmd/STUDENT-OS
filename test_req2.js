@@ -1,0 +1,1 @@
+fetch("https://ammeeee-student-os-backend.hf.space/ai/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: "Hello, what model are you?", userId: "test", modelName: "deepseek" }) }).then(r => r.json()).then(console.log).catch(console.error);

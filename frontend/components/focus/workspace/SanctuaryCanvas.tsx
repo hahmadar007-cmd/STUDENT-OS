@@ -23,6 +23,7 @@ import { DocumentViewer } from '../../documents/DocumentViewer';
 import { FileExplorer } from '../../documents/FileExplorer';
 import { useLivePresentation } from '../../../hooks/useLivePresentation';
 import { PresenterToast } from '../../groups/PresenterToast';
+import { MediaHubStandalone } from '../../sanctuary/MediaHubStandalone';
 
 interface SlideData {
   number: number;
