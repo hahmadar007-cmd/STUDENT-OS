@@ -666,6 +666,48 @@ export default function PersonalSanctuaryPage() {
                   >
                     YT Search
                   </button>
+
+                  <div className="w-[1px] h-6 bg-fouzar-border/40 mx-2 self-center" />
+                  <button
+                    onClick={() => setIsSplitMode(!isSplitMode)}
+                    className={`px-3 py-1 rounded-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all flex items-center gap-1.5 ${
+                      isSplitMode
+                        ? 'bg-fouzar-accent text-fouzar-text-inverse shadow-[0_0_12px_var(--fouzar-accent-glow)]'
+                        : 'text-fouzar-text-tertiary hover:text-fouzar-text-primary bg-fouzar-elevated/30 border border-fouzar-border'
+                    }`}
+                  >
+                    <Columns className="w-3.5 h-3.5" />
+                    Split
+                  </button>
+                  {isSplitMode && (
+                    <div className="flex items-center gap-2 ml-2 bg-fouzar-elevated/20 p-1 rounded-[var(--fouzar-radius-md)] border border-fouzar-border/50">
+                      <select
+                        value={splitLeftTab}
+                        onChange={(e) => setSplitLeftTab(e.target.value)}
+                        className="bg-transparent text-[9px] font-mono p-1 outline-none text-fouzar-text-primary uppercase cursor-pointer"
+                      >
+                        <option value="notes">Notebook</option>
+                        <option value="slides">Slides</option>
+                        <option value="youtube">YT Search</option>
+                        <option value="web">Web Hub</option>
+                        <option value="media">Media</option>
+                        {openDocs.map(d => <option key={d.id} value={d.id} className="text-fouzar-bg">{d.fileName}</option>)}
+                      </select>
+                      <span className="text-fouzar-text-tertiary">|</span>
+                      <select
+                        value={splitRightTab}
+                        onChange={(e) => setSplitRightTab(e.target.value)}
+                        className="bg-transparent text-[9px] font-mono p-1 outline-none text-fouzar-text-primary uppercase cursor-pointer"
+                      >
+                        <option value="notes">Notebook</option>
+                        <option value="slides">Slides</option>
+                        <option value="youtube">YT Search</option>
+                        <option value="web">Web Hub</option>
+                        <option value="media">Media</option>
+                        {openDocs.map(d => <option key={d.id} value={d.id} className="text-fouzar-bg">{d.fileName}</option>)}
+                      </select>
+                    </div>
+                  )}
                 </div>
                 <span className="font-mono text-[7px] text-fouzar-text-secondary uppercase">
                   {isSplitMode ? 'Split View Active' : centerTab === 'notes' ? (isSaving ? 'Saving...' : 'Saved locally') : centerTab === 'slides' ? 'Click a file to open' : centerTab === 'media' ? 'YouTube Theater' : 'Quick launch links'}
