@@ -24,6 +24,7 @@ import { FocusFrame } from '../../../components/focus/FocusFrame';
 import { getSocket, useOnGroupNotesSync, syncGroupNotes } from '../../../lib/socket';
 import { FouzarLogo } from '../../../components/logo/FouzarLogo';
 import { GroupWatchParty } from '../../../components/groups/GroupWatchParty';
+import { MediaHubStandalone } from '../../../components/sanctuary/MediaHubStandalone';
 
 interface SlideData {
   id: string;
@@ -295,44 +296,8 @@ export default function StudyGroupRoom() {
 
     if (tab === 'youtube') {
       return (
-        <section className={`flex flex-col overflow-hidden flex-1 h-full w-full`}>
-          <div className="flex-1 bg-black/50 relative border border-fouzar-border/30 rounded-t-xl overflow-hidden shadow-[inset_0_0_40px_rgba(0,0,0,0.8)]">
-            {embedUrl ? (
-              <iframe
-                src={embedUrl}
-                title="YouTube Video Player"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="w-full h-full absolute inset-0"
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full opacity-30 text-xs font-mono uppercase tracking-widest text-white">
-                <MonitorPlay className="w-6 h-6 mb-2 text-white/50" />
-                No Video Loaded
-              </div>
-            )}
-          </div>
-          <div className="bg-black/60 border-t border-fouzar-border/30 p-3 rounded-b-xl backdrop-blur-md z-10 shrink-0 shadow-lg">
-            <form onSubmit={handleSetVideo} className="flex items-center gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-fouzar-text-secondary" />
-                <input
-                  type="text"
-                  placeholder="Paste YouTube URL or 'watch?v=...' ID"
-                  value={videoInput}
-                  onChange={(e) => setVideoInput(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-fouzar-surface/40 border border-fouzar-border/50 rounded-lg text-xs font-mono text-fouzar-text-primary placeholder:text-fouzar-text-tertiary focus:outline-none focus:border-fouzar-accent focus:ring-1 focus:ring-fouzar-accent transition-all"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={!videoInput.trim()}
-                className="px-4 py-2 bg-fouzar-accent/20 hover:bg-fouzar-accent text-fouzar-accent hover:text-black border border-fouzar-accent/30 rounded-lg text-[10px] font-mono uppercase tracking-widest transition-all disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-fouzar-accent"
-              >
-                Load
-              </button>
-            </form>
-          </div>
+        <section className={`flex flex-col overflow-hidden flex-1 h-full w-full bg-slate-900/40 rounded-xl`}>
+          <MediaHubStandalone folderId={null} onVideoSelect={() => {}} />
         </section>
       );
     }
@@ -550,6 +515,24 @@ export default function StudyGroupRoom() {
         
         </ResizablePanel>
       </div>
+
+      {/* Floating Chat Re-open Button */}
+      <AnimatePresence>
+        {!isChatOpen && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 20 }}
+            onClick={() => setIsChatOpen(true)}
+            className="fixed bottom-6 right-6 z-50 p-4 bg-fouzar-surface/80 hover:bg-fouzar-surface backdrop-blur-xl border border-fouzar-border/50 rounded-full shadow-2xl cursor-pointer group hover:border-fouzar-accent transition-all"
+            title="Open Group Logs"
+          >
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-fouzar-accent rounded-full animate-ping" />
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-fouzar-accent rounded-full border-2 border-fouzar-bg" />
+            <MessageSquare className="w-5 h-5 text-fouzar-accent group-hover:scale-110 transition-transform" />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* Floating AI companion Orb */}
       <AiOrb />
