@@ -134,7 +134,7 @@ Student's Query: "${prompt}"`;
         };
       }
       try {
-        const actualModel = (!modelName || modelName === 'gemini') ? 'gemini-2.5-pro' : modelName;
+        const actualModel = (!modelName || modelName === 'gemini') ? 'gemini-1.5-pro' : modelName;
         const response = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${actualModel}:generateContent?key=${geminiKey}`,
           {
@@ -154,7 +154,7 @@ Student's Query: "${prompt}"`;
         const data = await response.json().catch(() => ({}));
         if (response.status === 404) {
           return {
-            text: `### Gemini Model Not Found\n\nThe model \`${actualModel}\` was not found. Please check if this model ID is correct and available in your region.\n\n**Tip:** Try \`gemini-2.5-pro\` or \`gemini-2.0-flash\`.`,
+            text: `### Gemini Model Not Found\n\nThe model \`${actualModel}\` was not found. Please check if this model ID is correct and available in your region.\n\n**Tip:** Try \`gemini-1.5-pro\` or \`gemini-1.5-flash\`.`,
             model: `Gemini (Error 404)`,
           };
         }
