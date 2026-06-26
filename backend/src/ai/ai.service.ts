@@ -384,6 +384,98 @@ Student's Query: "${prompt}"`;
     };
   }
 
+  async validateKey(
+    providerType: string,
+    headers: Record<string, string>,
+    modelName?: string,
+    baseUrl?: string,
+  ): Promise<{ ok: boolean; message: string }> {
+    const pType = (providerType || '').toUpperCase();
+    const geminiKey     = headers['x-gemini-key']     || '';
+    const openaiKey     = headers['x-openai-key']     || '';
+    const anthropicKey  = headers['x-anthropic-key']  || '';
+    const deepseekKey   = headers['x-deepseek-key']   || '';
+    const openrouterKey = headers['x-openrouter-key'] || '';
+    const customKey     = headers['x-custom-key']     || '';
+    const customUrl     = baseUrl || headers['x-custom-url'] || '';
+
+    try {
+      if (pType === 'GEMINI') {
+        if (!geminiKey) return { ok: false, message: 'No Gemini API key provided.' };
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${geminiKey}&pageSize=1`);
+        if (res.ok) return { ok: true, message: 'Gemini key is valid ✓' };
+        const data = await res.json().catch(() => ({}));
+        return { ok: false, message: `Gemini rejected the key (${res.status}): ${data.error?.message || 'Invalid API key.'}` };
+      }
+
+      if (pType === 'OPENAI') {
+        if (!openaiKey) return { ok: false, message: 'No OpenAI API key provided.' };
+        const res = await fetch('https://api.openai.com/v1/models', {
+          headers: { 'Authorization': `Bearer ${openaiKey}` },
+        });
+        if (res.ok) return { ok: true, message: 'OpenAI key is valid ✓' };
+        const data = await res.json().catch(() => ({}));
+        return { ok: false, message: `OpenAI rejected the key (${res.status}): ${data.error?.message || 'Invalid API key.'}` };
+      }
+
+      if (pType === 'ANTHROPIC') {
+        if (!anthropicKey) return { ok: false, message: 'No Anthropic API key provided.' };
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': anthropicKey,
+            'anthropic-version': '2023-06-01',
+          },
+          body: JSON.stringify({
+            model: 'claude-3-haiku-20240307',
+            max_tokens: 1,
+            messages: [{ role: 'user', content: 'hi' }],
+          }),
+        });
+        // 200 = ok, also accept 529 (overloaded) as key-is-valid
+        if (res.ok || res.status === 529) return { ok: true, message: 'Anthropic key is valid ✓' };
+        const data = await res.json().catch(() => ({}));
+        return { ok: false, message: `Anthropic rejected the key (${res.status}): ${data.error?.message || 'Invalid API key.'}` };
+      }
+
+      if (pType === 'DEEPSEEK') {
+        if (!deepseekKey) return { ok: false, message: 'No DeepSeek API key provided.' };
+        const res = await fetch('https://api.deepseek.com/models', {
+          headers: { 'Authorization': `Bearer ${deepseekKey}` },
+        });
+        if (res.ok) return { ok: true, message: 'DeepSeek key is valid ✓' };
+        const data = await res.json().catch(() => ({}));
+        return { ok: false, message: `DeepSeek rejected the key (${res.status}): ${data.error?.message || 'Invalid API key.'}` };
+      }
+
+      if (pType === 'OPENROUTER') {
+        if (!openrouterKey) return { ok: false, message: 'No OpenRouter API key provided.' };
+        const res = await fetch('https://openrouter.ai/api/v1/models', {
+          headers: { 'Authorization': `Bearer ${openrouterKey}` },
+        });
+        if (res.ok) return { ok: true, message: 'OpenRouter key is valid ✓' };
+        const data = await res.json().catch(() => ({}));
+        return { ok: false, message: `OpenRouter rejected the key (${res.status}): ${data.error?.message || 'Invalid API key.'}` };
+      }
+
+      if (pType === 'CUSTOM') {
+        if (!customKey) return { ok: false, message: 'No custom API key provided.' };
+        if (!customUrl) return { ok: false, message: 'No Base URL provided for custom endpoint.' };
+        const testUrl = customUrl.replace(/\/$/, '').replace(/\/chat\/completions$/, '') + '/models';
+        const res = await fetch(testUrl, {
+          headers: { 'Authorization': `Bearer ${customKey}` },
+        });
+        if (res.ok) return { ok: true, message: 'Custom endpoint is reachable ✓' };
+        return { ok: false, message: `Custom endpoint returned ${res.status}. Check your Base URL and key.` };
+      }
+
+      return { ok: false, message: `Unknown provider type: ${pType}. Use GEMINI, OPENAI, ANTHROPIC, DEEPSEEK, OPENROUTER, or CUSTOM.` };
+    } catch (err: any) {
+      return { ok: false, message: `Network error while validating: ${err.message || err}` };
+    }
+  }
+
   async search(query: string) {
     if (!query || !query.trim()) {
       return [];

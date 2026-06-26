@@ -495,6 +495,13 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
     const promptText = customPrompt || input;
     if (!promptText.trim() || isLoading) return;
 
+    // Guard: require an active engine before firing any request
+    if (!activeEngine) {
+      setError('No AI engine is active. Add and activate one in the AI Engines panel below.');
+      window.dispatchEvent(new CustomEvent('fasca:open-ai-engines'));
+      return;
+    }
+
     const userMsg: AiChatMessage = {
       id: `usr-${Date.now()}`,
       role: 'user',
@@ -637,15 +644,28 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
       </div>
 
       {messages.length === 0 && engines.length === 0 && (
-        <div className="shrink-0 mb-2 px-2.5 py-2 bg-[#7c5cfc]/5 border border-[#7c5cfc]/20 rounded-[var(--fouzar-radius-sm)]">
-          <p className="font-mono text-[8px] text-[#7c5cfc] uppercase tracking-wider mb-1">
+        <div className="shrink-0 mb-2 px-3 py-3 bg-[#7c5cfc]/5 border border-[#7c5cfc]/20 rounded-[var(--fouzar-radius-sm)]">
+          <p className="font-mono text-[8px] text-[#7c5cfc] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#7c5cfc] animate-pulse inline-block" />
             No AI Engine Connected
           </p>
-          <p className="font-mono text-[7px] text-fouzar-text-secondary leading-relaxed">
-            This app is <strong>BYOK</strong> (Bring Your Own Key). Add your Gemini, OpenAI, Anthropic, or DeepSeek API key in the <strong>AI Engines</strong> panel below to enable AI.
+          <p className="font-mono text-[7px] text-fouzar-text-secondary leading-relaxed mb-2">
+            This app is <strong className="text-white/60">BYOK</strong>. Paste a Gemini, OpenAI, Anthropic, or DeepSeek key in AI Engines — it's tested live before saving.
           </p>
+          <button
+            onClick={() => {
+              // Scroll to / open AI engines panel — dispatch a custom event the parent can listen for
+              window.dispatchEvent(new CustomEvent('fasca:open-ai-engines'));
+              // Fallback: scroll to element with this ID if it exists
+              document.getElementById('ai-engines-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}
+            className="font-mono text-[8px] uppercase tracking-wider text-[#7c5cfc] hover:text-[#a78bfa] border border-[#7c5cfc]/30 hover:border-[#7c5cfc]/60 px-3 py-1.5 rounded-lg transition-all cursor-pointer"
+          >
+            + Add AI Engine →
+          </button>
         </div>
       )}
+
 
       <div
         className={`flex-1 overflow-y-auto space-y-2.5 scrollbar-none mb-3 ${

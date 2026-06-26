@@ -229,6 +229,42 @@ export const askAi = (
     }, aiHeaders);
 };
 
+/** BYOK key validation — calls POST /ai/validate and returns { ok, message }.
+ *  Uses exactly the same per-provider header logic as askAi. */
+export const validateAiKey = async (
+  providerType: string,
+  apiKey: string,
+  baseUrl?: string,
+  modelName?: string,
+): Promise<{ ok: boolean; message: string }> => {
+  const pType = providerType.trim().toUpperCase();
+  const headers: Record<string, string> = {
+    'x-provider-type': pType,
+  };
+
+  if (pType === 'GEMINI')     headers['x-gemini-key']     = apiKey;
+  else if (pType === 'OPENAI')     headers['x-openai-key']     = apiKey;
+  else if (pType === 'ANTHROPIC')  headers['x-anthropic-key']  = apiKey;
+  else if (pType === 'DEEPSEEK')   headers['x-deepseek-key']   = apiKey;
+  else if (pType === 'OPENROUTER') headers['x-openrouter-key'] = apiKey;
+  else if (pType === 'CUSTOM') {
+    headers['x-custom-key'] = apiKey;
+    if (baseUrl) headers['x-custom-url'] = baseUrl;
+  }
+
+  try {
+    const result = await apiRequest(
+      '/ai/validate',
+      'POST',
+      { providerType: pType, modelName: modelName || '', baseUrl: baseUrl || '' },
+      headers,
+    );
+    return result as { ok: boolean; message: string };
+  } catch (err: any) {
+    return { ok: false, message: err.message || 'Validation request failed.' };
+  }
+};
+
 
 export const indexDocument = (
   courseId: string,

@@ -29,6 +29,14 @@ export class AiController {
     return this.aiService.chat(dto, headers);
   }
 
+  @Post('validate')
+  validateKey(
+    @Body() dto: { providerType: string; modelName?: string; baseUrl?: string },
+    @Headers() headers: Record<string, string>,
+  ) {
+    return this.aiService.validateKey(dto.providerType, headers, dto.modelName, dto.baseUrl);
+  }
+
   @Post('index-document')
   @UseInterceptors(FileInterceptor('file'))
   async indexDocument(
