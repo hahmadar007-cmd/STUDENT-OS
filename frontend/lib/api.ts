@@ -163,9 +163,10 @@ export const askAi = (
     }
   } catch (e) {}
 
-  // ── AI Control Center: read active provider from localStorage ──────────────
+  // ── BYOK: read active provider strictly from localStorage ─────────────────
   const aiHeaders: Record<string, string> = {};
   let resolvedModel = modelName;
+  let hasActiveEngine = false;
 
   if (typeof window !== 'undefined') {
     try {
@@ -174,60 +175,50 @@ export const askAi = (
         const providers: Array<{
           id: string;
           name: string;
-          providerType: 'OPENAI' | 'ANTHROPIC' | 'GEMINI' | 'CUSTOM';
+          providerType: string;
           apiKeyRaw: string;
           baseUrl: string | null;
           isActive: boolean;
         }> = JSON.parse(raw);
 
         const active = providers.find((p) => p.isActive);
-        if (active) {
-          let pType: string = active.providerType || (typeof active.name === 'string' ? active.name.trim().toUpperCase() : '');
-          if (pType === 'OPENAI' && active.name.toUpperCase().includes('DEEPSEEK')) {
-            pType = 'DEEPSEEK';
-          }
-          if (pType === 'OPENAI') {
-            resolvedModel = modelName.startsWith('gpt') || modelName.startsWith('o1') || modelName.startsWith('o3') ? modelName : 'gpt-4o';
+        if (active && active.providerType && active.apiKeyRaw) {
+          hasActiveEngine = true;
+          const pType = active.providerType.trim().toUpperCase();
+
+          // Always send explicit provider type — backend routes deterministically on this
+          aiHeaders['x-provider-type'] = pType;
+
+          if (pType === 'GEMINI') {
+            resolvedModel = (modelName && modelName.startsWith('gemini')) ? modelName : 'gemini-2.5-pro';
+            aiHeaders['x-gemini-key'] = active.apiKeyRaw;
+          } else if (pType === 'OPENAI') {
+            resolvedModel = (modelName && (modelName.startsWith('gpt') || modelName.startsWith('o1') || modelName.startsWith('o3'))) ? modelName : 'gpt-4o';
             aiHeaders['x-openai-key'] = active.apiKeyRaw;
           } else if (pType === 'ANTHROPIC') {
-            resolvedModel = modelName.startsWith('claude') ? modelName : 'claude-3-5-sonnet';
+            resolvedModel = (modelName && modelName.startsWith('claude')) ? modelName : 'claude-3-5-sonnet-20241022';
             aiHeaders['x-anthropic-key'] = active.apiKeyRaw;
-          } else if (pType === 'GEMINI') {
-            resolvedModel = modelName.startsWith('gemini') ? modelName : 'gemini-2.5-pro';
-            aiHeaders['x-gemini-key'] = active.apiKeyRaw;
           } else if (pType === 'DEEPSEEK') {
-            resolvedModel = 'deepseek';
+            resolvedModel = 'deepseek-chat';
             aiHeaders['x-deepseek-key'] = active.apiKeyRaw;
+          } else if (pType === 'OPENROUTER') {
+            resolvedModel = modelName || 'meta-llama/llama-3-8b-instruct:free';
+            aiHeaders['x-openrouter-key'] = active.apiKeyRaw;
+            if (active.baseUrl) aiHeaders['x-custom-url'] = active.baseUrl;
           } else if (pType === 'CUSTOM') {
-            const isGroq = (active.baseUrl && active.baseUrl.toLowerCase().includes('groq')) || active.name.toUpperCase().includes('GROQ');
-            const isOpenRouter = (active.baseUrl && active.baseUrl.toLowerCase().includes('openrouter')) || active.name.toUpperCase().includes('OPENROUTER');
-            
-            if (isGroq) {
-              resolvedModel = 'llama3-8b-8192';
-            } else if (isOpenRouter) {
-              resolvedModel = 'meta-llama/llama-3-8b-instruct:free';
-            } else {
-              resolvedModel = modelName === 'Custom API' ? 'custom-endpoint' : modelName;
-            }
-            
+            resolvedModel = modelName || 'custom-model';
             aiHeaders['x-custom-key'] = active.apiKeyRaw;
             if (active.baseUrl) aiHeaders['x-custom-url'] = active.baseUrl;
-            // Also treat as OpenRouter fallback just in case the backend needs it
-            aiHeaders['x-openrouter-key'] = active.apiKeyRaw;
-          } else {
-            // Fallback for custom OpenRouter
-            aiHeaders['x-openrouter-key'] = active.apiKeyRaw;
-            if (active.baseUrl) {
-              aiHeaders['x-custom-url'] = active.baseUrl;
-              aiHeaders['x-custom-key'] = active.apiKeyRaw;
-            }
           }
         }
       }
     } catch (e) {
-      // localStorage parse failure — proceed without custom headers
+      // localStorage parse failure — proceed, backend will return "configure an engine" message
     }
   }
+
+  // If no engine is active, send no key headers at all.
+  // The backend will return a friendly "configure an engine" message when x-provider-type is absent.
 
   return apiRequest('/ai/chat', 'POST', {
       userId,
@@ -237,6 +228,7 @@ export const askAi = (
       ...extraContext,
     }, aiHeaders);
 };
+
 
 export const indexDocument = (
   courseId: string,

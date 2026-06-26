@@ -231,7 +231,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
   }, [messages, isLoading]);
 
 
-  const activeModelLabel = activeEngine?.name ?? (aiModel === 'deepseek' ? 'DeepSeek (Free)' : 'No Engine');
+  const activeModelLabel = activeEngine?.name ?? (aiModel ? aiModel : 'No Engine');
 
   // Automatically trigger AI document summary/welcome message when a new document is opened
   const lastOpenedDocIdRef = useRef<string | null>(null);
@@ -609,40 +609,30 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
             </div>
           </div>
         </div>
-        {/* Engine selector — shows user's configured engines and free tier */}
+        {/* Engine selector — shows user's configured engines only (BYOK) */}
         <select
-          value={activeEngine ? activeEngine.id : aiModel}
+          value={activeEngine ? activeEngine.id : ''}
           onChange={(e) => {
             const selectedId = e.target.value;
-            if (selectedId === 'deepseek') {
-              setAiModel(selectedId);
-              try {
-                const raw = localStorage.getItem(AI_PROVIDERS_KEY);
-                if (raw) {
-                  const all: StoredProvider[] = JSON.parse(raw);
-                  const updated = all.map(p => ({ ...p, isActive: false }));
-                  localStorage.setItem(AI_PROVIDERS_KEY, JSON.stringify(updated));
-                  window.dispatchEvent(new Event('storage'));
-                }
-              } catch {}
-            } else {
-              try {
-                const raw = localStorage.getItem(AI_PROVIDERS_KEY);
-                if (raw) {
-                  const all: StoredProvider[] = JSON.parse(raw);
-                  const updated = all.map(p => ({ ...p, isActive: p.id === selectedId }));
-                  localStorage.setItem(AI_PROVIDERS_KEY, JSON.stringify(updated));
-                  window.dispatchEvent(new Event('storage'));
-                }
-              } catch {}
-            }
+            try {
+              const raw = localStorage.getItem(AI_PROVIDERS_KEY);
+              if (raw) {
+                const all: StoredProvider[] = JSON.parse(raw);
+                const updated = all.map(p => ({ ...p, isActive: p.id === selectedId }));
+                localStorage.setItem(AI_PROVIDERS_KEY, JSON.stringify(updated));
+                window.dispatchEvent(new Event('storage'));
+              }
+            } catch {}
           }}
           className="bg-[#0f0f1a] border border-fouzar-border text-[8px] font-mono uppercase px-2 py-1 rounded-[var(--fouzar-radius-sm)] text-fouzar-text-primary focus:outline-none max-w-[130px] truncate cursor-pointer"
         >
-          <option value="deepseek" className="bg-[#0f0f1a] text-white">DeepSeek (Free)</option>
-          {engines.map((e) => (
-            <option key={e.id} value={e.id} className="bg-[#0f0f1a] text-white">{e.name}</option>
-          ))}
+          {engines.length === 0 ? (
+            <option value="" className="bg-[#0f0f1a] text-white">No Engine</option>
+          ) : (
+            engines.map((e) => (
+              <option key={e.id} value={e.id} className="bg-[#0f0f1a] text-white">{e.name}</option>
+            ))
+          )}
         </select>
       </div>
 
@@ -652,7 +642,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
             No AI Engine Connected
           </p>
           <p className="font-mono text-[7px] text-fouzar-text-secondary leading-relaxed">
-            Add your OpenAI, Anthropic, or Gemini API key in the <strong>AI Engines</strong> panel below to enable real-time AI responses.
+            This app is <strong>BYOK</strong> (Bring Your Own Key). Add your Gemini, OpenAI, Anthropic, or DeepSeek API key in the <strong>AI Engines</strong> panel below to enable AI.
           </p>
         </div>
       )}

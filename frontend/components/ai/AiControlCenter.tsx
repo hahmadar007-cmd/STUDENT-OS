@@ -34,6 +34,8 @@ function maskKey(key: string): string {
   return `••••••••${key.slice(-4)}`;
 }
 
+/** Non-authoritative helper: suggests a provider type based on key/name patterns.
+ *  The user ALWAYS has final say via the Provider Type dropdown. */
 function inferProviderType(name: string, key: string): string {
   const n = name.trim().toUpperCase();
   const k = key.trim();
@@ -41,6 +43,7 @@ function inferProviderType(name: string, key: string): string {
   if (n.includes('DEEPSEEK')) return 'DEEPSEEK';
   if (k.startsWith('sk-') || n.includes('OPENAI') || n.includes('GPT')) return 'OPENAI';
   if (k.startsWith('AIza') || n.includes('GEMINI') || n.includes('GOOGLE')) return 'GEMINI';
+  if (n.includes('OPENROUTER')) return 'OPENROUTER';
   return 'CUSTOM';
 }
 
@@ -175,11 +178,14 @@ function AddProviderModal({ onClose, onAdded, nextColorIndex }: AddModalProps) {
               onChange={e => setProviderType(e.target.value)}
               className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white/90 font-mono focus:outline-none focus:border-white/25 transition-colors cursor-pointer"
             >
-              <option value="OPENAI" className="bg-[#0f0f1a]">OPENAI</option>
               <option value="GEMINI" className="bg-[#0f0f1a]">GEMINI</option>
+              <option value="OPENAI" className="bg-[#0f0f1a]">OPENAI</option>
               <option value="ANTHROPIC" className="bg-[#0f0f1a]">ANTHROPIC</option>
-              <option value="CUSTOM" className="bg-[#0f0f1a]">CUSTOM</option>
+              <option value="DEEPSEEK" className="bg-[#0f0f1a]">DEEPSEEK</option>
+              <option value="OPENROUTER" className="bg-[#0f0f1a]">OPENROUTER</option>
+              <option value="CUSTOM" className="bg-[#0f0f1a]">CUSTOM (Ollama/Local)</option>
             </select>
+            <p className="font-mono text-[8px] text-white/25">This is the single source of truth — choose carefully.</p>
           </div>
 
           <AnimatePresence>
@@ -253,7 +259,7 @@ export function AiControlCenter() {
     save(nextProvidersState);
 
     if (!nextActiveState) {
-      setAiModel('deepseek');
+      setAiModel('');
     }
 
     try {
@@ -276,7 +282,7 @@ export function AiControlCenter() {
     save(updatedProviders);
     
     if (target?.isActive) {
-      setAiModel('deepseek');
+      setAiModel('');
     }
 
     try {

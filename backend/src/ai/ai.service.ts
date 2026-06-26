@@ -3,9 +3,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import { VectorService } from './vector.service';
 import { YoutubeService } from './youtube.service';
 
-const DEFAULT_GEMINI_KEY = process.env.DEFAULT_GEMINI_KEY || '';
-const DEFAULT_OPENAI_KEY = process.env.DEFAULT_OPENAI_KEY || '';
-const DEFAULT_DEEPSEEK_KEY = process.env.DEFAULT_DEEPSEEK_KEY || 'sk-5981a9195c8e475b971917a6babd1296';
+// ── BYOK ONLY — no default/fallback keys ──────────────────────────────────────
+// All keys must come from request headers sent by the authenticated frontend.
+// ─────────────────────────────────────────────────────────────────────────────
 
 @Injectable()
 export class AiService {
@@ -99,28 +99,211 @@ Student's Query: "${prompt}"`;
     },
     headers: Record<string, string> = {},
   ) {
-    const { prompt, slideId, modelName, currentSlideText } = dto;
-    const lowercasePrompt = prompt.toLowerCase();
+    const { prompt, slideId, modelName } = dto;
 
-    const geminiKey = headers['x-gemini-key'] || process.env.GEMINI_API_KEY || DEFAULT_GEMINI_KEY;
-    const openaiKey = headers['x-openai-key'] || process.env.OPENAI_API_KEY || DEFAULT_OPENAI_KEY;
-    const deepseekKey = headers['x-deepseek-key'] || process.env.DEEPSEEK_API_KEY || DEFAULT_DEEPSEEK_KEY;
-    const anthropicKey = headers['x-anthropic-key'] || process.env.ANTHROPIC_API_KEY;
-    const customUrl = headers['x-custom-url'];
-    const customKey = headers['x-custom-key'];
-    const openrouterKey = headers['x-openrouter-key'];
+    // ── Read keys strictly from request headers (or env fallbacks for self-hosting) ──
+    const geminiKey     = headers['x-gemini-key']     || process.env.GEMINI_API_KEY     || '';
+    const openaiKey     = headers['x-openai-key']     || process.env.OPENAI_API_KEY     || '';
+    const deepseekKey   = headers['x-deepseek-key']   || process.env.DEEPSEEK_API_KEY   || '';
+    const anthropicKey  = headers['x-anthropic-key']  || process.env.ANTHROPIC_API_KEY  || '';
+    const openrouterKey = headers['x-openrouter-key'] || '';
+    const customUrl     = headers['x-custom-url']     || '';
+    const customKey     = headers['x-custom-key']     || '';
 
+    // ── Explicit provider type — this is the single source of truth ───────────
+    const providerType = (headers['x-provider-type'] || '').toUpperCase();
+
+    // Use whatever key is available for vector search context enrichment
     const activeApiKey = geminiKey || openaiKey || deepseekKey || anthropicKey || openrouterKey || '';
     const fullPrompt = await this.buildContextPrompt(dto, activeApiKey);
 
-    // OpenRouter — fires when user has configured a personal engine key
-    // Model name is passed as-is so users can specify any OpenRouter model
-    if (openrouterKey) {
-      const baseUrl = customUrl || 'https://openrouter.ai/api/v1';
-      const endpoint = baseUrl.endsWith('/chat/completions')
-        ? baseUrl
-        : `${baseUrl.replace(/\/$/, '')}/chat/completions`;
+    // ── No engine configured ───────────────────────────────────────────────────
+    if (!providerType) {
+      return {
+        text: `### No AI Engine Configured\n\nTo use Fasca AI, please:\n1. Open **AI Engines** in the settings panel\n2. Click **Add AI Engine**\n3. Enter your API key and select a **Provider Type** (Gemini, OpenAI, Anthropic, etc.)\n4. Click the engine card to activate it\n\nYour key is stored only in your browser and is never shared.`,
+        model: 'System',
+      };
+    }
+
+    // ── GEMINI ────────────────────────────────────────────────────────────────
+    if (providerType === 'GEMINI') {
+      if (!geminiKey) {
+        return {
+          text: `### Gemini Key Missing\n\nYou have selected GEMINI as your provider but no API key was found.\n\nPlease add and activate a Gemini engine in **AI Engines** settings.`,
+          model: 'System',
+        };
+      }
       try {
+        const actualModel = (!modelName || modelName === 'gemini') ? 'gemini-2.5-pro' : modelName;
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${actualModel}:generateContent?key=${geminiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: fullPrompt }] }],
+            }),
+          },
+        );
+        if (response.ok) {
+          const data = await response.json();
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text) return { text, model: actualModel };
+          return { text: '### Gemini returned an empty response. Please try again.', model: actualModel };
+        }
+        const data = await response.json().catch(() => ({}));
+        if (response.status === 404) {
+          return {
+            text: `### Gemini Model Not Found\n\nThe model \`${actualModel}\` was not found. Please check if this model ID is correct and available in your region.\n\n**Tip:** Try \`gemini-2.5-pro\` or \`gemini-2.0-flash\`.`,
+            model: `Gemini (Error 404)`,
+          };
+        }
+        return {
+          text: `### Gemini API Error\n\nStatus: ${response.status}\nMessage: ${data.error?.message || 'Unknown error'}\n\nCheck your API key permissions or billing status.`,
+          model: `Gemini (Error ${response.status})`,
+        };
+      } catch (err: any) {
+        return {
+          text: `### Gemini Network Error\n\nFailed to reach the Gemini API.\n\nError: ${err.message || err}`,
+          model: 'Gemini (Network Error)',
+        };
+      }
+    }
+
+    // ── OPENAI ────────────────────────────────────────────────────────────────
+    if (providerType === 'OPENAI') {
+      if (!openaiKey) {
+        return {
+          text: `### OpenAI Key Missing\n\nYou have selected OPENAI as your provider but no API key was found.\n\nPlease add and activate an OpenAI engine in **AI Engines** settings.`,
+          model: 'System',
+        };
+      }
+      try {
+        const actualModel = modelName && modelName !== 'gpt-4o' ? modelName : 'gpt-4o';
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${openaiKey}`,
+          },
+          body: JSON.stringify({
+            model: actualModel,
+            messages: [{ role: 'user', content: fullPrompt }],
+          }),
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const text = data.choices?.[0]?.message?.content;
+          if (text) return { text, model: actualModel };
+          return { text: '### OpenAI returned an empty response. Please try again.', model: actualModel };
+        }
+        const data = await response.json().catch(() => ({}));
+        return {
+          text: `### OpenAI API Error\n\nStatus: ${response.status}\nMessage: ${data.error?.message || 'Unknown error'}\n\nCheck your API key or billing status.`,
+          model: `OpenAI (Error ${response.status})`,
+        };
+      } catch (err: any) {
+        return {
+          text: `### OpenAI Network Error\n\nFailed to reach the OpenAI API.\n\nError: ${err.message || err}`,
+          model: 'OpenAI (Network Error)',
+        };
+      }
+    }
+
+    // ── ANTHROPIC ─────────────────────────────────────────────────────────────
+    if (providerType === 'ANTHROPIC') {
+      if (!anthropicKey) {
+        return {
+          text: `### Anthropic Key Missing\n\nYou have selected ANTHROPIC as your provider but no API key was found.\n\nPlease add and activate an Anthropic engine in **AI Engines** settings.`,
+          model: 'System',
+        };
+      }
+      try {
+        const actualModel = modelName && modelName.startsWith('claude') ? modelName : 'claude-3-5-sonnet-20241022';
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': anthropicKey,
+            'anthropic-version': '2023-06-01',
+          },
+          body: JSON.stringify({
+            model: actualModel,
+            max_tokens: 2048,
+            messages: [{ role: 'user', content: fullPrompt }],
+          }),
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const text = data.content?.[0]?.text;
+          if (text) return { text, model: actualModel };
+          return { text: '### Anthropic returned an empty response. Please try again.', model: actualModel };
+        }
+        const data = await response.json().catch(() => ({}));
+        return {
+          text: `### Anthropic API Error\n\nStatus: ${response.status}\nMessage: ${data.error?.message || 'Unknown error'}`,
+          model: `Anthropic (Error ${response.status})`,
+        };
+      } catch (err: any) {
+        return {
+          text: `### Anthropic Network Error\n\nFailed to reach the Anthropic API.\n\nError: ${err.message || err}`,
+          model: 'Anthropic (Network Error)',
+        };
+      }
+    }
+
+    // ── DEEPSEEK ──────────────────────────────────────────────────────────────
+    if (providerType === 'DEEPSEEK') {
+      if (!deepseekKey) {
+        return {
+          text: `### DeepSeek Key Missing\n\nYou have selected DEEPSEEK as your provider but no API key was found.\n\nPlease add and activate a DeepSeek engine in **AI Engines** settings.`,
+          model: 'System',
+        };
+      }
+      try {
+        const response = await fetch('https://api.deepseek.com/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${deepseekKey}`,
+          },
+          body: JSON.stringify({
+            model: 'deepseek-chat',
+            messages: [{ role: 'user', content: fullPrompt }],
+          }),
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const text = data.choices?.[0]?.message?.content;
+          if (text) return { text, model: 'DeepSeek' };
+          return { text: '### DeepSeek returned an empty response. Please try again.', model: 'DeepSeek' };
+        }
+        const data = await response.json().catch(() => ({}));
+        return {
+          text: `### DeepSeek API Error\n\nStatus: ${response.status}\nMessage: ${data.error?.message || 'Unknown error'}`,
+          model: `DeepSeek (Error ${response.status})`,
+        };
+      } catch (err: any) {
+        return {
+          text: `### DeepSeek Network Error\n\nFailed to reach the DeepSeek API.\n\nError: ${err.message || err}`,
+          model: 'DeepSeek (Network Error)',
+        };
+      }
+    }
+
+    // ── OPENROUTER ────────────────────────────────────────────────────────────
+    if (providerType === 'OPENROUTER') {
+      if (!openrouterKey) {
+        return {
+          text: `### OpenRouter Key Missing\n\nYou have selected OPENROUTER as your provider but no API key was found.\n\nPlease add and activate an OpenRouter engine in **AI Engines** settings.`,
+          model: 'System',
+        };
+      }
+      try {
+        const baseUrl = customUrl || 'https://openrouter.ai/api/v1';
+        const endpoint = baseUrl.endsWith('/chat/completions')
+          ? baseUrl
+          : `${baseUrl.replace(/\/$/, '')}/chat/completions`;
         const response = await fetch(endpoint, {
           method: 'POST',
           headers: {
@@ -138,170 +321,33 @@ Student's Query: "${prompt}"`;
           const data = await response.json();
           const text = data.choices?.[0]?.message?.content;
           if (text) return { text, model: modelName };
-        } else {
-          const data = await response.json().catch(() => ({}));
-          return {
-            text: `### Fasca AI Error\n\nAPI returned status ${response.status}.\n\n**Message:** ${data.error?.message || JSON.stringify(data)}\n\nCheck your API key and model name in AI Engines settings.`,
-            model: `${modelName} (Error ${response.status})`,
-          };
+          return { text: '### OpenRouter returned an empty response. Please try again.', model: modelName };
         }
+        const data = await response.json().catch(() => ({}));
+        return {
+          text: `### OpenRouter API Error\n\nStatus: ${response.status}\nMessage: ${data.error?.message || JSON.stringify(data)}\n\nCheck your API key and model name.`,
+          model: `OpenRouter (Error ${response.status})`,
+        };
       } catch (err: any) {
         return {
-          text: `### Fasca AI Error\n\nFailed to reach the AI endpoint.\n\n**Error:** ${err.message || err}\n\nCheck your Base URL and API key in AI Engines settings.`,
-          model: `${modelName} (Network Error)`,
+          text: `### OpenRouter Network Error\n\nFailed to reach the endpoint.\n\nError: ${err.message || err}`,
+          model: 'OpenRouter (Network Error)',
         };
       }
     }
 
-    if (modelName.startsWith('gemini') && geminiKey) {
-      try {
-        const actualModel = modelName === 'gemini' ? 'gemini-2.5-pro' : modelName;
-        const callGemini = async (model: string) => {
-          return await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                contents: [{ parts: [{ text: fullPrompt }] }],
-              }),
-            },
-          );
-        };
-
-        const response = await callGemini(actualModel);
-        let activeModel = actualModel === 'gemini-2.5-flash' ? 'Gemini 2.5 Flash' : 'Gemini 2.5 Pro';
-
-        if (response.ok) {
-          const data = await response.json();
-          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (text) return { text, model: activeModel };
-        } else {
-          const data = await response.json().catch(() => ({}));
-          if (response.status === 404) {
-            return {
-              text: `### Gemini Model Unavailable\n\nThe selected model \`${actualModel}\` was not found. Please check if this model is supported in your region or update your API key permissions.`,
-              model: `Gemini (Error 404)`,
-            };
-          }
-          return {
-            text: `### Gemini API Error\n\nThe Google Gemini API returned an error.\n\nStatus: ${response.status}\nMessage: ${data.error?.message || 'Unknown error'}\n\nPlease try again shortly, check your billing details, or link a personal key in settings.`,
-            model: `Gemini (API Error ${response.status})`,
-          };
-        }
-      } catch (err: any) {
+    // ── CUSTOM (Ollama / local / other OpenAI-compatible) ─────────────────────
+    if (providerType === 'CUSTOM') {
+      if (!customUrl || !customKey) {
         return {
-          text: `### Gemini API Error\n\nFailed to communicate with the Google Gemini API.\n\nError: ${err.message || err}\n\nPlease verify your internet connection or check your API key in settings.`,
-          model: 'Gemini (Network Error)',
+          text: `### Custom Engine Misconfigured\n\nYou have selected CUSTOM as your provider but the **Base URL** and/or **API Key** are missing.\n\nPlease edit your engine in **AI Engines** settings and ensure both are set.`,
+          model: 'System',
         };
       }
-    }
-
-    // OpenAI GPT-4o
-    if (modelName === 'gpt-4o' && openaiKey) {
       try {
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${openaiKey}`,
-          },
-          body: JSON.stringify({
-            model: 'gpt-4o',
-            messages: [{ role: 'user', content: fullPrompt }],
-          }),
-        });
-        if (response.ok) {
-          const data = await response.json();
-          const text = data.choices?.[0]?.message?.content;
-          if (text) return { text, model: 'GPT-4o' };
-        } else {
-          const data = await response.json().catch(() => ({}));
-          return {
-            text: `### OpenAI API Error\n\nThe OpenAI API returned an error.\n\nStatus: ${response.status}\nMessage: ${data.error?.message || 'Unknown error'}\n\nPlease check your billing details, link a personal key in settings, or switch connection mode.`,
-            model: `GPT-4o (API Error ${response.status})`,
-          };
-        }
-      } catch (err: any) {
-        return {
-          text: `### OpenAI API Error\n\nFailed to communicate with the OpenAI API.\n\nError: ${err.message || err}\n\nPlease check your internet connection or key status.`,
-          model: 'GPT-4o (Network Error)',
-        };
-      }
-    }
-
-    // Anthropic Claude
-    if (modelName === 'claude-3-5-sonnet' && anthropicKey) {
-      try {
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': anthropicKey,
-            'anthropic-version': '2023-06-01',
-          },
-          body: JSON.stringify({
-            model: 'claude-3-5-sonnet-20241022',
-            max_tokens: 1024,
-            messages: [{ role: 'user', content: fullPrompt }],
-          }),
-        });
-        if (response.ok) {
-          const data = await response.json();
-          const text = data.content?.[0]?.text;
-          if (text) return { text, model: 'Claude 3.5 Sonnet' };
-        } else {
-          const data = await response.json().catch(() => ({}));
-          return {
-            text: `### Anthropic API Error\n\nThe Anthropic API returned an error.\n\nStatus: ${response.status}\nMessage: ${data.error?.message || 'Unknown error'}`,
-            model: `Claude (API Error ${response.status})`,
-          };
-        }
-      } catch (err: any) {
-        return {
-          text: `### Anthropic API Error\n\nFailed to communicate with the Anthropic API.\n\nError: ${err.message || err}`,
-          model: 'Claude (Network Error)',
-        };
-      }
-    }
-
-    // DeepSeek (OpenAI-compatible API)
-    if (modelName === 'deepseek' && deepseekKey) {
-      try {
-        const response = await fetch('https://api.deepseek.com/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${deepseekKey}`,
-          },
-          body: JSON.stringify({
-            model: 'deepseek-chat',
-            messages: [{ role: 'user', content: fullPrompt }],
-          }),
-        });
-        if (response.ok) {
-          const data = await response.json();
-          const text = data.choices?.[0]?.message?.content;
-          if (text) return { text, model: 'DeepSeek' };
-        } else {
-          const data = await response.json().catch(() => ({}));
-          return {
-            text: `### DeepSeek API Error\n\nThe DeepSeek API returned an error.\n\nStatus: ${response.status}\nMessage: ${data.error?.message || 'Unknown error'}\n\nPlease try again or switch to another model.`,
-            model: `DeepSeek (API Error ${response.status})`,
-          };
-        }
-      } catch (err: any) {
-        return {
-          text: `### DeepSeek API Error\n\nFailed to communicate with the DeepSeek API.\n\nError: ${err.message || err}`,
-          model: 'DeepSeek (Network Error)',
-        };
-      }
-    }
-
-    // Custom / local endpoint (OpenAI-compatible)
-    if (customUrl && customKey) {
-      try {
-        const fetchUrl = customUrl.endsWith('chat/completions') ? customUrl : `${customUrl.replace(/\/$/, '')}/chat/completions`;
+        const fetchUrl = customUrl.endsWith('chat/completions')
+          ? customUrl
+          : `${customUrl.replace(/\/$/, '')}/chat/completions`;
         const response = await fetch(fetchUrl, {
           method: 'POST',
           headers: {
@@ -317,22 +363,23 @@ Student's Query: "${prompt}"`;
           const data = await response.json();
           const text = data.choices?.[0]?.message?.content;
           if (text) return { text, model: modelName };
-        } else {
-          return {
-            text: `### FASCA Core Intelligence Error\n\nThe custom endpoint returned status ${response.status}.`,
-            model: 'Custom Endpoint (Error)',
-          };
+          return { text: '### Custom endpoint returned an empty response.', model: modelName };
         }
+        return {
+          text: `### Custom Endpoint Error\n\nThe endpoint returned status ${response.status}.\n\nCheck your Base URL and API key.`,
+          model: 'Custom (Error)',
+        };
       } catch (err: any) {
         return {
-          text: `### FASCA Core Intelligence Error\n\nFailed to contact custom endpoint: ${err.message || err}`,
-          model: 'Custom Endpoint (Error)',
+          text: `### Custom Endpoint Network Error\n\nFailed to reach: ${customUrl}\n\nError: ${err.message || err}`,
+          model: 'Custom (Network Error)',
         };
       }
     }
 
+    // ── Unknown provider type ──────────────────────────────────────────────────
     return {
-      text: `### Configuration Error\n\nThe requested model \`${modelName}\` is missing its required API key or is unsupported. Please check your AI Engines settings or environment variables.`,
+      text: `### Unknown Provider Type\n\nReceived an unrecognised provider type: \`${providerType}\`.\n\nSupported types: GEMINI, OPENAI, ANTHROPIC, DEEPSEEK, OPENROUTER, CUSTOM.\n\nPlease re-configure your engine in **AI Engines** settings.`,
       model: 'System',
     };
   }
