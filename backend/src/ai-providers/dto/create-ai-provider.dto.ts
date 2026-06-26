@@ -5,6 +5,8 @@ export enum ProviderType {
   OPENAI = 'OPENAI',
   ANTHROPIC = 'ANTHROPIC',
   GEMINI = 'GEMINI',
+  DEEPSEEK = 'DEEPSEEK',
+  OPENROUTER = 'OPENROUTER',
   CUSTOM = 'CUSTOM',
 }
 
