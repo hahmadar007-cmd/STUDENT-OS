@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
-import { LmsService } from './lms.service';
-import { LmsController } from './lms.controller';
+import { PortalController } from './portal.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 
@@ -12,8 +11,6 @@ import { JwtModule } from '@nestjs/jwt';
       signOptions: { expiresIn: '7d' },
     }),
   ],
-  controllers: [LmsController],
-  providers: [LmsService],
-  exports: [LmsService],
+  controllers: [PortalController],
 })
-export class LmsModule {}
+export class PortalModule {}

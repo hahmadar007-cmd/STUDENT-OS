@@ -9,6 +9,9 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { SocialController } from './social/social.controller';
 import { JwtModule } from '@nestjs/jwt';
+import { PortalModule } from './portal/portal.module';
+import { UsersModule } from './users/users.module';
+import { VideosModule } from './videos/videos.module';
 
 @Module({
   imports: [
@@ -17,6 +20,9 @@ import { JwtModule } from '@nestjs/jwt';
     GroupsModule,
     AiModule,
     LmsModule,
+    PortalModule,
+    UsersModule,
+    VideosModule,
     AiProvidersModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'fasca-obsidian-secret-key-1337',

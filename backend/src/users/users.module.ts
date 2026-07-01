@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { LmsService } from './lms.service';
-import { LmsController } from './lms.controller';
+import { UsersController } from './users.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
+import { AppService } from '../app.service';
 
 @Module({
   imports: [
@@ -12,8 +12,7 @@ import { JwtModule } from '@nestjs/jwt';
       signOptions: { expiresIn: '7d' },
     }),
   ],
-  controllers: [LmsController],
-  providers: [LmsService],
-  exports: [LmsService],
+  controllers: [UsersController],
+  providers: [AppService], // We provide AppService here for setBypass
 })
-export class LmsModule {}
+export class UsersModule {}

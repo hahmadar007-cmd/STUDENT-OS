@@ -127,9 +127,39 @@ export class DocumentProcessorService {
       fs.writeFileSync(tempInputPath, buffer);
 
       console.log(`DocumentProcessorService: Converting DOCX to PDF via LibreOffice...`);
-      await execAsync(`soffice --headless --convert-to pdf --outdir "${tempDir}" "${tempInputPath}"`);
-
       const tempOutputPath = path.join(tempDir, `input-${uniqueId}.pdf`);
+
+      try {
+        await execAsync(`soffice --headless --convert-to pdf --outdir "${tempDir}" "${tempInputPath}"`);
+      } catch (libreErr) {
+        if (process.platform === 'win32') {
+          console.log(`DocumentProcessorService: LibreOffice not found. Falling back to Microsoft Word COM Object on Windows...`);
+          const psCommand = `
+            param([string]$in, [string]$out)
+            try {
+                $word = New-Object -ComObject Word.Application
+                $doc = $word.Documents.Open($in, $false, $true, $false)
+                $doc.SaveAs([ref] $out, [ref] 17)
+                $doc.Close()
+                $word.Quit()
+            } catch {
+                Write-Error $_.Exception.Message
+                exit 1
+            }
+          `;
+          const psScriptPath = path.join(tempDir, `convert-docx-${uniqueId}.ps1`);
+          fs.writeFileSync(psScriptPath, psCommand);
+          try {
+            await execAsync(`powershell -ExecutionPolicy Bypass -File "${psScriptPath}" -in "${tempInputPath}" -out "${tempOutputPath}"`, { timeout: 30000 });
+          } finally {
+            if (fs.existsSync(psScriptPath)) {
+              fs.unlinkSync(psScriptPath);
+            }
+          }
+        } else {
+          throw libreErr;
+        }
+      }
 
       if (fs.existsSync(tempOutputPath)) {
         const pdfBuffer = fs.readFileSync(tempOutputPath);
@@ -141,7 +171,7 @@ export class DocumentProcessorService {
         return null;
       }
     } catch (err) {
-      console.warn('DocumentProcessorService: Failed to convert DOCX to PDF. (Ignore if running locally without LibreOffice):', err);
+      console.warn('DocumentProcessorService: Failed to convert DOCX to PDF:', err);
       return null;
     } finally {
       if (fs.existsSync(tempInputPath)) {
@@ -163,7 +193,39 @@ export class DocumentProcessorService {
       // Run headless LibreOffice conversion
       // soffice --headless --convert-to pdf --outdir <tempDir> <tempInputPath>
       console.log(`DocumentProcessorService: Converting PPTX to PDF via LibreOffice...`);
-      await execAsync(`soffice --headless --convert-to pdf --outdir "${tempDir}" "${tempInputPath}"`);
+      
+      try {
+        await execAsync(`soffice --headless --convert-to pdf --outdir "${tempDir}" "${tempInputPath}"`);
+      } catch (libreErr) {
+        if (process.platform === 'win32') {
+          console.log(`DocumentProcessorService: LibreOffice not found. Falling back to Microsoft PowerPoint COM Object on Windows...`);
+          const psCommand = `
+            param([string]$in, [string]$out)
+            try {
+                $ppt = New-Object -ComObject PowerPoint.Application
+                $presentation = $ppt.Presentations.Open($in, [Microsoft.Office.Core.MsoTriState]::msoTrue, [Microsoft.Office.Core.MsoTriState]::msoFalse, [Microsoft.Office.Core.MsoTriState]::msoFalse)
+                $presentation.SaveAs($out, 32)
+                $presentation.Close()
+                $ppt.Quit()
+            } catch {
+                Write-Error $_.Exception.Message
+                exit 1
+            }
+          `;
+          const psScriptPath = path.join(tempDir, `convert-pptx-${uniqueId}.ps1`);
+          const tempOutputPathPs = path.join(tempDir, `input-${uniqueId}.pdf`);
+          fs.writeFileSync(psScriptPath, psCommand);
+          try {
+            await execAsync(`powershell -ExecutionPolicy Bypass -File "${psScriptPath}" -in "${tempInputPath}" -out "${tempOutputPathPs}"`, { timeout: 30000 });
+          } finally {
+            if (fs.existsSync(psScriptPath)) {
+              fs.unlinkSync(psScriptPath);
+            }
+          }
+        } else {
+          throw libreErr;
+        }
+      }
       
       // The output PDF name is determined by the input filename
       const tempOutputPath = path.join(tempDir, `input-${uniqueId}.pdf`);

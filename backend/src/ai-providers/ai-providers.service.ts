@@ -41,7 +41,7 @@ export class AiProvidersService {
     const provider = await this.prisma.aiProvider.create({
       data: {
         name: dto.name,
-        providerType: dto.providerType,
+        providerType: dto.providerType as any,
         apiKey: encryptedKey,
         baseUrl: dto.baseUrl ?? null,
         isActive: false,

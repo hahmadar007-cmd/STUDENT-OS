@@ -5,6 +5,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { CloudStorageService } from './cloud-storage.service';
 import { GroupsGateway } from './groups.gateway';
 import { DocumentProcessorService } from '../ai/document-processor.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Controller('groups')
 export class GroupsController {
@@ -14,6 +15,7 @@ export class GroupsController {
     private readonly cloudStorageService: CloudStorageService,
     private readonly groupsGateway: GroupsGateway,
     private readonly documentProcessorService: DocumentProcessorService,
+    private readonly prisma: PrismaService,
   ) {}
 
   @Post()
@@ -333,6 +335,76 @@ export class GroupsController {
       return { success: true, message: 'File deleted successfully' };
     } catch (err: any) {
       throw new UnauthorizedException(err.message || 'Authentication failed');
+    }
+  }
+
+  @Get()
+  async getGroups(@Headers('authorization') authHeader?: string) {
+    return this.getGroupsMy(authHeader);
+  }
+
+  @Get('my')
+  async getGroupsMy(@Headers('authorization') authHeader?: string) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Missing token');
+    }
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded = this.jwtService.verify(token);
+      const userId = decoded.sub;
+
+      // Ensure default groups exist in database
+      let groupsCount = await this.prisma.group.count();
+      if (groupsCount === 0) {
+        let creator = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!creator) {
+          creator = await this.prisma.user.findFirst();
+        }
+        if (!creator) {
+          const uni = await this.prisma.university.upsert({
+            where: { name: 'MIT' },
+            update: {},
+            create: { name: 'MIT' },
+          });
+          creator = await this.prisma.user.create({
+            data: {
+              email: 'alex@mit.edu',
+              name: 'Alex Mercer',
+              universityId: uni.id,
+            }
+          });
+        }
+        await this.prisma.group.create({
+          data: {
+            id: 'group-1',
+            name: 'CS-229 Neural Network Room',
+            creatorId: creator.id,
+            currentSlide: '1',
+          }
+        });
+        await this.prisma.group.create({
+          data: {
+            id: 'group-2',
+            name: 'CS-109 Study Desk',
+            creatorId: creator.id,
+            currentSlide: '1',
+          }
+        });
+      }
+
+      // Find user memberships (exclude private sanctuary from group list)
+      const memberships = await this.prisma.membership.findMany({
+        where: { userId },
+        include: { group: true }
+      });
+
+      const sharedGroups = memberships
+        .map((m) => m.group)
+        .filter((g) => !g.id.startsWith('personal-'));
+
+      return sharedGroups;
+    } catch (e) {
+      throw new UnauthorizedException('Authentication failed');
     }
   }
 }

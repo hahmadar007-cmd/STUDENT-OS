@@ -8,6 +8,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { CloudStorageService } from './cloud-storage.service';
 
 import { AiModule } from '../ai/ai.module';
+import { SanctuaryController } from './sanctuary.controller';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { AiModule } from '../ai/ai.module';
       signOptions: { expiresIn: '7d' },
     }),
   ],
-  controllers: [GroupsController],
+  controllers: [GroupsController, SanctuaryController],
   providers: [GroupsService, GroupsGateway, YoutubeStreamGateway, CloudStorageService],
   exports: [GroupsService, GroupsGateway, YoutubeStreamGateway, CloudStorageService],
 })
