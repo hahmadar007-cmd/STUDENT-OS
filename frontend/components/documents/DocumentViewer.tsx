@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Download, FileText, ExternalLink, Maximize2, Minimize2, Eye, EyeOff } from 'lucide-react';
+import { X, Download, FileText, ExternalLink, Maximize2, Minimize2, Eye, EyeOff, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   getDocument,
   createObjectUrl,
@@ -63,6 +63,151 @@ export async function extractTextFromPdf(blob: Blob): Promise<{ fullText: string
     }
   });
 }
+
+const CustomPdfViewer = ({ fileUrl, className = "" }: { fileUrl: string, className?: string }) => {
+  const [pdfDoc, setPdfDoc] = useState<any>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let active = true;
+    const loadPdf = async () => {
+      try {
+        setIsLoading(true);
+        if (typeof window === 'undefined') return;
+        
+        if (!(window as any).pdfjsLib) {
+          const script = window.document.createElement('script');
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js';
+          window.document.head.appendChild(script);
+          await new Promise((res) => { script.onload = res; });
+        }
+
+        const pdfjsLib = (window as any).pdfjsLib;
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+        const loadingTask = pdfjsLib.getDocument(fileUrl);
+        const pdf = await loadingTask.promise;
+        if (!active) return;
+        setPdfDoc(pdf);
+        setTotalPages(pdf.numPages);
+        setCurrentPage(1);
+        setIsLoading(false);
+      } catch (err) {
+        console.error("Failed to load PDF for canvas:", err);
+        if (active) setIsLoading(false);
+      }
+    };
+    loadPdf();
+    return () => { active = false; };
+  }, [fileUrl]);
+
+  useEffect(() => {
+    if (!pdfDoc || !canvasRef.current) return;
+    
+    let renderTask: any = null;
+    let active = true;
+
+    const renderPage = async () => {
+      try {
+        const page = await pdfDoc.getPage(currentPage);
+        if (!active) return;
+
+        let currentScale = 1.5;
+        if (containerRef.current) {
+           const containerWidth = containerRef.current.clientWidth - 64; 
+           const containerHeight = containerRef.current.clientHeight - 120;
+           const unscaledViewport = page.getViewport({ scale: 1.0 });
+           
+           const scaleX = containerWidth / unscaledViewport.width;
+           const scaleY = containerHeight / unscaledViewport.height;
+           currentScale = Math.min(scaleX, scaleY);
+           
+           if (currentScale > 3) currentScale = 3;
+           if (currentScale < 0.5) currentScale = 0.5;
+        }
+
+        const viewport = page.getViewport({ scale: currentScale });
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const context = canvas.getContext('2d');
+        if (!context) return;
+
+        const outputScale = window.devicePixelRatio || 1;
+        canvas.width = Math.floor(viewport.width * outputScale);
+        canvas.height = Math.floor(viewport.height * outputScale);
+        canvas.style.width = Math.floor(viewport.width) + "px";
+        canvas.style.height = Math.floor(viewport.height) + "px";
+
+        const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
+        
+        renderTask = page.render({ canvasContext: context, transform: transform, viewport: viewport });
+        await renderTask.promise;
+      } catch (err: any) {
+        if (err.name !== 'RenderingCancelledException') {
+          console.error("Error rendering PDF page", err);
+        }
+      }
+    };
+
+    renderPage();
+    return () => {
+      active = false;
+      if (renderTask) renderTask.cancel();
+    };
+  }, [pdfDoc, currentPage]);
+
+  const goNext = () => setCurrentPage(p => Math.min(p + 1, totalPages));
+  const goPrev = () => setCurrentPage(p => Math.max(p - 1, 1));
+
+  return (
+    <div className={`relative flex flex-col bg-[#050508] overflow-hidden ${className}`} ref={containerRef}>
+      {isLoading ? (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="font-mono text-[10px] text-fouzar-accent animate-pulse uppercase tracking-widest">
+            Preparing Slide Deck...
+          </span>
+        </div>
+      ) : (
+        <>
+          <div className="flex-1 overflow-auto flex items-center justify-center p-4 sm:p-8 custom-scrollbar">
+             <canvas 
+               ref={canvasRef} 
+               className="shadow-2xl rounded-sm bg-white"
+             />
+          </div>
+          
+          {totalPages > 0 && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-[#11111a]/90 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full shadow-2xl z-10">
+              <button 
+                onClick={goPrev} 
+                disabled={currentPage <= 1}
+                className="p-1.5 text-white/50 hover:text-fouzar-accent disabled:opacity-20 disabled:cursor-not-allowed transition-colors rounded-full hover:bg-white/5"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <div className="font-mono text-[11px] font-bold tracking-widest text-white flex items-center gap-1.5">
+                <span className="w-6 text-right">{currentPage}</span>
+                <span className="text-white/30">/</span>
+                <span className="w-6 text-left">{totalPages}</span>
+              </div>
+              <button 
+                onClick={goNext} 
+                disabled={currentPage >= totalPages}
+                className="p-1.5 text-white/50 hover:text-fouzar-accent disabled:opacity-20 disabled:cursor-not-allowed transition-colors rounded-full hover:bg-white/5"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
 
 /**
  * In-app viewer for uploaded lecture slides and course files.
@@ -428,10 +573,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
           )}
 
           {!loading && !error && previewUrl && isPdf && !showTextMode && (
-            <iframe
-              src={previewUrl}
-              title={document.fileName}
-              className="flex-1 w-full border-0 bg-white/5"
+            <CustomPdfViewer
+              fileUrl={previewUrl}
+              className="flex-1 w-full border-0"
             />
           )}
 
@@ -591,10 +735,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
           )}
 
           {!loading && !error && previewUrl && isPdf && !showTextMode && (
-            <iframe
-              src={previewUrl}
-              title={document.fileName}
-              className="flex-1 w-full border-0 bg-white/5"
+            <CustomPdfViewer
+              fileUrl={previewUrl}
+              className="flex-1 w-full border-0"
             />
           )}
 
