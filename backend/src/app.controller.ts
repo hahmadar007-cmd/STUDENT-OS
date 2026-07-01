@@ -317,30 +317,7 @@ export class AppController {
         .map((m) => m.group)
         .filter((g) => !g.id.startsWith('personal-'));
 
-      if (sharedGroups.length > 0) {
-        return sharedGroups;
-      }
-
-      // If user has no memberships, automatically enroll them in all existing groups
-      const allGroups = await this.prisma.group.findMany();
-      for (const group of allGroups) {
-        await this.prisma.membership.upsert({
-          where: {
-            groupId_userId: {
-              groupId: group.id,
-              userId
-            }
-          },
-          update: {},
-          create: {
-            groupId: group.id,
-            userId,
-            role: 'MEMBER'
-          }
-        });
-      }
-
-      return allGroups;
+      return sharedGroups;
     } catch (e) {
       throw new UnauthorizedException('Authentication failed');
     }
