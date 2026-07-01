@@ -619,8 +619,9 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
         {/* Engine selector — shows user's configured engines only (BYOK) */}
         <select
           value={activeEngine ? activeEngine.id : ''}
-          onChange={(e) => {
+          onChange={async (e) => {
             const selectedId = e.target.value;
+            if (!selectedId) return;
             try {
               const raw = localStorage.getItem(AI_PROVIDERS_KEY);
               if (raw) {
@@ -629,16 +630,23 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
                 localStorage.setItem(AI_PROVIDERS_KEY, JSON.stringify(updated));
                 window.dispatchEvent(new Event('storage'));
               }
-            } catch {}
+              const { toggleAiProviderActive } = await import('../../lib/api');
+              await toggleAiProviderActive(selectedId);
+            } catch (err) {
+              console.error('Failed to sync toggle with backend:', err);
+            }
           }}
           className="bg-[#0f0f1a] border border-fouzar-border text-[8px] font-mono uppercase px-2 py-1 rounded-[var(--fouzar-radius-sm)] text-fouzar-text-primary focus:outline-none max-w-[130px] truncate cursor-pointer"
         >
           {engines.length === 0 ? (
             <option value="" className="bg-[#0f0f1a] text-white">No Engine</option>
           ) : (
-            engines.map((e) => (
-              <option key={e.id} value={e.id} className="bg-[#0f0f1a] text-white">{e.name}</option>
-            ))
+            <>
+              {!activeEngine && <option value="" disabled hidden className="bg-[#0f0f1a] text-white">Select Engine...</option>}
+              {engines.map((e) => (
+                <option key={e.id} value={e.id} className="bg-[#0f0f1a] text-white">{e.name}</option>
+              ))}
+            </>
           )}
         </select>
       </div>
