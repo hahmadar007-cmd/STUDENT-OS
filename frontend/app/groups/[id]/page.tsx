@@ -437,7 +437,10 @@ export default function StudyGroupRoom() {
                 
                 <div className="w-[1px] h-4 bg-fouzar-border/30 mx-1 self-center" />
                 <button
-                  onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: prev.right ? null : 'youtube' }))}
+                  onClick={() => setActiveSplitTabs(prev => ({ 
+                    ...prev, 
+                    right: prev.right ? null : (prev.left === 'notepad' ? 'slides' : 'notepad') 
+                  }))}
                   disabled={isFlowActive}
                   className={`px-2.5 py-1 flex items-center gap-1 font-mono text-[9px] uppercase tracking-wider rounded-[4px] transition-colors ${
                     activeSplitTabs.right
@@ -450,16 +453,41 @@ export default function StudyGroupRoom() {
                 </button>
                 
                 {activeSplitTabs.right && !isFlowActive && (
-                  <select
-                    value={activeSplitTabs.right}
-                    onChange={(e) => setActiveSplitTabs(prev => ({ ...prev, right: e.target.value }))}
-                    className="bg-transparent border border-fouzar-border/30 rounded-[4px] text-[9px] font-mono uppercase tracking-wider text-fouzar-text-primary px-2 py-1 outline-none"
-                  >
-                    <option value="slides">Slides</option>
-                    <option value="notepad">Notepad</option>
-                    <option value="watch">Watch Party</option>
-                    <option value="youtube">YouTube</option>
-                  </select>
+                  <div className="flex items-center gap-1 ml-2 bg-fouzar-elevated/40 p-1 rounded-[4px] border border-fouzar-border/50">
+                    <span className="text-[7px] font-mono uppercase text-fouzar-text-tertiary px-1">Right Panel:</span>
+                    <button
+                      onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: 'notepad' }))}
+                      className={`px-2 py-1 rounded-[4px] text-[8px] font-mono uppercase transition-all ${
+                        activeSplitTabs.right === 'notepad' ? 'bg-fouzar-accent text-fouzar-text-inverse' : 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-fouzar-accent/10'
+                      }`}
+                    >
+                      Notepad
+                    </button>
+                    <button
+                      onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: 'slides' }))}
+                      className={`px-2 py-1 rounded-[4px] text-[8px] font-mono uppercase transition-all ${
+                        activeSplitTabs.right === 'slides' ? 'bg-fouzar-accent text-fouzar-text-inverse' : 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-fouzar-accent/10'
+                      }`}
+                    >
+                      Slides
+                    </button>
+                    <button
+                      onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: 'youtube' }))}
+                      className={`px-2 py-1 rounded-[4px] text-[8px] font-mono uppercase transition-all ${
+                        activeSplitTabs.right === 'youtube' ? 'bg-red-500 text-white' : 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-red-500/10'
+                      }`}
+                    >
+                      YouTube
+                    </button>
+                    <button
+                      onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: 'watch' }))}
+                      className={`px-2 py-1 rounded-[4px] text-[8px] font-mono uppercase transition-all ${
+                        activeSplitTabs.right === 'watch' ? 'bg-fouzar-accent text-fouzar-text-inverse' : 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-fouzar-accent/10'
+                      }`}
+                    >
+                      Watch Party
+                    </button>
+                  </div>
                 )}
               </div>
               
