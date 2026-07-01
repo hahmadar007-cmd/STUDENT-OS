@@ -1199,7 +1199,10 @@ export default function PersonalSanctuaryPage() {
 
                 <div className="w-[1px] h-6 bg-fouzar-border/40 mx-2 self-center" />
                 <button
-                  onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: prev.right ? null : 'youtube' }))}
+                  onClick={() => setActiveSplitTabs(prev => ({ 
+                    ...prev, 
+                    right: prev.right ? null : (prev.left === 'notes' ? 'slides' : 'notes') 
+                  }))}
                   className={`px-4 py-2 rounded-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all flex items-center gap-2 ${
                     activeSplitTabs.right
                       ? 'bg-indigo-500 text-white shadow-[0_0_12px_rgba(99,102,241,0.5)]'
@@ -1210,32 +1213,40 @@ export default function PersonalSanctuaryPage() {
                   {activeSplitTabs.right ? 'Exit Split' : 'Split View'}
                 </button>
                 {activeSplitTabs.right && (
-                  <div className="flex items-center gap-2 ml-2 bg-fouzar-elevated/20 p-1 rounded-[var(--fouzar-radius-md)] border border-fouzar-border/50">
-                    <select
-                      value={activeSplitTabs.left}
-                      onChange={(e) => setActiveSplitTabs(prev => ({ ...prev, left: e.target.value }))}
-                      className="bg-transparent text-[9px] font-mono p-1 outline-none text-fouzar-text-primary uppercase cursor-pointer"
+                  <div className="flex items-center gap-1 ml-2 bg-fouzar-elevated/40 p-1 rounded-[var(--fouzar-radius-md)] border border-fouzar-border/50">
+                    <span className="text-[7px] font-mono uppercase text-fouzar-text-tertiary px-1">Right Panel:</span>
+                    <button
+                      onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: 'notes' }))}
+                      className={`px-2 py-1 rounded-[var(--fouzar-radius-sm)] text-[8px] font-mono uppercase transition-all ${
+                        activeSplitTabs.right === 'notes' ? 'bg-fouzar-accent text-fouzar-text-inverse' : 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-fouzar-accent/10'
+                      }`}
                     >
-                      <option value="notes">Notebook</option>
-                      <option value="slides">Slides</option>
-                      <option value="youtube">YT Search</option>
-                      <option value="web">Web Hub</option>
-                      <option value="media">Media</option>
-                      {openDocs.map(d => <option key={d.id} value={d.id} className="text-fouzar-bg">{d.fileName}</option>)}
-                    </select>
-                    <span className="text-fouzar-text-tertiary">|</span>
-                    <select
-                      value={activeSplitTabs.right}
-                      onChange={(e) => setActiveSplitTabs(prev => ({ ...prev, right: e.target.value }))}
-                      className="bg-transparent text-[9px] font-mono p-1 outline-none text-fouzar-text-primary uppercase cursor-pointer"
+                      Notebook
+                    </button>
+                    <button
+                      onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: 'slides' }))}
+                      className={`px-2 py-1 rounded-[var(--fouzar-radius-sm)] text-[8px] font-mono uppercase transition-all ${
+                        activeSplitTabs.right === 'slides' ? 'bg-fouzar-accent text-fouzar-text-inverse' : 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-fouzar-accent/10'
+                      }`}
                     >
-                      <option value="notes">Notebook</option>
-                      <option value="slides">Slides</option>
-                      <option value="youtube">YT Search</option>
-                      <option value="web">Web Hub</option>
-                      <option value="media">Media</option>
-                      {openDocs.map(d => <option key={d.id} value={d.id} className="text-fouzar-bg">{d.fileName}</option>)}
-                    </select>
+                      Slides
+                    </button>
+                    <button
+                      onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: 'youtube' }))}
+                      className={`px-2 py-1 rounded-[var(--fouzar-radius-sm)] text-[8px] font-mono uppercase transition-all ${
+                        activeSplitTabs.right === 'youtube' ? 'bg-red-500 text-white' : 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-red-500/10'
+                      }`}
+                    >
+                      YouTube
+                    </button>
+                    <button
+                      onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: 'web' }))}
+                      className={`px-2 py-1 rounded-[var(--fouzar-radius-sm)] text-[8px] font-mono uppercase transition-all ${
+                        activeSplitTabs.right === 'web' ? 'bg-fouzar-accent text-fouzar-text-inverse' : 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-fouzar-accent/10'
+                      }`}
+                    >
+                      Web
+                    </button>
                   </div>
                 )}
               </div>
@@ -1247,8 +1258,8 @@ export default function PersonalSanctuaryPage() {
             {activeSplitTabs.right ? (
               <div className="flex-1 min-h-[280px] lg:min-h-0 flex flex-col overflow-hidden relative">
                 <ResizablePanel direction="horizontal" initialSize={500} minSize={300}>
-                  <div className="h-full w-full flex flex-col p-1 overflow-y-auto scrollbar-none">{renderTabContent(activeSplitTabs.left)}</div>
-                  <div className="h-full w-full flex flex-col p-1 overflow-y-auto scrollbar-none">{renderTabContent(activeSplitTabs.right)}</div>
+                  <div className="h-full w-full flex flex-col p-1 overflow-hidden">{renderTabContent(activeSplitTabs.left)}</div>
+                  <div className="h-full w-full flex flex-col p-1 overflow-hidden">{renderTabContent(activeSplitTabs.right)}</div>
                 </ResizablePanel>
               </div>
             ) : (
