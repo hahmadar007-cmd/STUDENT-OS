@@ -210,11 +210,13 @@ const CustomPdfViewer = ({ fileUrl, className = "", onClose }: { fileUrl: string
         </div>
       ) : (
         <>
-          <div className="flex-1 overflow-auto flex items-center justify-center p-4 sm:p-8 custom-scrollbar">
-             <canvas 
-               ref={canvasRef} 
-               className="shadow-2xl rounded-sm bg-white"
-             />
+          <div className="flex-1 overflow-auto w-full p-4 sm:p-8 custom-scrollbar flex flex-col items-center">
+             <div className="my-auto">
+               <canvas 
+                 ref={canvasRef} 
+                 className="shadow-2xl rounded-sm bg-white max-w-full"
+               />
+             </div>
           </div>
           
           {totalPages > 0 && (
