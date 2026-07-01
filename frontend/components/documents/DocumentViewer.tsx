@@ -64,7 +64,7 @@ export async function extractTextFromPdf(blob: Blob): Promise<{ fullText: string
   });
 }
 
-const CustomPdfViewer = ({ fileUrl, className = "" }: { fileUrl: string, className?: string }) => {
+const CustomPdfViewer = ({ fileUrl, className = "", onClose }: { fileUrl: string, className?: string, onClose?: () => void }) => {
   const [pdfDoc, setPdfDoc] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
@@ -162,6 +162,43 @@ const CustomPdfViewer = ({ fileUrl, className = "" }: { fileUrl: string, classNa
 
   const goNext = () => setCurrentPage(p => Math.min(p + 1, totalPages));
   const goPrev = () => setCurrentPage(p => Math.max(p - 1, 1));
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'PageDown') {
+        e.preventDefault();
+        setCurrentPage(p => Math.min(p + 1, totalPages));
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
+        e.preventDefault();
+        setCurrentPage(p => Math.max(p - 1, 1));
+      } else if (e.key === 'Escape' && onClose) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [totalPages, onClose]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    
+    let lastWheelTime = 0;
+    const handleWheel = (e: WheelEvent) => {
+      const now = Date.now();
+      if (now - lastWheelTime < 250) return; // throttle scrolling
+      
+      if (e.deltaY > 20) {
+        setCurrentPage(p => Math.min(p + 1, totalPages));
+        lastWheelTime = now;
+      } else if (e.deltaY < -20) {
+        setCurrentPage(p => Math.max(p - 1, 1));
+        lastWheelTime = now;
+      }
+    };
+    container.addEventListener('wheel', handleWheel, { passive: true });
+    return () => container.removeEventListener('wheel', handleWheel);
+  }, [totalPages]);
 
   return (
     <div className={`relative flex flex-col bg-[#050508] overflow-hidden ${className}`} ref={containerRef}>
@@ -576,6 +613,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
             <CustomPdfViewer
               fileUrl={previewUrl}
               className="flex-1 w-full border-0"
+              onClose={onClose}
             />
           )}
 
@@ -738,6 +776,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
             <CustomPdfViewer
               fileUrl={previewUrl}
               className="flex-1 w-full border-0"
+              onClose={() => setIsFullscreen(false)}
             />
           )}
 
