@@ -684,32 +684,51 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen w-screen bg-[#0a0a0f] text-[#f0f0ff] flex overflow-hidden">
+      <div className="min-h-screen w-screen bg-fouzar-bg flex text-fouzar-text-primary">
         {/* Sidebar skeleton */}
-        <div className="w-14 bg-[#0a0a0f] border-r border-[#2a2a3a] p-4 flex flex-col items-center gap-6">
-          <div className="w-6 h-6 bg-[#16161f] animate-pulse rounded-[2px]" />
-          <div className="w-1 h-32 bg-[#16161f] animate-pulse" />
+        <div className="w-16 border-r border-fouzar-border-subtle bg-fouzar-surface flex flex-col items-center py-6 space-y-8">
+          <div className="w-6 h-6 bg-fouzar-border-strong animate-pulse rounded-md opacity-50" />
+          <div className="w-0.5 h-32 bg-fouzar-border-subtle animate-pulse opacity-30" />
         </div>
         {/* Main content skeleton */}
         <div className="flex-1 flex flex-col md:flex-row">
-          <div className="w-full md:max-w-md bg-[#0a0a0f] border-r border-[#2a2a3a] p-6 space-y-8">
-            <div className="h-4 bg-[#16161f] w-1/4 animate-pulse rounded-[2px]" />
+          <div className="w-full md:max-w-md bg-fouzar-surface border-r border-fouzar-border-subtle p-6 space-y-8">
+            <div className="h-4 bg-fouzar-border-strong w-1/4 animate-pulse rounded-sm opacity-30" />
             <div className="flex gap-4">
               {[1, 2, 3].map(i => (
-                <div key={i} className="w-10 h-10 rounded-full bg-[#16161f] animate-pulse" />
+                <div key={i} className="w-10 h-10 rounded-full bg-fouzar-border-strong animate-pulse opacity-20" />
               ))}
             </div>
-            <div className="h-4 bg-[#16161f] w-1/3 animate-pulse rounded-[2px]" />
+            <div className="h-4 bg-fouzar-border-strong w-1/3 animate-pulse rounded-sm opacity-30" />
             <div className="space-y-4">
               {[1, 2].map(i => (
-                <div key={i} className="h-32 bg-[#16161f] animate-pulse border border-[#2a2a3a] rounded-[6px]" />
+                <div key={i} className="h-[120px] bg-fouzar-card/50 border border-fouzar-border-subtle rounded-xl animate-pulse p-4 flex flex-col justify-between opacity-60">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-2">
+                      <div className="h-4 w-24 bg-fouzar-border-strong/40 rounded-sm" />
+                      <div className="h-3 w-40 bg-fouzar-border-subtle/50 rounded-sm" />
+                    </div>
+                    <div className="h-6 w-6 rounded-full bg-fouzar-border-strong/30" />
+                  </div>
+                  <div className="flex justify-between items-end">
+                    <div className="h-8 w-24 bg-fouzar-border-strong/40 rounded-md" />
+                    <div className="h-6 w-16 bg-fouzar-border-strong/30 rounded-full" />
+                  </div>
+                </div>
               ))}
             </div>
           </div>
           <div className="flex-1 p-6 md:p-8 space-y-8 flex flex-col">
-            <div className="h-8 bg-[#16161f] w-1/3 animate-pulse rounded-[2px]" />
-            <div className="h-4 bg-[#16161f] w-1/4 animate-pulse rounded-[2px]" />
-            <div className="flex-1 bg-[#16161f] animate-pulse border border-[#2a2a3a] rounded-[6px] w-full" />
+            <div className="flex justify-between items-center opacity-30">
+              <div className="h-6 bg-fouzar-border-strong w-48 animate-pulse rounded-sm" />
+              <div className="h-8 bg-fouzar-border-strong w-24 animate-pulse rounded-full" />
+            </div>
+            <div className="flex-1 bg-fouzar-card/30 animate-pulse border border-fouzar-border-subtle rounded-xl w-full flex items-center justify-center">
+              <div className="flex flex-col items-center opacity-20 space-y-4">
+                <div className="w-20 h-20 rounded-full bg-fouzar-border-strong" />
+                <div className="h-3 w-32 bg-fouzar-border-strong rounded-full" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
