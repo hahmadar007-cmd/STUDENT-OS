@@ -25,6 +25,8 @@ import { getSocket, useOnGroupNotesSync, syncGroupNotes } from '../../../lib/soc
 import { FouzarLogo } from '../../../components/logo/FouzarLogo';
 import { GroupWatchParty } from '../../../components/groups/GroupWatchParty';
 import { MediaHubStandalone } from '../../../components/sanctuary/MediaHubStandalone';
+import { LiveLounge } from '../../../components/groups/LiveLounge';
+import { ThemeSwitcher } from '../../../components/theme/ThemeSwitcher';
 
 interface SlideData {
   id: string;
@@ -302,6 +304,14 @@ export default function StudyGroupRoom() {
       );
     }
     
+    if (tab === 'lounge') {
+      return (
+        <div className="flex-1 flex flex-col h-full min-h-[300px] w-full">
+          <LiveLounge groupId={groupId} />
+        </div>
+      );
+    }
+
     return null;
   };
 
@@ -397,6 +407,8 @@ export default function StudyGroupRoom() {
           >
             {mode === 'onyx' ? <Leaf className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
           </button>
+
+          <ThemeSwitcher />
         </div>
       </header>
 
@@ -416,7 +428,8 @@ export default function StudyGroupRoom() {
                   { id: 'slides', label: 'Slides' },
                   { id: 'notepad', label: 'Notepad' },
                   { id: 'watch', label: 'Watch Party' },
-                  { id: 'youtube', label: 'YouTube' }
+                  { id: 'youtube', label: 'YouTube' },
+                  { id: 'lounge', label: 'Live Lounge' }
                 ].map((v) => {
                   const isActive = activeSplitTabs.left === v.id;
                   return (

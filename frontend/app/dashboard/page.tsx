@@ -25,7 +25,9 @@ import {
   Edit2,
   Trash2,
   Palette,
-  ChevronRight
+  ChevronRight,
+  MessageSquare,
+  Plus
 } from 'lucide-react';
 import { useFouzar } from '../../lib/FouzarContext';
 import { FascaLogo } from '../../components/logo/FascaLogo';
@@ -46,6 +48,9 @@ import { useOnFocusStateChanged, updateFocusState as socketUpdateFocusState } fr
 import { getMyGroups, updateFocusState as apiUpdateFocusState, getFriends, inviteMemberToGroup, acceptGroupMember, rejectGroupMember } from '../../lib/api';
 import { ResizablePanel } from '../../components/ui/ResizablePanel';
 import { toast } from '../../components/ui/Toast';
+import { ThemeSwitcher } from '../../components/theme/ThemeSwitcher';
+import { FriendsChatDeck } from '../../components/friends/FriendsChatDeck';
+import { NotificationBell } from '../../components/ui/NotificationBell';
 
 const Tooltip = ({ text }: { text: string }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -97,6 +102,8 @@ interface GardenNode {
   roomName: string;
   creatorId: string;
   currentSlide: string;
+  isEmptyCourse?: boolean;
+  courseId?: string;
 }
 
 export default function DashboardPage() {
@@ -113,7 +120,7 @@ export default function DashboardPage() {
     setAccentColor,
   } = useFouzar();
   const [isSidebarHovered, setIsSidebarHovered] = useState(false);
-  const [activeNav, setActiveNav] = useState<'circles' | 'nodes' | 'ai' | 'bridge' | 'shield'>('circles');
+  const [activeNav, setActiveNav] = useState<'circles' | 'nodes' | 'ai' | 'bridge' | 'shield' | 'friends'>('circles');
   const [activePanelTab, setActivePanelTab] = useState<'timer' | 'nodes' | 'timeline' | 'ai'>('timer');
   const [sessionMinutes, setSessionMinutes] = useState(25);
   const [secondsLeft, setSecondsLeft] = useState(25 * 60);
@@ -125,6 +132,7 @@ export default function DashboardPage() {
   const [contextMenuFriend, setContextMenuFriend] = useState<StudyCirclePeer | null>(null);
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
 
   const router = useRouter();
 
@@ -133,6 +141,35 @@ export default function DashboardPage() {
   const [newGroupCourse, setNewGroupCourse] = useState('');
   const [createGroupError, setCreateGroupError] = useState<string | null>(null);
   const [createGroupLoading, setCreateGroupLoading] = useState(false);
+
+  const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
+  const [newCourseName, setNewCourseName] = useState('');
+  const [createCourseError, setCreateCourseError] = useState<string | null>(null);
+  const [createCourseLoading, setCreateCourseLoading] = useState(false);
+
+  const handleCreateCourseSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreateCourseError(null);
+    const name = newCourseName.trim().toUpperCase();
+
+    if (!name) {
+      setCreateCourseError('Father Circle name is required.');
+      return;
+    }
+
+    setCreateCourseLoading(true);
+    try {
+      const { createCourse } = await import('../../lib/api');
+      await createCourse(name);
+      setShowCreateCourseModal(false);
+      setNewCourseName('');
+      loadGroups();
+    } catch (err: any) {
+      setCreateCourseError(err.message || 'Failed to create Father Circle.');
+    } finally {
+      setCreateCourseLoading(false);
+    }
+  };
 
   const handleCreateGroupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -267,8 +304,19 @@ export default function DashboardPage() {
       await deleteGroup(nodeId);
       if (selectedCardId === nodeId) setSelectedCardId(null);
       loadGroups();
-    } catch (err) {
-      console.error('Failed to delete group:', err);
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete group');
+    }
+  };
+
+  const handleDeleteCourse = async (courseId: string, courseName: string) => {
+    if (!confirm(`Are you sure you want to delete the Father Circle "${courseName}" and all its study groups?`)) return;
+    try {
+      const { deleteCourse } = await import('../../lib/api');
+      await deleteCourse(courseId);
+      loadGroups();
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete Father Circle');
     }
   };
 
@@ -347,22 +395,45 @@ export default function DashboardPage() {
     }
   };
 
-  // Load Groups from DB
+  // Load Groups and Courses from DB
   const loadGroups = async () => {
     setLoadingNodes(true);
     try {
-      const groupsData = await getMyGroups();
-      const formattedNodes = (groupsData || []).map((g: any) => ({
+      const { getMyGroups, getMyCourses } = await import('../../lib/api');
+      const [groupsData, coursesData] = await Promise.all([
+        getMyGroups(),
+        getMyCourses()
+      ]);
+      
+      const formattedNodes: any[] = (groupsData || []).map((g: any) => ({
         id: g.id,
-        course: g.name.split(' ')[0] || 'CS-229',
+        course: g.course?.code || 'Uncategorized',
+        courseId: g.course?.id,
         roomName: g.name,
         creatorId: g.creatorId,
         currentSlide: g.currentSlide ? `Slide ${g.currentSlide}` : 'Slide 1'
       }));
+
+      // Add empty courses
+      const existingCourseCodes = new Set(formattedNodes.map(n => n.course));
+      (coursesData || []).forEach((c: any) => {
+        if (!existingCourseCodes.has(c.code)) {
+          formattedNodes.push({
+            id: c.id,
+            course: c.code,
+            courseId: c.id,
+            roomName: '',
+            creatorId: c.userId,
+            currentSlide: '',
+            isEmptyCourse: true
+          });
+        }
+      });
+
       setGardenNodes(formattedNodes);
-      loadPendingGroupRequests(formattedNodes);
+      loadPendingGroupRequests(formattedNodes.filter(n => !n.isEmptyCourse));
     } catch (err) {
-      console.error('Failed to load groups:', err);
+      console.error('Failed to load groups/courses:', err);
     } finally {
       setLoadingNodes(false);
     }
@@ -536,6 +607,8 @@ export default function DashboardPage() {
     } else if (id === 'shield') {
       setIsShieldOpen(true);
       setActiveNav('shield');
+    } else if (id === 'friends') {
+      setActiveNav('friends');
     } else {
       setActiveNav(id as any);
       if (id === 'circles') {
@@ -606,6 +679,7 @@ export default function DashboardPage() {
     { id: 'ai', label: 'AI Core', icon: Cpu, keyHint: 'A' },
     { id: 'bridge', label: 'Campus Gateway', icon: Plug, keyHint: 'L' },
     { id: 'shield', label: 'Focus Shield', icon: Shield, keyHint: 'F' },
+    { id: 'friends', label: 'Friends', icon: MessageSquare, keyHint: 'M' },
   ];
 
   if (loading) {
@@ -645,8 +719,21 @@ export default function DashboardPage() {
   return (
     <div 
       onClick={() => setSelectedCardId(null)}
-      className="min-h-screen w-screen bg-fouzar-bg text-fouzar-text-primary flex flex-col md:flex-row overflow-hidden relative select-none font-sans"
+      className="min-h-screen w-screen bg-[#0a0a0f] text-fouzar-text-primary flex flex-col md:flex-row overflow-hidden relative select-none font-sans"
     >
+      {/* --- Ambient Premium Background --- */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        {/* Glow Meshes */}
+        <div className={`absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full blur-[120px] opacity-[0.07] transition-colors duration-1000 ${
+          accentColor === 'signal' ? 'bg-[#ff2d55]' : 
+          accentColor === 'amber' ? 'bg-[#f5a623]' : 
+          accentColor === 'ice' ? 'bg-[#06b6d4]' : 'bg-[#7c5cfc]'
+        }`} />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-[#10b981] blur-[100px] opacity-[0.05]" />
+        {/* Subtle Grain Overlay */}
+        <div className="absolute inset-0 opacity-[0.015] mix-blend-overlay pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }}></div>
+      </div>
+
       <AnimatePresence>
         {showOnboarding && (
           <AiOnboardingModal onClose={() => setShowOnboarding(false)} />
@@ -661,7 +748,7 @@ export default function DashboardPage() {
         onMouseLeave={() => setIsSidebarHovered(false)}
         animate={{ width: isSidebarHovered ? 220 : 56 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
-        className="hidden md:flex h-full flex-col justify-between bg-fouzar-bg border-r border-fouzar-border py-6 z-30 shrink-0 transition-all duration-300"
+        className="hidden md:flex h-full flex-col justify-between bg-fouzar-bg/60 backdrop-blur-3xl border-r border-fouzar-border py-6 z-30 shrink-0 transition-all duration-300 relative"
       >
         <div className="flex flex-col gap-6">
           {/* Logo Brand top */}
@@ -877,10 +964,10 @@ export default function DashboardPage() {
                 </span>
                 <button
                   type="button"
-                  onClick={() => setShowCreateGroupModal(true)}
+                  onClick={() => setShowCreateCourseModal(true)}
                   className="text-[8px] font-mono uppercase tracking-wider text-fouzar-accent hover:underline cursor-pointer bg-none border-none p-0"
                 >
-                  + Create Circle
+                  + Create Father Circle
                 </button>
               </div>
 
@@ -901,173 +988,212 @@ export default function DashboardPage() {
                   <span className="text-[7.5px] font-mono text-[#6b6b8a] mt-1.5 uppercase">NO ACTIVE STUDY NODES DETECTED</span>
                 </div>
               ) : (
-                <div className="max-h-64 overflow-y-auto space-y-3 pr-1 scrollbar-none animate-none">
-                  {gardenNodes.map((node) => (
-                    <FascaCard 
-                      key={node.id} 
-                      className={`p-4 flex flex-col justify-between min-h-[128px] h-auto py-4 cursor-pointer transition-all duration-150 ease-out select-none relative ${
-                        getCardColorClass(node.id, selectedCardId === node.id)
-                      }`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedCardId(node.id);
-                      }}
-                      onDoubleClick={() => {
-                        if (editingNodeId !== node.id) {
-                          router.push(`/room/${node.id}`);
-                        }
-                      }}
-                    >
-                      <div className="w-full">
-                        <span className={`text-[8.5px] font-mono uppercase tracking-wider block ${getTextColor(node.id)}`}>
-                          {node.course}
+                <div className="max-h-[60vh] overflow-y-auto space-y-6 pr-1 scrollbar-none animate-none">
+                  {Object.entries(gardenNodes.reduce((acc, node) => {
+                    const groupName = node.course || 'Uncategorized';
+                    if (!acc[groupName]) acc[groupName] = [];
+                    acc[groupName].push(node);
+                    return acc;
+                  }, {} as Record<string, typeof gardenNodes>)).map(([courseName, nodes]) => (
+                    <div key={courseName} className="mb-4 last:mb-0">
+                      <div className="flex items-center justify-between mb-3 px-1 border-b border-white/5 pb-2">
+                        <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#f0f0ff] font-bold">
+                          {courseName}
                         </span>
-                        {editingNodeId === node.id ? (
-                          <input
-                            type="text"
-                            value={editingName}
-                            onChange={(e) => setEditingName(e.target.value)}
-                            className="bg-fouzar-surface border border-fouzar-accent px-2 py-1 text-xs rounded font-mono text-fouzar-text-primary focus:outline-none w-[80%] mt-1"
-                            onKeyDown={async (e) => {
-                              if (e.key === 'Enter') {
-                                await handleRename(node.id, editingName);
-                              } else if (e.key === 'Escape') {
-                                setEditingNodeId(null);
-                              }
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                            autoFocus
-                          />
-                        ) : (
-                          <h3 className="text-xs font-bold text-[#f0f0ff] mt-1 pr-6 truncate" title={node.roomName}>
-                            {node.roomName}
-                          </h3>
-                        )}
-                        <p className="text-[9px] text-[#6b6b8a] font-mono mt-1" title={node.currentSlide}>
-                          {node.currentSlide}
-                        </p>
-                        {/* Pending Join Requests (Creator Only) */}
-                        {node.creatorId === user?.id && pendingGroupRequests[node.id] && pendingGroupRequests[node.id].length > 0 && (
-                          <div className="mt-3 border-t border-[#2a2a3a]/40 pt-2.5 space-y-1.5 animate-none" onClick={(e) => e.stopPropagation()}>
-                            <span className="text-[7.5px] font-mono uppercase text-[#ff2d55] tracking-[0.15em] block font-bold">
-                              Join Requests ({pendingGroupRequests[node.id].length})
-                            </span>
-                            <div className="space-y-1 max-h-24 overflow-y-auto scrollbar-none">
-                              {pendingGroupRequests[node.id].map((req) => (
-                                <div key={req.userId} className="flex items-center justify-between p-1 bg-[#101015] border border-[#2a2a3a]/40 rounded-[4px] gap-2">
-                                  <span className="text-[8px] text-[#f0f0ff] font-mono truncate max-w-[120px]">
-                                    {req.user.name || req.user.email}
-                                  </span>
-                                  <div className="flex gap-1 shrink-0">
-                                    <button
-                                      onClick={() => handleAcceptGroupRequest(node.id, req.userId)}
-                                      className="px-1 py-0.5 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 text-[7px] font-mono uppercase rounded transition-colors cursor-pointer"
-                                    >
-                                      Accept
-                                    </button>
-                                    <button
-                                      onClick={() => handleRejectGroupRequest(node.id, req.userId)}
-                                      className="px-1 py-0.5 bg-[#ff2d55]/20 text-[#ff2d55] hover:bg-[#ff2d55]/30 text-[7px] font-mono uppercase rounded transition-colors cursor-pointer"
-                                    >
-                                      Decline
-                                    </button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* 3-dots Dropdown Menu (Shared Groups) */}
-                      {editingNodeId !== node.id && (
-                        <div className="absolute top-3.5 right-3.5" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-1">
                           <button
                             type="button"
-                            onClick={() => setActiveMenuNodeId(activeMenuNodeId === node.id ? null : node.id)}
-                            className="p-1 hover:bg-white/5 rounded text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors cursor-pointer"
-                            title="Group options"
+                            onClick={() => {
+                              setNewGroupCourse(courseName === 'Uncategorized' ? '' : courseName);
+                              setShowCreateGroupModal(true);
+                            }}
+                            className="p-1 hover:bg-white/10 rounded text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors cursor-pointer"
+                            title={`Add circle to ${courseName}`}
                           >
-                            <MoreVertical className="w-3.5 h-3.5" />
+                            <Plus className="w-3.5 h-3.5" />
                           </button>
-                          <AnimatePresence>
-                            {activeMenuNodeId === node.id && (
-                              <motion.div
-                                initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                                transition={{ duration: 0.1 }}
-                                className="absolute right-0 mt-1 w-36 bg-[#14141c]/95 border border-[#2a2a3a] rounded-[4px] shadow-2xl p-2 z-50 text-left"
-                              >
-                                {user && user.id === node.creatorId && (
-                                  <>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setEditingNodeId(node.id);
-                                        setEditingName(node.roomName);
-                                        setActiveMenuNodeId(null);
-                                      }}
-                                      className="w-full px-2 py-1.5 text-[8.5px] font-mono uppercase tracking-wider text-[#6b6b8a] hover:text-[#f0f0ff] hover:bg-white/5 rounded flex items-center gap-1.5 cursor-pointer text-left"
-                                    >
-                                      <Edit2 className="w-3 h-3 text-fouzar-accent" /> Rename
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        handleDelete(node.id);
-                                        setActiveMenuNodeId(null);
-                                      }}
-                                      className="w-full px-2 py-1.5 text-[8.5px] font-mono uppercase tracking-wider text-[#ff2d55]/85 hover:text-[#ff2d55] hover:bg-white/5 rounded flex items-center gap-1.5 cursor-pointer text-left"
-                                    >
-                                      <Trash2 className="w-3 h-3" /> Delete
-                                    </button>
-                                    <div className="border-t border-[#2a2a3a]/40 my-1.5" />
-                                  </>
-                                )}
-                                <div className="px-2 py-0.5 text-[7px] font-mono uppercase text-[#6b6b8a] tracking-wider mb-1.5 flex items-center gap-1">
-                                  <Palette className="w-2.5 h-2.5 text-[#06b6d4]" /> Set Color
-                                </div>
-                                <div className="flex gap-1.5 px-2 py-0.5 justify-between">
-                                  {COLOR_PRESETS.map((preset) => (
-                                    <button
-                                      key={preset.name}
-                                      type="button"
-                                      onClick={() => {
-                                        updateCardColor(node.id, preset.name);
-                                        setActiveMenuNodeId(null);
-                                      }}
-                                      style={{ backgroundColor: preset.value }}
-                                      className={`w-2.5 h-2.5 rounded-full border cursor-pointer ${
-                                        (cardColors[node.id] || 'violet') === preset.name ? 'border-[#f0f0ff]' : 'border-transparent'
-                                      }`}
-                                      title={`Set ${preset.name} color`}
-                                    />
-                                  ))}
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
+                          {courseName !== 'Uncategorized' && nodes[0]?.courseId && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteCourse(nodes[0].courseId!, courseName)}
+                              className="p-1 hover:bg-[#ff2d55]/10 rounded text-[#6b6b8a] hover:text-[#ff2d55] transition-colors cursor-pointer"
+                              title={`Delete ${courseName}`}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
-                      )}
-
-                      <div className="flex items-center justify-between mt-2 select-none">
-                        <div />
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (editingNodeId === node.id) {
-                              handleRename(node.id, editingName);
-                            } else {
-                              router.push(`/room/${node.id}`);
-                            }
-                          }}
-                          className={`text-[8.5px] font-mono uppercase tracking-widest ${getTextColor(node.id)} hover:text-[#f0f0ff] flex items-center gap-1 transition-colors cursor-pointer`}
-                        >
-                          {editingNodeId === node.id ? 'Save' : 'Join Circle'} <ArrowRight className="w-3 h-3" />
-                        </button>
                       </div>
-                    </FascaCard>
+                      <div className="space-y-3">
+                        {nodes.filter(node => !node.isEmptyCourse).map((node) => (
+                          <FascaCard 
+                            key={node.id} 
+                            className={`p-4 flex flex-col justify-between min-h-[128px] h-auto py-4 cursor-pointer transition-all duration-150 ease-out select-none relative ${
+                              getCardColorClass(node.id, selectedCardId === node.id)
+                            }`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedCardId(node.id);
+                            }}
+                            onDoubleClick={() => {
+                              if (editingNodeId !== node.id) {
+                                router.push(`/room/${node.id}`);
+                              }
+                            }}
+                          >
+                            <div className="w-full">
+                              <span className={`text-[8.5px] font-mono uppercase tracking-wider block ${getTextColor(node.id)}`}>
+                                {node.course}
+                              </span>
+                              {editingNodeId === node.id ? (
+                                <input
+                                  type="text"
+                                  value={editingName}
+                                  onChange={(e) => setEditingName(e.target.value)}
+                                  className="bg-fouzar-surface border border-fouzar-accent px-2 py-1 text-xs rounded font-mono text-fouzar-text-primary focus:outline-none w-[80%] mt-1"
+                                  onKeyDown={async (e) => {
+                                    if (e.key === 'Enter') {
+                                      await handleRename(node.id, editingName);
+                                    } else if (e.key === 'Escape') {
+                                      setEditingNodeId(null);
+                                    }
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  autoFocus
+                                />
+                              ) : (
+                                <h3 className="text-xs font-bold text-[#f0f0ff] mt-1 pr-6 truncate" title={node.roomName}>
+                                  {node.roomName}
+                                </h3>
+                              )}
+                              <p className="text-[9px] text-[#6b6b8a] font-mono mt-1" title={node.currentSlide}>
+                                {node.currentSlide}
+                              </p>
+                              {/* Pending Join Requests (Creator Only) */}
+                              {node.creatorId === user?.id && pendingGroupRequests[node.id] && pendingGroupRequests[node.id].length > 0 && (
+                                <div className="mt-3 border-t border-[#2a2a3a]/40 pt-2.5 space-y-1.5 animate-none" onClick={(e) => e.stopPropagation()}>
+                                  <span className="text-[7.5px] font-mono uppercase text-[#ff2d55] tracking-[0.15em] block font-bold">
+                                    Join Requests ({pendingGroupRequests[node.id].length})
+                                  </span>
+                                  <div className="space-y-1 max-h-24 overflow-y-auto scrollbar-none">
+                                    {pendingGroupRequests[node.id].map((req) => (
+                                      <div key={req.userId} className="flex items-center justify-between p-1 bg-[#101015] border border-[#2a2a3a]/40 rounded-[4px] gap-2">
+                                        <span className="text-[8px] text-[#f0f0ff] font-mono truncate max-w-[120px]">
+                                          {req.user.name || req.user.email}
+                                        </span>
+                                        <div className="flex gap-1 shrink-0">
+                                          <button
+                                            onClick={() => handleAcceptGroupRequest(node.id, req.userId)}
+                                            className="px-1 py-0.5 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 text-[7px] font-mono uppercase rounded transition-colors cursor-pointer"
+                                          >
+                                            Accept
+                                          </button>
+                                          <button
+                                            onClick={() => handleRejectGroupRequest(node.id, req.userId)}
+                                            className="px-1 py-0.5 bg-[#ff2d55]/20 text-[#ff2d55] hover:bg-[#ff2d55]/30 text-[7px] font-mono uppercase rounded transition-colors cursor-pointer"
+                                          >
+                                            Decline
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* 3-dots Dropdown Menu (Shared Groups) */}
+                            {editingNodeId !== node.id && (
+                              <div className="absolute top-3.5 right-3.5" onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveMenuNodeId(activeMenuNodeId === node.id ? null : node.id)}
+                                  className="p-1 hover:bg-white/5 rounded text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors cursor-pointer"
+                                  title="Group options"
+                                >
+                                  <MoreVertical className="w-3.5 h-3.5" />
+                                </button>
+                                <AnimatePresence>
+                                  {activeMenuNodeId === node.id && (
+                                    <motion.div
+                                      initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                                      exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                                      transition={{ duration: 0.1 }}
+                                      className="absolute right-0 mt-1 w-36 bg-[#14141c]/95 border border-[#2a2a3a] rounded-[4px] shadow-2xl p-2 z-50 text-left"
+                                    >
+                                      {user && (
+                                        <>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setEditingNodeId(node.id);
+                                              setEditingName(node.roomName);
+                                              setActiveMenuNodeId(null);
+                                            }}
+                                            className="w-full px-2 py-1.5 text-[8.5px] font-mono uppercase tracking-wider text-[#6b6b8a] hover:text-[#f0f0ff] hover:bg-white/5 rounded flex items-center gap-1.5 cursor-pointer text-left"
+                                          >
+                                            <Edit2 className="w-3 h-3 text-fouzar-accent" /> Rename
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              handleDelete(node.id);
+                                              setActiveMenuNodeId(null);
+                                            }}
+                                            className="w-full px-2 py-1.5 text-[8.5px] font-mono uppercase tracking-wider text-[#ff2d55]/85 hover:text-[#ff2d55] hover:bg-white/5 rounded flex items-center gap-1.5 cursor-pointer text-left"
+                                          >
+                                            <Trash2 className="w-3 h-3" /> Delete
+                                          </button>
+                                          <div className="border-t border-[#2a2a3a]/40 my-1.5" />
+                                        </>
+                                      )}
+                                      <div className="px-2 py-0.5 text-[7px] font-mono uppercase text-[#6b6b8a] tracking-wider mb-1.5 flex items-center gap-1">
+                                        <Palette className="w-2.5 h-2.5 text-[#06b6d4]" /> Set Color
+                                      </div>
+                                      <div className="flex gap-1.5 px-2 py-0.5 justify-between">
+                                        {COLOR_PRESETS.map((preset) => (
+                                          <button
+                                            key={preset.name}
+                                            type="button"
+                                            onClick={() => {
+                                              updateCardColor(node.id, preset.name);
+                                              setActiveMenuNodeId(null);
+                                            }}
+                                            style={{ backgroundColor: preset.value }}
+                                            className={`w-2.5 h-2.5 rounded-full border cursor-pointer ${
+                                              (cardColors[node.id] || 'violet') === preset.name ? 'border-[#f0f0ff]' : 'border-transparent'
+                                            }`}
+                                            title={`Set ${preset.name} color`}
+                                          />
+                                        ))}
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                            )}
+
+                            <div className="flex items-center justify-between mt-2 select-none">
+                              <div />
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (editingNodeId === node.id) {
+                                    handleRename(node.id, editingName);
+                                  } else {
+                                    router.push(`/room/${node.id}`);
+                                  }
+                                }}
+                                className={`text-[8.5px] font-mono uppercase tracking-widest ${getTextColor(node.id)} hover:text-[#f0f0ff] flex items-center gap-1 transition-colors cursor-pointer`}
+                              >
+                                {editingNodeId === node.id ? 'Save' : 'Join Circle'} <ArrowRight className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </FascaCard>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
@@ -1088,132 +1214,114 @@ export default function DashboardPage() {
         {/* ========================================================================= */}
         {/* 3. RIGHT PANEL: Workspace central Central Core controls                   */}
         {/* ========================================================================= */}
-        <main className="w-full h-full p-6 md:p-8 flex flex-col overflow-y-auto scrollbar-none space-y-12">
+        <main className={`w-full h-full flex flex-col ${
+          activeNav === 'friends'
+            ? 'overflow-hidden p-4'
+            : 'overflow-y-auto scrollbar-none space-y-12 p-6 md:p-8'
+        }`}>
 
-        {/* 1. Horizontal Friends Social Bar (Top) */}
-        <div className="space-y-3 shrink-0">
-          <div className="flex items-center gap-1.5">
-            <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a] block">
-              Active Friends
-            </span>
-          </div>
-          
-          {peers.length === 0 ? (
-            <div className="w-full h-16 border border-dashed border-[#2a2a3a] rounded-[6px] flex flex-col items-center justify-center p-3 text-center">
-              <span className="text-[9px] font-mono text-[#f0f0ff] uppercase tracking-wider">No friends active</span>
+        {activeNav === 'friends' ? (
+          <div className="flex flex-col h-full overflow-hidden">
+            <div className="flex items-center justify-between mb-3 shrink-0">
+              <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a]">Direct Messages</span>
+              <div className="flex items-center gap-2">
+                <NotificationBell />
+                <ThemeSwitcher />
+                <button
+                  type="button"
+                  onClick={() => setActiveNav('circles')}
+                  className="flex items-center justify-center w-6 h-6 rounded-full bg-fouzar-surface/60 border border-fouzar-border/40 text-fouzar-text-tertiary hover:text-fouzar-text-primary hover:bg-fouzar-signal/20 hover:border-fouzar-signal/40 transition-all cursor-pointer"
+                  title="Close Direct Messages"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
             </div>
-          ) : (
-            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
-              {peers.map((peer) => {
-                let ringColor = 'border-fouzar-border';
-                if (peer.status === 'online') ringColor = 'border-fouzar-accent';
-                if (peer.status === 'flow') ringColor = 'border-fouzar-signal animate-pulse shadow-[0_0_8px_var(--fouzar-accent-signal)]';
-
-                return (
-                  <div 
-                    key={peer.id} 
-                    className="flex flex-col items-center gap-1.5 shrink-0 select-none relative cursor-pointer"
-                    onMouseEnter={() => setHoveredPeerId(peer.id)}
-                    onMouseLeave={() => setHoveredPeerId(null)}
-                    onClick={(e) => handleFriendMenu(e, peer)}
-                    onContextMenu={(e) => handleFriendMenu(e, peer)}
-                  >
-                    <div className={`p-[1.5px] rounded-full border-2 ${ringColor} transition-all duration-300 cursor-pointer`}>
-                      <div className="w-10 h-10 rounded-full bg-fouzar-surface border border-fouzar-border flex items-center justify-center font-mono text-xs font-bold text-fouzar-text-primary">
-                        {peer.initials}
-                      </div>
-                    </div>
-                    <span className="text-[8px] font-mono uppercase tracking-wider text-fouzar-text-secondary">
-                      {peer.name}
-                    </span>
-                    
-                    <AnimatePresence>
-                      {hoveredPeerId === peer.id && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                          className="absolute bottom-full mb-2 z-50 bg-fouzar-surface border border-fouzar-accent/60 p-3 rounded-[6px] shadow-2xl w-40 text-left"
-                        >
-                          <div className="text-[9px] font-bold text-fouzar-text-primary uppercase">{peer.name}</div>
-                          <div className="text-[7.5px] font-mono text-fouzar-text-secondary uppercase mt-1">
-                            Status: <span className={peer.status === 'flow' ? 'text-fouzar-signal' : peer.status === 'online' ? 'text-fouzar-accent' : 'text-fouzar-text-secondary'}>{peer.status}</span>
-                          </div>
-                          <div className="text-[7.5px] font-mono text-[#6b6b8a] uppercase mt-0.5">
-                            Active: {peer.group || 'None'}
-                          </div>
-                          <div className="text-[7.5px] font-mono text-[#6b6b8a] uppercase mt-0.5">
-                            Duration: {peer.duration || 'N/A'}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                );
-              })}
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <FriendsChatDeck peers={peers} />
             </div>
-          )}
-        </div>
-
-        {/* 2. Focus Timer Section */}
-        <div id="timer-section" className="space-y-4 flex flex-col items-center border-t border-[#2a2a3a]/20 pt-6">
-          <div className="w-full flex items-center justify-start gap-2 mb-2">
-            <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a]">
-              Focus Timer
-            </span>
-            <Tooltip text="Choose a time block, hit 'Start', and our app will lock your open browser tabs and silence notifications so you can fully focus without cheating." />
           </div>
-          <div className="w-full max-w-sm flex flex-col items-center">
-            {/* Time span selector */}
-            <div className="w-full text-center">
-              <span className="text-[8px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a] block mb-3">
-                SELECT FOCUS SESSION SPAN
-              </span>
-              <div className="flex gap-2 justify-center">
-                {[15, 25, 45, 60].map((preset) => (
-                  <button
-                    key={preset}
-                    onClick={() => setSessionMinutes(preset)}
-                    className={`w-14 h-12 rounded-[6px] border text-[11px] font-mono flex flex-col items-center justify-center transition-colors cursor-pointer ${
-                      sessionMinutes === preset
-                        ? 'border-fouzar-accent text-fouzar-accent bg-fouzar-accent/5 font-semibold'
-                        : 'border-fouzar-border text-fouzar-text-secondary hover:border-fouzar-text-secondary hover:text-fouzar-text-primary'
-                    }`}
-                  >
-                    <span>{preset}</span>
-                    <span className="text-[7.5px] font-sans opacity-70">MIN</span>
-                  </button>
-                ))}
+        ) : (
+          <>
+            {/* Top Utility Header */}
+            <div className="w-full flex items-center justify-between mb-2">
+              <div />
+              <div className="flex items-center gap-3">
+                <NotificationBell />
+                <ThemeSwitcher />
+                <button
+                  type="button"
+                  onClick={() => setIsTimerModalOpen(!isTimerModalOpen)}
+                  className={`bg-zinc-900/50 backdrop-blur-md border px-3 py-1.5 rounded-full flex items-center gap-2 cursor-pointer transition-all duration-200 select-none text-xs shadow-sm ${
+                    isFlowActive ? 'border-fouzar-signal text-fouzar-signal shadow-[0_0_8px_var(--fouzar-signal)]' : 'border-white/5 hover:border-fouzar-accent/30 text-zinc-300'
+                  }`}
+                >
+                  <Clock className="w-3.5 h-3.5" />
+                  <span className="font-mono tracking-wider">{formatTime(secondsLeft)}</span>
+                </button>
               </div>
             </div>
 
-            {/* Circular countdown visualization */}
-            <div className="relative w-44 h-44 flex flex-col items-center justify-center rounded-full bg-fouzar-surface/60 border border-fouzar-border shadow-lg my-6">
-              <span className="text-[8px] font-mono uppercase tracking-[0.25em] text-fouzar-text-secondary mb-1">
-                Focus Timer
-              </span>
-              <span className="text-4xl font-mono font-light text-fouzar-text-primary tracking-wider text-glow-accent">
-                {formatTime(secondsLeft)}
-              </span>
-              <span className={`text-[7px] font-mono uppercase tracking-widest mt-2 flex items-center gap-1 ${isFlowActive ? 'text-fouzar-signal' : 'text-fouzar-accent'}`}>
-                <span className={`w-1.5 h-1.5 rounded-full animate-ping ${isFlowActive ? 'bg-fouzar-signal' : 'bg-fouzar-accent'}`} />
-                {isFlowActive ? 'FLOW SESSION ACTIVE' : 'IDLE STATE ACTIVE'}
-              </span>
-            </div>
+            <AnimatePresence>
+              {isTimerModalOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  className="fixed top-16 right-6 w-80 bg-zinc-950/90 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl z-[100] transition-all"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a]">
+                      Focus Timer
+                    </span>
+                    <button
+                      onClick={() => setIsTimerModalOpen(false)}
+                      className="text-zinc-500 hover:text-white cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="w-full flex flex-col items-center">
+                    <div className="flex gap-2 justify-center mb-6">
+                      {[15, 25, 45, 60].map((preset) => (
+                        <button
+                          key={preset}
+                          onClick={() => setSessionMinutes(preset)}
+                          className={`w-12 h-10 rounded-[6px] border text-[11px] font-mono flex flex-col items-center justify-center transition-colors cursor-pointer ${
+                            sessionMinutes === preset
+                              ? 'border-fouzar-accent text-fouzar-accent bg-fouzar-accent/5 font-semibold'
+                              : 'border-fouzar-border text-fouzar-text-secondary hover:border-fouzar-text-secondary hover:text-fouzar-text-primary'
+                          }`}
+                        >
+                          <span>{preset}</span>
+                        </button>
+                      ))}
+                    </div>
 
-            {/* Hero CTA button */}
-            <FascaButton
-              onClick={handleTriggerFlow}
-              variant={isFlowActive ? 'ghost-crimson' : 'solid-violet'}
-              className="w-full rounded-[6px] py-3 text-[10px] font-bold flex items-center justify-center gap-2"
-            >
-              <Flame className="w-4 h-4 fill-[#0a0a0f]" /> {isFlowActive ? 'EXIT DEEP FLOW' : 'Start Studying'}
-            </FascaButton>
-          </div>
-        </div>
+                    <div className="relative w-40 h-40 flex flex-col items-center justify-center rounded-full bg-fouzar-surface/60 border border-fouzar-border shadow-lg mb-6">
+                      <span className="text-4xl font-mono font-light text-fouzar-text-primary tracking-wider text-glow-accent">
+                        {formatTime(secondsLeft)}
+                      </span>
+                      <span className={`text-[7px] font-mono uppercase tracking-widest mt-2 flex items-center gap-1 ${isFlowActive ? 'text-fouzar-signal' : 'text-fouzar-accent'}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full animate-ping ${isFlowActive ? 'bg-fouzar-signal' : 'bg-fouzar-accent'}`} />
+                        {isFlowActive ? 'ACTIVE' : 'IDLE'}
+                      </span>
+                    </div>
 
-        {/* 3. Subject Mind Map Section */}
-        <div id="mindmap-section" className="space-y-4 w-full border-t border-[#2a2a3a]/20 pt-6">
+                    <FascaButton
+                      onClick={handleTriggerFlow}
+                      variant={isFlowActive ? 'ghost-crimson' : 'solid-violet'}
+                      className="w-full rounded-[6px] py-3 text-[10px] font-bold flex items-center justify-center gap-2"
+                    >
+                      <Flame className="w-4 h-4 fill-current" /> {isFlowActive ? 'EXIT DEEP FLOW' : 'Start Studying'}
+                    </FascaButton>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+        {/* 2. Subject Mind Map Section (Elevated) */}
+        <div id="mindmap-section" className="space-y-4 w-full">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a]">
               Subject Mind Map
@@ -1263,10 +1371,16 @@ export default function DashboardPage() {
         {/* Footer with open-source link */}
         <div className="pt-4 border-t border-fouzar-border/40 flex items-center justify-between text-[8px] font-mono text-fouzar-text-secondary uppercase tracking-wider shrink-0 animate-none">
           <span>Fasca Academic OS</span>
-          <a href="https://github.com/fasca-study/app" target="_blank" rel="noopener noreferrer" className="hover:text-fouzar-accent transition-colors">
-            OPEN SOURCE REPOSITORY
-          </a>
+          <div className="flex items-center gap-3">
+            <ThemeSwitcher />
+            <a href="https://github.com/fasca-study/app" target="_blank" rel="noopener noreferrer" className="hover:text-fouzar-accent transition-colors">
+              OPEN SOURCE REPOSITORY
+            </a>
+          </div>
         </div>
+
+        </>
+        )}
 
       </main>
       </ResizablePanel>
@@ -1364,6 +1478,77 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
 
+      {/* Create Father Circle Modal */}
+      <AnimatePresence>
+        {showCreateCourseModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 12 }}
+              className="bg-[#14141c] border border-[#2a2a3a] rounded-[var(--fouzar-radius-lg)] shadow-2xl w-full max-w-sm"
+            >
+              <div className="flex bg-[#0a0a0f]/40 border-b border-fouzar-border py-3.5 px-4 items-center justify-between rounded-t-[var(--fouzar-radius-lg)]">
+                <span className="font-mono text-[9px] uppercase tracking-widest text-fouzar-text-primary flex items-center gap-1.5">
+                  <Grid className="w-4 h-4 text-fouzar-accent" /> Create Father Circle
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateCourseModal(false)}
+                  className="text-fouzar-text-secondary hover:text-fouzar-text-primary cursor-pointer font-mono text-[8px]"
+                >
+                  [CLOSE]
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateCourseSubmit} className="p-6 space-y-6">
+                {createCourseError && (
+                  <div className="p-3 bg-fouzar-signal/5 border border-fouzar-signal/20 text-fouzar-signal font-mono text-[8.5px] uppercase tracking-wider">
+                    {createCourseError}
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <div className="flex flex-col">
+                    <span className="text-[7.5px] font-mono uppercase text-fouzar-text-secondary tracking-wider mb-1">Father Circle Title</span>
+                    <input
+                      type="text"
+                      required
+                      value={newCourseName}
+                      onChange={(e) => setNewCourseName(e.target.value)}
+                      placeholder="e.g. Semester 1 or CS-101"
+                      className="w-full bg-fouzar-surface border border-fouzar-border px-3 py-2 text-[10px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary uppercase"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-fouzar-border/40">
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateCourseModal(false)}
+                    className="px-4 py-2 text-[8px] font-mono uppercase tracking-widest text-fouzar-text-secondary hover:text-fouzar-text-primary border border-[#2a2a3a] rounded-[var(--fouzar-radius-md)] transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <FascaButton
+                    type="submit"
+                    variant="solid-violet"
+                    disabled={createCourseLoading || !newCourseName.trim()}
+                  >
+                    {createCourseLoading ? 'Creating...' : 'Create'}
+                  </FascaButton>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Create Group Modal */}
       <AnimatePresence>
         {showCreateGroupModal && (
@@ -1413,13 +1598,12 @@ export default function DashboardPage() {
                   </div>
 
                   <div className="flex flex-col">
-                    <span className="text-[7.5px] font-mono uppercase text-fouzar-text-secondary tracking-wider mb-1">Subject Code (Optional)</span>
+                    <span className="text-[7.5px] font-mono uppercase text-fouzar-text-secondary tracking-wider mb-1">Father Group (e.g. Semester 1 or CS-101)</span>
                     <input
                       type="text"
                       value={newGroupCourse}
-                      onChange={(e) => setNewGroupCourse(e.target.value)}
-                      placeholder="CS-229"
-                      className="w-full bg-fouzar-surface border border-fouzar-border px-3 py-2 text-[10px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary uppercase"
+                      readOnly
+                      className="w-full bg-fouzar-surface border border-fouzar-border px-3 py-2 text-[10px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary uppercase opacity-70 cursor-not-allowed"
                     />
                   </div>
                 </div>

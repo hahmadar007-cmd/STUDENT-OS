@@ -384,3 +384,70 @@ textarea {
   --fouzar-focus-ring: 0 0 0 2px rgba(255, 45, 85, 0.45);
 }
 
+[data-app-theme='cyberpunk'] {
+  --fouzar-bg: #0d0010;
+  --fouzar-bg-elevated: #12001a;
+  --fouzar-surface: #1a0024;
+  --fouzar-card: #220030;
+  --fouzar-elevated: #2a003c;
+  --fouzar-overlay: rgba(13, 0, 16, 0.85);
+  --fouzar-text-primary: #ffe600;
+  --fouzar-text-secondary: #cc99ff;
+  --fouzar-text-tertiary: #884dbb;
+  --fouzar-text-inverse: #0d0010;
+  --fouzar-border-subtle: rgba(255, 0, 200, 0.25);
+  --fouzar-border-strong: rgba(255, 0, 200, 0.5);
+  --fouzar-divider: rgba(255, 0, 200, 0.1);
+  --fouzar-accent-primary: #ff00c8;
+  --fouzar-accent-amber: #ffe600;
+  --fouzar-accent-ice: #00f7ff;
+  --fouzar-accent-signal: #ff2d55;
+  --fouzar-accent-success: #39ff14;
+  --fouzar-glow-primary: 0 0 28px rgba(255, 0, 200, 0.45);
+  --fouzar-glow-amber: 0 0 24px rgba(255, 230, 0, 0.4);
+  --fouzar-glow-ice: 0 0 24px rgba(0, 247, 255, 0.35);
+  --fouzar-glow-signal: 0 0 24px rgba(255, 45, 85, 0.35);
+  --fouzar-shadow-sm: 0 2px 12px rgba(255, 0, 200, 0.15);
+  --fouzar-shadow-md: 0 8px 32px rgba(255, 0, 200, 0.2);
+  --fouzar-shadow-lg: 0 20px 64px rgba(255, 0, 200, 0.25);
+  --fouzar-shadow-inset: inset 0 1px 0 rgba(255, 0, 200, 0.12);
+  --fouzar-surface-glass: rgba(26, 0, 36, 0.75);
+  --fouzar-backdrop: blur(20px);
+  --fouzar-grid-dot: rgba(255, 0, 200, 0.06);
+  --fouzar-focus-ring: 0 0 0 2px rgba(255, 0, 200, 0.55);
+}
+
+[data-app-theme='matrix'] {
+  --fouzar-bg: #000000;
+  --fouzar-bg-elevated: #030a03;
+  --fouzar-surface: #060f06;
+  --fouzar-card: #081408;
+  --fouzar-elevated: #0b1a0b;
+  --fouzar-overlay: rgba(0, 0, 0, 0.9);
+  --fouzar-text-primary: #00ff41;
+  --fouzar-text-secondary: #00c832;
+  --fouzar-text-tertiary: #007a1e;
+  --fouzar-text-inverse: #000000;
+  --fouzar-border-subtle: rgba(0, 255, 65, 0.15);
+  --fouzar-border-strong: rgba(0, 255, 65, 0.35);
+  --fouzar-divider: rgba(0, 255, 65, 0.07);
+  --fouzar-accent-primary: #00ff41;
+  --fouzar-accent-amber: #00e539;
+  --fouzar-accent-ice: #00ffaa;
+  --fouzar-accent-signal: #ff2d55;
+  --fouzar-accent-success: #00ff41;
+  --fouzar-glow-primary: 0 0 24px rgba(0, 255, 65, 0.4);
+  --fouzar-glow-amber: 0 0 20px rgba(0, 229, 57, 0.35);
+  --fouzar-glow-ice: 0 0 20px rgba(0, 255, 170, 0.3);
+  --fouzar-glow-signal: 0 0 20px rgba(255, 45, 85, 0.3);
+  --fouzar-shadow-sm: 0 2px 12px rgba(0, 255, 65, 0.08);
+  --fouzar-shadow-md: 0 8px 32px rgba(0, 255, 65, 0.12);
+  --fouzar-shadow-lg: 0 20px 64px rgba(0, 255, 65, 0.16);
+  --fouzar-shadow-inset: inset 0 1px 0 rgba(0, 255, 65, 0.08);
+  --fouzar-surface-glass: rgba(6, 15, 6, 0.82);
+  --fouzar-backdrop: blur(12px);
+  --fouzar-grid-dot: rgba(0, 255, 65, 0.08);
+  --fouzar-focus-ring: 0 0 0 2px rgba(0, 255, 65, 0.5);
+  --fouzar-font-sans: var(--font-mono), 'JetBrains Mono', monospace;
+  --fouzar-font-display: var(--font-mono), 'JetBrains Mono', monospace;
+}

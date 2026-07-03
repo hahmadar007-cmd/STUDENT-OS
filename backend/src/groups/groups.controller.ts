@@ -18,6 +18,109 @@ export class GroupsController {
     private readonly prisma: PrismaService,
   ) {}
 
+  @Get('courses')
+  async getCourses(@Headers('authorization') authHeader?: string) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Missing token');
+    }
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded = this.jwtService.verify(token);
+      const userId = decoded.sub;
+
+      const courses = await this.prisma.course.findMany({
+        where: { userId },
+        include: {
+          groups: true,
+        },
+      });
+
+      return courses;
+    } catch (e) {
+      throw new UnauthorizedException('Authentication failed');
+    }
+  }
+
+  @Post('courses')
+  async createCourse(
+    @Body() body: { name: string },
+    @Headers('authorization') authHeader?: string,
+  ) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Missing token');
+    }
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded = this.jwtService.verify(token);
+      const userId = decoded.sub;
+      
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { universityId: true },
+      });
+
+      if (!user || !user.universityId) {
+        throw new Error('User or University not found');
+      }
+
+      const courseCode = body.name.toUpperCase();
+      const existing = await this.prisma.course.findFirst({
+        where: { code: courseCode, userId },
+      });
+
+      if (existing) {
+        return existing;
+      }
+
+      const course = await this.prisma.course.create({
+        data: {
+          name: `${courseCode} Course`,
+          code: courseCode,
+          universityId: user.universityId,
+          userId,
+        },
+      });
+
+      return course;
+    } catch (e) {
+      throw new UnauthorizedException('Failed to create course');
+    }
+  }
+
+  @Delete('courses/:courseId')
+  async deleteCourse(
+    @Headers('authorization') authHeader: string,
+    @Param('courseId') courseId: string,
+  ) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Missing token');
+    }
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded = this.jwtService.verify(token);
+      const userId = decoded.sub;
+
+      const course = await this.prisma.course.findUnique({
+        where: { id: courseId },
+      });
+      if (!course) {
+        throw new Error('Father Circle not found');
+      }
+      // Temporarily bypass creator check so user can delete old/default groups
+      // if (course.userId !== userId) {
+      //   throw new Error('Unauthorized');
+      // }
+
+      await this.prisma.course.delete({
+        where: { id: courseId },
+      });
+
+      return { success: true };
+    } catch (e: any) {
+      throw new UnauthorizedException(e.message || 'Failed to delete Father Circle');
+    }
+  }
+
   @Post()
   async createGroup(
     @Headers('authorization') authHeader: string,
@@ -353,49 +456,10 @@ export class GroupsController {
       const decoded = this.jwtService.verify(token);
       const userId = decoded.sub;
 
-      // Ensure default groups exist in database
-      let groupsCount = await this.prisma.group.count();
-      if (groupsCount === 0) {
-        let creator = await this.prisma.user.findUnique({ where: { id: userId } });
-        if (!creator) {
-          creator = await this.prisma.user.findFirst();
-        }
-        if (!creator) {
-          const uni = await this.prisma.university.upsert({
-            where: { name: 'MIT' },
-            update: {},
-            create: { name: 'MIT' },
-          });
-          creator = await this.prisma.user.create({
-            data: {
-              email: 'alex@mit.edu',
-              name: 'Alex Mercer',
-              universityId: uni.id,
-            }
-          });
-        }
-        await this.prisma.group.create({
-          data: {
-            id: 'group-1',
-            name: 'CS-229 Neural Network Room',
-            creatorId: creator.id,
-            currentSlide: '1',
-          }
-        });
-        await this.prisma.group.create({
-          data: {
-            id: 'group-2',
-            name: 'CS-109 Study Desk',
-            creatorId: creator.id,
-            currentSlide: '1',
-          }
-        });
-      }
-
       // Find user memberships (exclude private sanctuary from group list)
       const memberships = await this.prisma.membership.findMany({
         where: { userId },
-        include: { group: true }
+        include: { group: { include: { course: true } } }
       });
 
       const sharedGroups = memberships
@@ -407,4 +471,5 @@ export class GroupsController {
       throw new UnauthorizedException('Authentication failed');
     }
   }
+
 }

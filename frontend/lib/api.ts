@@ -123,7 +123,13 @@ export const resetPassword = async (token: string, newPassword: string) => {
 
 export const getMe = () => apiRequest('/users/me', 'GET');
 
-export const getMyGroups = () => apiRequest('/groups', 'GET');
+export const getMyGroups = () => apiRequest('/groups/my', 'GET');
+
+export const getMyCourses = () => apiRequest('/groups/courses', 'GET');
+
+export const createCourse = (name: string) => apiRequest('/groups/courses', 'POST', { name });
+
+export const deleteCourse = (id: string) => apiRequest(`/groups/courses/${id}`, 'DELETE');
 
 export const getPersonalSanctuary = () => apiRequest('/sanctuary', 'GET');
 

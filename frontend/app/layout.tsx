@@ -10,6 +10,7 @@ import type { Metadata } from "next";
 import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { FouzarProvider } from "../lib/FouzarContext";
+import { ThemeProvider } from "../lib/ThemeContext";
 import { CommandPalette } from "../components/ui/CommandPalette";
 import { ToastContainer } from "../components/ui/Toast";
 
@@ -49,9 +50,11 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-fouzar-bg text-fouzar-text-primary antialiased select-none">
         <FouzarProvider>
-          {children}
-          <CommandPalette />
-          <ToastContainer />
+          <ThemeProvider>
+            {children}
+            <CommandPalette />
+            <ToastContainer />
+          </ThemeProvider>
         </FouzarProvider>
       </body>
     </html>

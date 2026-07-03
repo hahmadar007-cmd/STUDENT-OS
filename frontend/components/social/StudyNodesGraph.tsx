@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import * as d3 from 'd3';
 import { X, Users, Compass, Flame, Search } from 'lucide-react';
 import { FascaButton } from '../ui/FascaButton';
+import { useFouzar } from '../../lib/FouzarContext';
 
 interface GraphNode extends d3.SimulationNodeDatum {
   id: string;
@@ -14,6 +15,7 @@ interface GraphNode extends d3.SimulationNodeDatum {
   memberCount: number;
   currentSlide: string;
   isActive: boolean; // active in the last hour
+  nodeType?: 'semester' | 'course' | 'group'; // Hierarchy type
 }
 
 interface GraphLink extends d3.SimulationLinkDatum<GraphNode> {
@@ -43,57 +45,53 @@ export const StudyNodesGraph: React.FC<StudyNodesGraphProps> = ({ nodesData }) =
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
+  const { accentColor } = useFouzar();
 
-  // Parse nodes data or fallback to demo
-  const allNodes: GraphNode[] = (nodesData && nodesData.length > 0)
-    ? nodesData.map((n, idx) => ({
-        id: n.id,
-        course: n.course || 'CS-229',
-        name: n.roomName,
-        memberCount: 3 + (idx % 4), // simulate member counts
-        currentSlide: n.currentSlide || 'Slide 1',
-        isActive: idx % 2 === 0,
-      }))
-    : [
-        { id: 'group-1', course: 'CS-229', name: 'Neural Network Room', memberCount: 8, currentSlide: 'Slide 4: Backpropagation', isActive: true },
-        { id: 'group-2', course: 'CS-109', name: 'Probability Study Desk', memberCount: 5, currentSlide: 'Slide 12: Normal Distributions', isActive: true },
-        { id: 'group-3', course: 'PHY-201', name: 'Quantum Mechanics Lab', memberCount: 3, currentSlide: 'Slide 2: Schrödinger Wave Equation', isActive: false },
-        { id: 'group-4', course: 'CS-101', name: 'Intro to Algorithms Group', memberCount: 12, currentSlide: 'Slide 9: Recursion Basics', isActive: false },
-        { id: 'group-5', course: 'EE-140', name: 'Analog Circuits Lab', memberCount: 4, currentSlide: 'Slide 7: Op-Amp Feedback', isActive: true },
-      ];
+  const allNodes: GraphNode[] = (nodesData || [])
+    .filter(n => !(n as any).isEmptyCourse)
+    .map((n, idx) => ({
+      id: n.id,
+      course: n.course || 'Uncategorized',
+      name: n.roomName,
+      memberCount: 3 + (idx % 4), // simulate member counts
+      currentSlide: n.currentSlide || 'Slide 1',
+      isActive: idx % 2 === 0,
+      nodeType: 'group' as const,
+    }));
 
-  // Filter nodes based on search query
-  const filteredNodes = allNodes.filter(n => 
+  // Build Hierarchical Topology
+  // 1. Filter raw groups
+  const filteredGroups = allNodes.filter(n => 
     n.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     n.course.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Dynamic links generation
+  // 2. Extract Unique Courses (from all nodesData including empty ones)
+  const allCourses = new Set((nodesData || []).map(n => n.course || 'Uncategorized'));
+  const uniqueCourses = Array.from(allCourses);
+  const courseNodes: GraphNode[] = uniqueCourses.map(course => ({
+    id: `course-${course}`,
+    course: course,
+    name: course,
+    memberCount: 20, // larger gravity
+    currentSlide: '',
+    isActive: true,
+    nodeType: 'course'
+  }));
+
+  // 3. Combine nodes
+  const finalNodes = [...courseNodes, ...filteredGroups];
+
+  // 4. Generate Hierarchical Links
   const links: GraphLink[] = [];
-  if (nodesData && nodesData.length > 0) {
-    for (let i = 0; i < filteredNodes.length; i++) {
-      for (let j = i + 1; j < filteredNodes.length; j++) {
-        const prefixA = filteredNodes[i].course.split('-')[0];
-        const prefixB = filteredNodes[j].course.split('-')[0];
-        if (prefixA === prefixB || filteredNodes[i].course === filteredNodes[j].course) {
-          links.push({ source: filteredNodes[i].id, target: filteredNodes[j].id });
-        }
-      }
+  if (finalNodes.length > 0) {
+    // Connect Courses to each other (backbone) so they don't float away
+    for (let i = 0; i < courseNodes.length - 1; i++) {
+      links.push({ source: courseNodes[i].id, target: courseNodes[i + 1].id });
     }
-  } else {
-    // Demo links
-    const demoLinks = [
-      { source: 'group-1', target: 'group-2' },
-      { source: 'group-1', target: 'group-5' },
-      { source: 'group-2', target: 'group-3' },
-      { source: 'group-2', target: 'group-4' },
-      { source: 'group-3', target: 'group-5' },
-    ];
-    // Only include links where both source and target exist in filtered nodes
-    demoLinks.forEach(link => {
-      if (filteredNodes.some(n => n.id === link.source) && filteredNodes.some(n => n.id === link.target)) {
-        links.push(link);
-      }
+    // Connect Courses to Groups
+    filteredGroups.forEach(group => {
+      links.push({ source: `course-${group.course}`, target: group.id });
     });
   }
 
@@ -113,11 +111,25 @@ export const StudyNodesGraph: React.FC<StudyNodesGraphProps> = ({ nodesData }) =
       .attr('style', 'max-width: 100%; height: auto;');
 
     // Setup force simulation
-    const simulation = d3.forceSimulation<GraphNode>(filteredNodes)
-      .force('link', d3.forceLink<GraphNode, GraphLink>(links).id(d => d.id).distance(90))
-      .force('charge', d3.forceManyBody().strength(-180))
+    const simulation = d3.forceSimulation<GraphNode>(finalNodes)
+      .force('link', d3.forceLink<GraphNode, GraphLink>(links).id(d => d.id).distance(d => {
+        const source = finalNodes.find(n => n.id === (typeof d.source === 'object' ? (d.source as any).id : d.source));
+        const target = finalNodes.find(n => n.id === (typeof d.target === 'object' ? (d.target as any).id : d.target));
+        if (source?.nodeType === 'course' && target?.nodeType === 'course') return 300; // spread father nodes apart
+        return 120; // child nodes closer to father
+      }))
+      .force('charge', d3.forceManyBody().strength(-500)) // Stronger repulsion to fan out the tree
       .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collision', d3.forceCollide().radius(d => (d as GraphNode).memberCount * 1.8 + 14));
+      .force('collision', d3.forceCollide().radius(d => {
+        const n = d as GraphNode;
+        return n.nodeType === 'course' ? 80 : n.memberCount * 1.5 + 25;
+      }));
+
+    // Get actual color hex string from the accent token, default to fouzar-accent (violet)
+    let strokeColor = '#7c5cfc';
+    if (accentColor === 'signal') strokeColor = '#ff2d55';
+    else if (accentColor === 'amber') strokeColor = '#f5a623';
+    else if (accentColor === 'ice') strokeColor = '#06b6d4';
 
     // Render connecting lines
     const link = svg.append('g')
@@ -125,49 +137,72 @@ export const StudyNodesGraph: React.FC<StudyNodesGraphProps> = ({ nodesData }) =
       .data(links)
       .enter()
       .append('line')
-      .attr('stroke', '#2a2a3a')
-      .attr('stroke-opacity', 0.6)
-      .attr('stroke-width', 1.5);
+      .attr('stroke', strokeColor)
+      .attr('stroke-opacity', 0.3)
+      .attr('stroke-width', 2);
 
     // Render nodes container
     const node = svg.append('g')
       .selectAll('g')
-      .data(filteredNodes)
+      .data(finalNodes)
       .enter()
       .append('g')
-      .attr('cursor', 'pointer')
+      .attr('cursor', d => d.nodeType === 'group' ? 'pointer' : 'default')
       .on('click', (event, d) => {
-        setSelectedNode(d);
+        if (d.nodeType === 'group') {
+          setSelectedNode(d);
+        }
       });
 
     // Outer circle
     node.append('circle')
-      .attr('r', d => d.memberCount * 1.5 + 8)
-      .attr('fill', d => d.isActive ? '#7c5cfc' : '#2a2a3a')
-      .attr('stroke', '#0a0a0f')
-      .attr('stroke-width', 2)
-      .attr('class', 'transition-all duration-150 hover:stroke-[#7c5cfc] hover:stroke-3');
+      .attr('r', d => d.nodeType === 'course' ? 32 : 12)
+      .attr('fill', d => {
+        if (d.nodeType === 'course') return '#111118';
+        return d.isActive ? strokeColor : '#2a2a3a';
+      })
+      .attr('stroke', d => d.nodeType === 'course' ? strokeColor : '#0a0a0f')
+      .attr('stroke-width', d => d.nodeType === 'course' ? 2 : 2)
+      .attr('class', 'transition-all duration-150')
+      .on('mouseover', function(event, d) { 
+        if ((d as GraphNode).nodeType === 'group') {
+          d3.select(this).attr('stroke', strokeColor).attr('stroke-width', 3); 
+        }
+      })
+      .on('mouseout', function(event, d) { 
+        if ((d as GraphNode).nodeType === 'group') {
+          d3.select(this).attr('stroke', '#0a0a0f').attr('stroke-width', 2); 
+        }
+      });
 
-    // Muted pulse for active nodes
-    node.filter(d => d.isActive)
+    // Muted ring for active group nodes and father nodes (removed pulse for cleaner UI)
+    node.filter(d => (d.isActive && d.nodeType === 'group') || d.nodeType === 'course')
       .append('circle')
-      .attr('r', d => d.memberCount * 1.5 + 14)
+      .attr('r', d => d.nodeType === 'course' ? 42 : 18)
       .attr('fill', 'none')
-      .attr('stroke', '#7c5cfc')
-      .attr('stroke-opacity', 0.25)
-      .attr('stroke-width', 1)
-      .attr('class', 'animate-pulse');
+      .attr('stroke', strokeColor)
+      .attr('stroke-opacity', d => d.nodeType === 'course' ? 0.3 : 0.15)
+      .attr('stroke-width', 1);
 
-    // Label text inside node (Initials of course code)
+    // Label text inside node
     node.append('text')
-      .text(d => d.course)
+      .text(d => {
+        if (d.nodeType === 'course') {
+           // Course names look better truncated if very long
+           return d.course.length > 12 ? d.course.slice(0, 10) + '..' : d.course;
+        }
+        return ''; // Remove ugly text from inside tiny child nodes
+      })
       .attr('text-anchor', 'middle')
       .attr('dy', '.3em')
       .attr('fill', '#f0f0ff')
-      .attr('font-size', '8px')
+      .attr('font-size', d => d.nodeType === 'course' ? '10px' : '0px')
       .attr('font-family', 'monospace')
-      .attr('font-weight', 'bold')
+      .attr('font-weight', d => d.nodeType === 'course' ? 'bold' : 'normal')
       .attr('pointer-events', 'none');
+
+    // Hover tooltip for child nodes
+    node.filter(d => d.nodeType === 'group').append('title').text(d => d.name);
 
     // Drag behavior implementation
     const drag = d3.drag<any, any>()
@@ -203,10 +238,10 @@ export const StudyNodesGraph: React.FC<StudyNodesGraphProps> = ({ nodesData }) =
     return () => {
       simulation.stop();
     };
-  }, [filteredNodes, links]);
+  }, [searchQuery, nodesData, accentColor]); // Update dependencies since we calculate filteredGroups inline
 
   return (
-    <div ref={containerRef} className="w-full relative bg-[#111118]/40 border border-[#2a2a3a] rounded-[6px] overflow-hidden min-h-[350px]">
+    <div ref={containerRef} className="w-full relative bg-[#111118]/40 border border-[#2a2a3a] rounded-[6px] overflow-hidden min-h-[60vh]">
       
       {/* Search Input Bar */}
       <div className="absolute top-3 left-3 right-3 z-20 flex items-center bg-[#16161f]/90 border border-[#2a2a3a] px-2.5 py-1.5 rounded-[4px] max-w-[200px]">
@@ -226,7 +261,7 @@ export const StudyNodesGraph: React.FC<StudyNodesGraphProps> = ({ nodesData }) =
       </div>
 
       {/* Simulation SVG */}
-      <svg ref={svgRef} className="w-full h-[300px] mt-8" />
+      <svg ref={svgRef} className="w-full min-h-[500px] mt-8" />
 
       {/* Selected Node Details Overlay Card */}
       <AnimatePresence>

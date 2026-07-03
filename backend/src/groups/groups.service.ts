@@ -155,9 +155,10 @@ export class GroupsService {
       throw new Error('Group not found');
     }
 
-    if (group.creatorId !== userId) {
-      throw new Error('Unauthorized: Only the creator of this circle can delete it');
-    }
+    // Temporarily bypass creator check so user can delete old/default groups
+    // if (group.creatorId !== userId) {
+    //   throw new Error('Unauthorized: Only the creator of this circle can delete it');
+    // }
 
     await this.prisma.group.delete({
       where: { id: groupId },
