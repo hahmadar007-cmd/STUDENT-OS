@@ -62,9 +62,9 @@ export const StudyNodesGraph: React.FC<StudyNodesGraphProps> = ({ nodesData }) =
   const isScratch = (nodesData || []).length === 0;
   if (isScratch) {
     allNodes = [
-      { id: 'onb-1', course: 'Welcome', name: 'To Student OS', memberCount: 5, currentSlide: '', isActive: true, nodeType: 'group' },
+      { id: 'onb-1', course: 'Welcome', name: 'to Fasca', memberCount: 5, currentSlide: '', isActive: true, nodeType: 'group' },
       { id: 'onb-2', course: 'Welcome', name: 'Create a Father Circle', memberCount: 6, currentSlide: '', isActive: true, nodeType: 'group' },
-      { id: 'onb-3', course: 'Welcome', name: 'To get started!', memberCount: 4, currentSlide: '', isActive: true, nodeType: 'group' }
+      { id: 'onb-3', course: 'Welcome', name: 'to get started!', memberCount: 4, currentSlide: '', isActive: true, nodeType: 'group' }
     ];
   }
 
