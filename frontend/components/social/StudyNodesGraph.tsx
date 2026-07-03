@@ -201,12 +201,13 @@ export const StudyNodesGraph: React.FC<StudyNodesGraphProps> = ({ nodesData }) =
            // Course names look better truncated if very long
            return d.course.length > 12 ? d.course.slice(0, 10) + '..' : d.course;
         }
-        return ''; // Remove ugly text from inside tiny child nodes
+        // Show group names, slightly truncated
+        return d.name.length > 18 ? d.name.slice(0, 16) + '..' : d.name;
       })
       .attr('text-anchor', 'middle')
-      .attr('dy', '.3em')
-      .attr('fill', '#f0f0ff')
-      .attr('font-size', d => d.nodeType === 'course' ? '10px' : '0px')
+      .attr('dy', d => d.nodeType === 'course' ? '.3em' : '2.2em')
+      .attr('fill', d => d.nodeType === 'course' ? '#f0f0ff' : '#9494b8')
+      .attr('font-size', d => d.nodeType === 'course' ? '10px' : '9px')
       .attr('font-family', 'monospace')
       .attr('font-weight', d => d.nodeType === 'course' ? 'bold' : 'normal')
       .attr('pointer-events', 'none');
