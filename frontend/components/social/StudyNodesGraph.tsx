@@ -47,7 +47,7 @@ export const StudyNodesGraph: React.FC<StudyNodesGraphProps> = ({ nodesData }) =
   const router = useRouter();
   const { accentColor } = useFouzar();
 
-  const allNodes: GraphNode[] = (nodesData || [])
+  let allNodes: GraphNode[] = (nodesData || [])
     .filter(n => !(n as any).isEmptyCourse)
     .map((n, idx) => ({
       id: n.id,
@@ -59,6 +59,15 @@ export const StudyNodesGraph: React.FC<StudyNodesGraphProps> = ({ nodesData }) =
       nodeType: 'group' as const,
     }));
 
+  const isScratch = (nodesData || []).length === 0;
+  if (isScratch) {
+    allNodes = [
+      { id: 'onb-1', course: 'Welcome', name: 'To Student OS', memberCount: 5, currentSlide: '', isActive: true, nodeType: 'group' },
+      { id: 'onb-2', course: 'Welcome', name: 'Create a Father Circle', memberCount: 6, currentSlide: '', isActive: true, nodeType: 'group' },
+      { id: 'onb-3', course: 'Welcome', name: 'To get started!', memberCount: 4, currentSlide: '', isActive: true, nodeType: 'group' }
+    ];
+  }
+
   // Build Hierarchical Topology
   // 1. Filter raw groups
   const filteredGroups = allNodes.filter(n => 
@@ -68,6 +77,7 @@ export const StudyNodesGraph: React.FC<StudyNodesGraphProps> = ({ nodesData }) =
 
   // 2. Extract Unique Courses (from all nodesData including empty ones)
   const allCourses = new Set((nodesData || []).map(n => n.course || 'Uncategorized'));
+  if (isScratch) allCourses.add('Welcome');
   const uniqueCourses = Array.from(allCourses);
   const courseNodes: GraphNode[] = uniqueCourses.map(course => ({
     id: `course-${course}`,
