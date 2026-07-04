@@ -127,6 +127,7 @@ export function FriendsChatDeck({ peers }: FriendsChatDeckProps) {
   const [uploadingFile, setUploadingFile] = useState<UploadingFile | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const socketRef = useRef<ReturnType<typeof getSocket> | null>(null);
@@ -174,7 +175,10 @@ export function FriendsChatDeck({ peers }: FriendsChatDeckProps) {
   }, [peers]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
   }, [messages]);
 
   useEffect(() => {
@@ -541,7 +545,7 @@ export function FriendsChatDeck({ peers }: FriendsChatDeckProps) {
             )}
 
             {/* Messages scroll area */}
-            <div className="flex-1 overflow-y-auto px-4 py-5 space-y-2 scrollbar-none">
+            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-5 space-y-2 scrollbar-none">
               {messages.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center gap-3 select-none">
                   <div className="w-11 h-11 rounded-full bg-zinc-900 border border-white/[0.06] flex items-center justify-center font-mono text-sm font-bold text-zinc-500">
