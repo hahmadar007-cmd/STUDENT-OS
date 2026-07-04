@@ -7,37 +7,18 @@ import { useFouzar } from '../../lib/FouzarContext';
 
 export function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(3);
+  const [unreadCount, setUnreadCount] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { accentColor } = useFouzar();
 
-  // Mock Notifications
-  const [notifications, setNotifications] = useState([
-    {
-      id: '1',
-      type: 'friend_request',
-      title: 'New Friend Request',
-      message: 'Alex Chen wants to connect.',
-      time: '2m ago',
-      read: false
-    },
-    {
-      id: '2',
-      type: 'message',
-      title: 'Study Circle',
-      message: 'Sarah: Are we meeting for CS-229 tonight?',
-      time: '15m ago',
-      read: false
-    },
-    {
-      id: '3',
-      type: 'system',
-      title: 'Deep Flow Achieved',
-      message: 'You completed a 60m unbroken focus session.',
-      time: '1h ago',
-      read: false
-    }
-  ]);
+  const [notifications, setNotifications] = useState<{
+    id: string;
+    type: string;
+    title: string;
+    message: string;
+    time: string;
+    read: boolean;
+  }[]>([]);
 
   // Click outside to close
   useEffect(() => {
