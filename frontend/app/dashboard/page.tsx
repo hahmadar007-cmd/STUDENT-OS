@@ -680,7 +680,6 @@ export default function DashboardPage() {
     { id: 'ai', label: 'AI Core', icon: Cpu, keyHint: 'A' },
     { id: 'bridge', label: 'Campus Gateway', icon: Plug, keyHint: 'L' },
     { id: 'shield', label: 'Focus Shield', icon: Shield, keyHint: 'F' },
-    { id: 'friends', label: 'Friends', icon: MessageSquare, keyHint: 'M' },
   ];
 
   if (loading) {
