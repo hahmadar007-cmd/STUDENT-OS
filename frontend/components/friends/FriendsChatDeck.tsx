@@ -112,6 +112,11 @@ function groupMessagesByDate(messages: DirectMessage[]) {
   return groups;
 }
 
+/** Returns a deterministic DM room ID regardless of which side opens the chat first. */
+function getDmRoomId(myId: string, friendId: string): string {
+  return 'dm-' + [myId, friendId].sort().join('-');
+}
+
 export function FriendsChatDeck({ peers }: FriendsChatDeckProps) {
   const [selectedFriend, setSelectedFriend] = useState<Peer | null>(null);
   const [messages, setMessages] = useState<DirectMessage[]>([]);
@@ -120,6 +125,7 @@ export function FriendsChatDeck({ peers }: FriendsChatDeckProps) {
   const [search, setSearch] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [uploadingFile, setUploadingFile] = useState<UploadingFile | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -127,6 +133,20 @@ export function FriendsChatDeck({ peers }: FriendsChatDeckProps) {
   const activeRoomRef = useRef<string | null>(null);
   const pendingSent = useRef<Set<string>>(new Set());
   const dragCounter = useRef(0);
+
+  // Decode the current user's ID from the stored JWT so we can build canonical DM room IDs.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setCurrentUserId(payload.sub || '');
+      }
+    } catch {
+      // Token not yet available or malformed — currentUserId stays ''
+    }
+  }, []);
 
   useEffect(() => {
     if (peers.length > 0) {
@@ -161,7 +181,12 @@ export function FriendsChatDeck({ peers }: FriendsChatDeckProps) {
     if (!selectedFriend) return;
     inputRef.current?.focus();
 
-    const roomId = `dm-${selectedFriend.id}`;
+    // Use a canonical room ID: both sides sort their IDs so they always resolve the same room.
+    // If currentUserId is not yet available (edge case on first render), fall back to friend-only
+    // ID — it will be corrected once the token is decoded.
+    const roomId = currentUserId
+      ? getDmRoomId(currentUserId, selectedFriend.id)
+      : `dm-${selectedFriend.id}`;
     activeRoomRef.current = roomId;
     setMessages([]);
 
@@ -217,7 +242,9 @@ export function FriendsChatDeck({ peers }: FriendsChatDeckProps) {
   const uploadAndSendFile = useCallback(async (file: File) => {
     if (!selectedFriend || !socketRef.current) return;
 
-    const roomId = `dm-${selectedFriend.id}`;
+    const roomId = currentUserId
+      ? getDmRoomId(currentUserId, selectedFriend.id)
+      : `dm-${selectedFriend.id}`;
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (!token) return;
 
@@ -290,7 +317,9 @@ export function FriendsChatDeck({ peers }: FriendsChatDeckProps) {
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText.trim() || !socketRef.current || !selectedFriend) return;
-    const roomId = `dm-${selectedFriend.id}`;
+    const roomId = currentUserId
+      ? getDmRoomId(currentUserId, selectedFriend.id)
+      : `dm-${selectedFriend.id}`;
     const content = inputText.trim();
     pendingSent.current.add(content);
     socketRef.current.emit('sendMessage', { groupId: roomId, content, slideId: null });

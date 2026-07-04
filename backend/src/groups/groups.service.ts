@@ -6,6 +6,31 @@ export class GroupsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getMessages(groupId: string) {
+    // ── DM rooms: query DirectMessage table (no Group FK needed) ──────────────
+    if (groupId.startsWith('dm-')) {
+      const dms = await this.prisma.directMessage.findMany({
+        where: { roomId: groupId },
+        orderBy: { createdAt: 'asc' },
+        include: {
+          sender: {
+            select: { id: true, name: true, email: true },
+          },
+        },
+        take: 100,
+      });
+      // Return in the same shape as ChatMessage so the frontend handler is unchanged
+      return dms.map((dm) => ({
+        id: dm.id,
+        groupId,
+        senderId: dm.senderId,
+        sender: dm.sender,
+        content: dm.content,
+        slideId: null,
+        createdAt: dm.createdAt,
+      }));
+    }
+
+    // ── Regular group messages ────────────────────────────────────────────────
     // Make sure the group exists in the database
     const group = await this.prisma.group.findUnique({
       where: { id: groupId },

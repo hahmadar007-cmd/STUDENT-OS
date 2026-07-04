@@ -95,6 +95,35 @@ export class GroupsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
     }
 
+    // ── DM rooms use DirectMessage (no Group FK) ──────────────────────────────
+    if (data.groupId.startsWith('dm-')) {
+      const dm = await this.prisma.directMessage.create({
+        data: {
+          roomId: data.groupId,
+          senderId,
+          content: data.content,
+        },
+        include: {
+          sender: {
+            select: { id: true, name: true, email: true },
+          },
+        },
+      });
+
+      // Emit in the same shape as group messages so the frontend handler is unchanged
+      this.server.to(data.groupId).emit('onMessage', {
+        id: dm.id,
+        groupId: data.groupId,
+        senderId: dm.senderId,
+        sender: dm.sender,
+        content: dm.content,
+        slideId: null,
+        createdAt: dm.createdAt,
+      });
+      return;
+    }
+
+    // ── Regular group message ─────────────────────────────────────────────────
     const message = await this.prisma.chatMessage.create({
       data: {
         groupId: data.groupId,

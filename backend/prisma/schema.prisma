@@ -40,6 +40,7 @@ model User {
   createdGroups     Group[]       @relation("GroupCreator")
   memberships       Membership[]
   messages          ChatMessage[]
+  directMessages    DirectMessage[]
   friendships       Friendship[]  @relation("UserFriendships")
   friendOf          Friendship[]  @relation("FriendOfUser")
 
@@ -127,6 +128,21 @@ model ChatMessage {
   createdAt DateTime @default(now())
 
   @@index([groupId])
+  @@index([senderId])
+}
+
+// DirectMessage is for private 1-on-1 chats. It uses a plain roomId string
+// (e.g. "dm-userA-userB") with NO foreign key to Group, so DM rooms do not
+// need a matching Group record in the database.
+model DirectMessage {
+  id        String   @id @default(uuid())
+  roomId    String   // canonical sorted pair, e.g. "dm-<idA>-<idB>"
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([roomId])
   @@index([senderId])
 }
 
