@@ -51,6 +51,7 @@ import { toast } from '../../components/ui/Toast';
 import { ThemeSwitcher } from '../../components/theme/ThemeSwitcher';
 import { FriendsChatDeck } from '../../components/friends/FriendsChatDeck';
 import { NotificationBell } from '../../components/ui/NotificationBell';
+import { DmNotificationBell } from '../../components/ui/DmNotificationBell';
 
 const Tooltip = ({ text }: { text: string }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -1244,6 +1245,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between mb-3 shrink-0">
               <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a]">Direct Messages</span>
               <div className="flex items-center gap-2">
+                <DmNotificationBell onClick={() => setActiveNav('friends')} />
                 <NotificationBell />
                 <ThemeSwitcher />
                 <button
@@ -1266,6 +1268,7 @@ export default function DashboardPage() {
             <div className="w-full flex items-center justify-between mb-2">
               <div />
               <div className="flex items-center gap-3">
+                <DmNotificationBell onClick={() => setActiveNav('friends')} />
                 <NotificationBell />
                 <ThemeSwitcher />
                 <button
