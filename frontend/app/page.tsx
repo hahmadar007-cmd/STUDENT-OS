@@ -19,18 +19,28 @@ export default function LandingPage() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const slides = [
     {
-      src: '/graduation-hats.png',
-      tag: 'STUDENT OS',
-      title: 'Fasca Workspace Platform',
-      badge: 'LIVE SYNC ACTIVE',
-      color: '#7c5cfc',
+      src: '/slide1.jpg',
+      tag: 'DIGITAL WORKSPACE',
+      title: 'Unified Study Environment',
+      badge: 'ONLINE CLOUD SYNC',
+      color: '#0ea5e9', // Sky Blue
+      accent: 'rgba(6,182,212,0.2)', // Cyan
     },
     {
-      src: '/study-book.png',
-      tag: 'STUDY ASSETS',
-      title: 'Resource Ledger & Materials',
-      badge: 'OFFLINE MODE SYNCED',
-      color: '#ff2d55',
+      src: '/slide2.png',
+      tag: 'DEEP FOCUS',
+      title: 'Distraction-Free Flow State',
+      badge: 'FOCUS SHIELD ACTIVE',
+      color: '#eab308', // Yellow
+      accent: 'rgba(234,88,12,0.2)', // Orange
+    },
+    {
+      src: '/slide3.jpg',
+      tag: 'ACADEMIC TRACKING',
+      title: 'Smart Attendance & Marks',
+      badge: 'GRADES SYNCED',
+      color: '#ef4444', // Red
+      accent: 'rgba(168,85,247,0.2)', // Purple
     }
   ];
 
@@ -156,13 +166,12 @@ export default function LandingPage() {
               className="relative w-full max-w-lg aspect-[16/9] border rounded-none overflow-hidden bg-fouzar-surface/60 p-1.5 shadow-[0_0_50px_-12px_rgba(124,92,252,0.3)] group cursor-pointer transition-colors duration-500"
               style={{ borderColor: `${slides[currentSlide].color}30` }}
             >
-              {/* Outer frame neon line */}
-              <div 
-                className="absolute inset-0 bg-gradient-to-tr pointer-events-none transition-all duration-700" 
-                style={{
-                  backgroundImage: `linear-gradient(to top right, ${slides[currentSlide].color}20, transparent, ${currentSlide === 0 ? 'rgba(6,182,212,0.2)' : 'rgba(236,72,153,0.2)'})`
-                }}
-              />
+                <div 
+                  className="absolute inset-0 bg-gradient-to-tr pointer-events-none transition-all duration-700" 
+                  style={{
+                    backgroundImage: `linear-gradient(to top right, ${slides[currentSlide].color}20, transparent, ${slides[currentSlide].accent})`
+                  }}
+                />
               
               {/* The Image Wrapper with Framer Motion AnimatePresence for transitions */}
               <div className="w-full h-full overflow-hidden relative">
