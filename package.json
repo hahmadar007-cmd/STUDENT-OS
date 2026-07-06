@@ -9,7 +9,8 @@
   "scripts": {
     "dev:frontend": "npm run dev --workspace=frontend",
     "dev:backend": "npm run start:dev --workspace=backend",
-    "build": "npm run build --workspace=frontend"
+    "build": "npm run build --workspace=frontend",
+    "validate:all": "npm run build && npx prisma validate --schema=backend/prisma/schema.prisma"
   },
   "dependencies": {
     "@nestjs/jwt": "^11.0.2",

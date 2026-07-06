@@ -33,7 +33,7 @@ const MarkdownComponents: any = {
         style={vscDarkPlus as any}
         language={match[1]}
         PreTag="div"
-        className="rounded-md my-2 text-[9px] scrollbar-thin !bg-black/40 !border !border-white/10"
+        className="rounded-md my-2 text-[9px] scrollbar-thin !bg-black/40 !border !border-fouzar-border-subtle"
         {...props}
       >
         {String(children).replace(/\n$/, '')}
@@ -66,13 +66,13 @@ const MarkdownComponents: any = {
     return <ol className="list-decimal pl-4 mb-2 space-y-1" {...props} />;
   },
   h1({ node, ...props }: any) {
-    return <h1 className="text-sm font-bold text-white mt-4 mb-2" {...props} />;
+    return <h1 className="text-sm font-bold text-fouzar-text-primary mt-4 mb-2" {...props} />;
   },
   h2({ node, ...props }: any) {
-    return <h2 className="text-xs font-bold text-white mt-3 mb-1.5" {...props} />;
+    return <h2 className="text-xs font-bold text-fouzar-text-primary mt-3 mb-1.5" {...props} />;
   },
   h3({ node, ...props }: any) {
-    return <h3 className="text-[11px] font-bold text-white mt-2 mb-1" {...props} />;
+    return <h3 className="text-[11px] font-bold text-fouzar-text-primary mt-2 mb-1" {...props} />;
   },
   a({ node, ...props }: any) {
     return <a className="text-fouzar-accent hover:underline" target="_blank" rel="noopener noreferrer" {...props} />;
@@ -636,15 +636,15 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
               console.error('Failed to sync toggle with backend:', err);
             }
           }}
-          className="bg-[#0f0f1a] border border-fouzar-border text-[8px] font-mono uppercase px-2 py-1 rounded-[var(--fouzar-radius-sm)] text-fouzar-text-primary focus:outline-none max-w-[130px] truncate cursor-pointer"
+          className="bg-fouzar-bg border border-fouzar-border text-[8px] font-mono uppercase px-2 py-1 rounded-[var(--fouzar-radius-sm)] text-fouzar-text-primary focus:outline-none max-w-[130px] truncate cursor-pointer"
         >
           {engines.length === 0 ? (
-            <option value="" className="bg-[#0f0f1a] text-white">No Engine</option>
+            <option value="" className="bg-fouzar-bg text-fouzar-text-primary">No Engine</option>
           ) : (
             <>
-              {!activeEngine && <option value="" disabled hidden className="bg-[#0f0f1a] text-white">Select Engine...</option>}
+              {!activeEngine && <option value="" disabled hidden className="bg-fouzar-bg text-fouzar-text-primary">Select Engine...</option>}
               {engines.map((e) => (
-                <option key={e.id} value={e.id} className="bg-[#0f0f1a] text-white">{e.name}</option>
+                <option key={e.id} value={e.id} className="bg-fouzar-bg text-fouzar-text-primary">{e.name}</option>
               ))}
             </>
           )}
@@ -658,7 +658,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
             No AI Engine Connected
           </p>
           <p className="font-mono text-[7px] text-fouzar-text-secondary leading-relaxed mb-2">
-            This app is <strong className="text-white/60">BYOK</strong>. Paste a Gemini, OpenAI, Anthropic, or DeepSeek key in AI Engines — it's tested live before saving.
+            This app is <strong className="text-fouzar-text-primary/60">BYOK</strong>. Paste a Gemini, OpenAI, Anthropic, or DeepSeek key in AI Engines — it's tested live before saving.
           </p>
           <button
             onClick={() => {

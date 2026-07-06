@@ -62,7 +62,7 @@ const Tooltip = ({ text }: { text: string }) => {
         onMouseEnter={() => setIsOpen(true)}
         onMouseLeave={() => setIsOpen(false)}
         onClick={() => setIsOpen(!isOpen)}
-        className="p-1 hover:bg-white/5 rounded text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors cursor-pointer"
+        className="p-1 hover:bg-white/5 rounded text-fouzar-text-secondary hover:text-fouzar-text-primary transition-colors cursor-pointer"
         title="More information"
       >
         <span className="font-mono text-[10px]">ⓘ</span>
@@ -76,7 +76,7 @@ const Tooltip = ({ text }: { text: string }) => {
             transition={{ duration: 0.15, ease: 'easeOut' }}
             className="absolute left-0 mt-2 z-50 w-64 bg-fouzar-surface/95 border border-fouzar-accent/60 p-3 rounded-[6px] shadow-2xl text-left normal-case"
           >
-            <p className="text-[9px] font-mono text-[#f0f0ff] leading-relaxed normal-case">
+            <p className="text-[9px] font-mono text-fouzar-text-primary leading-relaxed normal-case">
               {text}
             </p>
           </motion.div>
@@ -154,7 +154,7 @@ export default function DashboardPage() {
     const name = newCourseName.trim().toUpperCase();
 
     if (!name) {
-      setCreateCourseError('Father Circle name is required.');
+      setCreateCourseError('Main Circle name is required.');
       return;
     }
 
@@ -166,7 +166,7 @@ export default function DashboardPage() {
       setNewCourseName('');
       loadGroups();
     } catch (err: any) {
-      setCreateCourseError(err.message || 'Failed to create Father Circle.');
+      setCreateCourseError(err.message || 'Failed to create Main Circle.');
     } finally {
       setCreateCourseLoading(false);
     }
@@ -311,13 +311,13 @@ export default function DashboardPage() {
   };
 
   const handleDeleteCourse = async (courseId: string, courseName: string) => {
-    if (!confirm(`Are you sure you want to delete the Father Circle "${courseName}" and all its study groups?`)) return;
+    if (!confirm(`Are you sure you want to delete the Main Circle "${courseName}" and all its study groups?`)) return;
     try {
       const { deleteCourse } = await import('../../lib/api');
       await deleteCourse(courseId);
       loadGroups();
     } catch (err: any) {
-      alert(err.message || 'Failed to delete Father Circle');
+      alert(err.message || 'Failed to delete Main Circle');
     }
   };
 
@@ -738,7 +738,7 @@ export default function DashboardPage() {
   return (
     <div 
       onClick={() => setSelectedCardId(null)}
-      className="min-h-screen w-screen bg-[#0a0a0f] text-fouzar-text-primary flex flex-col md:flex-row overflow-hidden relative select-none font-sans"
+      className="min-h-screen w-screen bg-fouzar-bg text-fouzar-text-primary flex flex-col md:flex-row overflow-hidden relative select-none font-sans"
     >
       {/* --- Ambient Premium Background --- */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
@@ -893,7 +893,7 @@ export default function DashboardPage() {
 
             {/* Personal Sanctuary */}
             <div className="space-y-3">
-              <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a] block">
+              <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-fouzar-text-secondary block">
                 Personal Space
               </span>
               <FascaCard
@@ -910,8 +910,8 @@ export default function DashboardPage() {
                   <span className={`text-[8.5px] font-mono uppercase tracking-wider block ${getTextColor('sanctuary')}`}>
                     Private · Solo
                   </span>
-                  <h3 className="text-sm font-bold text-[#f0f0ff] mt-1">My Sanctuary</h3>
-                  <p className="text-[9px] text-[#6b6b8a] font-mono mt-1 pr-6">
+                  <h3 className="text-sm font-bold text-fouzar-text-primary mt-1">My Sanctuary</h3>
+                  <p className="text-[9px] text-fouzar-text-secondary font-mono mt-1 pr-6">
                     Semester notes, AI tutor, your materials
                   </p>
                 </div>
@@ -921,7 +921,7 @@ export default function DashboardPage() {
                   <button
                     type="button"
                     onClick={() => setActiveMenuNodeId(activeMenuNodeId === 'sanctuary' ? null : 'sanctuary')}
-                    className="p-1 hover:bg-white/5 rounded text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors cursor-pointer"
+                    className="p-1 hover:bg-white/5 rounded text-fouzar-text-secondary hover:text-fouzar-text-primary transition-colors cursor-pointer"
                     title="Sanctuary options"
                   >
                     <MoreVertical className="w-3.5 h-3.5" />
@@ -933,9 +933,9 @@ export default function DashboardPage() {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: -4 }}
                         transition={{ duration: 0.1 }}
-                        className="absolute right-0 mt-1 w-36 bg-[#14141c]/95 border border-[#2a2a3a] rounded-[4px] shadow-2xl p-2 z-50 text-left"
+                        className="absolute right-0 mt-1 w-36 bg-fouzar-surface/95 border border-fouzar-border-strong rounded-[4px] shadow-2xl p-2 z-50 text-left"
                       >
-                        <div className="px-2 py-0.5 text-[7px] font-mono uppercase text-[#6b6b8a] tracking-wider mb-1.5 flex items-center gap-1">
+                        <div className="px-2 py-0.5 text-[7px] font-mono uppercase text-fouzar-text-secondary tracking-wider mb-1.5 flex items-center gap-1">
                           <Palette className="w-2.5 h-2.5 text-[#06b6d4]" /> Set Color
                         </div>
                         <div className="flex gap-1.5 px-2 py-0.5 justify-between">
@@ -967,7 +967,7 @@ export default function DashboardPage() {
                       e.stopPropagation();
                       router.push('/sanctuary');
                     }}
-                    className={`text-[8.5px] font-mono uppercase tracking-widest ${getTextColor('sanctuary')} hover:text-[#f0f0ff] flex items-center gap-1 transition-colors cursor-pointer`}
+                    className={`text-[8.5px] font-mono uppercase tracking-widest ${getTextColor('sanctuary')} hover:text-fouzar-text-primary flex items-center gap-1 transition-colors cursor-pointer`}
                   >
                     Enter Sanctuary <ArrowRight className="w-3 h-3" />
                   </button>
@@ -978,7 +978,7 @@ export default function DashboardPage() {
             {/* Active Garden Nodes list */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a] block">
+                <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-fouzar-text-secondary block">
                   Shared Study Groups
                 </span>
                 <button
@@ -986,25 +986,25 @@ export default function DashboardPage() {
                   onClick={() => setShowCreateCourseModal(true)}
                   className="text-[8px] font-mono uppercase tracking-wider text-fouzar-accent hover:underline cursor-pointer bg-none border-none p-0"
                 >
-                  + Create Father Circle
+                  + Create Main Circle
                 </button>
               </div>
 
               {loadingNodes ? (
                 <div className="max-h-64 overflow-y-auto space-y-3 pr-1 scrollbar-none">
                   {[1, 2].map((i) => (
-                    <div key={i} className="h-32 bg-[#16161f] border border-[#2a2a3a] animate-pulse rounded-[6px] p-4 flex flex-col justify-between">
-                      <div className="h-3 bg-[#1e1e2a] w-1/4 rounded-[2px]" />
-                      <div className="h-4 bg-[#1e1e2a] w-3/4 rounded-[2px]" />
-                      <div className="h-4 bg-[#1e1e2a] w-16 self-end rounded-[2px]" />
+                    <div key={i} className="h-32 bg-fouzar-card border border-fouzar-border-strong animate-pulse rounded-[6px] p-4 flex flex-col justify-between">
+                      <div className="h-3 bg-fouzar-elevated w-1/4 rounded-[2px]" />
+                      <div className="h-4 bg-fouzar-elevated w-3/4 rounded-[2px]" />
+                      <div className="h-4 bg-fouzar-elevated w-16 self-end rounded-[2px]" />
                     </div>
                   ))}
                 </div>
               ) : gardenNodes.length === 0 ? (
-                <div className="w-full h-32 border border-dashed border-[#2a2a3a] rounded-[6px] flex flex-col items-center justify-center p-4 text-center">
-                  <Grid className="w-8 h-8 text-[#6b6b8a]/40 mb-2" />
-                  <span className="text-[10px] font-mono text-[#f0f0ff] uppercase tracking-wider">Your circles are forming</span>
-                  <span className="text-[7.5px] font-mono text-[#6b6b8a] mt-1.5 uppercase">NO ACTIVE STUDY NODES DETECTED</span>
+                <div className="w-full h-32 border border-dashed border-fouzar-border-strong rounded-[6px] flex flex-col items-center justify-center p-4 text-center">
+                  <Grid className="w-8 h-8 text-fouzar-text-secondary/40 mb-2" />
+                  <span className="text-[10px] font-mono text-fouzar-text-primary uppercase tracking-wider">Your circles are forming</span>
+                  <span className="text-[7.5px] font-mono text-fouzar-text-secondary mt-1.5 uppercase">NO ACTIVE STUDY NODES DETECTED</span>
                 </div>
               ) : (
                 <div className="max-h-[60vh] overflow-y-auto space-y-6 pr-1 scrollbar-none animate-none">
@@ -1016,7 +1016,7 @@ export default function DashboardPage() {
                   }, {} as Record<string, typeof gardenNodes>)).map(([courseName, nodes]) => (
                     <div key={courseName} className="mb-4 last:mb-0">
                       <div className="flex items-center justify-between mb-3 px-1 border-b border-white/5 pb-2">
-                        <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#f0f0ff] font-bold">
+                        <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-fouzar-text-primary font-bold">
                           {courseName}
                         </span>
                         <div className="flex items-center gap-1">
@@ -1026,7 +1026,7 @@ export default function DashboardPage() {
                               setNewGroupCourse(courseName === 'Uncategorized' ? '' : courseName);
                               setShowCreateGroupModal(true);
                             }}
-                            className="p-1 hover:bg-white/10 rounded text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors cursor-pointer"
+                            className="p-1 hover:bg-white/10 rounded text-fouzar-text-secondary hover:text-fouzar-text-primary transition-colors cursor-pointer"
                             title={`Add circle to ${courseName}`}
                           >
                             <Plus className="w-3.5 h-3.5" />
@@ -1035,7 +1035,7 @@ export default function DashboardPage() {
                             <button
                               type="button"
                               onClick={() => handleDeleteCourse(nodes[0].courseId!, courseName)}
-                              className="p-1 hover:bg-[#ff2d55]/10 rounded text-[#6b6b8a] hover:text-[#ff2d55] transition-colors cursor-pointer"
+                              className="p-1 hover:bg-[#ff2d55]/10 rounded text-fouzar-text-secondary hover:text-[#ff2d55] transition-colors cursor-pointer"
                               title={`Delete ${courseName}`}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -1081,23 +1081,23 @@ export default function DashboardPage() {
                                   autoFocus
                                 />
                               ) : (
-                                <h3 className="text-xs font-bold text-[#f0f0ff] mt-1 pr-6 truncate" title={node.roomName}>
+                                <h3 className="text-xs font-bold text-fouzar-text-primary mt-1 pr-6 truncate" title={node.roomName}>
                                   {node.roomName}
                                 </h3>
                               )}
-                              <p className="text-[9px] text-[#6b6b8a] font-mono mt-1" title={node.currentSlide}>
+                              <p className="text-[9px] text-fouzar-text-secondary font-mono mt-1" title={node.currentSlide}>
                                 {node.currentSlide}
                               </p>
                               {/* Pending Join Requests (Creator Only) */}
                               {node.creatorId === user?.id && pendingGroupRequests[node.id] && pendingGroupRequests[node.id].length > 0 && (
-                                <div className="mt-3 border-t border-[#2a2a3a]/40 pt-2.5 space-y-1.5 animate-none" onClick={(e) => e.stopPropagation()}>
+                                <div className="mt-3 border-t border-fouzar-border-strong/40 pt-2.5 space-y-1.5 animate-none" onClick={(e) => e.stopPropagation()}>
                                   <span className="text-[7.5px] font-mono uppercase text-[#ff2d55] tracking-[0.15em] block font-bold">
                                     Join Requests ({pendingGroupRequests[node.id].length})
                                   </span>
                                   <div className="space-y-1 max-h-24 overflow-y-auto scrollbar-none">
                                     {pendingGroupRequests[node.id].map((req) => (
-                                      <div key={req.userId} className="flex items-center justify-between p-1 bg-[#101015] border border-[#2a2a3a]/40 rounded-[4px] gap-2">
-                                        <span className="text-[8px] text-[#f0f0ff] font-mono truncate max-w-[120px]">
+                                      <div key={req.userId} className="flex items-center justify-between p-1 bg-fouzar-bg-elevated border border-fouzar-border-strong/40 rounded-[4px] gap-2">
+                                        <span className="text-[8px] text-fouzar-text-primary font-mono truncate max-w-[120px]">
                                           {req.user.name || req.user.email}
                                         </span>
                                         <div className="flex gap-1 shrink-0">
@@ -1127,7 +1127,7 @@ export default function DashboardPage() {
                                 <button
                                   type="button"
                                   onClick={() => setActiveMenuNodeId(activeMenuNodeId === node.id ? null : node.id)}
-                                  className="p-1 hover:bg-white/5 rounded text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors cursor-pointer"
+                                  className="p-1 hover:bg-white/5 rounded text-fouzar-text-secondary hover:text-fouzar-text-primary transition-colors cursor-pointer"
                                   title="Group options"
                                 >
                                   <MoreVertical className="w-3.5 h-3.5" />
@@ -1139,7 +1139,7 @@ export default function DashboardPage() {
                                       animate={{ opacity: 1, scale: 1, y: 0 }}
                                       exit={{ opacity: 0, scale: 0.95, y: -4 }}
                                       transition={{ duration: 0.1 }}
-                                      className="absolute right-0 mt-1 w-36 bg-[#14141c]/95 border border-[#2a2a3a] rounded-[4px] shadow-2xl p-2 z-50 text-left"
+                                      className="absolute right-0 mt-1 w-36 bg-fouzar-surface/95 border border-fouzar-border-strong rounded-[4px] shadow-2xl p-2 z-50 text-left"
                                     >
                                       {user && (
                                         <>
@@ -1150,7 +1150,7 @@ export default function DashboardPage() {
                                               setEditingName(node.roomName);
                                               setActiveMenuNodeId(null);
                                             }}
-                                            className="w-full px-2 py-1.5 text-[8.5px] font-mono uppercase tracking-wider text-[#6b6b8a] hover:text-[#f0f0ff] hover:bg-white/5 rounded flex items-center gap-1.5 cursor-pointer text-left"
+                                            className="w-full px-2 py-1.5 text-[8.5px] font-mono uppercase tracking-wider text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-white/5 rounded flex items-center gap-1.5 cursor-pointer text-left"
                                           >
                                             <Edit2 className="w-3 h-3 text-fouzar-accent" /> Rename
                                           </button>
@@ -1164,10 +1164,10 @@ export default function DashboardPage() {
                                           >
                                             <Trash2 className="w-3 h-3" /> Delete
                                           </button>
-                                          <div className="border-t border-[#2a2a3a]/40 my-1.5" />
+                                          <div className="border-t border-fouzar-border-strong/40 my-1.5" />
                                         </>
                                       )}
-                                      <div className="px-2 py-0.5 text-[7px] font-mono uppercase text-[#6b6b8a] tracking-wider mb-1.5 flex items-center gap-1">
+                                      <div className="px-2 py-0.5 text-[7px] font-mono uppercase text-fouzar-text-secondary tracking-wider mb-1.5 flex items-center gap-1">
                                         <Palette className="w-2.5 h-2.5 text-[#06b6d4]" /> Set Color
                                       </div>
                                       <div className="flex gap-1.5 px-2 py-0.5 justify-between">
@@ -1204,7 +1204,7 @@ export default function DashboardPage() {
                                     router.push(`/room/${node.id}`);
                                   }
                                 }}
-                                className={`text-[8.5px] font-mono uppercase tracking-widest ${getTextColor(node.id)} hover:text-[#f0f0ff] flex items-center gap-1 transition-colors cursor-pointer`}
+                                className={`text-[8.5px] font-mono uppercase tracking-widest ${getTextColor(node.id)} hover:text-fouzar-text-primary flex items-center gap-1 transition-colors cursor-pointer`}
                               >
                                 {editingNodeId === node.id ? 'Save' : 'Join Circle'} <ArrowRight className="w-3 h-3" />
                               </button>
@@ -1220,7 +1220,7 @@ export default function DashboardPage() {
 
             {user?.email === 'h.ahmad.ar007@gmail.com' && (
               <div className="space-y-3">
-                <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a] block">
+                <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-fouzar-text-secondary block">
                   All Members
                 </span>
                 <AdminMembersPanel />
@@ -1242,7 +1242,7 @@ export default function DashboardPage() {
         {activeNav === 'friends' ? (
           <div className="flex flex-col h-full overflow-hidden">
             <div className="flex items-center justify-between mb-3 shrink-0">
-              <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a]">Direct Messages</span>
+              <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-fouzar-text-secondary">Direct Messages</span>
               <div className="flex items-center gap-2">
                 <DmNotificationBell onClick={() => setActiveNav('friends')} />
                 <NotificationBell />
@@ -1289,15 +1289,15 @@ export default function DashboardPage() {
                   initial={{ opacity: 0, y: -10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                  className="fixed top-16 right-6 w-80 bg-zinc-950/90 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl z-[100] transition-all"
+                  className="fixed top-16 right-6 w-80 bg-zinc-950/90 backdrop-blur-xl border border-fouzar-border-subtle rounded-2xl p-6 shadow-2xl z-[100] transition-all"
                 >
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a]">
+                    <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-fouzar-text-secondary">
                       Focus Timer
                     </span>
                     <button
                       onClick={() => setIsTimerModalOpen(false)}
-                      className="text-zinc-500 hover:text-white cursor-pointer"
+                      className="text-fouzar-text-secondary hover:text-fouzar-text-primary cursor-pointer"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -1344,7 +1344,7 @@ export default function DashboardPage() {
         {/* 2. Subject Mind Map Section (Elevated) */}
         <div id="mindmap-section" className="space-y-4 w-full">
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a]">
+            <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-fouzar-text-secondary">
               Subject Mind Map
             </span>
             <Tooltip text="A visual map of your subjects. Click on a topic to see your uploaded lecture slides, notes, and connected AI flashcards all in one web." />
@@ -1355,9 +1355,9 @@ export default function DashboardPage() {
         </div>
 
         {/* 4. My Study Schedule Section */}
-        <div id="timeline-section" className="space-y-4 w-full border-t border-[#2a2a3a]/20 pt-6 pb-6">
+        <div id="timeline-section" className="space-y-4 w-full border-t border-fouzar-border-strong/20 pt-6 pb-6">
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a]">
+            <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-fouzar-text-secondary">
               My Study Schedule
             </span>
             <Tooltip text="Your academic timeline. Drag it left or right to see upcoming assignment deadlines, exam dates, or custom goals you've set for the semester." />
@@ -1368,20 +1368,14 @@ export default function DashboardPage() {
         </div>
 
         {/* 5. Academic Info Section */}
-        <div className="space-y-4 w-full border-t border-[#2a2a3a]/20 pt-6 pb-2">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a]">
-              Academic Info
-            </span>
-            <Tooltip text="Track your attendance per subject with live pie charts, input your marks and grades, and view your full transcript with auto-calculated GPA. All stored locally — works for any university." />
-          </div>
+        <div className="space-y-4 w-full border-t border-fouzar-border-strong/20 pt-6 pb-2">
           <AcademicInfoPanel />
         </div>
 
         {/* 6. AI Engines Section */}
-        <div id="ai-engines-section" className="space-y-4 w-full border-t border-[#2a2a3a]/20 pt-6 pb-6 scroll-mt-6">
+        <div id="ai-engines-section" className="space-y-4 w-full border-t border-fouzar-border-strong/20 pt-6 pb-6 scroll-mt-6">
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a]">
+            <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-fouzar-text-secondary">
               AI Engines
             </span>
             <Tooltip text="Connect your own AI API keys (OpenAI, Anthropic, Gemini, or local Ollama). Keys are encrypted with AES-256 before storage. Only one engine can be active at a time." />
@@ -1390,7 +1384,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Footer with open-source link */}
-        <div className="pt-4 border-t border-fouzar-border/40 flex items-center justify-between text-[8px] font-mono text-fouzar-text-secondary uppercase tracking-wider shrink-0 animate-none">
+        <div className="mt-10 mb-12 pt-4 border-t border-fouzar-border/40 flex items-center justify-between text-[8px] font-mono text-fouzar-text-secondary uppercase tracking-wider shrink-0 animate-none">
           <span>Fasca Academic OS</span>
           <div className="flex items-center gap-3">
             <ThemeSwitcher />
@@ -1430,7 +1424,7 @@ export default function DashboardPage() {
         })}
         
         {/* Mobile profile link */}
-        <div className="w-6 h-6 rounded-none border border-[#2a2a3a] bg-[#16161f] flex items-center justify-center font-mono text-[8px] font-bold text-[#f0f0ff] shrink-0">
+        <div className="w-6 h-6 rounded-none border border-fouzar-border-strong bg-fouzar-card flex items-center justify-center font-mono text-[8px] font-bold text-fouzar-text-primary shrink-0">
           {user ? user.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2) : 'AM'}
         </div>
       </nav>
@@ -1499,24 +1493,24 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
 
-      {/* Create Father Circle Modal */}
+      {/* Create Main Circle Modal */}
       <AnimatePresence>
         {showCreateCourseModal && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-md flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-fouzar-bg/80 backdrop-blur-md flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 12 }}
-              className="bg-[#14141c] border border-[#2a2a3a] rounded-[var(--fouzar-radius-lg)] shadow-2xl w-full max-w-sm"
+              className="bg-fouzar-surface border border-fouzar-border-strong rounded-[var(--fouzar-radius-lg)] shadow-2xl w-full max-w-sm"
             >
-              <div className="flex bg-[#0a0a0f]/40 border-b border-fouzar-border py-3.5 px-4 items-center justify-between rounded-t-[var(--fouzar-radius-lg)]">
+              <div className="flex bg-fouzar-bg/40 border-b border-fouzar-border py-3.5 px-4 items-center justify-between rounded-t-[var(--fouzar-radius-lg)]">
                 <span className="font-mono text-[9px] uppercase tracking-widest text-fouzar-text-primary flex items-center gap-1.5">
-                  <Grid className="w-4 h-4 text-fouzar-accent" /> Create Father Circle
+                  <Grid className="w-4 h-4 text-fouzar-accent" /> Create Main Circle
                 </span>
                 <button
                   type="button"
@@ -1536,7 +1530,7 @@ export default function DashboardPage() {
 
                 <div className="space-y-4">
                   <div className="flex flex-col">
-                    <span className="text-[7.5px] font-mono uppercase text-fouzar-text-secondary tracking-wider mb-1">Father Circle Title</span>
+                    <span className="text-[7.5px] font-mono uppercase text-fouzar-text-secondary tracking-wider mb-1">Main Circle Title</span>
                     <input
                       type="text"
                       required
@@ -1552,7 +1546,7 @@ export default function DashboardPage() {
                   <button
                     type="button"
                     onClick={() => setShowCreateCourseModal(false)}
-                    className="px-4 py-2 text-[8px] font-mono uppercase tracking-widest text-fouzar-text-secondary hover:text-fouzar-text-primary border border-[#2a2a3a] rounded-[var(--fouzar-radius-md)] transition-colors cursor-pointer"
+                    className="px-4 py-2 text-[8px] font-mono uppercase tracking-widest text-fouzar-text-secondary hover:text-fouzar-text-primary border border-fouzar-border-strong rounded-[var(--fouzar-radius-md)] transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -1577,15 +1571,15 @@ export default function DashboardPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-md flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-fouzar-bg/80 backdrop-blur-md flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 12 }}
-              className="bg-[#14141c] border border-[#2a2a3a] rounded-[var(--fouzar-radius-lg)] shadow-2xl w-full max-w-sm"
+              className="bg-fouzar-surface border border-fouzar-border-strong rounded-[var(--fouzar-radius-lg)] shadow-2xl w-full max-w-sm"
             >
-              <div className="flex bg-[#0a0a0f]/40 border-b border-fouzar-border py-3.5 px-4 items-center justify-between rounded-t-[var(--fouzar-radius-lg)]">
+              <div className="flex bg-fouzar-bg/40 border-b border-fouzar-border py-3.5 px-4 items-center justify-between rounded-t-[var(--fouzar-radius-lg)]">
                 <span className="font-mono text-[9px] uppercase tracking-widest text-fouzar-text-primary flex items-center gap-1.5">
                   <Users className="w-4 h-4 text-fouzar-accent" /> Create Study Circle
                 </span>
@@ -1619,7 +1613,7 @@ export default function DashboardPage() {
                   </div>
 
                   <div className="flex flex-col">
-                    <span className="text-[7.5px] font-mono uppercase text-fouzar-text-secondary tracking-wider mb-1">Father Group (e.g. Semester 1 or CS-101)</span>
+                    <span className="text-[7.5px] font-mono uppercase text-fouzar-text-secondary tracking-wider mb-1">Main Group (e.g. Semester 1 or CS-101)</span>
                     <input
                       type="text"
                       value={newGroupCourse}
@@ -1717,12 +1711,12 @@ export default function DashboardPage() {
           href="https://www.linkedin.com/in/muhammad-ahmad-3387a7382/?skipRedirect=true" 
           target="_blank" 
           rel="noopener noreferrer" 
-          className="font-mono text-[10px] text-white/20 hover:text-indigo-400 transition-colors duration-300 hover:[text-shadow:0_0_12px_rgba(129,140,248,0.7)] pointer-events-auto uppercase tracking-widest"
+          className="font-mono text-[10px] text-fouzar-text-primary/20 hover:text-indigo-400 transition-colors duration-300 hover:[text-shadow:0_0_12px_rgba(129,140,248,0.7)] pointer-events-auto uppercase tracking-widest"
         >
           LinkedIn
         </a>
 
-        <p className="font-mono text-[8px] text-white/15 tracking-[0.18em] uppercase select-none pointer-events-auto text-center absolute left-1/2 -translate-x-1/2">
+        <p className="font-mono text-[8px] text-fouzar-text-primary/15 tracking-[0.18em] uppercase select-none pointer-events-auto text-center absolute left-1/2 -translate-x-1/2">
           developed by Muhammad Ahmad and a lot of ai&apos;s
         </p>
 
@@ -1730,7 +1724,7 @@ export default function DashboardPage() {
           href="https://github.com/hahmadar007-cmd/STUDENT-OS" 
           target="_blank" 
           rel="noopener noreferrer" 
-          className="font-mono text-[10px] text-white/20 hover:text-indigo-400 transition-colors duration-300 hover:[text-shadow:0_0_12px_rgba(129,140,248,0.7)] pointer-events-auto uppercase tracking-widest"
+          className="font-mono text-[10px] text-fouzar-text-primary/20 hover:text-indigo-400 transition-colors duration-300 hover:[text-shadow:0_0_12px_rgba(129,140,248,0.7)] pointer-events-auto uppercase tracking-widest"
         >
           GitHub
         </a>

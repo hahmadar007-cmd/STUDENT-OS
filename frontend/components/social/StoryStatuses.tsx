@@ -64,7 +64,7 @@ export const StoryStatuses: React.FC = () => {
                 )}
 
                 {/* Inner Content avatar */}
-                <div className="w-12 h-12 rounded-full bg-[#111118] border-2 border-fasca-bg flex items-center justify-center relative z-10 font-mono text-xs font-bold text-text-primary">
+                <div className="w-12 h-12 rounded-full bg-fouzar-surface border-2 border-fasca-bg flex items-center justify-center relative z-10 font-mono text-xs font-bold text-text-primary">
                   {story.initials}
                 </div>
 
@@ -102,7 +102,7 @@ export const StoryStatuses: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-[#0a0a0f]/90 backdrop-blur-md flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-fouzar-bg/90 backdrop-blur-md flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ scale: 0.95, y: 15 }}
@@ -136,7 +136,7 @@ export const StoryStatuses: React.FC = () => {
                   {activeStory.course} student
                 </span>
 
-                <div className="my-6 p-4 bg-[#0a0a0f] border border-border-color/60 rounded-[4px] w-full text-left">
+                <div className="my-6 p-4 bg-fouzar-bg border border-border-color/60 rounded-[4px] w-full text-left">
                   <span className="text-[8px] font-mono uppercase text-text-secondary block tracking-widest mb-1.5">Current Status</span>
                   <p className="text-xs text-text-primary italic">"{activeStory.statusMessage}"</p>
                 </div>

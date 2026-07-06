@@ -270,7 +270,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
           <button
             type="button"
             onClick={() => setCurrentDirId(parentDirId)}
-            className="p-1 hover:bg-fouzar-elevated/40 hover:text-white rounded transition-colors mr-1 cursor-pointer"
+            className="p-1 hover:bg-fouzar-elevated/40 hover:text-fouzar-text-primary rounded transition-colors mr-1 cursor-pointer"
             title="Go Back"
           >
             <ChevronLeft className="w-3.5 h-3.5" />
@@ -352,7 +352,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
             className={`p-1.5 border rounded-[var(--fouzar-radius-md)] cursor-pointer transition-colors ${
               isCreatingFolder
                 ? 'bg-fouzar-accent/20 border-fouzar-accent text-fouzar-accent'
-                : 'bg-fouzar-elevated/40 border-fouzar-border text-fouzar-text-secondary hover:text-white hover:border-white/20'
+                : 'bg-fouzar-elevated/40 border-fouzar-border text-fouzar-text-secondary hover:text-fouzar-text-primary hover:border-fouzar-border-strong'
             }`}
             title="New Folder"
           >
@@ -593,7 +593,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
               className="w-full max-w-sm bg-fouzar-surface border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-5 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col max-h-[80vh]"
             >
               <div className="flex justify-between items-center mb-3.5 pb-2 border-b border-fouzar-border/20 shrink-0">
-                <h3 className="font-serif text-xs font-bold uppercase tracking-wider text-white">
+                <h3 className="font-serif text-xs font-bold uppercase tracking-wider text-fouzar-text-primary">
                   Move {movingItem.type}
                 </h3>
                 <button
@@ -602,7 +602,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
                     setMovingItem(null);
                     setSelectedDestId(null);
                   }}
-                  className="text-fouzar-text-tertiary hover:text-white cursor-pointer"
+                  className="text-fouzar-text-tertiary hover:text-fouzar-text-primary cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -623,7 +623,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
                     className={`w-full text-left py-2 px-3 rounded text-[10px] flex items-center gap-2 cursor-pointer transition-colors border ${
                       selectedDestId === dest.id
                         ? 'bg-fouzar-accent/20 border-fouzar-accent text-fouzar-accent font-bold'
-                        : 'border-transparent text-fouzar-text-primary hover:bg-fouzar-elevated/40 hover:text-white'
+                        : 'border-transparent text-fouzar-text-primary hover:bg-fouzar-elevated/40 hover:text-fouzar-text-primary'
                     }`}
                   >
                     <Folder className={`w-3.5 h-3.5 ${selectedDestId === dest.id ? 'text-fouzar-accent' : 'text-fouzar-text-secondary'}`} />
@@ -639,7 +639,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
                     setMovingItem(null);
                     setSelectedDestId(null);
                   }}
-                  className="px-3.5 py-1.5 border border-fouzar-border rounded-[var(--fouzar-radius-md)] font-mono text-[9px] uppercase text-fouzar-text-secondary hover:text-white cursor-pointer"
+                  className="px-3.5 py-1.5 border border-fouzar-border rounded-[var(--fouzar-radius-md)] font-mono text-[9px] uppercase text-fouzar-text-secondary hover:text-fouzar-text-primary cursor-pointer"
                 >
                   Cancel
                 </button>

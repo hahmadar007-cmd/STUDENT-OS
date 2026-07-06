@@ -164,87 +164,87 @@ function AddProviderModal({ onClose, onAdded, nextColorIndex }: AddModalProps) {
         transition={{ type: 'spring', stiffness: 300, damping: 28 }}
         className="w-full max-w-sm"
         style={{
-          background: 'linear-gradient(135deg,#0f0f1a 0%,#12121f 100%)',
+          background: 'var(--fouzar-surface)',
           border: `1px solid ${palette.color}40`,
           borderRadius: 12,
           boxShadow: `0 0 40px ${palette.glow}, 0 24px 48px rgba(0,0,0,0.5)`,
         }}
       >
         <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-          <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/60">Connect AI Engine</span>
-          <button onClick={onClose} className="text-white/30 hover:text-white/70 transition-colors cursor-pointer">
+          <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-fouzar-text-primary/60">Connect AI Engine</span>
+          <button onClick={onClose} className="text-fouzar-text-primary/30 hover:text-fouzar-text-primary/70 transition-colors cursor-pointer">
             <X className="w-4 h-4" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="space-y-1.5">
-            <label className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/40">Engine Name</label>
+            <label className="font-mono text-[9px] uppercase tracking-[0.2em] text-fouzar-text-primary/40">Engine Name</label>
             <input
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder="e.g. My Gemini Key"
-              className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white/90 placeholder-white/20 font-mono focus:outline-none focus:border-white/25 transition-colors"
+              className="w-full bg-white/[0.04] border border-fouzar-border-subtle rounded-lg px-3 py-2.5 text-sm text-fouzar-text-primary/90 placeholder-white/20 font-mono focus:outline-none focus:border-white/25 transition-colors"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/40">API Key</label>
+            <label className="font-mono text-[9px] uppercase tracking-[0.2em] text-fouzar-text-primary/40">API Key</label>
             <div className="relative">
               <input
                 type={showKey ? 'text' : 'password'}
                 value={apiKey}
                 onChange={e => setApiKey(e.target.value)}
                 placeholder="sk-•••••••••••••••"
-                className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 pr-10 py-2.5 text-sm text-white/90 placeholder-white/20 font-mono focus:outline-none focus:border-white/25 transition-colors"
+                className="w-full bg-white/[0.04] border border-fouzar-border-subtle rounded-lg px-3 pr-10 py-2.5 text-sm text-fouzar-text-primary/90 placeholder-white/20 font-mono focus:outline-none focus:border-white/25 transition-colors"
               />
               <button
                 type="button"
                 onClick={() => setShowKey(!showKey)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-fouzar-text-primary/30 hover:text-fouzar-text-primary/60 cursor-pointer"
               >
                 {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               </button>
             </div>
-            <p className="font-mono text-[8px] text-white/25 flex items-center gap-1">
+            <p className="font-mono text-[8px] text-fouzar-text-primary/25 flex items-center gap-1">
               <Lock className="w-2.5 h-2.5" /> Stored locally in your browser only
             </p>
           </div>
 
           <div className="space-y-1.5">
-            <label className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/40">
-              Base URL <span className="text-white/20 normal-case">(optional — for Ollama / custom endpoints)</span>
+            <label className="font-mono text-[9px] uppercase tracking-[0.2em] text-fouzar-text-primary/40">
+              Base URL <span className="text-fouzar-text-primary/20 normal-case">(optional — for Ollama / custom endpoints)</span>
             </label>
             <input
               value={baseUrl}
               onChange={e => setBaseUrl(e.target.value)}
               placeholder="https://openrouter.ai/api/v1"
-              className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white/90 placeholder-white/20 font-mono focus:outline-none focus:border-white/25 transition-colors"
+              className="w-full bg-white/[0.04] border border-fouzar-border-subtle rounded-lg px-3 py-2.5 text-sm text-fouzar-text-primary/90 placeholder-white/20 font-mono focus:outline-none focus:border-white/25 transition-colors"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/40">Provider Type</label>
+            <label className="font-mono text-[9px] uppercase tracking-[0.2em] text-fouzar-text-primary/40">Provider Type</label>
             <select
               value={providerType}
               onChange={e => handleProviderTypeChange(e.target.value)}
-              className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white/90 font-mono focus:outline-none focus:border-white/25 transition-colors cursor-pointer"
+              className="w-full bg-white/[0.04] border border-fouzar-border-subtle rounded-lg px-3 py-2.5 text-sm text-fouzar-text-primary/90 font-mono focus:outline-none focus:border-white/25 transition-colors cursor-pointer"
             >
-              <option value="GEMINI" className="bg-[#0f0f1a]">GEMINI</option>
-              <option value="OPENAI" className="bg-[#0f0f1a]">OPENAI</option>
-              <option value="ANTHROPIC" className="bg-[#0f0f1a]">ANTHROPIC</option>
-              <option value="DEEPSEEK" className="bg-[#0f0f1a]">DEEPSEEK</option>
-              <option value="OPENROUTER" className="bg-[#0f0f1a]">OPENROUTER</option>
-              <option value="CUSTOM" className="bg-[#0f0f1a]">CUSTOM (Ollama/Local)</option>
+              <option value="GEMINI" className="bg-fouzar-bg">GEMINI</option>
+              <option value="OPENAI" className="bg-fouzar-bg">OPENAI</option>
+              <option value="ANTHROPIC" className="bg-fouzar-bg">ANTHROPIC</option>
+              <option value="DEEPSEEK" className="bg-fouzar-bg">DEEPSEEK</option>
+              <option value="OPENROUTER" className="bg-fouzar-bg">OPENROUTER</option>
+              <option value="CUSTOM" className="bg-fouzar-bg">CUSTOM (Ollama/Local)</option>
             </select>
-            <p className="font-mono text-[8px] text-white/25">Single source of truth — pre-filled from key pattern, override as needed.</p>
+            <p className="font-mono text-[8px] text-fouzar-text-primary/25">Single source of truth — pre-filled from key pattern, override as needed.</p>
           </div>
 
           {/* Validation status */}
           <AnimatePresence>
             {validationStatus === 'testing' && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="flex items-center gap-2 font-mono text-[10px] text-white/50 bg-white/[0.03] border border-white/10 rounded-lg px-3 py-2">
+                className="flex items-center gap-2 font-mono text-[10px] text-fouzar-text-primary/50 bg-white/[0.03] border border-fouzar-border-subtle rounded-lg px-3 py-2">
                 <Loader2 className="w-3 h-3 animate-spin" /> {validationMsg}
               </motion.div>
             )}
@@ -263,7 +263,7 @@ function AddProviderModal({ onClose, onAdded, nextColorIndex }: AddModalProps) {
                 <button
                   type="button"
                   onClick={handleSaveAnyway}
-                  className="text-left font-mono text-[8px] text-white/25 hover:text-white/50 underline transition-colors cursor-pointer"
+                  className="text-left font-mono text-[8px] text-fouzar-text-primary/25 hover:text-fouzar-text-primary/50 underline transition-colors cursor-pointer"
                 >
                   Save anyway (skip validation)
                 </button>
@@ -401,7 +401,7 @@ export function AiControlCenter() {
       </AnimatePresence>
 
       <div id="ai-engines-panel" className="rounded-xl overflow-hidden" style={{
-        background: 'linear-gradient(135deg,rgba(15,15,26,0.9) 0%,rgba(10,10,20,0.95) 100%)',
+        background: 'var(--fouzar-surface)',
         border: '1px solid rgba(124,92,252,0.2)',
         boxShadow: '0 0 30px rgba(124,92,252,0.08), 0 8px 32px rgba(0,0,0,0.4)',
       }}>
@@ -419,8 +419,8 @@ export function AiControlCenter() {
               <Zap className="w-4 h-4 text-[#7c5cfc]" />
             </div>
             <div>
-              <h3 className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/90 font-bold">AI Engines</h3>
-              <p className="font-mono text-[8px] text-white/30 mt-0.5">
+              <h3 className="font-mono text-[11px] uppercase tracking-[0.2em] text-fouzar-text-primary/90 font-bold">AI Engines</h3>
+              <p className="font-mono text-[8px] text-fouzar-text-primary/30 mt-0.5">
                 {providers.length === 0
                   ? 'No engines configured'
                   : activeProvider
@@ -434,7 +434,7 @@ export function AiControlCenter() {
               background: activeProvider ? '#10b981' : 'rgba(255,255,255,0.15)',
               boxShadow: activeProvider ? '0 0 6px rgba(16,185,129,0.6)' : 'none',
             }} />
-            {expanded ? <ChevronUp className="w-3.5 h-3.5 text-white/30" /> : <ChevronDown className="w-3.5 h-3.5 text-white/30" />}
+            {expanded ? <ChevronUp className="w-3.5 h-3.5 text-fouzar-text-primary/30" /> : <ChevronDown className="w-3.5 h-3.5 text-fouzar-text-primary/30" />}
           </div>
         </div>
 
@@ -448,11 +448,11 @@ export function AiControlCenter() {
               <div className="px-5 py-4 space-y-3">
                 {providers.length === 0 && (
                   <div className="text-center py-6">
-                    <div className="w-10 h-10 rounded-full bg-white/[0.03] border border-white/10 flex items-center justify-center mx-auto mb-3">
-                      <Zap className="w-4 h-4 text-white/20" />
+                    <div className="w-10 h-10 rounded-full bg-white/[0.03] border border-fouzar-border-subtle flex items-center justify-center mx-auto mb-3">
+                      <Zap className="w-4 h-4 text-fouzar-text-primary/20" />
                     </div>
-                    <p className="font-mono text-[10px] text-white/30">No AI engines configured yet.</p>
-                    <p className="font-mono text-[9px] text-white/20 mt-1">Add one to power your AI features.</p>
+                    <p className="font-mono text-[10px] text-fouzar-text-primary/30">No AI engines configured yet.</p>
+                    <p className="font-mono text-[9px] text-fouzar-text-primary/20 mt-1">Add one to power your AI features.</p>
                   </div>
                 )}
 
@@ -470,15 +470,15 @@ export function AiControlCenter() {
                         onClick={() => !isMutating && handleToggle(provider.id)}
                         className={`relative rounded-lg p-3.5 transition-all select-none ${
                           isMutating ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'
+                        } ${
+                          provider.isActive 
+                            ? 'border border-fouzar-primary/50 shadow-[0_0_15px_var(--fouzar-primary-shadow)]' 
+                            : 'border border-white/[0.06]'
                         }`}
                         style={{
                           background: provider.isActive
                             ? `linear-gradient(135deg,${palette.color}10,${palette.color}06)`
                             : 'rgba(255,255,255,0.02)',
-                          border: `1px solid ${provider.isActive ? palette.color : 'rgba(255,255,255,0.06)'}`,
-                          boxShadow: provider.isActive
-                            ? `0 0 20px ${palette.glow}, 0 0 40px ${palette.glow.replace('0.35', '0.15')}`
-                            : 'none',
                         }}
                       >
                         <div className="flex items-center gap-3">
@@ -489,15 +489,15 @@ export function AiControlCenter() {
                           }} />
 
                           <div className="flex-1 min-w-0">
-                            <span className="text-[11px] font-semibold text-white/90 truncate block">
+                            <span className="text-[11px] font-semibold text-fouzar-text-primary/90 truncate block">
                               {provider.name}
                             </span>
                             <div className="flex items-center gap-2 mt-0.5">
-                              <span className="font-mono text-[8px] text-white/25 flex items-center gap-1">
+                              <span className="font-mono text-[8px] text-fouzar-text-primary/25 flex items-center gap-1">
                                 <Lock className="w-2 h-2" />{maskKey(provider.apiKeyRaw)}
                               </span>
                               {provider.baseUrl && (
-                                <span className="font-mono text-[8px] text-white/20 flex items-center gap-0.5">
+                                <span className="font-mono text-[8px] text-fouzar-text-primary/20 flex items-center gap-0.5">
                                   <Globe className="w-2 h-2 shrink-0" />custom
                                 </span>
                               )}
@@ -514,7 +514,7 @@ export function AiControlCenter() {
                           <button
                             onClick={e => { e.stopPropagation(); !isMutating && handleDelete(provider.id); }}
                             disabled={isMutating}
-                            className={`w-6 h-6 rounded flex items-center justify-center text-white/20 hover:text-[#ff4d6d] hover:bg-[#ff4d6d]/10 transition-all shrink-0 ${
+                            className={`w-6 h-6 rounded flex items-center justify-center text-fouzar-text-primary/20 hover:text-[#ff4d6d] hover:bg-[#ff4d6d]/10 transition-all shrink-0 ${
                               isMutating ? 'cursor-not-allowed' : 'cursor-pointer'
                             }`}
                             title="Remove engine"
@@ -529,15 +529,15 @@ export function AiControlCenter() {
 
                 <button
                   onClick={() => setShowAddModal(true)}
-                  className="w-full py-2.5 rounded-lg font-mono text-[9px] uppercase tracking-[0.2em] text-white/30 hover:text-[#7c5cfc] border border-dashed border-white/10 hover:border-[#7c5cfc]/40 hover:bg-[#7c5cfc]/[0.04] transition-all cursor-pointer flex items-center justify-center gap-2"
+                  className="w-full py-2.5 rounded-lg font-mono text-[9px] uppercase tracking-[0.2em] text-fouzar-text-primary/30 hover:text-[#7c5cfc] border border-dashed border-fouzar-border-subtle hover:border-[#7c5cfc]/40 hover:bg-[#7c5cfc]/[0.04] transition-all cursor-pointer flex items-center justify-center gap-2"
                 >
                   <Plus className="w-3.5 h-3.5" /> Add AI Engine
                 </button>
               </div>
 
               <div className="px-5 py-2.5 flex items-center gap-1.5" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-                <Lock className="w-2.5 h-2.5 text-white/20 shrink-0" />
-                <p className="font-mono text-[8px] text-white/20">Keys stored locally. Click a card to activate. One engine active at a time.</p>
+                <Lock className="w-2.5 h-2.5 text-fouzar-text-primary/20 shrink-0" />
+                <p className="font-mono text-[8px] text-fouzar-text-primary/20">Keys stored locally. Click a card to activate. One engine active at a time.</p>
               </div>
             </motion.div>
           )}

@@ -105,7 +105,7 @@ function DonutChart({ pct, size = 110 }: { pct: number; size?: number }) {
       <text x={size/2} y={size/2 - 4} textAnchor="middle" fill={col.text} fontSize="16" fontWeight="bold" fontFamily="JetBrains Mono, monospace">
         {Math.round(pct)}%
       </text>
-      <text x={size/2} y={size/2 + 13} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize="8" fontFamily="JetBrains Mono, monospace">
+      <text x={size/2} y={size/2 + 13} textAnchor="middle" fill="var(--fouzar-text-tertiary)" fontSize="8" fontFamily="JetBrains Mono, monospace">
         ATTENDED
       </text>
     </svg>
@@ -132,8 +132,8 @@ function AttendancePill({ subject, onEdit }: { subject: Subject; onEdit: () => v
         <div className="flex items-center gap-3">
           <div className="w-2 h-2 rounded-full shrink-0" style={{ background: col.stroke, boxShadow: `0 0 6px ${col.stroke}` }} />
           <div className="text-left">
-            <p className="text-[11px] font-semibold text-white/90">{subject.name}</p>
-            <p className="text-[9px] font-mono text-white/35 uppercase tracking-wider">{subject.code}</p>
+            <p className="text-[11px] font-semibold text-fouzar-text-primary/90">{subject.name}</p>
+            <p className="text-[9px] font-mono text-fouzar-text-primary/35 uppercase tracking-wider">{subject.code}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -144,9 +144,9 @@ function AttendancePill({ subject, onEdit }: { subject: Subject; onEdit: () => v
           )}
           <div className="text-right">
             <p className="text-[13px] font-bold font-mono" style={{ color: col.text }}>{Math.round(pct)}%</p>
-            <p className="text-[8px] text-white/30 font-mono">{subject.attendedClasses}/{subject.totalClasses}</p>
+            <p className="text-[8px] text-fouzar-text-primary/30 font-mono">{subject.attendedClasses}/{subject.totalClasses}</p>
           </div>
-          {expanded ? <ChevronUp className="w-3.5 h-3.5 text-white/30" /> : <ChevronDown className="w-3.5 h-3.5 text-white/30" />}
+          {expanded ? <ChevronUp className="w-3.5 h-3.5 text-fouzar-text-primary/30" /> : <ChevronDown className="w-3.5 h-3.5 text-fouzar-text-primary/30" />}
         </div>
       </button>
 
@@ -175,14 +175,14 @@ function AttendancePill({ subject, onEdit }: { subject: Subject; onEdit: () => v
                     { label: 'Can Miss', val: canMiss, color: canMiss <= 2 ? '#f5a623' : undefined },
                   ].map(item => (
                     <div key={item.label} className="bg-white/[0.03] rounded-lg px-3 py-2">
-                      <p className="text-[8px] font-mono text-white/30 uppercase tracking-wider">{item.label}</p>
+                      <p className="text-[8px] font-mono text-fouzar-text-primary/30 uppercase tracking-wider">{item.label}</p>
                       <p className="text-[14px] font-bold font-mono mt-0.5" style={{ color: item.color || 'rgba(255,255,255,0.85)' }}>{item.val}</p>
                     </div>
                   ))}
                 </div>
                 <button
                   onClick={(e) => { e.stopPropagation(); onEdit(); }}
-                  className="w-full py-1.5 rounded-lg text-[9px] font-mono uppercase tracking-wider text-white/40 hover:text-white/70 border border-white/[0.06] hover:border-white/[0.12] transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  className="w-full py-1.5 rounded-lg text-[9px] font-mono uppercase tracking-wider text-fouzar-text-primary/40 hover:text-fouzar-text-primary/70 border border-white/[0.06] hover:border-white/[0.12] transition-all cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <Edit2 className="w-2.5 h-2.5" /> Edit Classes
                 </button>
@@ -235,7 +235,7 @@ function SubjectModal({ subject, onSave, onClose }: { subject?: Subject; onSave:
     onSave(form);
   };
 
-  const inputCls = "w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/90 placeholder-white/20 font-mono focus:outline-none focus:border-white/20 transition-colors";
+  const inputCls = "w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-fouzar-text-primary/90 placeholder-white/20 font-mono focus:outline-none focus:border-fouzar-border-strong transition-colors";
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -245,29 +245,29 @@ function SubjectModal({ subject, onSave, onClose }: { subject?: Subject; onSave:
     >
       <motion.div initial={{ scale: 0.93, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.93, y: 16 }}
         className="w-full max-w-md max-h-[90vh] overflow-y-auto"
-        style={{ background: 'linear-gradient(135deg,#0f0f1a,#12121f)', border: '1px solid rgba(124,92,252,0.25)', borderRadius: 14, boxShadow: '0 0 40px rgba(124,92,252,0.12), 0 24px 48px rgba(0,0,0,0.5)' }}
+        style={{ background: 'var(--fouzar-surface)', border: '1px solid rgba(124,92,252,0.25)', borderRadius: 14, boxShadow: '0 0 40px rgba(124,92,252,0.12), 0 24px 48px rgba(0,0,0,0.5)' }}
       >
         <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-          <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/50">{subject ? 'Edit Subject' : 'Add Subject'}</span>
-          <button onClick={onClose} className="text-white/30 hover:text-white/70 cursor-pointer transition-colors"><X className="w-4 h-4" /></button>
+          <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-fouzar-text-primary/50">{subject ? 'Edit Subject' : 'Add Subject'}</span>
+          <button onClick={onClose} className="text-fouzar-text-primary/30 hover:text-fouzar-text-primary/70 cursor-pointer transition-colors"><X className="w-4 h-4" /></button>
         </div>
 
         <div className="p-5 space-y-4">
           {/* Name & Code */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="font-mono text-[9px] uppercase tracking-[0.15em] text-white/35">Subject Name</label>
+              <label className="font-mono text-[9px] uppercase tracking-[0.15em] text-fouzar-text-primary/35">Subject Name</label>
               <input value={form.name} onChange={e => update('name', e.target.value)} placeholder="e.g. Data Structures" className={inputCls} />
             </div>
             <div className="space-y-1.5">
-              <label className="font-mono text-[9px] uppercase tracking-[0.15em] text-white/35">Course Code</label>
+              <label className="font-mono text-[9px] uppercase tracking-[0.15em] text-fouzar-text-primary/35">Course Code</label>
               <input value={form.code} onChange={e => update('code', e.target.value)} placeholder="e.g. CS-201" className={inputCls} />
             </div>
           </div>
 
           {/* Credit Hours */}
           <div className="space-y-1.5">
-            <label className="font-mono text-[9px] uppercase tracking-[0.15em] text-white/35">Credit Hours</label>
+            <label className="font-mono text-[9px] uppercase tracking-[0.15em] text-fouzar-text-primary/35">Credit Hours</label>
             <div className="flex gap-2">
               {[1, 2, 3, 4].map(c => (
                 <button key={c} type="button" onClick={() => update('creditHours', c)}
@@ -275,7 +275,7 @@ function SubjectModal({ subject, onSave, onClose }: { subject?: Subject; onSave:
                   style={{
                     background: form.creditHours === c ? 'rgba(124,92,252,0.2)' : 'rgba(255,255,255,0.03)',
                     border: `1px solid ${form.creditHours === c ? 'rgba(124,92,252,0.5)' : 'rgba(255,255,255,0.06)'}`,
-                    color: form.creditHours === c ? '#7c5cfc' : 'rgba(255,255,255,0.4)',
+                    color: form.creditHours === c ? '#7c5cfc' : 'var(--fouzar-text-secondary)',
                   }}
                 >{c}</button>
               ))}
@@ -284,14 +284,14 @@ function SubjectModal({ subject, onSave, onClose }: { subject?: Subject; onSave:
 
           {/* Attendance */}
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 16 }}>
-            <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-white/35 mb-3">Attendance</p>
+            <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-fouzar-text-primary/35 mb-3">Attendance</p>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="font-mono text-[8px] text-white/25">Total Classes</label>
+                <label className="font-mono text-[8px] text-fouzar-text-primary/25">Total Classes</label>
                 <input type="number" min={0} value={form.totalClasses || ''} onChange={e => update('totalClasses', Number(e.target.value))} placeholder="0" className={inputCls} />
               </div>
               <div className="space-y-1.5">
-                <label className="font-mono text-[8px] text-white/25">Classes Attended</label>
+                <label className="font-mono text-[8px] text-fouzar-text-primary/25">Classes Attended</label>
                 <input type="number" min={0} value={form.attendedClasses || ''} onChange={e => update('attendedClasses', Number(e.target.value))} placeholder="0" className={inputCls} />
               </div>
             </div>
@@ -299,7 +299,7 @@ function SubjectModal({ subject, onSave, onClose }: { subject?: Subject; onSave:
 
           {/* Marks */}
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 16 }}>
-            <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-white/35 mb-3">Marks</p>
+            <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-fouzar-text-primary/35 mb-3">Marks</p>
             <div className="grid grid-cols-2 gap-3">
               {[
                 { key: 'midterm' as const, label: 'Midterm', max: 30 },
@@ -308,7 +308,7 @@ function SubjectModal({ subject, onSave, onClose }: { subject?: Subject; onSave:
                 { key: 'total' as const, label: 'Total / Final', max: 100 },
               ].map(({ key, label, max }) => (
                 <div key={key} className="space-y-1.5">
-                  <label className="font-mono text-[8px] text-white/25">{label} <span className="text-white/15">/ {max}</span></label>
+                  <label className="font-mono text-[8px] text-fouzar-text-primary/25">{label} <span className="text-fouzar-text-primary/15">/ {max}</span></label>
                   <input
                     type="number" min={0} max={max}
                     value={form.marks[key] ?? ''}
@@ -323,7 +323,7 @@ function SubjectModal({ subject, onSave, onClose }: { subject?: Subject; onSave:
 
           {/* Grade override */}
           <div className="space-y-1.5">
-            <label className="font-mono text-[9px] uppercase tracking-[0.15em] text-white/35">Grade <span className="text-white/20 normal-case">(auto or override)</span></label>
+            <label className="font-mono text-[9px] uppercase tracking-[0.15em] text-fouzar-text-primary/35">Grade <span className="text-fouzar-text-primary/20 normal-case">(auto or override)</span></label>
             <div className="flex flex-wrap gap-1.5">
               {GRADES.map(g => (
                 <button key={g} type="button" onClick={() => update('grade', g)}
@@ -331,7 +331,7 @@ function SubjectModal({ subject, onSave, onClose }: { subject?: Subject; onSave:
                   style={{
                     background: form.grade === g ? 'rgba(124,92,252,0.2)' : 'rgba(255,255,255,0.03)',
                     border: `1px solid ${form.grade === g ? 'rgba(124,92,252,0.5)' : 'rgba(255,255,255,0.05)'}`,
-                    color: form.grade === g ? '#7c5cfc' : 'rgba(255,255,255,0.35)',
+                    color: form.grade === g ? '#7c5cfc' : 'var(--fouzar-text-tertiary)',
                   }}
                 >{g}</button>
               ))}
@@ -436,7 +436,7 @@ export function AcademicInfoPanel() {
 
       {/* Panel */}
       <div className="rounded-xl overflow-hidden" style={{
-        background: 'linear-gradient(135deg,rgba(15,15,26,0.92) 0%,rgba(10,10,20,0.96) 100%)',
+        background: 'var(--fouzar-surface)',
         border: '1px solid rgba(255,255,255,0.07)',
         boxShadow: '0 0 30px rgba(124,92,252,0.06), 0 8px 32px rgba(0,0,0,0.4)',
       }}>
@@ -453,8 +453,8 @@ export function AcademicInfoPanel() {
               <GraduationCap className="w-4 h-4 text-[#7c5cfc]" />
             </div>
             <div>
-              <h3 className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/90 font-bold">Academic Info</h3>
-              <p className="font-mono text-[8px] text-white/30 mt-0.5">
+              <h3 className="font-mono text-[11px] uppercase tracking-[0.2em] text-fouzar-text-primary/90 font-bold">Academic Info</h3>
+              <p className="font-mono text-[8px] text-fouzar-text-primary/30 mt-0.5">
                 {subjects.length === 0 ? 'No subjects added' : `${subjects.length} subjects · GPA ${gpa}`}
               </p>
             </div>
@@ -475,7 +475,7 @@ export function AcademicInfoPanel() {
                 <AlertTriangle className="w-2.5 h-2.5" /> {lowAttendance.length} Low
               </div>
             )}
-            {expanded ? <ChevronUp className="w-3.5 h-3.5 text-white/30" /> : <ChevronDown className="w-3.5 h-3.5 text-white/30" />}
+            {expanded ? <ChevronUp className="w-3.5 h-3.5 text-fouzar-text-primary/30" /> : <ChevronDown className="w-3.5 h-3.5 text-fouzar-text-primary/30" />}
           </div>
         </div>
 
@@ -493,7 +493,7 @@ export function AcademicInfoPanel() {
                     { label: 'Subjects', value: subjects.length.toString(), color: 'rgba(255,255,255,0.7)' },
                   ].map(item => (
                     <div key={item.label} className="px-4 py-2.5 text-center">
-                      <p className="font-mono text-[8px] text-white/30 uppercase tracking-wider">{item.label}</p>
+                      <p className="font-mono text-[8px] text-fouzar-text-primary/30 uppercase tracking-wider">{item.label}</p>
                       <p className="font-mono text-[15px] font-bold mt-0.5" style={{ color: item.color }}>{item.value}</p>
                     </div>
                   ))}
@@ -508,7 +508,7 @@ export function AcademicInfoPanel() {
                     onClick={() => setActiveTab(tab.id)}
                     className="flex items-center gap-1.5 px-3 py-2 rounded-t-lg font-mono text-[9px] uppercase tracking-wider transition-all cursor-pointer relative"
                     style={{
-                      color: activeTab === tab.id ? '#7c5cfc' : 'rgba(255,255,255,0.3)',
+                      color: activeTab === tab.id ? '#7c5cfc' : 'var(--fouzar-text-tertiary)',
                       background: activeTab === tab.id ? 'rgba(124,92,252,0.08)' : 'transparent',
                       borderBottom: activeTab === tab.id ? '2px solid #7c5cfc' : '2px solid transparent',
                     }}
@@ -548,7 +548,7 @@ export function AcademicInfoPanel() {
                             <thead>
                               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                                 {['Subject', 'Mid/30', 'Asgn/20', 'Quiz/10', 'Total', 'Grade'].map(h => (
-                                  <th key={h} className="text-left pb-2 font-mono text-[8px] uppercase tracking-wider text-white/25 pr-3 whitespace-nowrap">{h}</th>
+                                  <th key={h} className="text-left pb-2 font-mono text-[8px] uppercase tracking-wider text-fouzar-text-primary/25 pr-3 whitespace-nowrap">{h}</th>
                                 ))}
                               </tr>
                             </thead>
@@ -558,19 +558,19 @@ export function AcademicInfoPanel() {
                                 return (
                                   <tr key={s.id} className="hover:bg-white/[0.02] transition-colors group" style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
                                     <td className="py-2.5 pr-3">
-                                      <p className="text-[11px] text-white/80 font-medium">{s.name}</p>
-                                      <p className="text-[8px] font-mono text-white/25">{s.code}</p>
+                                      <p className="text-[11px] text-fouzar-text-primary/80 font-medium">{s.name}</p>
+                                      <p className="text-[8px] font-mono text-fouzar-text-primary/25">{s.code}</p>
                                     </td>
                                     {[s.marks.midterm, s.marks.assignments, s.marks.quizzes, s.marks.total].map((v, i) => (
-                                      <td key={i} className="py-2.5 pr-3 font-mono text-[11px] text-white/60">{v ?? '—'}</td>
+                                      <td key={i} className="py-2.5 pr-3 font-mono text-[11px] text-fouzar-text-primary/60">{v ?? '—'}</td>
                                     ))}
                                     <td className="py-2.5 pr-1">
                                       <span className="font-mono text-[11px] font-bold" style={{ color: gradeColor }}>{s.grade || '—'}</span>
                                     </td>
                                     <td>
                                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={() => { setEditSubject(s); setShowModal(true); }} className="p-1 rounded text-white/30 hover:text-white/60 cursor-pointer"><Edit2 className="w-3 h-3" /></button>
-                                        <button onClick={() => handleDelete(s.id)} className="p-1 rounded text-white/20 hover:text-[#ff4d6d] cursor-pointer"><Trash2 className="w-3 h-3" /></button>
+                                        <button onClick={() => { setEditSubject(s); setShowModal(true); }} className="p-1 rounded text-fouzar-text-primary/30 hover:text-fouzar-text-primary/60 cursor-pointer"><Edit2 className="w-3 h-3" /></button>
+                                        <button onClick={() => handleDelete(s.id)} className="p-1 rounded text-fouzar-text-primary/20 hover:text-[#ff4d6d] cursor-pointer"><Trash2 className="w-3 h-3" /></button>
                                       </div>
                                     </td>
                                   </tr>
@@ -594,11 +594,11 @@ export function AcademicInfoPanel() {
                           <div className="rounded-xl p-4 space-y-3" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/40">Academic Transcript</p>
-                                <p className="text-[11px] text-white/70 mt-0.5">{new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} Semester</p>
+                                <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-fouzar-text-primary/40">Academic Transcript</p>
+                                <p className="text-[11px] text-fouzar-text-primary/70 mt-0.5">{new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} Semester</p>
                               </div>
                               <div className="text-right">
-                                <p className="font-mono text-[8px] text-white/30 uppercase">Cumulative GPA</p>
+                                <p className="font-mono text-[8px] text-fouzar-text-primary/30 uppercase">Cumulative GPA</p>
                                 <p className="font-mono text-[22px] font-bold text-[#7c5cfc]">{gpa}</p>
                               </div>
                             </div>
@@ -616,13 +616,13 @@ export function AcademicInfoPanel() {
                                         {s.grade || '?'}
                                       </div>
                                       <div>
-                                        <p className="text-[11px] text-white/80 font-medium leading-tight">{s.name}</p>
-                                        <p className="text-[8px] font-mono text-white/30">{s.code} · {s.creditHours} CR</p>
+                                        <p className="text-[11px] text-fouzar-text-primary/80 font-medium leading-tight">{s.name}</p>
+                                        <p className="text-[8px] font-mono text-fouzar-text-primary/30">{s.code} · {s.creditHours} CR</p>
                                       </div>
                                     </div>
                                     <div className="text-right space-y-0.5">
                                       <p className="font-mono text-[11px] font-bold" style={{ color: gradeColor }}>
-                                        {gp !== null ? gp.toFixed(1) : '—'} <span className="text-white/20 text-[8px]">pts</span>
+                                        {gp !== null ? gp.toFixed(1) : '—'} <span className="text-fouzar-text-primary/20 text-[8px]">pts</span>
                                       </p>
                                       <p className="font-mono text-[8px]" style={{ color: attendanceColor(pct).text }}>{Math.round(pct)}% attend.</p>
                                     </div>
@@ -639,7 +639,7 @@ export function AcademicInfoPanel() {
                                 { label: 'Avg Attend.', value: `${Math.round(avgAttendance)}%`, color: attendanceColor(avgAttendance).text },
                               ].map(item => (
                                 <div key={item.label} className="rounded-lg px-3 py-2 text-center" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                  <p className="font-mono text-[7.5px] text-white/25 uppercase tracking-wider">{item.label}</p>
+                                  <p className="font-mono text-[7.5px] text-fouzar-text-primary/25 uppercase tracking-wider">{item.label}</p>
                                   <p className="font-mono text-[14px] font-bold mt-0.5" style={{ color: item.color }}>{item.value}</p>
                                 </div>
                               ))}
@@ -654,17 +654,11 @@ export function AcademicInfoPanel() {
 
                 {/* Bottom action bar */}
                 <div className="flex gap-2 mt-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-                  <button
-                    onClick={() => { setEditSubject(undefined); setShowModal(true); }}
-                    className="flex-1 py-2.5 rounded-lg font-mono text-[9px] uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-2"
-                    style={{ background: 'rgba(124,92,252,0.1)', border: '1px solid rgba(124,92,252,0.25)', color: '#7c5cfc' }}
-                  >
-                    <Plus className="w-3.5 h-3.5" /> Add Subject
-                  </button>
+
                   {subjects.length === 0 && (
                     <button
                       onClick={() => save(generateMockSubjects())}
-                      className="flex-1 py-2.5 rounded-lg font-mono text-[9px] uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-2 text-white/40 hover:text-white/60 border border-white/[0.06] hover:border-white/10"
+                      className="flex-1 py-2.5 rounded-lg font-mono text-[9px] uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-2 text-fouzar-text-primary/40 hover:text-fouzar-text-primary/60 border border-white/[0.06] hover:border-fouzar-border-subtle"
                     >
                       <Sparkles className="w-3.5 h-3.5" /> Mock Generate
                     </button>
@@ -672,7 +666,7 @@ export function AcademicInfoPanel() {
                   {subjects.length > 0 && (
                     <button
                       onClick={() => { if (confirm('Clear all subjects?')) save([]); }}
-                      className="px-4 py-2.5 rounded-lg font-mono text-[9px] uppercase tracking-wider cursor-pointer transition-all text-white/20 hover:text-[#ff4d6d] border border-white/[0.05] hover:border-[#ff4d6d]/20"
+                      className="px-4 py-2.5 rounded-lg font-mono text-[9px] uppercase tracking-wider cursor-pointer transition-all text-fouzar-text-primary/20 hover:text-[#ff4d6d] border border-fouzar-border-subtle hover:border-[#ff4d6d]/20"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -694,11 +688,11 @@ function EmptyState({ onAdd, onMock, label }: { onAdd: () => void; onMock: () =>
   return (
     <div className="text-center py-8 space-y-3">
       <div className="w-12 h-12 rounded-full bg-white/[0.03] border border-white/[0.07] flex items-center justify-center mx-auto">
-        <BookOpen className="w-5 h-5 text-white/20" />
+        <BookOpen className="w-5 h-5 text-fouzar-text-primary/20" />
       </div>
       <div>
-        <p className="font-mono text-[10px] text-white/40">No {label} data yet</p>
-        <p className="font-mono text-[8px] text-white/20 mt-1">Add subjects to track your {label}</p>
+        <p className="font-mono text-[10px] text-fouzar-text-primary/40">No {label} data yet</p>
+        <p className="font-mono text-[8px] text-fouzar-text-primary/20 mt-1">Add subjects to track your {label}</p>
       </div>
       <div className="flex gap-2 justify-center">
         <button onClick={onAdd}
@@ -707,7 +701,7 @@ function EmptyState({ onAdd, onMock, label }: { onAdd: () => void; onMock: () =>
           <Plus className="w-3 h-3" /> Add Subject
         </button>
         <button onClick={onMock}
-          className="px-4 py-2 rounded-lg font-mono text-[9px] uppercase tracking-wider cursor-pointer text-white/35 hover:text-white/60 border border-white/[0.06] hover:border-white/[0.1] transition-all flex items-center gap-1.5">
+          className="px-4 py-2 rounded-lg font-mono text-[9px] uppercase tracking-wider cursor-pointer text-fouzar-text-primary/35 hover:text-fouzar-text-primary/60 border border-white/[0.06] hover:border-white/[0.1] transition-all flex items-center gap-1.5">
           <Sparkles className="w-3 h-3" /> Mock Data
         </button>
       </div>

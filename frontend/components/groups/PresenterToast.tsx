@@ -57,7 +57,7 @@ export const PresenterToast: React.FC<PresenterToastProps> = ({
           className={`absolute top-3 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-2.5 rounded-[var(--fouzar-radius-md)] shadow-2xl border w-auto max-w-[92%] pointer-events-auto ${
             isGreenhouse
               ? 'fouzar-glass border-fouzar-border/60'
-              : 'bg-[#16161f]/95 border-[#7c5cfc]/40 backdrop-blur-xl'
+              : 'bg-fouzar-card/95 border-[#7c5cfc]/40 backdrop-blur-xl'
           }`}
           style={{
             boxShadow: '0 0 32px rgba(124,92,252,0.18), 0 8px 32px rgba(0,0,0,0.45)',
@@ -116,7 +116,7 @@ export const PresenterToast: React.FC<PresenterToastProps> = ({
           className={`absolute top-3 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 px-3 py-2 rounded-[var(--fouzar-radius-md)] border pointer-events-auto ${
             isGreenhouse
               ? 'fouzar-glass border-fouzar-signal/30'
-              : 'bg-[#16161f]/95 border-fouzar-signal/40 backdrop-blur-xl'
+              : 'bg-fouzar-card/95 border-fouzar-signal/40 backdrop-blur-xl'
           }`}
           style={{
             boxShadow: '0 0 20px rgba(255,45,85,0.12), 0 4px 20px rgba(0,0,0,0.4)',

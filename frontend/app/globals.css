@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@500;700;800&display=swap');
+
 @import "tailwindcss";
 
 /* =============================================================================
@@ -15,6 +15,14 @@
   --fouzar-font-sans: var(--font-sans), 'Inter', system-ui, sans-serif;
   --fouzar-font-display: var(--font-serif), 'Space Grotesk', sans-serif;
   --fouzar-font-mono: var(--font-mono), 'JetBrains Mono', monospace;
+
+  --fouzar-text-xs: 0.75rem;
+  --fouzar-text-sm: 0.8125rem;
+  --fouzar-text-base: 0.875rem;
+  --fouzar-text-md: 1rem;
+  --fouzar-text-lg: 1.125rem;
+  --fouzar-text-xl: 1.5rem;
+  --fouzar-text-2xl: 2rem;
 
   --fouzar-radius-sm: 4px;
   --fouzar-radius-md: 6px;
@@ -71,6 +79,8 @@
   --fouzar-accent-amber: #f5a623;
   --fouzar-accent-ice: #5ce1ff;
   --fouzar-accent-signal: #ff2d55;
+  --fouzar-primary: #10b981;
+  --fouzar-primary-shadow: rgba(16, 185, 129, 0.5);
   --fouzar-accent-success: #3dd68c;
 
   --fouzar-glow-primary: 0 0 24px rgba(124, 92, 252, 0.18);
@@ -206,7 +216,8 @@ body {
   background-color: var(--fouzar-bg);
   color: var(--fouzar-text-primary);
   font-family: var(--fouzar-font-sans);
-  line-height: 1.55;
+  font-size: 0.875rem;
+  line-height: 1.6;
   letter-spacing: -0.01em;
   transition:
     background-color var(--fouzar-duration-base) var(--fouzar-ease-out),
@@ -223,6 +234,41 @@ body::before {
   background-image: radial-gradient(var(--fouzar-grid-dot) 1px, transparent 1px);
   background-size: 24px 24px;
   opacity: 0.7;
+}
+
+.fz-heading {
+  font-family: var(--fouzar-font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.fz-subhead {
+  font-family: var(--fouzar-font-sans);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.fz-body {
+  font-family: var(--fouzar-font-sans);
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.fz-caption {
+  font-family: var(--fouzar-font-sans);
+  font-size: var(--fouzar-text-xs);
+  color: var(--fouzar-text-secondary);
+}
+
+.fz-label {
+  font-family: var(--fouzar-font-sans);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.fz-mono {
+  font-family: var(--fouzar-font-mono);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -383,71 +429,35 @@ textarea {
   --fouzar-glow-primary: 0 0 24px rgba(255, 45, 85, 0.24);
   --fouzar-focus-ring: 0 0 0 2px rgba(255, 45, 85, 0.45);
 }
-
-[data-app-theme='cyberpunk'] {
-  --fouzar-bg: #0d0010;
-  --fouzar-bg-elevated: #12001a;
-  --fouzar-surface: #1a0024;
-  --fouzar-card: #220030;
-  --fouzar-elevated: #2a003c;
-  --fouzar-overlay: rgba(13, 0, 16, 0.85);
-  --fouzar-text-primary: #ffe600;
-  --fouzar-text-secondary: #cc99ff;
-  --fouzar-text-tertiary: #884dbb;
-  --fouzar-text-inverse: #0d0010;
-  --fouzar-border-subtle: rgba(255, 0, 200, 0.25);
-  --fouzar-border-strong: rgba(255, 0, 200, 0.5);
-  --fouzar-divider: rgba(255, 0, 200, 0.1);
-  --fouzar-accent-primary: #ff00c8;
-  --fouzar-accent-amber: #ffe600;
-  --fouzar-accent-ice: #00f7ff;
-  --fouzar-accent-signal: #ff2d55;
-  --fouzar-accent-success: #39ff14;
-  --fouzar-glow-primary: 0 0 28px rgba(255, 0, 200, 0.45);
-  --fouzar-glow-amber: 0 0 24px rgba(255, 230, 0, 0.4);
-  --fouzar-glow-ice: 0 0 24px rgba(0, 247, 255, 0.35);
-  --fouzar-glow-signal: 0 0 24px rgba(255, 45, 85, 0.35);
-  --fouzar-shadow-sm: 0 2px 12px rgba(255, 0, 200, 0.15);
-  --fouzar-shadow-md: 0 8px 32px rgba(255, 0, 200, 0.2);
-  --fouzar-shadow-lg: 0 20px 64px rgba(255, 0, 200, 0.25);
-  --fouzar-shadow-inset: inset 0 1px 0 rgba(255, 0, 200, 0.12);
-  --fouzar-surface-glass: rgba(26, 0, 36, 0.75);
-  --fouzar-backdrop: blur(20px);
-  --fouzar-grid-dot: rgba(255, 0, 200, 0.06);
-  --fouzar-focus-ring: 0 0 0 2px rgba(255, 0, 200, 0.55);
-}
-
-[data-app-theme='matrix'] {
-  --fouzar-bg: #000000;
-  --fouzar-bg-elevated: #030a03;
-  --fouzar-surface: #060f06;
-  --fouzar-card: #081408;
-  --fouzar-elevated: #0b1a0b;
-  --fouzar-overlay: rgba(0, 0, 0, 0.9);
-  --fouzar-text-primary: #00ff41;
-  --fouzar-text-secondary: #00c832;
-  --fouzar-text-tertiary: #007a1e;
-  --fouzar-text-inverse: #000000;
-  --fouzar-border-subtle: rgba(0, 255, 65, 0.15);
-  --fouzar-border-strong: rgba(0, 255, 65, 0.35);
-  --fouzar-divider: rgba(0, 255, 65, 0.07);
-  --fouzar-accent-primary: #00ff41;
-  --fouzar-accent-amber: #00e539;
-  --fouzar-accent-ice: #00ffaa;
-  --fouzar-accent-signal: #ff2d55;
-  --fouzar-accent-success: #00ff41;
-  --fouzar-glow-primary: 0 0 24px rgba(0, 255, 65, 0.4);
-  --fouzar-glow-amber: 0 0 20px rgba(0, 229, 57, 0.35);
-  --fouzar-glow-ice: 0 0 20px rgba(0, 255, 170, 0.3);
-  --fouzar-glow-signal: 0 0 20px rgba(255, 45, 85, 0.3);
-  --fouzar-shadow-sm: 0 2px 12px rgba(0, 255, 65, 0.08);
-  --fouzar-shadow-md: 0 8px 32px rgba(0, 255, 65, 0.12);
-  --fouzar-shadow-lg: 0 20px 64px rgba(0, 255, 65, 0.16);
-  --fouzar-shadow-inset: inset 0 1px 0 rgba(0, 255, 65, 0.08);
-  --fouzar-surface-glass: rgba(6, 15, 6, 0.82);
-  --fouzar-backdrop: blur(12px);
-  --fouzar-grid-dot: rgba(0, 255, 65, 0.08);
-  --fouzar-focus-ring: 0 0 0 2px rgba(0, 255, 65, 0.5);
-  --fouzar-font-sans: var(--font-mono), 'JetBrains Mono', monospace;
-  --fouzar-font-display: var(--font-mono), 'JetBrains Mono', monospace;
+[data-app-theme='light'] {
+  --fouzar-bg: #f3f4f6;
+  --fouzar-bg-elevated: #e5e7eb;
+  --fouzar-surface: #d1d5db;
+  --fouzar-card: #ffffff;
+  --fouzar-elevated: #ffffff;
+  --fouzar-overlay: rgba(243, 244, 246, 0.85);
+  --fouzar-text-primary: #111827;
+  --fouzar-text-secondary: #4b5563;
+  --fouzar-text-tertiary: #6b7280;
+  --fouzar-text-inverse: #f8f9fa;
+  --fouzar-border-subtle: rgba(0, 0, 0, 0.06);
+  --fouzar-border-strong: rgba(0, 0, 0, 0.12);
+  --fouzar-divider: rgba(0, 0, 0, 0.04);
+  --fouzar-accent-primary: #4f46e5;
+  --fouzar-accent-amber: #d97706;
+  --fouzar-accent-ice: #0284c7;
+  --fouzar-accent-signal: #e11d48;
+  --fouzar-accent-success: #16a34a;
+  --fouzar-glow-primary: 0 0 24px rgba(79, 70, 229, 0.15);
+  --fouzar-glow-amber: 0 0 18px rgba(217, 119, 6, 0.15);
+  --fouzar-glow-ice: 0 0 18px rgba(2, 132, 199, 0.15);
+  --fouzar-glow-signal: 0 0 20px rgba(225, 29, 72, 0.15);
+  --fouzar-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --fouzar-shadow-md: 0 8px 32px rgba(0, 0, 0, 0.06);
+  --fouzar-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.1);
+  --fouzar-shadow-inset: inset 0 1px 0 rgba(0, 0, 0, 0.04);
+  --fouzar-surface-glass: rgba(248, 249, 250, 0.72);
+  --fouzar-backdrop: blur(16px);
+  --fouzar-grid-dot: rgba(0, 0, 0, 0.04);
+  --fouzar-focus-ring: 0 0 0 2px rgba(79, 70, 229, 0.35);
 }

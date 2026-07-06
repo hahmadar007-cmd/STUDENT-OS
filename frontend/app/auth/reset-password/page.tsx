@@ -163,15 +163,15 @@ function ResetPasswordForm() {
   };
 
   return (
-    <div className="w-full max-w-[420px] bg-[#16161f]/90 border border-[#7c5cfc] rounded-none shadow-2xl overflow-hidden z-10 backdrop-blur-md">
+    <div className="w-full max-w-[420px] bg-fouzar-card/90 border border-[#7c5cfc] rounded-none shadow-2xl overflow-hidden z-10 backdrop-blur-md">
       {/* Code Editor Tab Header */}
-      <div className="flex bg-[#0a0a0f]/40 border-b border-[#2a2a3a] py-3.5 px-4 items-center justify-between">
-        <span className="font-mono text-[9px] uppercase tracking-widest text-[#f0f0ff]">
+      <div className="flex bg-fouzar-bg/40 border-b border-fouzar-border-strong py-3.5 px-4 items-center justify-between">
+        <span className="font-mono text-[9px] uppercase tracking-widest text-fouzar-text-primary">
           RESET_KEY.tsx
         </span>
         <Link
           href="/auth?tab=login"
-          className="text-[7.5px] font-mono uppercase text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors"
+          className="text-[7.5px] font-mono uppercase text-fouzar-text-secondary hover:text-fouzar-text-primary transition-colors"
         >
           [Cancel]
         </Link>
@@ -180,7 +180,7 @@ function ResetPasswordForm() {
       <form onSubmit={handleReset} className="p-6 space-y-6">
         <div className="space-y-4">
           <div className="flex flex-col">
-            <span className="text-[7.5px] font-mono uppercase text-[#6b6b8a] tracking-wider mb-1">
+            <span className="text-[7.5px] font-mono uppercase text-fouzar-text-secondary tracking-wider mb-1">
               New Security Key
             </span>
             <input
@@ -189,12 +189,12 @@ function ResetPasswordForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full bg-transparent border-b border-[#2a2a3a] px-1 py-2 text-xs text-[#f0f0ff] placeholder-[#6b6b8a]/50 focus:outline-none focus:border-[#7c5cfc] rounded-none transition-colors"
+              className="w-full bg-transparent border-b border-fouzar-border-strong px-1 py-2 text-xs text-fouzar-text-primary placeholder-[#6b6b8a]/50 focus:outline-none focus:border-[#7c5cfc] rounded-none transition-colors"
             />
           </div>
 
           <div className="flex flex-col">
-            <span className="text-[7.5px] font-mono uppercase text-[#6b6b8a] tracking-wider mb-1">
+            <span className="text-[7.5px] font-mono uppercase text-fouzar-text-secondary tracking-wider mb-1">
               Confirm Security Key
             </span>
             <input
@@ -203,7 +203,7 @@ function ResetPasswordForm() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full bg-transparent border-b border-[#2a2a3a] px-1 py-2 text-xs text-[#f0f0ff] placeholder-[#6b6b8a]/50 focus:outline-none focus:border-[#7c5cfc] rounded-none transition-colors"
+              className="w-full bg-transparent border-b border-fouzar-border-strong px-1 py-2 text-xs text-fouzar-text-primary placeholder-[#6b6b8a]/50 focus:outline-none focus:border-[#7c5cfc] rounded-none transition-colors"
             />
           </div>
         </div>
@@ -229,9 +229,9 @@ function ResetPasswordForm() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-[#0a0a0f]/95 z-20 flex flex-col items-center justify-center gap-4"
+              className="absolute inset-0 bg-fouzar-bg/95 z-20 flex flex-col items-center justify-center gap-4"
             >
-              <div className="relative flex items-center justify-center w-16 h-16 rounded-full border border-[#7c5cfc]/30 bg-[#111118]/50">
+              <div className="relative flex items-center justify-center w-16 h-16 rounded-full border border-[#7c5cfc]/30 bg-fouzar-surface/50">
                 <motion.svg
                   width="24"
                   height="24"
@@ -272,7 +272,7 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <div className="min-h-screen w-full relative bg-[#0a0a0f] flex items-center justify-center p-6 select-none overflow-hidden font-sans">
+    <div className="min-h-screen w-full relative bg-fouzar-bg flex items-center justify-center p-6 select-none overflow-hidden font-sans">
       {/* Node Canvas background */}
       <div className="absolute inset-0 z-0 opacity-60">
         <NodeCanvas />
@@ -281,7 +281,7 @@ export default function ResetPasswordPage() {
       {/* Return to login link */}
       <Link
         href="/auth?tab=login"
-        className="absolute top-8 left-8 flex items-center gap-1.5 text-[8px] font-mono uppercase tracking-widest text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors cursor-pointer z-10"
+        className="absolute top-8 left-8 flex items-center gap-1.5 text-[8px] font-mono uppercase tracking-widest text-fouzar-text-secondary hover:text-fouzar-text-primary transition-colors cursor-pointer z-10"
       >
         <ArrowLeft className="w-3 h-3" /> return
       </Link>
@@ -293,7 +293,7 @@ export default function ResetPasswordPage() {
         {/* Suspense wrapper for SearchParams consumption */}
         <Suspense
           fallback={
-            <div className="w-full max-w-[420px] bg-[#16161f]/90 border border-[#7c5cfc]/20 p-8 flex items-center justify-center font-mono text-[9px] uppercase tracking-widest text-[#6b6b8a]">
+            <div className="w-full max-w-[420px] bg-fouzar-card/90 border border-[#7c5cfc]/20 p-8 flex items-center justify-center font-mono text-[9px] uppercase tracking-widest text-fouzar-text-secondary">
               Initializing connection credentials...
             </div>
           }

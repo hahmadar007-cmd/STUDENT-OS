@@ -421,7 +421,7 @@ export const FocusCard: React.FC = () => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="w-full bg-[#030305] border border-fouzar-accent/20 rounded-2xl p-8 md:p-10 flex flex-col items-center shadow-[0_0_50px_rgba(0,0,0,0.8)] relative overflow-hidden"
+            className="w-full bg-fouzar-bg border border-fouzar-accent/20 rounded-2xl p-8 md:p-10 flex flex-col items-center shadow-[0_0_50px_rgba(0,0,0,0.8)] relative overflow-hidden"
           >
             {/* Pulsing Core Focus Glowing Aura */}
             <motion.div

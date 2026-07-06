@@ -63,7 +63,7 @@ export const StudyNodesGraph: React.FC<StudyNodesGraphProps> = ({ nodesData }) =
   if (isScratch) {
     allNodes = [
       { id: 'onb-1', course: 'Welcome', name: 'to Fasca', memberCount: 5, currentSlide: '', isActive: true, nodeType: 'group' },
-      { id: 'onb-2', course: 'Welcome', name: 'Create a Father Circle', memberCount: 6, currentSlide: '', isActive: true, nodeType: 'group' },
+      { id: 'onb-2', course: 'Welcome', name: 'Create a Main Circle', memberCount: 6, currentSlide: '', isActive: true, nodeType: 'group' },
       { id: 'onb-3', course: 'Welcome', name: 'to get started!', memberCount: 4, currentSlide: '', isActive: true, nodeType: 'group' }
     ];
   }
@@ -125,8 +125,8 @@ export const StudyNodesGraph: React.FC<StudyNodesGraphProps> = ({ nodesData }) =
       .force('link', d3.forceLink<GraphNode, GraphLink>(links).id(d => d.id).distance(d => {
         const source = finalNodes.find(n => n.id === (typeof d.source === 'object' ? (d.source as any).id : d.source));
         const target = finalNodes.find(n => n.id === (typeof d.target === 'object' ? (d.target as any).id : d.target));
-        if (source?.nodeType === 'course' && target?.nodeType === 'course') return 300; // spread father nodes apart
-        return 120; // child nodes closer to father
+        if (source?.nodeType === 'course' && target?.nodeType === 'course') return 300; // spread main nodes apart
+        return 120; // child nodes closer to main
       }))
       .force('charge', d3.forceManyBody().strength(-500)) // Stronger repulsion to fan out the tree
       .force('center', d3.forceCenter(width / 2, height / 2))
@@ -168,10 +168,10 @@ export const StudyNodesGraph: React.FC<StudyNodesGraphProps> = ({ nodesData }) =
     node.append('circle')
       .attr('r', d => d.nodeType === 'course' ? 32 : 12)
       .attr('fill', d => {
-        if (d.nodeType === 'course') return '#111118';
-        return d.isActive ? strokeColor : '#2a2a3a';
+        if (d.nodeType === 'course') return 'var(--fouzar-surface)';
+        return d.isActive ? strokeColor : 'var(--fouzar-border-strong)';
       })
-      .attr('stroke', d => d.nodeType === 'course' ? strokeColor : '#0a0a0f')
+      .attr('stroke', d => d.nodeType === 'course' ? strokeColor : 'var(--fouzar-bg)')
       .attr('stroke-width', d => d.nodeType === 'course' ? 2 : 2)
       .attr('class', 'transition-all duration-150')
       .on('mouseover', function(event, d) { 
@@ -181,11 +181,11 @@ export const StudyNodesGraph: React.FC<StudyNodesGraphProps> = ({ nodesData }) =
       })
       .on('mouseout', function(event, d) { 
         if ((d as GraphNode).nodeType === 'group') {
-          d3.select(this).attr('stroke', '#0a0a0f').attr('stroke-width', 2); 
+          d3.select(this).attr('stroke', 'var(--fouzar-bg)').attr('stroke-width', 2); 
         }
       });
 
-    // Muted ring for active group nodes and father nodes (removed pulse for cleaner UI)
+    // Muted ring for active group nodes and main nodes (removed pulse for cleaner UI)
     node.filter(d => (d.isActive && d.nodeType === 'group') || d.nodeType === 'course')
       .append('circle')
       .attr('r', d => d.nodeType === 'course' ? 42 : 18)
@@ -206,7 +206,7 @@ export const StudyNodesGraph: React.FC<StudyNodesGraphProps> = ({ nodesData }) =
       })
       .attr('text-anchor', 'middle')
       .attr('dy', d => d.nodeType === 'course' ? '.3em' : '2.2em')
-      .attr('fill', d => d.nodeType === 'course' ? '#f0f0ff' : '#9494b8')
+      .attr('fill', d => d.nodeType === 'course' ? 'var(--fouzar-text-primary)' : 'var(--fouzar-text-secondary)')
       .attr('font-size', d => d.nodeType === 'course' ? '10px' : '9px')
       .attr('font-family', 'monospace')
       .attr('font-weight', d => d.nodeType === 'course' ? 'bold' : 'normal')
@@ -252,20 +252,20 @@ export const StudyNodesGraph: React.FC<StudyNodesGraphProps> = ({ nodesData }) =
   }, [searchQuery, nodesData, accentColor]); // Update dependencies since we calculate filteredGroups inline
 
   return (
-    <div ref={containerRef} className="w-full relative bg-[#111118]/40 border border-[#2a2a3a] rounded-[6px] overflow-hidden min-h-[60vh]">
+    <div ref={containerRef} className="w-full relative bg-fouzar-surface/40 border border-fouzar-border-strong rounded-[6px] overflow-hidden min-h-[60vh]">
       
       {/* Search Input Bar */}
-      <div className="absolute top-3 left-3 right-3 z-20 flex items-center bg-[#16161f]/90 border border-[#2a2a3a] px-2.5 py-1.5 rounded-[4px] max-w-[200px]">
-        <Search className="w-3.5 h-3.5 text-[#6b6b8a] mr-1.5" />
+      <div className="absolute top-3 left-3 right-3 z-20 flex items-center bg-fouzar-card/90 border border-fouzar-border-strong px-2.5 py-1.5 rounded-[4px] max-w-[200px]">
+        <Search className="w-3.5 h-3.5 text-fouzar-text-secondary mr-1.5" />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Filter nodes..."
-          className="bg-transparent border-none text-[9px] font-mono text-[#f0f0ff] focus:outline-none w-full placeholder-[#6b6b8a]"
+          className="bg-transparent border-none text-[9px] font-mono text-fouzar-text-primary focus:outline-none w-full placeholder-[#6b6b8a]"
         />
         {searchQuery && (
-          <button onClick={() => setSearchQuery('')} className="text-[#6b6b8a] hover:text-[#f0f0ff]">
+          <button onClick={() => setSearchQuery('')} className="text-fouzar-text-secondary hover:text-fouzar-text-primary">
             <X className="w-3 h-3" />
           </button>
         )}
@@ -281,20 +281,20 @@ export const StudyNodesGraph: React.FC<StudyNodesGraphProps> = ({ nodesData }) =
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="absolute bottom-4 left-4 right-4 bg-[#16161f]/95 border border-[#7c5cfc] p-4 shadow-2xl backdrop-blur-md z-20"
+            className="absolute bottom-4 left-4 right-4 bg-fouzar-card/95 border border-[#7c5cfc] p-4 shadow-2xl backdrop-blur-md z-20"
           >
             <div className="flex justify-between items-start mb-2">
               <div>
                 <span className="text-[7.5px] font-mono text-[#7c5cfc] uppercase tracking-wider block">
                   {selectedNode.course} ACTIVE CIRCLE
                 </span>
-                <h4 className="text-xs font-bold text-[#f0f0ff] mt-0.5">
+                <h4 className="text-xs font-bold text-fouzar-text-primary mt-0.5">
                   {selectedNode.name}
                 </h4>
               </div>
               <button 
                 onClick={() => setSelectedNode(null)}
-                className="p-1 hover:bg-white/5 rounded text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors cursor-pointer"
+                className="p-1 hover:bg-white/5 rounded text-fouzar-text-secondary hover:text-fouzar-text-primary transition-colors cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -302,16 +302,16 @@ export const StudyNodesGraph: React.FC<StudyNodesGraphProps> = ({ nodesData }) =
 
             <div className="grid grid-cols-2 gap-4 my-3 text-left">
               <div className="flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5 text-[#6b6b8a]" />
+                <Users className="w-3.5 h-3.5 text-fouzar-text-secondary" />
                 <div className="flex flex-col">
-                  <span className="text-[7px] font-mono text-[#6b6b8a] uppercase">Peers</span>
+                  <span className="text-[7px] font-mono text-fouzar-text-secondary uppercase">Peers</span>
                   <span className="text-[10px] font-bold">{selectedNode.memberCount} Active</span>
                 </div>
               </div>
               <div className="flex items-center gap-1.5">
-                <Compass className="w-3.5 h-3.5 text-[#6b6b8a]" />
+                <Compass className="w-3.5 h-3.5 text-fouzar-text-secondary" />
                 <div className="flex flex-col min-w-0">
-                  <span className="text-[7px] font-mono text-[#6b6b8a] uppercase">Current State</span>
+                  <span className="text-[7px] font-mono text-fouzar-text-secondary uppercase">Current State</span>
                   <span className="text-[9px] font-medium truncate">{selectedNode.currentSlide}</span>
                 </div>
               </div>

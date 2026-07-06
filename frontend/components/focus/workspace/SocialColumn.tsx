@@ -370,7 +370,7 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
           </div>
         </div>
         {onMinimize && (
-          <button onClick={onMinimize} className="text-fouzar-text-tertiary hover:text-white cursor-pointer p-1" title="Minimize Panel">
+          <button onClick={onMinimize} className="text-fouzar-text-tertiary hover:text-fouzar-text-primary cursor-pointer p-1" title="Minimize Panel">
             <Minus className="w-4 h-4" />
           </button>
         )}
@@ -878,7 +878,7 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               style={{ top: contextMenuPos.y, left: contextMenuPos.x }}
-              className="fixed z-50 bg-[#16161f]/95 border border-[#7c5cfc]/60 shadow-2xl p-1.5 rounded-[4px] w-36 text-left"
+              className="fixed z-50 bg-fouzar-card/95 border border-[#7c5cfc]/60 shadow-2xl p-1.5 rounded-[4px] w-36 text-left"
               onClick={(e) => e.stopPropagation()}
             >
               <button
@@ -888,7 +888,7 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
                   setContextMenuFriend(null);
                   await handleAddFriendToCircleDirect(friendId);
                 }}
-                className="w-full px-2 py-1.5 text-[8.5px] font-mono uppercase tracking-wider text-[#f0f0ff] hover:bg-[#7c5cfc]/15 rounded flex items-center gap-1.5 cursor-pointer text-left transition-colors"
+                className="w-full px-2 py-1.5 text-[8.5px] font-mono uppercase tracking-wider text-fouzar-text-primary hover:bg-[#7c5cfc]/15 rounded flex items-center gap-1.5 cursor-pointer text-left transition-colors"
               >
                 Add to Circle
               </button>

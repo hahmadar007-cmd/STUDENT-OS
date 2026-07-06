@@ -204,17 +204,17 @@ export const SharedGroupDrive: React.FC<SharedGroupDriveProps> = ({
       {/* Section header */}
       <div className="flex items-center justify-between shrink-0">
         <div>
-          <span className="font-mono text-[8px] uppercase tracking-[0.2em] text-fouzar-text-secondary block">
+          <span className="font-sans text-xs uppercase tracking-wider text-fouzar-text-secondary block">
             Shared Circle Drive
           </span>
-          <span className="font-mono text-[7px] text-fouzar-text-tertiary">
+          <span className="font-sans text-xs text-fouzar-text-tertiary">
             {files.length} file{files.length !== 1 ? 's' : ''} · synced live
           </span>
         </div>
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="px-3 py-1.5 bg-fouzar-accent text-fouzar-text-inverse font-mono text-[7.5px] uppercase tracking-wider rounded-[var(--fouzar-radius-sm)] hover:opacity-90 transition-opacity flex items-center gap-1.5 shrink-0"
+          className="px-3 py-1.5 bg-fouzar-accent text-fouzar-text-inverse font-sans text-xs uppercase tracking-wider rounded-[var(--fouzar-radius-sm)] hover:opacity-90 transition-opacity flex items-center gap-1.5 shrink-0"
         >
           <Upload className="w-3 h-3" />
           Upload
@@ -261,7 +261,7 @@ export const SharedGroupDrive: React.FC<SharedGroupDriveProps> = ({
                   transition={{ duration: 0.2 }}
                 />
               </div>
-              <span className="font-mono text-[8px] text-fouzar-accent">{uploadProgress}%</span>
+              <span className="font-mono text-xs text-fouzar-accent">{uploadProgress}%</span>
             </motion.div>
           )}
           {uploadState === 'success' && (
@@ -273,7 +273,7 @@ export const SharedGroupDrive: React.FC<SharedGroupDriveProps> = ({
               className="flex flex-col items-center gap-1"
             >
               <CheckCircle className="w-6 h-6 text-emerald-400" />
-              <span className="font-mono text-[8px] text-emerald-400 uppercase">Uploaded!</span>
+              <span className="font-mono text-xs text-emerald-400 uppercase">Uploaded!</span>
             </motion.div>
           )}
           {(uploadState === 'idle' || uploadState === 'error') && (
@@ -286,13 +286,13 @@ export const SharedGroupDrive: React.FC<SharedGroupDriveProps> = ({
             >
               <Upload className={`w-5 h-5 ${uploadState === 'error' ? 'text-fouzar-signal' : 'text-fouzar-text-tertiary'}`} />
               {uploadState === 'error' && uploadError ? (
-                <span className="font-mono text-[7.5px] text-fouzar-signal text-center px-4">{uploadError}</span>
+                <span className="font-sans text-xs text-fouzar-signal text-center px-4">{uploadError}</span>
               ) : (
                 <>
-                  <span className="font-mono text-[8px] text-fouzar-text-secondary">
+                  <span className="font-sans text-xs text-fouzar-text-secondary">
                     Drop a file or click to upload
                   </span>
-                  <span className="font-mono text-[6.5px] text-fouzar-text-tertiary uppercase">
+                  <span className="font-sans text-xs text-fouzar-text-tertiary uppercase">
                     PDF · DOCX · PPTX · Images · Video · Max {MAX_FILE_MB} MB
                   </span>
                 </>
@@ -307,7 +307,7 @@ export const SharedGroupDrive: React.FC<SharedGroupDriveProps> = ({
         <AnimatePresence initial={false}>
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <span className="font-mono text-[8px] text-fouzar-text-tertiary uppercase animate-pulse">
+              <span className="font-sans text-xs text-fouzar-text-tertiary animate-pulse">
                 Loading drive…
               </span>
             </div>
@@ -319,7 +319,7 @@ export const SharedGroupDrive: React.FC<SharedGroupDriveProps> = ({
               className="flex flex-col items-center justify-center py-10 gap-3 border border-dashed border-fouzar-border/40 rounded-[var(--fouzar-radius-lg)]"
             >
               <CloudUpload className="w-8 h-8 text-fouzar-text-tertiary opacity-40" />
-              <p className="font-mono text-[8px] text-fouzar-text-tertiary uppercase text-center leading-relaxed">
+              <p className="font-sans text-xs text-fouzar-text-tertiary text-center leading-relaxed">
                 No files uploaded yet.
                 <br />
                 Drop a file above to share with your circle.
@@ -353,20 +353,20 @@ export const SharedGroupDrive: React.FC<SharedGroupDriveProps> = ({
 
                   {/* File info */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] font-semibold truncate leading-tight text-fouzar-text-primary">
+                    <p className="text-sm font-semibold truncate leading-tight text-fouzar-text-primary">
                       {file.fileName}
                     </p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="font-mono text-[6.5px] text-fouzar-text-tertiary uppercase">
+                      <span className="font-mono text-xs text-fouzar-text-tertiary">
                         {file.fileSize}
                       </span>
-                      <span className="font-mono text-[6.5px] text-fouzar-text-tertiary">·</span>
-                      <span className="font-mono text-[6.5px] text-fouzar-text-tertiary">
+                      <span className="font-mono text-xs text-fouzar-text-tertiary">·</span>
+                      <span className="font-sans text-xs text-fouzar-text-tertiary">
                         {file.uploadedBy}
                       </span>
-                      <span className="font-mono text-[6.5px] text-fouzar-text-tertiary">·</span>
+                      <span className="font-mono text-xs text-fouzar-text-tertiary">·</span>
                       <Clock className="w-2.5 h-2.5 text-fouzar-text-tertiary" />
-                      <span className="font-mono text-[6.5px] text-fouzar-text-tertiary">
+                      <span className="font-mono text-xs text-fouzar-text-tertiary">
                         {formatDate(file.createdAt)}
                       </span>
                     </div>
@@ -380,7 +380,7 @@ export const SharedGroupDrive: React.FC<SharedGroupDriveProps> = ({
                         type="button"
                         onClick={() => onPresentFile(file.id, file.fileName)}
                         title="Present this file live to the circle"
-                        className="flex items-center gap-1 px-2 py-1 bg-fouzar-accent/10 border border-fouzar-accent/30 text-fouzar-accent rounded-[var(--fouzar-radius-sm)] font-mono text-[7px] uppercase tracking-wider hover:bg-fouzar-accent/20 transition-colors cursor-pointer"
+                        className="flex items-center gap-1 px-2 py-1 bg-fouzar-accent/10 border border-fouzar-accent/30 text-fouzar-accent rounded-[var(--fouzar-radius-sm)] font-sans text-xs uppercase tracking-wider hover:bg-fouzar-accent/20 transition-colors cursor-pointer"
                       >
                         <Radio className="w-2.5 h-2.5" />
                         Present

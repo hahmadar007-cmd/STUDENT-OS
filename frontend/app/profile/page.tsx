@@ -408,7 +408,7 @@ export default function ProfilePage() {
                   )}
                   
                   {/* Upload Overlay */}
-                  <label className="absolute inset-0 bg-[#0a0a0f]/80 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer select-none text-[8px] font-mono uppercase tracking-widest text-fouzar-text-primary text-center">
+                  <label className="absolute inset-0 bg-fouzar-bg/80 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer select-none text-[8px] font-mono uppercase tracking-widest text-fouzar-text-primary text-center">
                     <UserPlus className="w-4 h-4 mb-1 text-fouzar-accent mx-auto" />
                     Upload
                     <input
@@ -608,7 +608,7 @@ export default function ProfilePage() {
                     >
                       {/* Colored circle */}
                       <span 
-                        className="w-5 h-5 rounded-full mb-1.5 shadow-[0_0_8px_rgba(255,255,255,0.05)] border border-white/10 shrink-0" 
+                        className="w-5 h-5 rounded-full mb-1.5 shadow-[0_0_8px_rgba(255,255,255,0.05)] border border-fouzar-border-subtle shrink-0" 
                         style={{ 
                           backgroundColor: accent.color,
                           boxShadow: isSelected ? `0 0 12px ${accent.color}80` : undefined

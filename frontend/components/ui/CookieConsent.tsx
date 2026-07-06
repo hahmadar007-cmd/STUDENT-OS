@@ -32,7 +32,7 @@ export const CookieConsent: React.FC = () => {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 50, opacity: 0 }}
           transition={{ duration: 0.35, ease: 'easeOut' }}
-          className="fixed bottom-6 left-6 right-6 md:left-auto md:right-6 md:w-[360px] z-[9999] p-4 bg-[#16161f]/90 backdrop-blur-xl border border-fouzar-border/60 rounded-[var(--fouzar-radius-lg)] shadow-2xl flex flex-col gap-3"
+          className="fixed bottom-6 left-6 right-6 md:left-auto md:right-6 md:w-[360px] z-[9999] p-4 bg-fouzar-card/90 backdrop-blur-xl border border-fouzar-border/60 rounded-[var(--fouzar-radius-lg)] shadow-2xl flex flex-col gap-3"
         >
           <div className="flex gap-2.5 items-start">
             <Cookie className="w-5 h-5 text-fouzar-accent shrink-0 mt-0.5" />

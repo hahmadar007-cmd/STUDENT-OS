@@ -25,15 +25,15 @@ export function LiveLounge({ groupId }: LiveLoungeProps) {
             </div>
 
             <div className="text-center space-y-2">
-              <h2 className="font-sans text-lg font-light text-fouzar-text-primary tracking-wide">
+              <h2 className="font-sans text-lg font-medium text-fouzar-text-primary tracking-wide">
                 Live Lounge
               </h2>
-              <p className="text-[10px] font-mono text-fouzar-text-secondary uppercase tracking-widest">
+              <p className="text-xs font-sans text-fouzar-text-secondary uppercase tracking-widest">
                 Group · {groupId}
               </p>
             </div>
 
-            <div className="flex items-center gap-2 text-[8px] font-mono text-fouzar-text-tertiary uppercase tracking-wider">
+            <div className="flex items-center gap-2 text-xs font-sans text-fouzar-text-tertiary uppercase tracking-wider">
               <span className="w-1.5 h-1.5 rounded-full bg-fouzar-accent-success animate-pulse" />
               Powered by Jitsi Meet · End-to-end encrypted
             </div>
@@ -41,7 +41,7 @@ export function LiveLounge({ groupId }: LiveLoungeProps) {
             <button
               type="button"
               onClick={() => setIsCallActive(true)}
-              className="flex items-center gap-2.5 px-7 py-3 bg-fouzar-accent hover:opacity-90 text-white font-mono text-[10px] uppercase tracking-widest rounded-full shadow-[0_0_20px_rgba(124,92,252,0.35)] hover:shadow-[0_0_32px_rgba(124,92,252,0.5)] transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
+              className="flex items-center gap-2.5 px-7 py-3 bg-fouzar-accent hover:opacity-90 text-fouzar-text-primary font-sans text-sm font-medium uppercase tracking-wider rounded-full shadow-[0_0_20px_rgba(124,92,252,0.35)] hover:shadow-[0_0_32px_rgba(124,92,252,0.5)] transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
             >
               <span className="text-base">🎙️</span>
               Enter Live Lounge

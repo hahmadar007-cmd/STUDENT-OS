@@ -211,7 +211,7 @@ export default function StudyGroupRoom() {
       return (
         <div className="flex flex-col flex-1 justify-between h-full w-full">
           {/* Slide Header */}
-          <div className="flex justify-between items-start text-[8px] font-mono border-b border-transparent pb-3">
+          <div className="flex justify-between items-start text-xs font-mono border-b border-transparent pb-3">
             <span className="text-fouzar-accent uppercase tracking-widest">{activeSlide.topic}</span>
             <span className="text-fouzar-text-secondary uppercase">PAGE {currentSlideIndex + 1} OF {slides.length}</span>
           </div>
@@ -227,12 +227,12 @@ export default function StudyGroupRoom() {
                 transition={{ duration: 0.25 }}
                 className="space-y-6 max-w-xl mx-auto"
               >
-                <h2 className="font-sans text-2xl font-light text-fouzar-text-primary tracking-wide leading-snug text-glow-accent">
+                <h2 className="font-sans text-xl font-semibold text-fouzar-text-primary tracking-wide leading-snug text-glow-accent">
                   {activeSlide.title}
                 </h2>
                 <ul className="space-y-4">
                   {activeSlide.bullets.map((bullet, idx) => (
-                    <li key={idx} className="text-fouzar-text-secondary text-[11px] flex items-start gap-3 leading-relaxed">
+                    <li key={idx} className="text-fouzar-text-secondary text-sm flex items-start gap-3 leading-relaxed">
                       <span className="w-1 h-1 bg-fouzar-accent shrink-0 mt-2 rounded-full" />
                       <span>{bullet}</span>
                     </li>
@@ -247,7 +247,7 @@ export default function StudyGroupRoom() {
             <button
               disabled={currentSlideIndex === 0}
               onClick={() => handleSlideChange('prev')}
-              className="flex items-center gap-1 text-[9px] font-mono uppercase tracking-wider text-fouzar-text-secondary hover:text-fouzar-text-primary disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+              className="flex items-center gap-1 text-xs font-mono uppercase tracking-wider text-fouzar-text-secondary hover:text-fouzar-text-primary disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
             >
               <ChevronLeft className="w-3.5 h-3.5" /> Previous
             </button>
@@ -266,7 +266,7 @@ export default function StudyGroupRoom() {
             <button
               disabled={currentSlideIndex === slides.length - 1}
               onClick={() => handleSlideChange('next')}
-              className="flex items-center gap-1 text-[9px] font-mono uppercase tracking-wider text-fouzar-text-secondary hover:text-fouzar-text-primary disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+              className="flex items-center gap-1 text-xs font-mono uppercase tracking-wider text-fouzar-text-secondary hover:text-fouzar-text-primary disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
             >
               Next <ChevronRight className="w-3.5 h-3.5" />
             </button>
@@ -290,7 +290,7 @@ export default function StudyGroupRoom() {
             value={notes}
             onChange={handleNotesChange}
             placeholder={`Collaborative Group Scratchpad for ${groupId}...`}
-            className="flex-1 bg-transparent text-fouzar-text-primary font-mono text-[11px] leading-relaxed resize-none focus:outline-none placeholder:text-fouzar-text-tertiary"
+            className="flex-1 bg-transparent text-fouzar-text-primary font-sans text-sm leading-relaxed resize-none focus:outline-none placeholder:text-fouzar-text-tertiary"
           />
         </div>
       );
@@ -335,16 +335,16 @@ export default function StudyGroupRoom() {
         <div className="flex items-center gap-4">
           <button 
             onClick={() => router.push('/dashboard')}
-            className="p-1 hover:bg-white/5 rounded-[4px] text-fouzar-text-secondary hover:text-fouzar-text-primary cursor-pointer flex items-center gap-1 text-[9px] uppercase tracking-wider font-sans"
+            className="p-1 hover:bg-white/5 rounded-[4px] text-fouzar-text-secondary hover:text-fouzar-text-primary cursor-pointer flex items-center gap-1 text-xs uppercase tracking-wider font-sans"
           >
             <ArrowLeft className="w-3.5 h-3.5" /> Back
           </button>
           <span className="w-[1.5px] h-3 bg-fouzar-border/30" />
-          <span className="font-sans font-light text-[10px] uppercase tracking-[0.2em] text-fouzar-text-primary">
+          <span className="font-sans font-medium text-sm uppercase tracking-wider text-fouzar-text-primary">
             {groupId === 'group-1' ? 'CS-229 Study room' : 'CS-109 Study Desk'}
           </span>
           <span className="w-[1.5px] h-3 bg-fouzar-border/30" />
-          <div className="flex items-center gap-1.5 text-[9px] text-fouzar-text-secondary uppercase">
+          <div className="flex items-center gap-1.5 text-xs text-fouzar-text-secondary uppercase">
             <Users className="w-3 h-3 text-fouzar-accent animate-pulse" />
             <span>{memberCount} PEERS ACTIVE</span>
           </div>
@@ -355,7 +355,7 @@ export default function StudyGroupRoom() {
           
           {/* Sync Switcher */}
           <div className="flex items-center gap-2 bg-fouzar-surface/60 px-3 py-1 rounded-[4px] border border-fouzar-border/30">
-            <span className="text-[9px] font-mono uppercase text-fouzar-text-secondary">Sync</span>
+            <span className="text-xs font-sans uppercase text-fouzar-text-secondary">Sync</span>
             <button
               onClick={toggleSync}
               className={`relative inline-flex h-3.5 w-7 shrink-0 cursor-pointer rounded-full border border-transparent transition-colors duration-150 ease-in-out focus:outline-none ${
@@ -373,7 +373,7 @@ export default function StudyGroupRoom() {
           {/* Role selector */}
           <button
             onClick={() => setIsLeader(!isLeader)}
-            className="px-3 py-1 border border-fouzar-border/30 hover:border-fouzar-accent rounded-[4px] text-[8px] font-mono text-fouzar-text-secondary hover:text-fouzar-text-primary transition-colors cursor-pointer"
+            className="px-3 py-1 border border-fouzar-border/30 hover:border-fouzar-accent rounded-[4px] text-xs font-sans text-fouzar-text-secondary hover:text-fouzar-text-primary transition-colors cursor-pointer"
           >
             {isLeader ? 'LEADER' : 'VIEWER'}
           </button>
@@ -394,7 +394,7 @@ export default function StudyGroupRoom() {
           {/* Start Deep Flow */}
           <button
             onClick={() => setIsFlowActive(true)}
-            className="px-3.5 py-1 bg-fouzar-accent hover:opacity-95 text-fouzar-bg text-[8px] font-mono uppercase tracking-widest rounded-[4px] cursor-pointer flex items-center gap-1.5 shadow-[0_0_10px_var(--fouzar-accent-glow)]"
+            className="px-3.5 py-1 bg-fouzar-accent hover:opacity-95 text-fouzar-bg text-xs font-sans uppercase tracking-widest rounded-[4px] cursor-pointer flex items-center gap-1.5 shadow-[0_0_10px_var(--fouzar-accent-glow)]"
           >
             <Flame className="w-3.5 h-3.5 text-fouzar-bg fill-fouzar-bg" />
             FLOW
@@ -437,9 +437,9 @@ export default function StudyGroupRoom() {
                       key={v.id}
                       onClick={() => setActiveSplitTabs(prev => ({ ...prev, left: v.id }))}
                       disabled={isFlowActive}
-                      className={`px-3 py-1 text-[9px] font-mono uppercase tracking-wider rounded-[4px] transition-colors ${
+                      className={`px-3 py-1 text-xs font-sans uppercase tracking-wider rounded-[4px] transition-colors ${
                         isActive 
-                          ? (v.id === 'watch' || v.id === 'youtube' ? 'bg-red-500 text-white shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'bg-fouzar-accent text-white')
+                          ? (v.id === 'watch' || v.id === 'youtube' ? 'bg-red-500 text-fouzar-text-primary shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'bg-fouzar-accent text-fouzar-text-primary')
                           : 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-white/5'
                       } disabled:opacity-30`}
                     >
@@ -455,7 +455,7 @@ export default function StudyGroupRoom() {
                     right: prev.right ? null : (prev.left === 'notepad' ? 'slides' : 'notepad') 
                   }))}
                   disabled={isFlowActive}
-                  className={`px-2.5 py-1 flex items-center gap-1 font-mono text-[9px] uppercase tracking-wider rounded-[4px] transition-colors ${
+                  className={`px-2.5 py-1 flex items-center gap-1 font-sans text-xs uppercase tracking-wider rounded-[4px] transition-colors ${
                     activeSplitTabs.right
                       ? 'bg-indigo-500/20 text-indigo-400'
                       : 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-white/5'
@@ -467,10 +467,10 @@ export default function StudyGroupRoom() {
                 
                 {activeSplitTabs.right && !isFlowActive && (
                   <div className="flex items-center gap-1 ml-2 bg-fouzar-elevated/40 p-1 rounded-[4px] border border-fouzar-border/50">
-                    <span className="text-[7px] font-mono uppercase text-fouzar-text-tertiary px-1">Right Panel:</span>
+                    <span className="text-[11px] font-sans uppercase text-fouzar-text-tertiary px-1">Right Panel:</span>
                     <button
                       onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: 'notepad' }))}
-                      className={`px-2 py-1 rounded-[4px] text-[8px] font-mono uppercase transition-all ${
+                      className={`px-2 py-1 rounded-[4px] text-xs font-sans uppercase transition-all ${
                         activeSplitTabs.right === 'notepad' ? 'bg-fouzar-accent text-fouzar-text-inverse' : 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-fouzar-accent/10'
                       }`}
                     >
@@ -478,7 +478,7 @@ export default function StudyGroupRoom() {
                     </button>
                     <button
                       onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: 'slides' }))}
-                      className={`px-2 py-1 rounded-[4px] text-[8px] font-mono uppercase transition-all ${
+                      className={`px-2 py-1 rounded-[4px] text-xs font-sans uppercase transition-all ${
                         activeSplitTabs.right === 'slides' ? 'bg-fouzar-accent text-fouzar-text-inverse' : 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-fouzar-accent/10'
                       }`}
                     >
@@ -486,15 +486,15 @@ export default function StudyGroupRoom() {
                     </button>
                     <button
                       onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: 'youtube' }))}
-                      className={`px-2 py-1 rounded-[4px] text-[8px] font-mono uppercase transition-all ${
-                        activeSplitTabs.right === 'youtube' ? 'bg-red-500 text-white' : 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-red-500/10'
+                      className={`px-2 py-1 rounded-[4px] text-xs font-sans uppercase transition-all ${
+                        activeSplitTabs.right === 'youtube' ? 'bg-red-500 text-fouzar-text-primary' : 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-red-500/10'
                       }`}
                     >
                       YouTube
                     </button>
                     <button
                       onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: 'watch' }))}
-                      className={`px-2 py-1 rounded-[4px] text-[8px] font-mono uppercase transition-all ${
+                      className={`px-2 py-1 rounded-[4px] text-xs font-sans uppercase transition-all ${
                         activeSplitTabs.right === 'watch' ? 'bg-fouzar-accent text-fouzar-text-inverse' : 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-fouzar-accent/10'
                       }`}
                     >
@@ -505,7 +505,7 @@ export default function StudyGroupRoom() {
               </div>
               
               {activeSplitTabs.left === 'notepad' && (
-                <span className="text-[8px] font-mono text-fouzar-text-tertiary uppercase">
+                <span className="text-xs font-mono text-fouzar-text-tertiary uppercase">
                   {isSaving ? 'Saving...' : 'Saved to local storage'}
                 </span>
               )}

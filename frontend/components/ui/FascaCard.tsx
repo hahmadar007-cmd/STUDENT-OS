@@ -19,7 +19,7 @@ export const FascaCard: React.FC<FascaCardProps> = ({
 }) => {
   return (
     <div
-      className={`bg-[#16161f] border border-[#2a2a3a] rounded-[6px] shadow-[0_4px_20px_rgba(124,92,252,0.08)] transition-all duration-150 ease-out ${className}`}
+      className={`bg-fouzar-card border border-fouzar-border-strong rounded-[6px] shadow-[0_4px_20px_rgba(124,92,252,0.08)] transition-all duration-150 ease-out ${className}`}
       {...props}
     >
       {children}

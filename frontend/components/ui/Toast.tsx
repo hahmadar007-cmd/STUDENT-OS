@@ -73,24 +73,24 @@ export const ToastContainer: React.FC = () => {
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: 50, scale: 0.95 }}
               transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-              className={`pointer-events-auto w-full bg-[#111118] border border-[#2a2a3a] ${borderTheme} ${glowTheme} rounded-[6px] p-4 flex items-start justify-between gap-3`}
+              className={`pointer-events-auto w-full bg-fouzar-surface border border-fouzar-border-strong ${borderTheme} ${glowTheme} rounded-[6px] p-4 flex items-start justify-between gap-3`}
             >
               <div className="flex gap-3">
                 <div className={`mt-0.5 ${iconColor} shrink-0`}>
                   <Icon className="w-4 h-4" />
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] font-bold text-[#f0f0ff] uppercase tracking-wider leading-snug">
+                  <span className="text-[10px] font-bold text-fouzar-text-primary uppercase tracking-wider leading-snug">
                     {t.type === 'violet' ? 'Message' : t.type === 'crimson' ? 'Flow Signal' : 'System Alert'}
                   </span>
-                  <p className="text-[9px] font-mono text-[#6b6b8a] uppercase leading-relaxed">
+                  <p className="text-[9px] font-mono text-fouzar-text-secondary uppercase leading-relaxed">
                     {t.message}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => removeToast(t.id)}
-                className="text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors p-0.5 rounded cursor-pointer"
+                className="text-fouzar-text-secondary hover:text-fouzar-text-primary transition-colors p-0.5 rounded cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>

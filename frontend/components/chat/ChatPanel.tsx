@@ -102,12 +102,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       <div className="flex items-center justify-between pb-3 border-b border-fouzar-border mb-4">
         <div className="flex items-center gap-2">
           <MessageSquare className="w-4 h-4 text-fouzar-accent animate-pulse" />
-          <span className="font-sans font-light text-[10px] uppercase tracking-[0.2em] text-fouzar-text-primary">
+          <span className="font-sans font-medium text-sm uppercase tracking-wider text-fouzar-text-primary">
             Group Logs
           </span>
         </div>
         {currentSlideId && (
-          <div className="flex items-center gap-1 text-[8px] font-mono bg-fouzar-accent/10 text-fouzar-accent border border-fouzar-accent/20 px-2.5 py-0.5 rounded-full text-glow-accent">
+          <div className="flex items-center gap-1 text-[11px] font-mono bg-fouzar-accent/10 text-fouzar-accent border border-fouzar-accent/20 px-2.5 py-0.5 rounded-full text-glow-accent">
             <Hash className="w-2.5 h-2.5" />
             <span>Slide {currentSlideId}</span>
           </div>
@@ -118,8 +118,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       <div className="flex-1 overflow-y-auto space-y-4 pr-1 max-h-[380px] scrollbar-none">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center text-fouzar-text-secondary p-8 select-none">
-            <span className="text-[10px] font-mono uppercase tracking-widest">No logs yet.</span>
-            <span className="text-[9px] text-fouzar-text-secondary/60 mt-1">Start typing below to broadcast.</span>
+            <span className="text-sm font-sans uppercase tracking-wider">No logs yet.</span>
+            <span className="text-xs text-fouzar-text-secondary/60 mt-1">Start typing below to broadcast.</span>
           </div>
         ) : (
           <div className="space-y-4">
@@ -134,27 +134,27 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
               return (
                 <div key={msg.id} className="flex items-start gap-3 group/msg hover:bg-white/2 p-1.5 rounded-[4px] transition-colors">
                   {/* Discord Circular Avatar */}
-                  <div className="w-9 h-9 rounded-full bg-white/5 border border-fouzar-border shrink-0 flex items-center justify-center font-mono text-xs font-bold text-fouzar-text-secondary">
+                  <div className="w-9 h-9 rounded-full bg-white/5 border border-fouzar-border shrink-0 flex items-center justify-center font-sans text-sm font-bold text-fouzar-text-secondary">
                     {senderInitials}
                   </div>
 
                   {/* Message details */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-fouzar-text-primary hover:underline cursor-pointer">
+                      <span className="text-sm font-semibold text-fouzar-text-primary hover:underline cursor-pointer">
                         {msg.sender.name || msg.sender.email.split('@')[0]}
                       </span>
-                      <span className="text-[8px] font-mono text-fouzar-text-secondary/50">
+                      <span className="text-xs font-mono text-fouzar-text-secondary/50">
                         {formatTimestamp(msg.createdAt)}
                       </span>
                       {msg.slideId && (
-                        <span className="text-[7px] font-mono bg-fouzar-border/40 text-fouzar-text-secondary px-1.5 py-0.2 rounded-full flex items-center gap-0.5">
+                        <span className="text-[11px] font-mono bg-fouzar-border/40 text-fouzar-text-secondary px-1.5 py-0.2 rounded-full flex items-center gap-0.5">
                           <Hash className="w-2 h-2" />
                           {msg.slideId}
                         </span>
                       )}
                     </div>
-                    <p className="text-xs font-light text-fouzar-text-primary mt-1 leading-relaxed break-words">
+                    <p className="text-sm font-normal text-fouzar-text-primary mt-1 leading-relaxed break-words">
                       {msg.content}
                     </p>
                   </div>
@@ -174,7 +174,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             placeholder="Type your message..."
-            className="flex-1 bg-transparent text-xs text-fouzar-text-primary focus:outline-none placeholder:text-fouzar-text-secondary/35"
+            className="flex-1 bg-transparent text-sm text-fouzar-text-primary focus:outline-none placeholder:text-fouzar-text-secondary/35"
           />
         </div>
         <button

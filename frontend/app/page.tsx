@@ -46,7 +46,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen relative select-none bg-[#0a0a0f] text-[#f0f0ff] font-sans antialiased overflow-x-hidden">
+    <div className="flex flex-col min-h-screen relative select-none bg-fouzar-bg text-fouzar-text-primary font-sans antialiased overflow-x-hidden">
       
       {/* Background radial grid */}
       <motion.div
@@ -101,7 +101,7 @@ export default function LandingPage() {
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.3, duration: 0.6 }}
             >
-              <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold tracking-[0.05em] text-[#f0f0ff] leading-none mb-6">
+              <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold tracking-[0.05em] text-fouzar-text-primary leading-none mb-6">
                 Study like you mean it.
               </h1>
             </motion.div>
@@ -112,7 +112,7 @@ export default function LandingPage() {
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.5, duration: 0.6 }}
             >
-              <p className="text-[#6b6b8a] text-xs md:text-sm font-light max-w-lg leading-relaxed mb-10">
+              <p className="text-fouzar-text-secondary text-xs md:text-sm font-light max-w-lg leading-relaxed mb-10">
                 Real-time collaboration. AI that knows your slide. Focus mode your peers will notice.
               </p>
             </motion.div>
@@ -131,7 +131,7 @@ export default function LandingPage() {
                   {/* Solid violet background on hover */}
                   <div className="absolute inset-0 bg-[#7c5cfc] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   {/* Inner text container */}
-                  <div className="relative px-10 py-4 bg-[#0a0a0f] text-[#f0f0ff] group-hover:bg-transparent group-hover:text-[#0a0a0f] transition-all duration-300 text-[10px] font-mono font-bold uppercase tracking-[0.25em] rounded-none">
+                  <div className="relative px-10 py-4 bg-fouzar-bg text-fouzar-text-primary group-hover:bg-transparent group-hover:text-[#0a0a0f] transition-all duration-300 text-[10px] font-mono font-bold uppercase tracking-[0.25em] rounded-none">
                     ENTER FASCA
                   </div>
                 </Link>
@@ -140,7 +140,7 @@ export default function LandingPage() {
               <FascaButton
                 variant="ghost-violet"
                 onClick={scrollToInfo}
-                className="text-[9px] font-mono uppercase tracking-widest px-6 py-4 rounded-none border border-[#2a2a3a] flex items-center gap-2"
+                className="text-[9px] font-mono uppercase tracking-widest px-6 py-4 rounded-none border border-fouzar-border-strong flex items-center gap-2"
               >
                 EXPLORE INFO <ArrowDown className="w-3.5 h-3.5 animate-bounce" />
               </FascaButton>
@@ -153,7 +153,7 @@ export default function LandingPage() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.8 }}
-              className="relative w-full max-w-lg aspect-[16/9] border rounded-none overflow-hidden bg-[#111118]/60 p-1.5 shadow-[0_0_50px_-12px_rgba(124,92,252,0.3)] group cursor-pointer transition-colors duration-500"
+              className="relative w-full max-w-lg aspect-[16/9] border rounded-none overflow-hidden bg-fouzar-surface/60 p-1.5 shadow-[0_0_50px_-12px_rgba(124,92,252,0.3)] group cursor-pointer transition-colors duration-500"
               style={{ borderColor: `${slides[currentSlide].color}30` }}
             >
               {/* Outer frame neon line */}
@@ -191,12 +191,12 @@ export default function LandingPage() {
                         >
                           {slides[currentSlide].tag}
                         </span>
-                        <span className="text-xs font-serif font-bold text-[#f0f0ff] mt-0.5">
+                        <span className="text-xs font-serif font-bold text-fouzar-text-primary mt-0.5">
                           {slides[currentSlide].title}
                         </span>
                       </div>
                       <span 
-                        className="text-[7.5px] font-mono text-[#6b6b8a] uppercase tracking-wider bg-[#0a0a0f]/80 px-2 py-0.5 border"
+                        className="text-[7.5px] font-mono text-fouzar-text-secondary uppercase tracking-wider bg-fouzar-bg/80 px-2 py-0.5 border"
                         style={{ borderColor: `${slides[currentSlide].color}30` }}
                       >
                         {slides[currentSlide].badge}
@@ -230,7 +230,7 @@ export default function LandingPage() {
         <div className="flex justify-center mt-12 lg:mt-6">
           <button 
             onClick={scrollToInfo}
-            className="flex flex-col items-center gap-1 text-[7.5px] font-mono uppercase tracking-[0.3em] text-[#6b6b8a] hover:text-[#7c5cfc] transition-colors cursor-pointer bg-transparent border-none"
+            className="flex flex-col items-center gap-1 text-[7.5px] font-mono uppercase tracking-[0.3em] text-fouzar-text-secondary hover:text-[#7c5cfc] transition-colors cursor-pointer bg-transparent border-none"
           >
             <span>SCROLL TO EXPLORE</span>
             <ArrowDown className="w-3.5 h-3.5 animate-bounce mt-1 text-[#7c5cfc]" />
@@ -241,7 +241,7 @@ export default function LandingPage() {
       {/* Scroll Down Page Section (Detailed information) */}
       <section 
         id="info-section" 
-        className="w-full min-h-screen bg-[#111118]/80 border-t border-[#2a2a3a]/40 relative z-10 py-24 flex flex-col justify-center"
+        className="w-full min-h-screen bg-fouzar-surface/80 border-t border-fouzar-border-strong/40 relative z-10 py-24 flex flex-col justify-center"
       >
         {/* Subtle grid backdrop inside the section */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#161623_1px,transparent_1px),linear-gradient(to_bottom,#161623_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-30 pointer-events-none" />
@@ -255,22 +255,22 @@ export default function LandingPage() {
               initial={{ opacity: 0, x: -30 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
-              className="w-full max-w-md bg-[#16161f] border border-[#2a2a3a] p-4 shadow-2xl relative"
+              className="w-full max-w-md bg-fouzar-card border border-fouzar-border-strong p-4 shadow-2xl relative"
             >
               {/* Top editor bar styling */}
-              <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#2a2a3a]">
+              <div className="flex items-center justify-between pb-3 mb-4 border-b border-fouzar-border-strong">
                 <div className="flex gap-1.5">
                   <div className="w-2 h-2 rounded-full bg-[#ff2d55]" />
                   <div className="w-2 h-2 rounded-full bg-[#ffcc00]" />
                   <div className="w-2 h-2 rounded-full bg-[#00cd46]" />
                 </div>
-                <span className="text-[7.5px] font-mono text-[#6b6b8a] uppercase tracking-widest">
+                <span className="text-[7.5px] font-mono text-fouzar-text-secondary uppercase tracking-widest">
                   study_materials.png
                 </span>
               </div>
 
               {/* Styled Image */}
-              <div className="aspect-square bg-rose-950/20 overflow-hidden relative border border-[#2a2a3a]">
+              <div className="aspect-square bg-rose-950/20 overflow-hidden relative border border-fouzar-border-strong">
                 <img 
                   src="/study-book.png" 
                   alt="Student OS Study Assets" 
@@ -286,13 +286,13 @@ export default function LandingPage() {
                   <p className="text-[8px] font-mono text-[#ff2d55] uppercase tracking-widest font-bold">
                     STUDY CORE ASSETS V1.0
                   </p>
-                  <p className="text-lg font-serif font-bold text-[#f0f0ff] mt-0.5">
+                  <p className="text-lg font-serif font-bold text-fouzar-text-primary mt-0.5">
                     Interactive Study Ledger
                   </p>
                 </div>
               </div>
 
-              <div className="mt-4 flex items-center justify-between text-[7.5px] font-mono text-[#6b6b8a] uppercase tracking-wider">
+              <div className="mt-4 flex items-center justify-between text-[7.5px] font-mono text-fouzar-text-secondary uppercase tracking-wider">
                 <span>RESOURCE CACHE STABLE</span>
                 <span className="text-[#00cd46] animate-pulse">● DATABASE CONNECTED</span>
               </div>
@@ -312,12 +312,12 @@ export default function LandingPage() {
                 <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#ff2d55]">
                   ABOUT THE PLATFORM
                 </span>
-                <h2 className="font-serif text-3xl md:text-4xl font-bold tracking-[0.02em] text-[#f0f0ff] mt-1">
+                <h2 className="font-serif text-3xl md:text-4xl font-bold tracking-[0.02em] text-fouzar-text-primary mt-1">
                   What is Student OS?
                 </h2>
               </div>
 
-              <p className="text-[#6b6b8a] text-xs font-light leading-relaxed">
+              <p className="text-fouzar-text-secondary text-xs font-light leading-relaxed">
                 Fasca Student OS is a custom-engineered workspace crafted specifically for academic focus and collaboration. It merges peer presence networking, interactive slide-synced classrooms, and direct AI companion assets to redefine how you approach study sessions.
               </p>
 
@@ -325,53 +325,53 @@ export default function LandingPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4">
                 
                 {/* Feature 1 */}
-                <div className="space-y-2 border-t border-[#2a2a3a]/60 pt-4">
+                <div className="space-y-2 border-t border-fouzar-border-strong/60 pt-4">
                   <div className="flex items-center gap-2">
                     <Users className="w-4 h-4 text-[#ff2d55]" />
-                    <h3 className="font-mono text-[10px] uppercase font-bold tracking-wider text-[#f0f0ff]">
+                    <h3 className="font-mono text-[10px] uppercase font-bold tracking-wider text-fouzar-text-primary">
                       Study Circles
                     </h3>
                   </div>
-                  <p className="text-[#6b6b8a] text-[9px] font-mono leading-relaxed uppercase">
+                  <p className="text-fouzar-text-secondary text-[9px] font-mono leading-relaxed uppercase">
                     Connect in peer-to-peer study streams with live presence indicators and shared sync targets.
                   </p>
                 </div>
 
                 {/* Feature 2 */}
-                <div className="space-y-2 border-t border-[#2a2a3a]/60 pt-4">
+                <div className="space-y-2 border-t border-fouzar-border-strong/60 pt-4">
                   <div className="flex items-center gap-2">
                     <Cpu className="w-4 h-4 text-[#ff2d55]" />
-                    <h3 className="font-mono text-[10px] uppercase font-bold tracking-wider text-[#f0f0ff]">
+                    <h3 className="font-mono text-[10px] uppercase font-bold tracking-wider text-fouzar-text-primary">
                       AI Core Guidance
                     </h3>
                   </div>
-                  <p className="text-[#6b6b8a] text-[9px] font-mono leading-relaxed uppercase">
+                  <p className="text-fouzar-text-secondary text-[9px] font-mono leading-relaxed uppercase">
                     Your AI companion understands your slide deck context and assists you instantly with queries.
                   </p>
                 </div>
 
                 {/* Feature 3 */}
-                <div className="space-y-2 border-t border-[#2a2a3a]/60 pt-4">
+                <div className="space-y-2 border-t border-fouzar-border-strong/60 pt-4">
                   <div className="flex items-center gap-2">
                     <Shield className="w-4 h-4 text-[#ff2d55]" />
-                    <h3 className="font-mono text-[10px] uppercase font-bold tracking-wider text-[#f0f0ff]">
+                    <h3 className="font-mono text-[10px] uppercase font-bold tracking-wider text-fouzar-text-primary">
                       Deep Focus Shield
                     </h3>
                   </div>
-                  <p className="text-[#6b6b8a] text-[9px] font-mono leading-relaxed uppercase">
+                  <p className="text-fouzar-text-secondary text-[9px] font-mono leading-relaxed uppercase">
                     Trigger custom cognitive flow timers and shield block configurations to silence notifications.
                   </p>
                 </div>
 
                 {/* Feature 4 */}
-                <div className="space-y-2 border-t border-[#2a2a3a]/60 pt-4">
+                <div className="space-y-2 border-t border-fouzar-border-strong/60 pt-4">
                   <div className="flex items-center gap-2">
                     <Plug className="w-4 h-4 text-[#ff2d55]" />
-                    <h3 className="font-mono text-[10px] uppercase font-bold tracking-wider text-[#f0f0ff]">
+                    <h3 className="font-mono text-[10px] uppercase font-bold tracking-wider text-fouzar-text-primary">
                       LMS Bridge Panel
                     </h3>
                   </div>
-                  <p className="text-[#6b6b8a] text-[9px] font-mono leading-relaxed uppercase">
+                  <p className="text-fouzar-text-secondary text-[9px] font-mono leading-relaxed uppercase">
                     Bridge deadlines and course materials from Canvas, Blackboard, or external calendars.
                   </p>
                 </div>
@@ -397,13 +397,13 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="w-full max-w-7xl mx-auto px-6 py-6 border-t border-[#2a2a3a]/40 flex items-center justify-between text-[8px] font-mono text-[#6b6b8a] z-10 uppercase tracking-widest relative">
+      <footer className="w-full max-w-7xl mx-auto px-6 py-6 border-t border-fouzar-border-strong/40 flex items-center justify-between text-[8px] font-mono text-fouzar-text-secondary z-10 uppercase tracking-widest relative">
         <div className="flex items-center gap-2.5">
           <span>FASCA</span>
           <span className="w-[1.5px] h-2.5 bg-[#2a2a3a]" />
           <span>V1.0</span>
         </div>
-        <span className="text-[#6b6b8a]">
+        <span className="text-fouzar-text-secondary">
           © 2025 hahmadar007-cmd — All Rights Reserved. Proprietary & Confidential.
         </span>
       </footer>

@@ -82,32 +82,52 @@ export const FascaTimeline: React.FC = () => {
         customEvents = [
           {
             id: 'ev-1',
-            date: 'JUN 04, 2026',
-            timestamp: Date.now() - 2 * 24 * 60 * 60 * 1000,
-            title: 'ML Project Draft',
-            course: 'CS-229',
-            type: 'MILESTONE',
-            description: 'Submit preliminary architecture ideas and git repository link for review.',
+            date: 'JUL 06, 2026',
+            timestamp: Date.parse('JUL 06, 2026'),
+            title: 'Computer Networks Final (High Priority)',
+            course: 'CS-NET',
+            type: 'EXAM',
+            description: 'Final Exam',
             link: '#',
           },
           {
             id: 'ev-2',
-            date: 'JUN 05, 2026',
-            timestamp: Date.now() - 1 * 24 * 60 * 60 * 1000,
-            title: 'Neural Nets Deep Dive',
-            course: 'CS-229',
-            type: 'LECTURE',
-            description: 'Guest lecture on advanced transformers and auto-regressive decoding strategies.',
+            date: 'JUL 07, 2026',
+            timestamp: Date.parse('JUL 07, 2026'),
+            title: 'Theory of Automata',
+            course: 'CS-TOA',
+            type: 'EXAM',
+            description: 'Final Exam',
             link: '#',
           },
           {
             id: 'ev-3',
-            date: 'JUN 07, 2026',
-            timestamp: Date.now() + 1 * 24 * 60 * 60 * 1000,
-            title: 'Probability Midterm',
-            course: 'CS-109',
+            date: 'JUL 08, 2026',
+            timestamp: Date.parse('JUL 08, 2026'),
+            title: 'Database Systems',
+            course: 'CS-DB',
             type: 'EXAM',
-            description: 'Covers discrete random variables, combinations, expectation, and Bayes theorem.',
+            description: 'Final Exam',
+            link: '#',
+          },
+          {
+            id: 'ev-4',
+            date: 'JUL 09, 2026',
+            timestamp: Date.parse('JUL 09, 2026'),
+            title: 'Professional Practices',
+            course: 'CS-PP',
+            type: 'EXAM',
+            description: 'Final Exam',
+            link: '#',
+          },
+          {
+            id: 'ev-5',
+            date: 'JUL 10, 2026',
+            timestamp: Date.parse('JUL 10, 2026'),
+            title: 'Computer Architecture',
+            course: 'CS-ARCH',
+            type: 'EXAM',
+            description: 'Final Exam',
             link: '#',
           },
         ];
@@ -207,18 +227,18 @@ export const FascaTimeline: React.FC = () => {
       case 'EXAM':
         return 'bg-[#06b6d4]/10 border border-[#06b6d4]/30 text-[#06b6d4]';
       case 'MILESTONE':
-        return 'bg-white/5 border border-white/20 text-[#f0f0ff]';
+        return 'bg-white/5 border border-fouzar-border-strong text-fouzar-text-primary';
       default:
-        return 'bg-white/5 text-[#f0f0ff]';
+        return 'bg-white/5 text-fouzar-text-primary';
     }
   };
 
   return (
-    <div className="w-full bg-[#111118]/40 border border-[#2a2a3a] rounded-[6px] p-6 relative overflow-hidden min-h-[380px] flex flex-col justify-center">
+    <div className="w-full bg-fouzar-surface/40 border border-fouzar-border-strong rounded-[6px] p-6 relative overflow-hidden min-h-[380px] flex flex-col justify-center">
       
       {/* Header with actions */}
       <div className="flex justify-between items-center mb-2 z-10">
-        <span className="text-[8.5px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a]">
+        <span className="text-[8.5px] font-mono uppercase tracking-[0.25em] text-fouzar-text-secondary">
           Dynamic Timeline Hub
         </span>
         <button
@@ -230,10 +250,10 @@ export const FascaTimeline: React.FC = () => {
       </div>
 
       {/* Scrollable Timeline Area */}
-      <div className="w-full overflow-x-auto py-1 relative scrollbar-thin min-w-[500px] h-[280px]">
+      <div className="w-full overflow-x-auto py-1 relative [&::-webkit-scrollbar]:hidden scrollbar-none min-w-[500px] h-[280px]">
         
         {/* Connecting Horizontal Line */}
-        <div className="absolute left-0 right-0 top-[205px] h-[1.5px] bg-[#2a2a3a]/60 z-0" />
+        <div className="absolute left-0 right-0 top-[205px] h-[1.5px] bg-fouzar-border-strong/60 z-0" />
         
         {/* TODAY Vertical Line Marker */}
         <div 
@@ -259,14 +279,14 @@ export const FascaTimeline: React.FC = () => {
                 {/* Event Card positioned at the top */}
                 <div className="w-full relative z-20">
                   <FascaCard 
-                    className={`p-4 flex flex-col justify-between rounded-[6px] bg-[#16161f]/95 hover:border-[#7c5cfc]/60 shadow-xl transition-all duration-200 min-h-[140px] ${
-                      isHovered ? 'shadow-[0_0_16px_rgba(124,92,252,0.15)] border-[#7c5cfc]/50' : 'border-[#2a2a3a]'
+                    className={`p-4 flex flex-col justify-between rounded-[6px] bg-fouzar-card/95 hover:border-[#7c5cfc]/60 shadow-xl transition-all duration-200 min-h-[140px] ${
+                      isHovered ? 'shadow-[0_0_16px_rgba(124,92,252,0.15)] border-[#7c5cfc]/50' : 'border-fouzar-border-strong'
                     }`}
                   >
                     <div className="space-y-2.5">
                       {/* Date and Delete button */}
                       <div className="flex justify-between items-center">
-                        <span className="text-[7.5px] font-mono text-[#6b6b8a] uppercase tracking-wider">
+                        <span className="text-[7.5px] font-mono text-fouzar-text-secondary uppercase tracking-wider">
                           {event.date}
                         </span>
                         {event.isCustom && isHovered && (
@@ -275,7 +295,7 @@ export const FascaTimeline: React.FC = () => {
                               e.stopPropagation();
                               handleDeleteCustomEvent(event.id);
                             }}
-                            className="text-[#6b6b8a] hover:text-[#ff2d55] transition-colors"
+                            className="text-fouzar-text-secondary hover:text-[#ff2d55] transition-colors"
                             title="Delete event"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -284,7 +304,7 @@ export const FascaTimeline: React.FC = () => {
                       </div>
 
                       {/* Event Title */}
-                      <h5 className="text-[11px] font-bold text-[#f0f0ff] tracking-wide line-clamp-1">
+                      <h5 className="text-[11px] font-bold text-fouzar-text-primary tracking-wide line-clamp-1">
                         {event.title}
                       </h5>
 
@@ -306,9 +326,9 @@ export const FascaTimeline: React.FC = () => {
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
                             transition={{ duration: 0.15 }}
-                            className="pt-2 border-t border-[#2a2a3a]/40"
+                            className="pt-2 border-t border-fouzar-border-strong/40"
                           >
-                            <p className="text-[8px] text-[#6b6b8a] leading-relaxed font-sans mb-2">
+                            <p className="text-[8px] text-fouzar-text-secondary leading-relaxed font-sans mb-2">
                               {event.description}
                             </p>
                           </motion.div>
@@ -320,8 +340,8 @@ export const FascaTimeline: React.FC = () => {
 
                 {/* Dot connector positioned exactly at the bottom intersection */}
                 <div 
-                  className={`absolute left-[50%] translate-x-[-50%] top-[200px] w-2.5 h-2.5 rounded-full border-2 bg-[#111118] transition-colors duration-150 z-30 ${
-                    isHovered ? 'border-[#7c5cfc] bg-[#7c5cfc] shadow-[0_0_8px_#7c5cfc]' : 'border-[#2a2a3a]'
+                  className={`absolute left-[50%] translate-x-[-50%] top-[200px] w-2.5 h-2.5 rounded-full border-2 bg-fouzar-surface transition-colors duration-150 z-30 ${
+                    isHovered ? 'border-[#7c5cfc] bg-[#7c5cfc] shadow-[0_0_8px_#7c5cfc]' : 'border-fouzar-border-strong'
                   }`} 
                 />
               </div>
@@ -331,7 +351,7 @@ export const FascaTimeline: React.FC = () => {
 
       </div>
 
-      <span className="text-[7.5px] font-mono text-[#6b6b8a] uppercase tracking-[0.2em] block text-center mt-2 z-10">
+      <span className="text-[7.5px] font-mono text-fouzar-text-secondary uppercase tracking-[0.2em] block text-center mt-2 z-10">
         ← Drag timeline to scroll | Hover events to view details & delete custom milestones →
       </span>
 
@@ -342,22 +362,22 @@ export const FascaTimeline: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-md flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-fouzar-bg/80 backdrop-blur-md flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 12 }}
-              className="bg-[#14141c] border border-[#2a2a3a] p-6 rounded-[var(--fouzar-radius-lg)] shadow-2xl w-full max-w-sm space-y-4 text-left"
+              className="bg-fouzar-surface border border-fouzar-border-strong p-6 rounded-[var(--fouzar-radius-lg)] shadow-2xl w-full max-w-sm space-y-4 text-left"
             >
-              <div className="flex items-center justify-between border-b border-[#2a2a3a]/40 pb-2">
-                <span className="font-mono text-[9px] uppercase tracking-widest text-[#6b6b8a] flex items-center gap-1.5">
+              <div className="flex items-center justify-between border-b border-fouzar-border-strong/40 pb-2">
+                <span className="font-mono text-[9px] uppercase tracking-widest text-fouzar-text-secondary flex items-center gap-1.5">
                   <Calendar className="w-4 h-4 text-[#7c5cfc]" /> Add Custom Event
                 </span>
                 <button
                   type="button"
                   onClick={() => setShowAddEventModal(false)}
-                  className="text-[#6b6b8a] hover:text-[#f0f0ff]"
+                  className="text-fouzar-text-secondary hover:text-fouzar-text-primary"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -365,7 +385,7 @@ export const FascaTimeline: React.FC = () => {
 
               <form onSubmit={handleAddCustomEvent} className="space-y-3.5">
                 <div className="space-y-1">
-                  <label className="font-mono text-[7px] uppercase tracking-wider text-[#6b6b8a] block">
+                  <label className="font-mono text-[7px] uppercase tracking-wider text-fouzar-text-secondary block">
                     Event Title
                   </label>
                   <input
@@ -374,13 +394,13 @@ export const FascaTimeline: React.FC = () => {
                     placeholder="e.g. Lab 4 Submission..."
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
-                    className="w-full bg-[#16161f] border border-[#2a2a3a] px-3 py-2 text-[10px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-[#7c5cfc] text-[#f0f0ff]"
+                    className="w-full bg-fouzar-card border border-fouzar-border-strong px-3 py-2 text-[10px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-[#7c5cfc] text-fouzar-text-primary"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="font-mono text-[7px] uppercase tracking-wider text-[#6b6b8a] block">
+                    <label className="font-mono text-[7px] uppercase tracking-wider text-fouzar-text-secondary block">
                       Course/Tag
                     </label>
                     <input
@@ -388,18 +408,18 @@ export const FascaTimeline: React.FC = () => {
                       placeholder="e.g. CS-229..."
                       value={newCourse}
                       onChange={(e) => setNewCourse(e.target.value)}
-                      className="w-full bg-[#16161f] border border-[#2a2a3a] px-3 py-2 text-[10px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-[#7c5cfc] text-[#f0f0ff] uppercase"
+                      className="w-full bg-fouzar-card border border-fouzar-border-strong px-3 py-2 text-[10px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-[#7c5cfc] text-fouzar-text-primary uppercase"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="font-mono text-[7px] uppercase tracking-wider text-[#6b6b8a] block">
+                    <label className="font-mono text-[7px] uppercase tracking-wider text-fouzar-text-secondary block">
                       Event Type
                     </label>
                     <select
                       value={newType}
                       onChange={(e) => setNewType(e.target.value as any)}
-                      className="w-full bg-[#16161f] border border-[#2a2a3a] px-3 py-2 text-[9px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-[#7c5cfc] text-[#f0f0ff]"
+                      className="w-full bg-fouzar-card border border-fouzar-border-strong px-3 py-2 text-[9px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-[#7c5cfc] text-fouzar-text-primary"
                     >
                       <option value="MILESTONE">Milestone</option>
                       <option value="DEADLINE">Deadline</option>
@@ -410,7 +430,7 @@ export const FascaTimeline: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-mono text-[7px] uppercase tracking-wider text-[#6b6b8a] block">
+                  <label className="font-mono text-[7px] uppercase tracking-wider text-fouzar-text-secondary block">
                     Days from now
                   </label>
                   <input
@@ -419,19 +439,19 @@ export const FascaTimeline: React.FC = () => {
                     required
                     value={newDaysOffset}
                     onChange={(e) => setNewDaysOffset(parseInt(e.target.value) || 0)}
-                    className="w-full bg-[#16161f] border border-[#2a2a3a] px-3 py-2 text-[10px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-[#7c5cfc] text-[#f0f0ff]"
+                    className="w-full bg-fouzar-card border border-fouzar-border-strong px-3 py-2 text-[10px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-[#7c5cfc] text-fouzar-text-primary"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-mono text-[7px] uppercase tracking-wider text-[#6b6b8a] block">
+                  <label className="font-mono text-[7px] uppercase tracking-wider text-fouzar-text-secondary block">
                     Description
                   </label>
                   <textarea
                     placeholder="Enter details..."
                     value={newDescription}
                     onChange={(e) => setNewDescription(e.target.value)}
-                    className="w-full bg-[#16161f] border border-[#2a2a3a] px-3 py-2 text-[10px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-[#7c5cfc] text-[#f0f0ff] resize-none h-14"
+                    className="w-full bg-fouzar-card border border-fouzar-border-strong px-3 py-2 text-[10px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-[#7c5cfc] text-fouzar-text-primary resize-none h-14"
                   />
                 </div>
 
@@ -439,7 +459,7 @@ export const FascaTimeline: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setShowAddEventModal(false)}
-                    className="px-3 py-1.5 border border-[#2a2a3a] rounded-[var(--fouzar-radius-md)] font-mono text-[8px] uppercase text-[#6b6b8a] hover:text-[#f0f0ff] cursor-pointer"
+                    className="px-3 py-1.5 border border-fouzar-border-strong rounded-[var(--fouzar-radius-md)] font-mono text-[8px] uppercase text-fouzar-text-secondary hover:text-fouzar-text-primary cursor-pointer"
                   >
                     Cancel
                   </button>

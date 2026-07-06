@@ -127,7 +127,7 @@ export const FolderSelector: React.FC = () => {
             exit={{ opacity: 0, y: 4 }}
             transition={{ duration: 0.15 }}
             className={`absolute left-0 right-0 mt-1 border border-fouzar-border rounded-[var(--fouzar-radius-lg)] shadow-2xl overflow-hidden z-50 flex flex-col max-h-[300px] ${
-              mode === 'onyx' ? 'bg-[#14141c]' : 'bg-[#0a1018]'
+              mode === 'onyx' ? 'bg-fouzar-surface' : 'bg-[#0a1018]'
             }`}
           >
             {/* List of Folders */}

@@ -104,9 +104,9 @@ export const NotificationsCenter: React.FC<NotificationsCenterProps> = ({ align 
               align === 'left-up' ? 'left-0 bottom-full mb-2' :
               align === 'right-up' ? 'right-0 bottom-full mb-2' :
               'right-0 mt-2'
-            } w-72 bg-[#16161f]/95 backdrop-blur-xl border border-fouzar-border/60 rounded-[var(--fouzar-radius-lg)] shadow-2xl z-50 overflow-hidden`}
+            } w-72 bg-fouzar-card/95 backdrop-blur-xl border border-fouzar-border/60 rounded-[var(--fouzar-radius-lg)] shadow-2xl z-50 overflow-hidden`}
           >
-            <div className="px-4 py-3 border-b border-fouzar-border/40 bg-[#0a0a0f]/40 flex items-center justify-between">
+            <div className="px-4 py-3 border-b border-fouzar-border/40 bg-fouzar-bg/40 flex items-center justify-between">
               <span className="font-serif text-[10px] font-bold uppercase tracking-wider text-fouzar-text-primary">
                 Inbox Notifications
               </span>

@@ -201,7 +201,7 @@ const CustomPdfViewer = ({ fileUrl, className = "", onClose }: { fileUrl: string
   }, [totalPages]);
 
   return (
-    <div className={`relative flex flex-col bg-[#050508] overflow-hidden ${className}`} ref={containerRef}>
+    <div className={`relative flex flex-col bg-fouzar-bg overflow-hidden ${className}`} ref={containerRef}>
       {isLoading ? (
         <div className="absolute inset-0 flex items-center justify-center">
           <span className="font-mono text-[10px] text-fouzar-accent animate-pulse uppercase tracking-widest">
@@ -220,23 +220,23 @@ const CustomPdfViewer = ({ fileUrl, className = "", onClose }: { fileUrl: string
           </div>
           
           {totalPages > 0 && (
-            <div className="w-full bg-[#11111a]/80 backdrop-blur-md border-t border-white/5 py-2 flex items-center justify-center gap-4 shrink-0 z-10">
+            <div className="w-full bg-fouzar-surface/80 backdrop-blur-md border-t border-white/5 py-2 flex items-center justify-center gap-4 shrink-0 z-10">
               <button 
                 onClick={goPrev} 
                 disabled={currentPage <= 1}
-                className="p-1.5 text-white/50 hover:text-fouzar-accent disabled:opacity-20 disabled:cursor-not-allowed transition-colors rounded-[var(--fouzar-radius-sm)] hover:bg-white/5"
+                className="p-1.5 text-fouzar-text-primary/50 hover:text-fouzar-accent disabled:opacity-20 disabled:cursor-not-allowed transition-colors rounded-[var(--fouzar-radius-sm)] hover:bg-white/5"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <div className="font-mono text-[10px] font-bold tracking-widest text-white/80 flex items-center gap-2">
+              <div className="font-mono text-[10px] font-bold tracking-widest text-fouzar-text-primary/80 flex items-center gap-2">
                 <span className="w-6 text-right">{currentPage}</span>
-                <span className="text-white/30">/</span>
+                <span className="text-fouzar-text-primary/30">/</span>
                 <span className="w-6 text-left">{totalPages}</span>
               </div>
               <button 
                 onClick={goNext} 
                 disabled={currentPage >= totalPages}
-                className="p-1.5 text-white/50 hover:text-fouzar-accent disabled:opacity-20 disabled:cursor-not-allowed transition-colors rounded-[var(--fouzar-radius-sm)] hover:bg-white/5"
+                className="p-1.5 text-fouzar-text-primary/50 hover:text-fouzar-accent disabled:opacity-20 disabled:cursor-not-allowed transition-colors rounded-[var(--fouzar-radius-sm)] hover:bg-white/5"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>

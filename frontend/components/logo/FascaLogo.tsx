@@ -59,7 +59,7 @@ export const FascaLogo: React.FC<FascaLogoProps> = ({
 
       {showWordmark && (
         <span 
-          className="font-serif text-lg font-bold tracking-[0.2em] text-[#f0f0ff] leading-none"
+          className="font-serif text-lg font-bold tracking-[0.2em] text-fouzar-text-primary leading-none"
           style={{ fontFamily: 'var(--font-serif), sans-serif' }}
         >
           FASCA

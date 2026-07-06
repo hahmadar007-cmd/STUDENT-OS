@@ -17,7 +17,7 @@ export const FascaInput: React.FC<FascaInputProps> = ({
 }) => {
   return (
     <input
-      className={`w-full bg-[#111118]/60 border-b-2 border-[#2a2a3a] rounded-t-[6px] px-3 py-2.5 text-xs text-[#f0f0ff] placeholder-[#6b6b8a] transition-all duration-150 ease-out focus:outline-none focus:border-[#7c5cfc] focus:bg-[#111118]/90 focus:shadow-[0_1px_0_rgba(124,92,252,0.5)] ${className}`}
+      className={`w-full bg-fouzar-surface/60 border-b-2 border-fouzar-border-strong rounded-t-[6px] px-3 py-2.5 text-xs text-fouzar-text-primary placeholder-[#6b6b8a] transition-all duration-150 ease-out focus:outline-none focus:border-[#7c5cfc] focus:bg-fouzar-surface/90 focus:shadow-[0_1px_0_rgba(124,92,252,0.5)] ${className}`}
       {...props}
     />
   );

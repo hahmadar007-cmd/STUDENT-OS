@@ -180,11 +180,6 @@ export default function PersonalSanctuaryPage() {
   const [newSubjectCode, setNewSubjectCode] = useState('');
   const [addSubjectError, setAddSubjectError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (activeDoc?.id) {
-      setActiveSplitTabs(prev => ({ ...prev, left: activeDoc.id }));
-    }
-  }, [activeDoc?.id]);
 
   const handleWebSearchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -400,9 +395,9 @@ export default function PersonalSanctuaryPage() {
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder={`Your private ${semester} workspace — lecture notes, exam prep, project ideas...`}
-                    className="flex-1 min-h-[280px] lg:min-h-0 bg-fouzar-elevated/30 border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-5 font-mono text-[11px] leading-relaxed resize-none focus:outline-none focus:shadow-[var(--fouzar-focus-ring)]"
+                    className="flex-1 min-h-[280px] lg:min-h-0 bg-fouzar-elevated/30 border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-5 font-sans text-sm leading-relaxed resize-none focus:outline-none focus:shadow-[var(--fouzar-focus-ring)]"
                   />
-                  <p className="mt-2 font-mono text-[7px] text-fouzar-text-tertiary uppercase">
+                  <p className="mt-2 font-mono text-xs text-fouzar-text-tertiary uppercase">
                     Private — not shared with any group
                   </p>
                 </>
@@ -411,8 +406,11 @@ export default function PersonalSanctuaryPage() {
                   <DocumentViewer
                     document={openDocs.find(d => d.id === tabId)!}
                     onClose={() => {
-                      closeDoc(activeSplitTabs.left);
-                      setActiveSplitTabs(prev => ({ ...prev, left: 'notes' }));
+                      closeDoc(tabId);
+                      setActiveSplitTabs(prev => ({
+                        left: prev.left === tabId ? 'notes' : prev.left,
+                        right: prev.right === tabId ? null : prev.right
+                      }));
                     }}
                     isInline={true}
                   />
@@ -423,8 +421,8 @@ export default function PersonalSanctuaryPage() {
                     {/* Header */}
                     <div className="flex justify-between items-center border-b border-fouzar-border/30 pb-4">
                       <div>
-                        <h3 className="font-serif text-sm font-bold uppercase tracking-wider text-white">Slides Library</h3>
-                        <p className="text-[9px] text-fouzar-text-secondary uppercase mt-0.5 font-mono">
+                        <h3 className="font-serif text-base font-semibold uppercase tracking-wider text-fouzar-text-primary">Slides Library</h3>
+                        <p className="text-xs text-fouzar-text-secondary uppercase mt-0.5 font-mono">
                           {activeFolder?.name || 'General Space'} · Slides & Presentations
                         </p>
                       </div>
@@ -434,7 +432,7 @@ export default function PersonalSanctuaryPage() {
                         type="button"
                         disabled={uploading}
                         onClick={() => fileInputRef.current?.click()}
-                        className="px-3 py-1.5 bg-fouzar-accent text-fouzar-text-inverse font-mono text-[8px] uppercase font-bold rounded-[var(--fouzar-radius-md)] shadow-[var(--fouzar-glow-primary)] flex items-center gap-1.5 hover:opacity-90 transition-opacity cursor-pointer"
+                        className="px-3 py-1.5 bg-fouzar-accent text-fouzar-text-inverse font-sans text-xs uppercase font-bold rounded-[var(--fouzar-radius-md)] shadow-[var(--fouzar-glow-primary)] flex items-center gap-1.5 hover:opacity-90 transition-opacity cursor-pointer"
                       >
                         {uploading ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -463,19 +461,19 @@ export default function PersonalSanctuaryPage() {
                       >
                         <div>
                           <div className="flex items-center justify-between mb-2">
-                            <span className="font-serif text-[11px] font-bold uppercase text-fouzar-accent">
+                            <span className="font-serif text-xs font-bold uppercase text-fouzar-accent">
                               Demo Slides
                             </span>
                             <Sparkles className="w-4 h-4 text-fouzar-accent animate-pulse" />
                           </div>
-                          <h4 className="font-sans text-xs font-bold text-fouzar-text-primary leading-snug mb-1">
+                          <h4 className="font-sans text-sm font-semibold text-fouzar-text-primary leading-snug mb-1">
                             ML Foundations
                           </h4>
-                          <p className="text-[9px] text-fouzar-text-secondary leading-relaxed">
+                          <p className="text-xs text-fouzar-text-secondary leading-relaxed">
                             Learn loss functions, cross-entropy, backpropagation, and machine learning paradigms.
                           </p>
                         </div>
-                        <span className="font-mono text-[7px] text-fouzar-accent uppercase tracking-widest border border-fouzar-accent/20 px-2 py-0.5 rounded-[var(--fouzar-radius-sm)] inline-block w-fit mt-4">
+                        <span className="font-mono text-[11px] text-fouzar-accent uppercase tracking-widest border border-fouzar-accent/20 px-2 py-0.5 rounded-[var(--fouzar-radius-sm)] inline-block w-fit mt-4">
                           Open Presentation ↗
                         </span>
                       </div>
@@ -493,12 +491,22 @@ export default function PersonalSanctuaryPage() {
                           return (
                             <div
                               key={doc.id}
-                              onClick={() => setActiveDoc(doc)}
+                              onClick={() => {
+                                if (isPpt) {
+                                  setShowDemoSlides(true);
+                                } else {
+                                  setActiveDoc(doc);
+                                  setActiveSplitTabs(prev => ({
+                                    ...prev,
+                                    [prev.right === tabId ? 'right' : 'left']: doc.id
+                                  }));
+                                }
+                              }}
                               className="p-4 rounded-[var(--fouzar-radius-md)] border border-fouzar-border hover:border-fouzar-accent/40 bg-fouzar-elevated/20 hover:bg-fouzar-elevated/35 text-left flex flex-col justify-between transition-all hover:scale-[1.02] cursor-pointer shadow-[var(--fouzar-shadow-sm)]"
                             >
                               <div>
                                 <div className="flex items-center justify-between mb-2">
-                                  <span className={`font-mono text-[7px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${
+                                  <span className={`font-mono text-[11px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${
                                     isPpt 
                                       ? 'bg-fouzar-amber/10 border-fouzar-amber/20 text-fouzar-amber' 
                                       : 'bg-fouzar-signal/10 border-fouzar-signal/20 text-fouzar-signal'
@@ -507,14 +515,14 @@ export default function PersonalSanctuaryPage() {
                                   </span>
                                   <FileText className={`w-4 h-4 ${isPpt ? 'text-fouzar-amber' : 'text-fouzar-signal'}`} />
                                 </div>
-                                <h4 className="font-sans text-xs font-bold text-fouzar-text-primary leading-snug truncate" title={doc.fileName}>
+                                <h4 className="font-sans text-sm font-semibold text-fouzar-text-primary leading-snug truncate" title={doc.fileName}>
                                   {doc.fileName}
                                 </h4>
-                                <p className="text-[8px] font-mono text-fouzar-text-secondary uppercase mt-1">
+                                <p className="text-xs font-mono text-fouzar-text-secondary uppercase mt-1">
                                   Size: {doc.sizeLabel}
                                 </p>
                               </div>
-                              <span className="font-mono text-[7px] text-fouzar-text-primary uppercase tracking-widest border border-fouzar-border/30 px-2 py-0.5 rounded-[var(--fouzar-radius-sm)] inline-block w-fit mt-4">
+                              <span className="font-mono text-[11px] text-fouzar-text-primary uppercase tracking-widest border border-fouzar-border/30 px-2 py-0.5 rounded-[var(--fouzar-radius-sm)] inline-block w-fit mt-4">
                                 View Slides ↗
                               </span>
                             </div>
@@ -530,10 +538,10 @@ export default function PersonalSanctuaryPage() {
                     ).length === 0 && (
                       <div className="py-12 text-center border border-dashed border-fouzar-border rounded-[var(--fouzar-radius-lg)] bg-fouzar-elevated/10 flex flex-col items-center justify-center">
                         <FileText className="w-8 h-8 text-fouzar-text-tertiary mb-2" />
-                        <p className="font-mono text-[9px] text-fouzar-text-secondary uppercase">
+                        <p className="font-sans text-xs text-fouzar-text-secondary uppercase">
                           No presentations uploaded yet
                         </p>
-                        <p className="text-[7.5px] font-mono text-fouzar-text-tertiary uppercase mt-1">
+                        <p className="text-[11px] font-sans text-fouzar-text-tertiary uppercase mt-1">
                           Upload slide decks for this space above or drag them to the explorer.
                         </p>
                       </div>
@@ -548,14 +556,14 @@ export default function PersonalSanctuaryPage() {
                         <button
                           type="button"
                           onClick={() => setShowDemoSlides(false)}
-                          className="flex items-center gap-1 font-mono text-[8px] uppercase text-fouzar-text-secondary hover:text-fouzar-text-primary border border-fouzar-border/30 px-2 py-1 rounded-[var(--fouzar-radius-sm)] cursor-pointer bg-fouzar-elevated/30"
+                          className="flex items-center gap-1 font-sans text-xs uppercase text-fouzar-text-secondary hover:text-fouzar-text-primary border border-fouzar-border/30 px-2 py-1 rounded-[var(--fouzar-radius-sm)] cursor-pointer bg-fouzar-elevated/30"
                         >
                           <ArrowLeft className="w-3.5 h-3.5" /> Back to Library
                         </button>
                         <span className="w-[1px] h-4 bg-fouzar-border" />
-                        <span className="text-fouzar-accent uppercase tracking-widest text-[8px] font-mono">{activeSlide.topic}</span>
+                        <span className="text-fouzar-accent uppercase tracking-widest text-xs font-mono">{activeSlide.topic}</span>
                       </div>
-                      <span className="text-fouzar-text-secondary uppercase text-[8px] font-mono">PAGE {currentSlideIndex + 1} OF {dummySlides.length}</span>
+                      <span className="text-fouzar-text-secondary uppercase text-xs font-mono">PAGE {currentSlideIndex + 1} OF {dummySlides.length}</span>
                     </div>
 
                     <div className="my-auto py-8">
@@ -568,12 +576,12 @@ export default function PersonalSanctuaryPage() {
                           transition={{ duration: 0.25 }}
                           className="space-y-6 max-w-xl mx-auto"
                         >
-                          <h2 className="font-sans text-2xl font-light text-fouzar-text-primary tracking-wide leading-snug text-glow-accent">
+                          <h2 className="font-sans text-xl font-semibold text-fouzar-text-primary tracking-wide leading-snug text-glow-accent">
                             {activeSlide.title}
                           </h2>
                           <ul className="space-y-4">
                             {activeSlide.bullets.map((bullet, idx) => (
-                              <li key={idx} className="text-fouzar-text-secondary text-[11px] flex items-start gap-3 leading-relaxed">
+                              <li key={idx} className="text-fouzar-text-secondary text-sm flex items-start gap-3 leading-relaxed">
                                 <span className="w-1 h-1 bg-fouzar-accent shrink-0 mt-2 rounded-full" />
                                 <span>{bullet}</span>
                               </li>
@@ -587,7 +595,7 @@ export default function PersonalSanctuaryPage() {
                       <button
                         disabled={currentSlideIndex === 0}
                         onClick={() => handleSlideChange('prev')}
-                        className="flex items-center gap-1 text-[9px] font-mono uppercase tracking-wider text-fouzar-text-secondary hover:text-fouzar-text-primary disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                        className="flex items-center gap-1 text-xs font-mono uppercase tracking-wider text-fouzar-text-secondary hover:text-fouzar-text-primary disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
                       >
                         <ArrowLeft className="w-3.5 h-3.5" /> Previous
                       </button>
@@ -793,7 +801,7 @@ export default function PersonalSanctuaryPage() {
                   <div className="flex flex-col h-full overflow-y-auto scrollbar-none space-y-6">
                     <div className="flex justify-between items-center border-b border-fouzar-border/30 pb-4">
                       <div>
-                        <h3 className="font-serif text-sm font-bold uppercase tracking-wider text-white">Media Theater</h3>
+                        <h3 className="font-serif text-sm font-bold uppercase tracking-wider text-fouzar-text-primary">Media Theater</h3>
                         <p className="text-[9px] text-fouzar-text-secondary uppercase mt-0.5 font-mono">
                           {activeFolder?.name || 'General Space'} · YouTube & Video Resources
                         </p>
@@ -918,7 +926,7 @@ export default function PersonalSanctuaryPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-fouzar-bg flex items-center justify-center">
-        <span className="font-mono text-[10px] text-fouzar-text-secondary animate-pulse uppercase">
+        <span className="font-sans text-sm text-fouzar-text-secondary animate-pulse uppercase">
           Loading sanctuary...
         </span>
       </div>
@@ -992,7 +1000,7 @@ export default function PersonalSanctuaryPage() {
                     Spaces
                   </h2>
                 </div>
-                <button onClick={() => setIsSidebarMinimized(true)} className="text-fouzar-text-tertiary hover:text-white">
+                <button onClick={() => setIsSidebarMinimized(true)} className="text-fouzar-text-tertiary hover:text-fouzar-text-primary">
                   <Minus className="w-4 h-4" />
                 </button>
               </div>
@@ -1140,7 +1148,10 @@ export default function PersonalSanctuaryPage() {
                     <button
                       onClick={() => {
                         closeDoc(doc.id);
-                        if (activeSplitTabs.left === doc.id) setActiveSplitTabs(prev => ({ ...prev, left: 'notes' }));
+                        setActiveSplitTabs(prev => ({
+                          left: prev.left === doc.id ? 'notes' : prev.left,
+                          right: prev.right === doc.id ? null : prev.right
+                        }));
                       }}
                       className={`pr-3 pl-1 py-2 rounded-r-[var(--fouzar-radius-md)] text-[9px] font-mono transition-all ${
                         activeSplitTabs.left === doc.id
@@ -1190,8 +1201,8 @@ export default function PersonalSanctuaryPage() {
                   onClick={() => setActiveSplitTabs(prev => ({ ...prev, left: 'youtube' }))}
                   className={`px-4 py-2 rounded-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all whitespace-nowrap ${
                     activeSplitTabs.left === 'youtube'
-                      ? 'bg-red-500 text-white shadow-[0_0_12px_rgba(239,68,68,0.5)]'
-                      : 'text-fouzar-text-tertiary hover:text-white hover:bg-red-500/10'
+                      ? 'bg-red-500 text-fouzar-text-primary shadow-[0_0_12px_rgba(239,68,68,0.5)]'
+                      : 'text-fouzar-text-tertiary hover:text-fouzar-text-primary hover:bg-red-500/10'
                   }`}
                 >
                   YT Search
@@ -1205,8 +1216,8 @@ export default function PersonalSanctuaryPage() {
                   }))}
                   className={`px-4 py-2 rounded-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all flex items-center gap-2 ${
                     activeSplitTabs.right
-                      ? 'bg-indigo-500 text-white shadow-[0_0_12px_rgba(99,102,241,0.5)]'
-                      : 'text-indigo-400 hover:text-white bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30'
+                      ? 'bg-indigo-500 text-fouzar-text-primary shadow-[0_0_12px_rgba(99,102,241,0.5)]'
+                      : 'text-indigo-400 hover:text-fouzar-text-primary bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30'
                   }`}
                 >
                   <Columns className="w-3.5 h-3.5" />
@@ -1234,7 +1245,7 @@ export default function PersonalSanctuaryPage() {
                     <button
                       onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: 'youtube' }))}
                       className={`px-2 py-1 rounded-[var(--fouzar-radius-sm)] text-[8px] font-mono uppercase transition-all ${
-                        activeSplitTabs.right === 'youtube' ? 'bg-red-500 text-white' : 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-red-500/10'
+                        activeSplitTabs.right === 'youtube' ? 'bg-red-500 text-fouzar-text-primary' : 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-red-500/10'
                       }`}
                     >
                       YouTube
@@ -1278,7 +1289,7 @@ export default function PersonalSanctuaryPage() {
                   AI Study Partner
                 </h2>
               </div>
-              <button onClick={() => setIsAiPanelMinimized(true)} className="text-fouzar-text-tertiary hover:text-white">
+              <button onClick={() => setIsAiPanelMinimized(true)} className="text-fouzar-text-tertiary hover:text-fouzar-text-primary">
                 <Minus className="w-4 h-4" />
               </button>
             </div>

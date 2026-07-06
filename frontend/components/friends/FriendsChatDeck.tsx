@@ -367,7 +367,7 @@ export function FriendsChatDeck({ peers }: FriendsChatDeckProps) {
           </div>
           <div className="flex flex-col min-w-0 flex-1">
             <span className="text-[11px] font-medium text-zinc-100 truncate">{fileData.name}</span>
-            <span className="text-[9px] text-zinc-500 mt-0.5">{formatBytes(fileData.size)}</span>
+            <span className="text-[9px] text-fouzar-text-secondary mt-0.5">{formatBytes(fileData.size)}</span>
           </div>
           {fileData.url && (
             <a
@@ -407,9 +407,9 @@ export function FriendsChatDeck({ peers }: FriendsChatDeckProps) {
       style={{ height: 'calc(100vh - 180px)', minHeight: '520px' }}
     >
       {/* ── Sidebar ─────────────────────────────────── */}
-      <div className="w-60 shrink-0 flex flex-col border-r border-white/[0.05] bg-zinc-900/40">
+      <div className="w-60 shrink-0 flex flex-col border-r border-fouzar-border-subtle bg-zinc-900/40">
         <div className="px-3 pt-4 pb-3 shrink-0">
-          <p className="text-[9px] font-mono uppercase tracking-[0.2em] text-zinc-500 mb-3 px-1">Friends</p>
+          <p className="text-[9px] font-mono uppercase tracking-[0.2em] text-fouzar-text-secondary mb-3 px-1">Friends</p>
           <div className="flex items-center gap-2 bg-zinc-800/50 border border-white/[0.06] rounded-lg px-3 py-2 focus-within:border-zinc-600 transition-colors">
             <Search className="w-3 h-3 text-zinc-600 shrink-0" />
             <input
@@ -480,7 +480,7 @@ export function FriendsChatDeck({ peers }: FriendsChatDeckProps) {
               <Paperclip className="w-7 h-7 text-emerald-400" />
             </div>
             <p className="text-[14px] font-semibold text-zinc-200">Drop to send</p>
-            <p className="text-[10px] text-zinc-500 mt-1 font-mono">PDF, DOCX, images, and more</p>
+            <p className="text-[10px] text-fouzar-text-secondary mt-1 font-mono">PDF, DOCX, images, and more</p>
           </div>
         )}
 
@@ -497,7 +497,7 @@ export function FriendsChatDeck({ peers }: FriendsChatDeckProps) {
         ) : (
           <>
             {/* Header */}
-            <div className="flex items-center gap-3 px-5 py-3 border-b border-white/[0.05] bg-zinc-900/30 shrink-0">
+            <div className="flex items-center gap-3 px-5 py-3 border-b border-fouzar-border-subtle bg-zinc-900/30 shrink-0">
               <div className="relative">
                 <div className="w-8 h-8 rounded-full bg-zinc-800 border border-white/[0.08] flex items-center justify-center font-mono text-[10px] font-bold text-zinc-200">
                   {selectedFriend.initials}
@@ -515,7 +515,7 @@ export function FriendsChatDeck({ peers }: FriendsChatDeckProps) {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-7 h-7 rounded-lg bg-zinc-800/60 border border-white/[0.06] flex items-center justify-center text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700/60 transition-all cursor-pointer"
+                  className="w-7 h-7 rounded-lg bg-zinc-800/60 border border-white/[0.06] flex items-center justify-center text-fouzar-text-secondary hover:text-zinc-200 hover:bg-zinc-700/60 transition-all cursor-pointer"
                   title="Attach file"
                 >
                   <Paperclip className="w-3.5 h-3.5" />
@@ -531,7 +531,7 @@ export function FriendsChatDeck({ peers }: FriendsChatDeckProps) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[10px] text-zinc-300 truncate">{uploadingFile.name}</span>
-                      <span className="text-[9px] text-zinc-500 ml-2 shrink-0">{uploadingFile.progress}%</span>
+                      <span className="text-[9px] text-fouzar-text-secondary ml-2 shrink-0">{uploadingFile.progress}%</span>
                     </div>
                     <div className="h-0.5 w-full bg-zinc-800 rounded-full overflow-hidden">
                       <div
@@ -548,7 +548,7 @@ export function FriendsChatDeck({ peers }: FriendsChatDeckProps) {
             <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-5 space-y-2 scrollbar-none">
               {messages.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center gap-3 select-none">
-                  <div className="w-11 h-11 rounded-full bg-zinc-900 border border-white/[0.06] flex items-center justify-center font-mono text-sm font-bold text-zinc-500">
+                  <div className="w-11 h-11 rounded-full bg-zinc-900 border border-white/[0.06] flex items-center justify-center font-mono text-sm font-bold text-fouzar-text-secondary">
                     {selectedFriend.initials}
                   </div>
                   <div className="text-center">
@@ -573,7 +573,7 @@ export function FriendsChatDeck({ peers }: FriendsChatDeckProps) {
                           <div key={msg.id} className={`flex ${msg.isSelf ? 'justify-end' : 'justify-start'} ${isGrouped ? '' : 'mt-3'}`}>
                             <div className={`${isFile ? '' : 'max-w-[68%]'} ${msg.isSelf ? 'ml-auto' : 'mr-auto'}`}>
                               {!isGrouped && !msg.isSelf && !isFile && (
-                                <p className="text-[9px] font-medium text-zinc-500 mb-1 px-1">{msg.senderName}</p>
+                                <p className="text-[9px] font-medium text-fouzar-text-secondary mb-1 px-1">{msg.senderName}</p>
                               )}
                               {renderMessageContent(msg)}
                               {isFile && (
@@ -599,7 +599,7 @@ export function FriendsChatDeck({ peers }: FriendsChatDeckProps) {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-500 hover:text-zinc-300 hover:bg-white/5 transition-all cursor-pointer shrink-0"
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-fouzar-text-secondary hover:text-zinc-300 hover:bg-white/5 transition-all cursor-pointer shrink-0"
                     title="Attach file"
                   >
                     <Paperclip className="w-3.5 h-3.5" />

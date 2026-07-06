@@ -85,7 +85,7 @@ export const CommandPalette: React.FC = () => {
       id: 'dashboard',
       title: 'NAVIGATE TO DASHBOARD',
       shortcut: 'D',
-      icon: <Compass className="w-4 h-4 text-[#6b6b8a]" />,
+      icon: <Compass className="w-4 h-4 text-fouzar-text-secondary" />,
       action: () => {
         setIsOpen(false);
         router.push('/dashboard');
@@ -156,7 +156,7 @@ export const CommandPalette: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-[#0a0a0f]/90 backdrop-blur-md z-50 flex items-start justify-center pt-24 px-4"
+            className="fixed inset-0 bg-fouzar-bg/90 backdrop-blur-md z-50 flex items-start justify-center pt-24 px-4"
           >
             <motion.div
               initial={{ y: -20, scale: 0.97 }}
@@ -167,17 +167,17 @@ export const CommandPalette: React.FC = () => {
               <FascaCard className="rounded-none border-[#7c5cfc] shadow-[0_0_30px_rgba(124,92,252,0.2)] overflow-hidden flex flex-col">
                 
                 {/* Search Header input */}
-                <div className="p-4 border-b border-[#2a2a3a] flex items-center gap-3">
-                  <Search className="w-4 h-4 text-[#6b6b8a]" />
+                <div className="p-4 border-b border-fouzar-border-strong flex items-center gap-3">
+                  <Search className="w-4 h-4 text-fouzar-text-secondary" />
                   <input
                     ref={inputRef}
                     type="text"
                     placeholder="Search Fasca commands..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="flex-1 bg-transparent border-none text-xs text-[#f0f0ff] focus:outline-none placeholder:text-[#6b6b8a]/40 font-sans"
+                    className="flex-1 bg-transparent border-none text-xs text-fouzar-text-primary focus:outline-none placeholder:text-fouzar-text-secondary/40 font-sans"
                   />
-                  <span className="px-1.5 py-0.5 bg-[#16161f] border border-[#2a2a3a] text-[8px] font-mono text-[#6b6b8a] uppercase rounded">
+                  <span className="px-1.5 py-0.5 bg-fouzar-card border border-fouzar-border-strong text-[8px] font-mono text-fouzar-text-secondary uppercase rounded">
                     ESC
                   </span>
                 </div>
@@ -206,11 +206,11 @@ export const CommandPalette: React.FC = () => {
 
                         <div className="flex items-center gap-2 font-mono text-[8px]">
                           {isSelected && (
-                            <span className="text-[#6b6b8a] flex items-center gap-0.5">
+                            <span className="text-fouzar-text-secondary flex items-center gap-0.5">
                               SELECT <CornerDownLeft className="w-2.5 h-2.5" />
                             </span>
                           )}
-                          <span className="px-1.5 py-0.5 bg-[#0a0a0f] border border-[#2a2a3a] text-[#6b6b8a] rounded">
+                          <span className="px-1.5 py-0.5 bg-fouzar-bg border border-fouzar-border-strong text-fouzar-text-secondary rounded">
                             {cmd.shortcut}
                           </span>
                         </div>
@@ -218,14 +218,14 @@ export const CommandPalette: React.FC = () => {
                     );
                   })}
                   {filteredCommands.length === 0 && (
-                    <div className="py-8 text-center text-[#6b6b8a] font-mono text-[9px] uppercase tracking-wider">
+                    <div className="py-8 text-center text-fouzar-text-secondary font-mono text-[9px] uppercase tracking-wider">
                       No commands found matching "{search}"
                     </div>
                   )}
                 </div>
 
                 {/* Footer instructions */}
-                <div className="p-3 bg-[#0a0a0f] border-t border-[#2a2a3a] flex justify-between items-center text-[7.5px] font-mono text-[#6b6b8a] uppercase tracking-wider">
+                <div className="p-3 bg-fouzar-bg border-t border-fouzar-border-strong flex justify-between items-center text-[7.5px] font-mono text-fouzar-text-secondary uppercase tracking-wider">
                   <span>Use ↑↓ arrows to navigate, ↵ to execute</span>
                   <span>Ctrl+K to dismiss</span>
                 </div>

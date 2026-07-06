@@ -348,7 +348,7 @@ export default function StudyRoomPage() {
             className={`fixed z-50 ${
               aiModalSize === 'minimized' 
                 ? 'bottom-6 right-6 flex items-end justify-end pointer-events-none' 
-                : 'inset-0 bg-[#0a0a0f]/90 backdrop-blur-md flex items-center justify-center p-4'
+                : 'inset-0 bg-fouzar-bg/90 backdrop-blur-md flex items-center justify-center p-4'
             }`}
           >
             <motion.div
@@ -356,7 +356,7 @@ export default function StudyRoomPage() {
               initial={{ scale: 0.95, y: 15 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 15 }}
-              className={`w-full bg-[#16161f] border border-[#7c5cfc] shadow-2xl relative overflow-hidden flex flex-col pointer-events-auto ${
+              className={`w-full bg-fouzar-card border border-[#7c5cfc] shadow-2xl relative overflow-hidden flex flex-col pointer-events-auto ${
                 aiModalSize === 'maximized' ? 'max-w-7xl h-[90vh] p-8' :
                 aiModalSize === 'minimized' ? 'w-[320px] h-[60px] p-0 shadow-lg cursor-pointer border-[#7c5cfc]/50 hover:border-[#7c5cfc]' :
                 'max-w-md h-[80vh] p-6'
@@ -369,61 +369,61 @@ export default function StudyRoomPage() {
                 <div className="flex items-center justify-between w-full h-full px-4 bg-[#7c5cfc]/10">
                   <div className="flex items-center gap-2">
                     <Bot className="w-5 h-5 text-[#7c5cfc]" />
-                    <span className="font-serif text-[10px] font-bold tracking-widest text-[#f0f0ff] uppercase">AI Assist Active</span>
+                    <span className="font-serif text-[10px] font-bold tracking-widest text-fouzar-text-primary uppercase">AI Assist Active</span>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={(e) => { e.stopPropagation(); setAiModalSize('default'); }} className="p-1 text-[#6b6b8a] hover:text-[#f0f0ff]">
+                    <button onClick={(e) => { e.stopPropagation(); setAiModalSize('default'); }} className="p-1 text-fouzar-text-secondary hover:text-fouzar-text-primary">
                       <Maximize2 className="w-4 h-4" />
                     </button>
-                    <button onClick={(e) => { e.stopPropagation(); setShowAiModal(false); }} className="p-1 text-[#6b6b8a] hover:text-[#f0f0ff]">
+                    <button onClick={(e) => { e.stopPropagation(); setShowAiModal(false); }} className="p-1 text-fouzar-text-secondary hover:text-fouzar-text-primary">
                       <X className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
               ) : (
                 <>
-                  <div className="flex justify-between items-start mb-4 border-b border-[#2a2a3a]/40 pb-2 shrink-0">
+                  <div className="flex justify-between items-start mb-4 border-b border-fouzar-border-strong/40 pb-2 shrink-0">
                     <div className="flex items-center gap-1.5">
                       <Bot className="w-4 h-4 text-[#7c5cfc]" />
                       <div>
-                        <h4 className="font-serif text-xs font-bold tracking-widest text-[#f0f0ff] uppercase">
+                        <h4 className="font-serif text-xs font-bold tracking-widest text-fouzar-text-primary uppercase">
                           FASCA AI ROOM ASSIST
                         </h4>
-                        <p className="text-[7.5px] font-mono text-[#6b6b8a] uppercase">Slide Context Co-pilot</p>
+                        <p className="text-[7.5px] font-mono text-fouzar-text-secondary uppercase">Slide Context Co-pilot</p>
                       </div>
                     </div>
                     <div className="flex gap-1">
                       {aiModalSize === 'maximized' ? (
                         <button
                           onClick={() => setAiModalSize('default')}
-                          className="p-1 hover:bg-white/5 rounded text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors cursor-pointer"
+                          className="p-1 hover:bg-white/5 rounded text-fouzar-text-secondary hover:text-fouzar-text-primary transition-colors cursor-pointer"
                         >
                           <Minimize2 className="w-3.5 h-3.5" />
                         </button>
                       ) : (
                         <button
                           onClick={() => setAiModalSize('maximized')}
-                          className="p-1 hover:bg-white/5 rounded text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors cursor-pointer"
+                          className="p-1 hover:bg-white/5 rounded text-fouzar-text-secondary hover:text-fouzar-text-primary transition-colors cursor-pointer"
                         >
                           <Maximize2 className="w-3.5 h-3.5" />
                         </button>
                       )}
                       <button
                         onClick={() => setAiModalSize('minimized')}
-                        className="p-1 hover:bg-white/5 rounded text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors cursor-pointer"
+                        className="p-1 hover:bg-white/5 rounded text-fouzar-text-secondary hover:text-fouzar-text-primary transition-colors cursor-pointer"
                       >
                         <Minus className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => setShowAiModal(false)}
-                        className="p-1 hover:bg-white/5 rounded text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors cursor-pointer ml-2"
+                        className="p-1 hover:bg-white/5 rounded text-fouzar-text-secondary hover:text-fouzar-text-primary transition-colors cursor-pointer ml-2"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
 
-                  <div className="flex-1 overflow-hidden my-2 border border-[#2a2a3a]/30 rounded-md">
+                  <div className="flex-1 overflow-hidden my-2 border border-fouzar-border-strong/30 rounded-md">
                     <IntegratedAiChat
                       contextLabel={`Room · Slide ${currentSlide}`}
                       slideId={String(currentSlide)}

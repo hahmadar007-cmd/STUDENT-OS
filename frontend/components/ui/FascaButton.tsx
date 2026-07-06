@@ -36,10 +36,10 @@ export const FascaButton: React.FC<FascaButtonProps> = ({
 
   switch (resolvedVariant) {
     case 'solid-violet':
-      variantStyle = 'bg-fouzar-accent text-[#f0f0ff] hover:opacity-90 hover:shadow-md hover:shadow-fouzar-accent/45';
+      variantStyle = 'bg-fouzar-accent text-fouzar-text-primary hover:opacity-90 hover:shadow-md hover:shadow-fouzar-accent/45';
       break;
     case 'ghost-violet':
-      variantStyle = 'bg-transparent border border-fouzar-accent text-fouzar-accent hover:bg-fouzar-accent/10 hover:text-[#f0f0ff]';
+      variantStyle = 'bg-transparent border border-fouzar-accent text-fouzar-accent hover:bg-fouzar-accent/10 hover:text-fouzar-text-primary';
       break;
     case 'ghost-crimson':
       variantStyle = 'bg-transparent text-fouzar-signal hover:bg-fouzar-signal/10';

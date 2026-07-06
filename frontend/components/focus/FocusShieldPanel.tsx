@@ -74,7 +74,7 @@ export const FocusShieldPanel: React.FC<FocusShieldPanelProps> = ({
     if (shieldState === 'expiring') {
       return 'bg-[#ff2d55]/10 border-[#ff2d55] text-[#ff2d55] shadow-[0_0_12px_rgba(255,45,85,0.1)]';
     }
-    return 'bg-transparent border-[#2a2a3a] text-[#6b6b8a]';
+    return 'bg-transparent border-fouzar-border-strong text-fouzar-text-secondary';
   };
 
   return (
@@ -85,24 +85,24 @@ export const FocusShieldPanel: React.FC<FocusShieldPanelProps> = ({
           animate={{ x: 0 }}
           exit={{ x: '100%' }}
           transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-          className="fixed top-0 right-0 bottom-0 w-[380px] max-w-full bg-[#111118] border-l border-[#2a2a3a] z-40 p-6 shadow-2xl flex flex-col justify-between"
+          className="fixed top-0 right-0 bottom-0 w-[380px] max-w-full bg-fouzar-surface border-l border-fouzar-border-strong z-40 p-6 shadow-2xl flex flex-col justify-between"
         >
           {/* Main Overlay Content wrapper */}
           <div className="flex-1 flex flex-col justify-start overflow-y-auto scrollbar-none space-y-6">
             
             {/* Overlay Header */}
-            <div className="flex items-center justify-between border-b border-[#2a2a3a]/40 pb-4 shrink-0">
+            <div className="flex items-center justify-between border-b border-fouzar-border-strong/40 pb-4 shrink-0">
               <div>
-                <h3 className="font-serif text-sm font-bold tracking-[0.2em] text-[#f0f0ff] uppercase flex items-center gap-1.5">
+                <h3 className="font-serif text-sm font-bold tracking-[0.2em] text-fouzar-text-primary uppercase flex items-center gap-1.5">
                   <Shield className="w-4 h-4 text-[#7c5cfc]" /> FOCUS SHIELD
                 </h3>
-                <p className="text-[8.5px] font-mono text-[#6b6b8a] uppercase tracking-wider mt-0.5">
+                <p className="text-[8.5px] font-mono text-fouzar-text-secondary uppercase tracking-wider mt-0.5">
                   Cognitive Distraction Blocker
                 </p>
               </div>
               <button
                 onClick={onClose}
-                className="p-1.5 hover:bg-white/5 rounded text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors cursor-pointer"
+                className="p-1.5 hover:bg-white/5 rounded text-fouzar-text-secondary hover:text-fouzar-text-primary transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -127,7 +127,7 @@ export const FocusShieldPanel: React.FC<FocusShieldPanelProps> = ({
                   className={`flex-1 py-1.5 text-[8px] font-mono uppercase tracking-wider border rounded-[4px] transition-all cursor-pointer ${
                     shieldState === 'active'
                       ? 'bg-[#7c5cfc] border-[#7c5cfc] text-[#0a0a0f] font-bold'
-                      : 'border-[#2a2a3a] hover:border-[#7c5cfc]/40 text-[#6b6b8a] hover:text-[#f0f0ff]'
+                      : 'border-fouzar-border-strong hover:border-[#7c5cfc]/40 text-fouzar-text-secondary hover:text-fouzar-text-primary'
                   }`}
                 >
                   ACTIVE
@@ -137,7 +137,7 @@ export const FocusShieldPanel: React.FC<FocusShieldPanelProps> = ({
                   className={`flex-1 py-1.5 text-[8px] font-mono uppercase tracking-wider border rounded-[4px] transition-all cursor-pointer ${
                     shieldState === 'expiring'
                       ? 'bg-[#ff2d55] border-[#ff2d55] text-[#0a0a0f] font-bold'
-                      : 'border-[#2a2a3a] hover:border-[#ff2d55]/40 text-[#6b6b8a] hover:text-[#f0f0ff]'
+                      : 'border-fouzar-border-strong hover:border-[#ff2d55]/40 text-fouzar-text-secondary hover:text-fouzar-text-primary'
                   }`}
                 >
                   EXPIRING
@@ -146,8 +146,8 @@ export const FocusShieldPanel: React.FC<FocusShieldPanelProps> = ({
                   onClick={() => setShieldState('off')}
                   className={`flex-1 py-1.5 text-[8px] font-mono uppercase tracking-wider border rounded-[4px] transition-all cursor-pointer ${
                     shieldState === 'off'
-                      ? 'bg-white/10 border-white/20 text-[#f0f0ff] font-bold'
-                      : 'border-[#2a2a3a] hover:border-white/20 text-[#6b6b8a] hover:text-[#f0f0ff]'
+                      ? 'bg-white/10 border-fouzar-border-strong text-fouzar-text-primary font-bold'
+                      : 'border-fouzar-border-strong hover:border-fouzar-border-strong text-fouzar-text-secondary hover:text-fouzar-text-primary'
                   }`}
                 >
                   DISABLE
@@ -157,28 +157,28 @@ export const FocusShieldPanel: React.FC<FocusShieldPanelProps> = ({
 
             {/* Blocked Sites section */}
             <div className="space-y-3 text-left">
-              <span className="text-[8px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a] flex items-center gap-1.5">
+              <span className="text-[8px] font-mono uppercase tracking-[0.25em] text-fouzar-text-secondary flex items-center gap-1.5">
                 <Globe className="w-3.5 h-3.5" /> BLOCKED SITES
               </span>
 
               {/* Sites list */}
-              <div className="flex flex-wrap gap-1.5 p-3 bg-[#0a0a0f]/40 border border-[#2a2a3a]/40 rounded-[6px]">
+              <div className="flex flex-wrap gap-1.5 p-3 bg-fouzar-bg/40 border border-fouzar-border-strong/40 rounded-[6px]">
                 {blockedSites.map((domain) => (
                   <span
                     key={domain}
-                    className="pl-2 pr-1.5 py-1 bg-[#16161f] border border-[#2a2a3a] text-[8.5px] font-mono text-[#f0f0ff] rounded-[4px] flex items-center gap-1.5 group hover:border-[#ff2d55]/40 transition-colors"
+                    className="pl-2 pr-1.5 py-1 bg-fouzar-card border border-fouzar-border-strong text-[8.5px] font-mono text-fouzar-text-primary rounded-[4px] flex items-center gap-1.5 group hover:border-[#ff2d55]/40 transition-colors"
                   >
                     {domain}
                     <button
                       onClick={() => handleRemoveSite(domain)}
-                      className="p-0.5 rounded-sm hover:bg-[#ff2d55]/10 text-[#6b6b8a] hover:text-[#ff2d55] transition-colors cursor-pointer"
+                      className="p-0.5 rounded-sm hover:bg-[#ff2d55]/10 text-fouzar-text-secondary hover:text-[#ff2d55] transition-colors cursor-pointer"
                     >
                       <X className="w-2.5 h-2.5" />
                     </button>
                   </span>
                 ))}
                 {blockedSites.length === 0 && (
-                  <span className="text-[8px] font-mono text-[#6b6b8a] py-1">No blocked domains.</span>
+                  <span className="text-[8px] font-mono text-fouzar-text-secondary py-1">No blocked domains.</span>
                 )}
               </div>
 
@@ -193,7 +193,7 @@ export const FocusShieldPanel: React.FC<FocusShieldPanelProps> = ({
                 />
                 <button
                   type="submit"
-                  className="px-3 bg-white/5 border border-[#2a2a3a] hover:border-[#7c5cfc]/60 text-[#f0f0ff] hover:text-[#7c5cfc] rounded-[6px] transition-colors cursor-pointer flex items-center justify-center"
+                  className="px-3 bg-white/5 border border-fouzar-border-strong hover:border-[#7c5cfc]/60 text-fouzar-text-primary hover:text-[#7c5cfc] rounded-[6px] transition-colors cursor-pointer flex items-center justify-center"
                 >
                   <Plus className="w-3.5 h-3.5" />
                 </button>
@@ -202,28 +202,28 @@ export const FocusShieldPanel: React.FC<FocusShieldPanelProps> = ({
 
             {/* Blocked Apps section */}
             <div className="space-y-3 text-left">
-              <span className="text-[8px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a] flex items-center gap-1.5">
+              <span className="text-[8px] font-mono uppercase tracking-[0.25em] text-fouzar-text-secondary flex items-center gap-1.5">
                 <Monitor className="w-3.5 h-3.5" /> BLOCKED APPS
               </span>
 
               {/* Apps list */}
-              <div className="flex flex-wrap gap-1.5 p-3 bg-[#0a0a0f]/40 border border-[#2a2a3a]/40 rounded-[6px]">
+              <div className="flex flex-wrap gap-1.5 p-3 bg-fouzar-bg/40 border border-fouzar-border-strong/40 rounded-[6px]">
                 {blockedApps.map((appName) => (
                   <span
                     key={appName}
-                    className="pl-2 pr-1.5 py-1 bg-[#16161f] border border-[#2a2a3a] text-[8.5px] font-mono text-[#f0f0ff] rounded-[4px] flex items-center gap-1.5 group hover:border-[#ff2d55]/40 transition-colors"
+                    className="pl-2 pr-1.5 py-1 bg-fouzar-card border border-fouzar-border-strong text-[8.5px] font-mono text-fouzar-text-primary rounded-[4px] flex items-center gap-1.5 group hover:border-[#ff2d55]/40 transition-colors"
                   >
                     {appName}
                     <button
                       onClick={() => handleRemoveApp(appName)}
-                      className="p-0.5 rounded-sm hover:bg-[#ff2d55]/10 text-[#6b6b8a] hover:text-[#ff2d55] transition-colors cursor-pointer"
+                      className="p-0.5 rounded-sm hover:bg-[#ff2d55]/10 text-fouzar-text-secondary hover:text-[#ff2d55] transition-colors cursor-pointer"
                     >
                       <X className="w-2.5 h-2.5" />
                     </button>
                   </span>
                 ))}
                 {blockedApps.length === 0 && (
-                  <span className="text-[8px] font-mono text-[#6b6b8a] py-1">No blocked applications.</span>
+                  <span className="text-[8px] font-mono text-fouzar-text-secondary py-1">No blocked applications.</span>
                 )}
               </div>
 
@@ -238,7 +238,7 @@ export const FocusShieldPanel: React.FC<FocusShieldPanelProps> = ({
                 />
                 <button
                   type="submit"
-                  className="px-3 bg-white/5 border border-[#2a2a3a] hover:border-[#7c5cfc]/60 text-[#f0f0ff] hover:text-[#7c5cfc] rounded-[6px] transition-colors cursor-pointer flex items-center justify-center"
+                  className="px-3 bg-white/5 border border-fouzar-border-strong hover:border-[#7c5cfc]/60 text-fouzar-text-primary hover:text-[#7c5cfc] rounded-[6px] transition-colors cursor-pointer flex items-center justify-center"
                 >
                   <Plus className="w-3.5 h-3.5" />
                 </button>
@@ -248,12 +248,12 @@ export const FocusShieldPanel: React.FC<FocusShieldPanelProps> = ({
           </div>
 
           {/* Browser Extension / Mobile App footer section */}
-          <div className="border-t border-[#2a2a3a]/40 pt-4 shrink-0 text-left space-y-3 mt-4">
-            <div className="p-3 bg-[#16161f] border border-[#ff2d55]/20 rounded-[6px] flex flex-col gap-1.5">
+          <div className="border-t border-fouzar-border-strong/40 pt-4 shrink-0 text-left space-y-3 mt-4">
+            <div className="p-3 bg-fouzar-card border border-[#ff2d55]/20 rounded-[6px] flex flex-col gap-1.5">
               <span className="text-[8.5px] font-mono text-[#ff2d55] font-bold uppercase tracking-wider flex items-center gap-1">
                 <ShieldAlert className="w-3 h-3" /> BROWSER EXTENSION REQUIRED
               </span>
-              <p className="text-[8px] text-[#6b6b8a] leading-relaxed font-sans">
+              <p className="text-[8px] text-fouzar-text-secondary leading-relaxed font-sans">
                 {isMobile 
                   ? 'To enforce shield parameters on mobile viewports, please synchronize via our local mobile application.'
                   : 'Fasca Shield requires the browser companion extension to actively intercept website sockets and domains.'

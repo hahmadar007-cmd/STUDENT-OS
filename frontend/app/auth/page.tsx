@@ -237,7 +237,7 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen w-full relative bg-[#0a0a0f] flex flex-col lg:flex-row select-none overflow-hidden font-sans">
+    <div className="min-h-screen w-full relative bg-fouzar-bg flex flex-col lg:flex-row select-none overflow-hidden font-sans">
       
       {/* Dynamic Success Checkmark Screen */}
       <AnimatePresence>
@@ -246,9 +246,9 @@ export default function AuthPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-[#0a0a0f] z-50 flex flex-col items-center justify-center gap-4"
+            className="absolute inset-0 bg-fouzar-bg z-50 flex flex-col items-center justify-center gap-4"
           >
-            <div className="relative flex items-center justify-center w-16 h-16 rounded-full border border-[#7c5cfc]/30 bg-[#111118]/50">
+            <div className="relative flex items-center justify-center w-16 h-16 rounded-full border border-[#7c5cfc]/30 bg-fouzar-surface/50">
               <motion.svg
                 width="24"
                 height="24"
@@ -275,12 +275,12 @@ export default function AuthPage() {
       </AnimatePresence>
 
       {/* 1. LEFT 40%: The Auth Form Container */}
-      <div className="w-full lg:w-[40%] flex flex-col justify-center px-8 sm:px-16 lg:px-12 xl:px-16 py-12 z-10 bg-[#111118]/80 relative backdrop-blur-md shrink-0 border-r border-[#2a2a3a]/40">
+      <div className="w-full lg:w-[40%] flex flex-col justify-center px-8 sm:px-16 lg:px-12 xl:px-16 py-12 z-10 bg-fouzar-surface/80 relative backdrop-blur-md shrink-0 border-r border-fouzar-border-strong/40">
         
         {/* Back Link */}
         <Link
           href="/"
-          className="absolute top-8 left-8 flex items-center gap-1.5 text-[8px] font-mono uppercase tracking-widest text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors cursor-pointer"
+          className="absolute top-8 left-8 flex items-center gap-1.5 text-[8px] font-mono uppercase tracking-widest text-fouzar-text-secondary hover:text-fouzar-text-primary transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-3 h-3" /> return
         </Link>
@@ -297,12 +297,12 @@ export default function AuthPage() {
         )}
 
         {/* Auth form card (no border radius, 1px violet border) */}
-        <div className="w-full bg-[#16161f] border border-[#7c5cfc] rounded-none shadow-2xl overflow-hidden">
+        <div className="w-full bg-fouzar-card border border-[#7c5cfc] rounded-none shadow-2xl overflow-hidden">
           
           {/* Code Editor Styled Tabs */}
           {activeTab === 'forgot' ? (
-            <div className="flex bg-[#0a0a0f]/40 border-b border-[#2a2a3a] py-3.5 px-4 items-center justify-between">
-              <span className="font-mono text-[9px] uppercase tracking-widest text-[#f0f0ff]">
+            <div className="flex bg-fouzar-bg/40 border-b border-fouzar-border-strong py-3.5 px-4 items-center justify-between">
+              <span className="font-mono text-[9px] uppercase tracking-widest text-fouzar-text-primary">
                 RECOVER_KEY.tsx
               </span>
               <button
@@ -312,13 +312,13 @@ export default function AuthPage() {
                   setValidationError(null);
                   setIsLinkSent(false);
                 }}
-                className="text-[7.5px] font-mono uppercase text-[#6b6b8a] hover:text-[#f0f0ff] cursor-pointer transition-colors"
+                className="text-[7.5px] font-mono uppercase text-fouzar-text-secondary hover:text-fouzar-text-primary cursor-pointer transition-colors"
               >
                 [Cancel]
               </button>
             </div>
           ) : (
-            <div className="flex bg-[#0a0a0f]/40 border-b border-[#2a2a3a]">
+            <div className="flex bg-fouzar-bg/40 border-b border-fouzar-border-strong">
               {/* REGISTER TAB */}
               <button
                 type="button"
@@ -382,50 +382,50 @@ export default function AuthPage() {
                   className="space-y-4"
                 >
                   <div className="flex flex-col">
-                    <span className="text-[7.5px] font-mono uppercase text-[#6b6b8a] tracking-wider mb-1">Email address</span>
+                    <span className="text-[7.5px] font-mono uppercase text-fouzar-text-secondary tracking-wider mb-1">Email address</span>
                     <input
                       type="email"
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="alex@university.edu"
-                      className="w-full bg-transparent border-b border-[#2a2a3a] px-1 py-2 text-xs text-[#f0f0ff] placeholder-[#6b6b8a]/50 focus:outline-none focus:border-[#7c5cfc] rounded-none transition-colors"
+                      className="w-full bg-transparent border-b border-fouzar-border-strong px-1 py-2 text-xs text-fouzar-text-primary placeholder-[#6b6b8a]/50 focus:outline-none focus:border-[#7c5cfc] rounded-none transition-colors"
                     />
                   </div>
 
                   <div className="flex flex-col">
-                    <span className="text-[7.5px] font-mono uppercase text-[#6b6b8a] tracking-wider mb-1">Full Name</span>
+                    <span className="text-[7.5px] font-mono uppercase text-fouzar-text-secondary tracking-wider mb-1">Full Name</span>
                     <input
                       type="text"
                       required
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Alex Mercer"
-                      className="w-full bg-transparent border-b border-[#2a2a3a] px-1 py-2 text-xs text-[#f0f0ff] placeholder-[#6b6b8a]/50 focus:outline-none focus:border-[#7c5cfc] rounded-none transition-colors"
+                      className="w-full bg-transparent border-b border-fouzar-border-strong px-1 py-2 text-xs text-fouzar-text-primary placeholder-[#6b6b8a]/50 focus:outline-none focus:border-[#7c5cfc] rounded-none transition-colors"
                     />
                   </div>
 
                   <div className="flex flex-col">
-                    <span className="text-[7.5px] font-mono uppercase text-[#6b6b8a] tracking-wider mb-1">University Name</span>
+                    <span className="text-[7.5px] font-mono uppercase text-fouzar-text-secondary tracking-wider mb-1">University Name</span>
                     <input
                       type="text"
                       required
                       value={universityName}
                       onChange={(e) => setUniversityName(e.target.value)}
                       placeholder="Massachusetts Institute of Technology"
-                      className="w-full bg-transparent border-b border-[#2a2a3a] px-1 py-2 text-xs text-[#f0f0ff] placeholder-[#6b6b8a]/50 focus:outline-none focus:border-[#7c5cfc] rounded-none transition-colors"
+                      className="w-full bg-transparent border-b border-fouzar-border-strong px-1 py-2 text-xs text-fouzar-text-primary placeholder-[#6b6b8a]/50 focus:outline-none focus:border-[#7c5cfc] rounded-none transition-colors"
                     />
                   </div>
 
                   <div className="flex flex-col">
-                    <span className="text-[7.5px] font-mono uppercase text-[#6b6b8a] tracking-wider mb-1">Security Key</span>
+                    <span className="text-[7.5px] font-mono uppercase text-fouzar-text-secondary tracking-wider mb-1">Security Key</span>
                     <input
                       type="password"
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full bg-transparent border-b border-[#2a2a3a] px-1 py-2 text-xs text-[#f0f0ff] placeholder-[#6b6b8a]/50 focus:outline-none focus:border-[#7c5cfc] rounded-none transition-colors"
+                      className="w-full bg-transparent border-b border-fouzar-border-strong px-1 py-2 text-xs text-fouzar-text-primary placeholder-[#6b6b8a]/50 focus:outline-none focus:border-[#7c5cfc] rounded-none transition-colors"
                     />
                   </div>
                 </motion.div>
@@ -444,26 +444,26 @@ export default function AuthPage() {
                   className="space-y-4"
                 >
                   <div className="flex flex-col">
-                    <span className="text-[7.5px] font-mono uppercase text-[#6b6b8a] tracking-wider mb-1">Email address</span>
+                    <span className="text-[7.5px] font-mono uppercase text-fouzar-text-secondary tracking-wider mb-1">Email address</span>
                     <input
                       type="email"
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="alex@university.edu"
-                      className="w-full bg-transparent border-b border-[#2a2a3a] px-1 py-2 text-xs text-[#f0f0ff] placeholder-[#6b6b8a]/50 focus:outline-none focus:border-[#7c5cfc] rounded-none transition-colors"
+                      className="w-full bg-transparent border-b border-fouzar-border-strong px-1 py-2 text-xs text-fouzar-text-primary placeholder-[#6b6b8a]/50 focus:outline-none focus:border-[#7c5cfc] rounded-none transition-colors"
                     />
                   </div>
 
                   <div className="flex flex-col">
-                    <span className="text-[7.5px] font-mono uppercase text-[#6b6b8a] tracking-wider mb-1">Security Key</span>
+                    <span className="text-[7.5px] font-mono uppercase text-fouzar-text-secondary tracking-wider mb-1">Security Key</span>
                     <input
                       type="password"
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full bg-transparent border-b border-[#2a2a3a] px-1 py-2 text-xs text-[#f0f0ff] placeholder-[#6b6b8a]/50 focus:outline-none focus:border-[#7c5cfc] rounded-none transition-colors"
+                      className="w-full bg-transparent border-b border-fouzar-border-strong px-1 py-2 text-xs text-fouzar-text-primary placeholder-[#6b6b8a]/50 focus:outline-none focus:border-[#7c5cfc] rounded-none transition-colors"
                     />
                   </div>
 
@@ -474,7 +474,7 @@ export default function AuthPage() {
                         setActiveTab('forgot');
                         setValidationError(null);
                       }}
-                      className="text-[7.5px] font-mono uppercase text-[#6b6b8a] hover:text-[#7c5cfc] transition-colors cursor-pointer"
+                      className="text-[7.5px] font-mono uppercase text-fouzar-text-secondary hover:text-[#7c5cfc] transition-colors cursor-pointer"
                     >
                       Forgot Password?
                     </button>
@@ -497,23 +497,23 @@ export default function AuthPage() {
                   {!isLinkSent ? (
                     <>
                       <div className="flex flex-col">
-                        <span className="text-[7.5px] font-mono uppercase text-[#6b6b8a] tracking-wider mb-1">Email address</span>
+                        <span className="text-[7.5px] font-mono uppercase text-fouzar-text-secondary tracking-wider mb-1">Email address</span>
                         <input
                           type="email"
                           required
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           placeholder="alex@university.edu"
-                          className="w-full bg-transparent border-b border-[#2a2a3a] px-1 py-2 text-xs text-[#f0f0ff] placeholder-[#6b6b8a]/50 focus:outline-none focus:border-[#7c5cfc] rounded-none transition-colors"
+                          className="w-full bg-transparent border-b border-fouzar-border-strong px-1 py-2 text-xs text-fouzar-text-primary placeholder-[#6b6b8a]/50 focus:outline-none focus:border-[#7c5cfc] rounded-none transition-colors"
                         />
                       </div>
-                      <div className="p-3 bg-[#7c5cfc]/5 border border-[#7c5cfc]/20 text-[#6b6b8a] font-mono text-[8px] leading-relaxed text-left uppercase tracking-wider">
+                      <div className="p-3 bg-[#7c5cfc]/5 border border-[#7c5cfc]/20 text-fouzar-text-secondary font-mono text-[8px] leading-relaxed text-left uppercase tracking-wider">
                         A secure password reset link will be sent to your email.
                       </div>
                     </>
                   ) : (
                     <div className="space-y-4 text-left">
-                      <div className="p-4 bg-[#7c5cfc]/10 border border-[#7c5cfc]/30 text-[#f0f0ff] font-mono text-[9px] leading-relaxed uppercase tracking-widest">
+                      <div className="p-4 bg-[#7c5cfc]/10 border border-[#7c5cfc]/30 text-fouzar-text-primary font-mono text-[9px] leading-relaxed uppercase tracking-widest">
                         [STATUS: ENCRYPTED LINK TRANSMITTED]
                         <br/><br/>
                         A password reset link has been dispatched to {email}. Check your inbox to restore access.
@@ -524,7 +524,7 @@ export default function AuthPage() {
                           setIsLinkSent(false);
                           setValidationError(null);
                         }}
-                        className="w-full text-center text-[8px] font-mono uppercase text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors mt-2 cursor-pointer"
+                        className="w-full text-center text-[8px] font-mono uppercase text-fouzar-text-secondary hover:text-fouzar-text-primary transition-colors mt-2 cursor-pointer"
                       >
                         [Resend Link]
                       </button>
@@ -566,7 +566,7 @@ export default function AuthPage() {
       </div>
 
       {/* 2. RIGHT 60%: Beautiful Cyan Graphic with Node Canvas overlay */}
-      <div className="hidden lg:block lg:w-[60%] h-full relative bg-[#0a0a0f] overflow-hidden">
+      <div className="hidden lg:block lg:w-[60%] h-full relative bg-fouzar-bg overflow-hidden">
         {/* The Graphic background with scale transition */}
         <div 
           className="absolute inset-0 bg-cover bg-center transition-transform duration-10000 hover:scale-105"
@@ -589,15 +589,15 @@ export default function AuthPage() {
             initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.8 }}
-            className="p-6 bg-[#111118]/80 border border-[#7c5cfc]/30 backdrop-blur-md"
+            className="p-6 bg-fouzar-surface/80 border border-[#7c5cfc]/30 backdrop-blur-md"
           >
             <span className="text-[8px] font-mono uppercase tracking-[0.25em] text-[#7c5cfc] block mb-2">
               STUDENT OS ENVIRONMENT
             </span>
-            <h2 className="font-serif text-2xl font-bold text-[#f0f0ff] mb-2 leading-tight">
+            <h2 className="font-serif text-2xl font-bold text-fouzar-text-primary mb-2 leading-tight">
               Unlock your academic potential.
             </h2>
-            <p className="text-[9px] font-mono text-[#6b6b8a] uppercase tracking-wider leading-relaxed">
+            <p className="text-[9px] font-mono text-fouzar-text-secondary uppercase tracking-wider leading-relaxed">
               Connect with peers, access powerful AI study companions, and experience next-level productivity in real time.
             </p>
           </motion.div>

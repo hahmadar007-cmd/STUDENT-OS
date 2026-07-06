@@ -75,10 +75,10 @@ export const AiPanel: React.FC<AiPanelProps> = ({
   };
 
   return (
-    <div className="w-[420px] h-full bg-[#111118] border-l border-violet shadow-[0_0_30px_rgba(124,92,252,0.15)] flex flex-col justify-between select-none relative z-40">
+    <div className="w-[420px] h-full bg-fouzar-surface border-l border-violet shadow-[0_0_30px_rgba(124,92,252,0.15)] flex flex-col justify-between select-none relative z-40">
       
       {/* Header */}
-      <div className="p-4 border-b border-border-color flex flex-col gap-2 bg-[#0a0a0f]">
+      <div className="p-4 border-b border-border-color flex flex-col gap-2 bg-fouzar-bg">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Bot className="w-5 h-5 text-violet text-glow-violet" strokeWidth={1.5} />
@@ -103,7 +103,7 @@ export const AiPanel: React.FC<AiPanelProps> = ({
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 5 }}
-                    className="absolute right-0 mt-2 w-48 bg-[#111118] border border-border-color rounded-[4px] shadow-2xl z-50 overflow-hidden"
+                    className="absolute right-0 mt-2 w-48 bg-fouzar-surface border border-border-color rounded-[4px] shadow-2xl z-50 overflow-hidden"
                   >
                     {models.map((m) => (
                       <button
@@ -142,7 +142,7 @@ export const AiPanel: React.FC<AiPanelProps> = ({
         </div>
 
         {currentSlideId && (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#16161f] border border-border-color text-[10px] font-mono text-text-secondary rounded-[4px]">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-fouzar-card border border-border-color text-[10px] font-mono text-text-secondary rounded-[4px]">
             <Hash className="w-3.5 h-3.5 text-violet" />
             <span>Context: Slide {currentSlideId} - {currentSlideTitle}</span>
           </div>
@@ -170,7 +170,7 @@ export const AiPanel: React.FC<AiPanelProps> = ({
                 className={`text-xs p-3 leading-relaxed rounded-[6px] max-w-[90%] ${
                   isUser
                     ? 'bg-transparent border-l-2 border-violet text-text-primary font-medium rounded-tr-none'
-                    : 'bg-[#16161f] border border-border-color text-text-primary rounded-tl-none'
+                    : 'bg-fouzar-card border border-border-color text-text-primary rounded-tl-none'
                 }`}
               >
                 {msg.content}
@@ -191,7 +191,7 @@ export const AiPanel: React.FC<AiPanelProps> = ({
         {/* Typing indicator using three blinking underscores */}
         {isLoading && (
           <div className="flex flex-col items-start">
-            <div className="bg-[#16161f] border border-border-color p-3 rounded-[6px] rounded-tl-none text-xs text-violet font-mono flex gap-1">
+            <div className="bg-fouzar-card border border-border-color p-3 rounded-[6px] rounded-tl-none text-xs text-violet font-mono flex gap-1">
               <span className="animate-pulse">_</span>
               <span className="animate-pulse delay-75">_</span>
               <span className="animate-pulse delay-150">_</span>
@@ -202,7 +202,7 @@ export const AiPanel: React.FC<AiPanelProps> = ({
       </div>
 
       {/* Fixed Input at Bottom */}
-      <form onSubmit={handleSend} className="p-4 border-t border-border-color bg-[#0a0a0f] flex items-center gap-2">
+      <form onSubmit={handleSend} className="p-4 border-t border-border-color bg-fouzar-bg flex items-center gap-2">
         <input
           type="text"
           value={inputText}

@@ -72,17 +72,17 @@ export function NotificationBell() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="absolute right-0 mt-3 w-80 bg-zinc-950/80 backdrop-blur-2xl border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col"
+            className="absolute right-0 mt-3 w-80 bg-zinc-950/80 backdrop-blur-2xl border border-fouzar-border-subtle rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col"
           >
             {/* Header */}
-            <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between bg-zinc-900/50">
+            <div className="px-4 py-3 border-b border-fouzar-border-subtle flex items-center justify-between bg-zinc-900/50">
               <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-zinc-400">
                 Notifications
               </span>
               {unreadCount > 0 && (
                 <button
                   onClick={handleMarkAllRead}
-                  className="text-[9px] text-fouzar-accent hover:text-white transition-colors cursor-pointer"
+                  className="text-[9px] text-fouzar-accent hover:text-fouzar-text-primary transition-colors cursor-pointer"
                 >
                   Mark all read
                 </button>
@@ -92,7 +92,7 @@ export function NotificationBell() {
             {/* List */}
             <div className="max-h-80 overflow-y-auto scrollbar-none">
               {notifications.length === 0 ? (
-                <div className="p-6 text-center text-zinc-500 text-[10px] font-mono uppercase tracking-widest">
+                <div className="p-6 text-center text-fouzar-text-secondary text-[10px] font-mono uppercase tracking-widest">
                   No new notifications
                 </div>
               ) : (
@@ -104,13 +104,13 @@ export function NotificationBell() {
                     {!n.read && (
                       <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-fouzar-accent" />
                     )}
-                    <div className="mt-0.5 shrink-0 bg-zinc-900 p-1.5 rounded-full border border-white/10">
+                    <div className="mt-0.5 shrink-0 bg-zinc-900 p-1.5 rounded-full border border-fouzar-border-subtle">
                       {getIcon(n.type)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start mb-1">
                         <span className="text-xs font-bold text-zinc-200">{n.title}</span>
-                        <span className="text-[9px] text-zinc-500 font-mono">{n.time}</span>
+                        <span className="text-[9px] text-fouzar-text-secondary font-mono">{n.time}</span>
                       </div>
                       <p className="text-[10px] text-zinc-400 truncate">{n.message}</p>
                       
@@ -140,7 +140,7 @@ export function NotificationBell() {
             
             {/* Footer */}
             <div className="px-4 py-2 bg-zinc-950 text-center border-t border-white/5">
-              <button className="text-[9px] font-mono text-zinc-500 hover:text-zinc-300 uppercase tracking-widest cursor-pointer transition-colors">
+              <button className="text-[9px] font-mono text-fouzar-text-secondary hover:text-zinc-300 uppercase tracking-widest cursor-pointer transition-colors">
                 View Archive
               </button>
             </div>

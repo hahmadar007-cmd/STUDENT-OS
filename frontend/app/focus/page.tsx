@@ -102,7 +102,7 @@ export default function FocusTakeoverPage() {
   const strokeDashoffset = strokeLength * (1 - progress);
 
   return (
-    <div className="min-h-screen w-screen bg-[#0a0a0f] text-[#f0f0ff] flex flex-col items-center justify-between py-12 relative overflow-hidden select-none">
+    <div className="min-h-screen w-screen bg-fouzar-bg text-fouzar-text-primary flex flex-col items-center justify-between py-12 relative overflow-hidden select-none">
       
       {/* 4s breathing radial pulse inline style */}
       <style>{`
@@ -147,11 +147,11 @@ export default function FocusTakeoverPage() {
 
           {/* Time content centered inside the frame */}
           <div className="flex flex-col items-center justify-center">
-            <span className="text-4xl font-mono font-light tracking-widest text-[#f0f0ff] text-glow select-none">
+            <span className="text-4xl font-mono font-light tracking-widest text-fouzar-text-primary text-glow select-none">
               {formatTime(timeLeft)}
             </span>
             <div className="flex flex-col items-center mt-3 text-center">
-              <span className="text-[7px] font-mono text-[#6b6b8a] uppercase tracking-[0.25em]">
+              <span className="text-[7px] font-mono text-fouzar-text-secondary uppercase tracking-[0.25em]">
                 SESSION DURATION
               </span>
               <span className="text-[8.5px] font-mono text-[#7c5cfc] mt-0.5 uppercase tracking-wider">
@@ -164,23 +164,23 @@ export default function FocusTakeoverPage() {
 
         {/* Peers In Flow Row Section */}
         <div className="space-y-4 text-center">
-          <span className="text-[8px] font-mono text-[#6b6b8a] uppercase tracking-[0.25em] block">
+          <span className="text-[8px] font-mono text-fouzar-text-secondary uppercase tracking-[0.25em] block">
             IN FLOW
           </span>
 
           <div className="flex justify-center items-center gap-6">
             {peersInFlow.map((peer) => (
               <div key={peer.id} className="flex flex-col items-center gap-1.5 shrink-0">
-                <div className="w-8 h-8 rounded-none border border-[#ff2d55] shadow-[0_0_8px_rgba(255,45,85,0.25)] bg-[#16161f] flex items-center justify-center font-mono text-[9px] font-bold text-[#ff2d55]">
+                <div className="w-8 h-8 rounded-none border border-[#ff2d55] shadow-[0_0_8px_rgba(255,45,85,0.25)] bg-fouzar-card flex items-center justify-center font-mono text-[9px] font-bold text-[#ff2d55]">
                   {peer.initials}
                 </div>
-                <span className="text-[7.5px] font-mono text-[#6b6b8a] uppercase tracking-wider">
+                <span className="text-[7.5px] font-mono text-fouzar-text-secondary uppercase tracking-wider">
                   {peer.name}
                 </span>
               </div>
             ))}
             {peersInFlow.length === 0 && (
-              <span className="text-[8.5px] font-mono text-[#6b6b8a] uppercase tracking-widest block italic py-1">
+              <span className="text-[8.5px] font-mono text-fouzar-text-secondary uppercase tracking-widest block italic py-1">
                 No peers in flow. Hold the signal.
               </span>
             )}
@@ -188,7 +188,7 @@ export default function FocusTakeoverPage() {
         </div>
 
         {/* Muted Signal footer statement */}
-        <p className="text-[8px] font-mono text-[#6b6b8a] italic uppercase tracking-[0.15em] select-none text-center">
+        <p className="text-[8px] font-mono text-fouzar-text-secondary italic uppercase tracking-[0.15em] select-none text-center">
           The signal is clear. Your peers are watching.
         </p>
 
@@ -211,13 +211,13 @@ export default function FocusTakeoverPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-[#0a0a0f]/95 backdrop-blur-md z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-fouzar-bg/95 backdrop-blur-md z-50 flex items-center justify-center p-4"
           >
             <FascaCard className="w-full max-w-xs p-6 border-[#ff2d55] rounded-none text-center space-y-4 shadow-[0_0_30px_rgba(255,45,85,0.15)]">
               <h4 className="font-serif text-xs font-bold text-[#ff2d55] tracking-widest uppercase">
                 CONFIRM TERMINATION
               </h4>
-              <p className="text-[9px] font-sans text-[#6b6b8a] leading-relaxed">
+              <p className="text-[9px] font-sans text-fouzar-text-secondary leading-relaxed">
                 Are you sure you want to disconnect from this deep flow session? Your peers will detect the signal break.
               </p>
               <div className="flex gap-3 mt-4">
@@ -240,7 +240,7 @@ export default function FocusTakeoverPage() {
       </AnimatePresence>
 
       {/* Watermark in bottom right corner */}
-      <div className="absolute bottom-4 right-4 z-10 font-serif text-[9px] font-bold tracking-[0.2em] text-[#6b6b8a]/20 select-none uppercase pointer-events-none">
+      <div className="absolute bottom-4 right-4 z-10 font-serif text-[9px] font-bold tracking-[0.2em] text-fouzar-text-secondary/20 select-none uppercase pointer-events-none">
         FASCA SECURE DEPTH
       </div>
 

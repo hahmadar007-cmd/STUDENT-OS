@@ -166,7 +166,7 @@ export const FriendActivity: React.FC = () => {
                       {/* Focus flame indicator */}
                       {friend.isFocusing ? (
                         <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-red-500 border border-fouzar-surface rounded-full flex items-center justify-center shadow">
-                          <Flame className="w-1.5 h-1.5 text-white fill-white" />
+                          <Flame className="w-1.5 h-1.5 text-fouzar-text-primary fill-white" />
                         </span>
                       ) : (
                         <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-fouzar-accent border-2 border-fouzar-surface rounded-full animate-pulse" />

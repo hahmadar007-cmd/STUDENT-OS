@@ -102,11 +102,11 @@ const CourseBlock: React.FC<{
               </span>
             )}
           </div>
-          <p className="text-[10px] font-bold text-[#f0f0ff] mt-0.5 leading-tight truncate">
+          <p className="text-[10px] font-bold text-fouzar-text-primary mt-0.5 leading-tight truncate">
             {course.fullname}
           </p>
           {course.teacherName && (
-            <p className="text-[7.5px] font-mono text-[#6b6b8a] mt-0.5 flex items-center gap-1">
+            <p className="text-[7.5px] font-mono text-fouzar-text-secondary mt-0.5 flex items-center gap-1">
               <User2 className="w-2.5 h-2.5 shrink-0" style={{ color }} />
               {course.teacherName}
             </p>
@@ -114,7 +114,7 @@ const CourseBlock: React.FC<{
         </div>
       </div>
       {/* Items */}
-      <div className="space-y-2 pl-3 border-l border-[#2a2a3a]/30 ml-3">
+      <div className="space-y-2 pl-3 border-l border-fouzar-border-strong/30 ml-3">
         {children}
       </div>
     </div>
@@ -125,10 +125,10 @@ const CourseBlock: React.FC<{
 const Skeletons = () => (
   <div className="space-y-3">
     {[1, 2, 3].map(i => (
-      <div key={i} className="h-20 bg-[#16161f] border border-[#2a2a3a] animate-pulse p-4 flex flex-col gap-2">
-        <div className="h-2 bg-[#1e1e2a] w-1/4 rounded" />
-        <div className="h-3 bg-[#1e1e2a] w-3/4 rounded" />
-        <div className="h-4 bg-[#1e1e2a] w-16 rounded" />
+      <div key={i} className="h-20 bg-fouzar-card border border-fouzar-border-strong animate-pulse p-4 flex flex-col gap-2">
+        <div className="h-2 bg-fouzar-elevated w-1/4 rounded" />
+        <div className="h-3 bg-fouzar-elevated w-3/4 rounded" />
+        <div className="h-4 bg-fouzar-elevated w-16 rounded" />
       </div>
     ))}
   </div>
@@ -136,10 +136,10 @@ const Skeletons = () => (
 
 // ── Empty state ───────────────────────────────────────────────────────────────
 const EmptyState = ({ icon: Icon, title, sub }: { icon: any; title: string; sub: string }) => (
-  <div className="h-44 border border-dashed border-[#2a2a3a] flex flex-col items-center justify-center p-6 text-center">
-    <Icon className="w-7 h-7 text-[#6b6b8a]/40 mb-3" />
-    <span className="text-xs font-bold text-[#f0f0ff]">{title}</span>
-    <span className="text-[9px] font-mono text-[#6b6b8a] mt-1.5 leading-relaxed">{sub}</span>
+  <div className="h-44 border border-dashed border-fouzar-border-strong flex flex-col items-center justify-center p-6 text-center">
+    <Icon className="w-7 h-7 text-fouzar-text-secondary/40 mb-3" />
+    <span className="text-xs font-bold text-fouzar-text-primary">{title}</span>
+    <span className="text-[9px] font-mono text-fouzar-text-secondary mt-1.5 leading-relaxed">{sub}</span>
   </div>
 );
 
@@ -301,23 +301,23 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose 
           <motion.div
             initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="fixed top-0 right-0 bottom-0 w-[440px] max-w-full bg-[#0e0e16] border-l border-[#2a2a3a] z-40 shadow-2xl flex flex-col"
+            className="fixed top-0 right-0 bottom-0 w-[440px] max-w-full bg-fouzar-surface border-l border-fouzar-border-strong z-40 shadow-2xl flex flex-col"
           >
             {/* ── Header ── */}
-            <div className="flex items-center justify-between border-b border-[#2a2a3a]/50 px-5 py-4 shrink-0">
+            <div className="flex items-center justify-between border-b border-fouzar-border-strong/50 px-5 py-4 shrink-0">
               <div>
-                <h3 className="font-serif text-sm font-bold text-[#f0f0ff]">My Campus Gateway</h3>
-                <p className="text-[7.5px] font-mono text-[#6b6b8a] mt-0.5">
+                <h3 className="font-serif text-sm font-bold text-fouzar-text-primary">My Campus Gateway</h3>
+                <p className="text-[7.5px] font-mono text-fouzar-text-secondary mt-0.5">
                   {lmsSource === 'live' ? `Connected live · ${connectedProvider}` : lmsSource === 'error' ? 'Connection issue' : 'Not connected'}
                 </p>
               </div>
               <div className="flex items-center gap-1">
                 <button onClick={handleSync} title="Refresh"
-                  className={`p-1.5 hover:bg-white/5 rounded-[6px] text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors cursor-pointer ${isSyncing ? 'animate-spin' : ''}`}>
+                  className={`p-1.5 hover:bg-white/5 rounded-[6px] text-fouzar-text-secondary hover:text-fouzar-text-primary transition-colors cursor-pointer ${isSyncing ? 'animate-spin' : ''}`}>
                   <RefreshCw className="w-3.5 h-3.5" />
                 </button>
                 <button onClick={onClose}
-                  className="p-1.5 hover:bg-white/5 rounded-[6px] text-[#6b6b8a] hover:text-[#f0f0ff] transition-colors cursor-pointer">
+                  className="p-1.5 hover:bg-white/5 rounded-[6px] text-fouzar-text-secondary hover:text-fouzar-text-primary transition-colors cursor-pointer">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -333,7 +333,7 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose 
             </div>
 
             {/* ── Tab bar ── */}
-            <div className="flex border-b border-[#2a2a3a]/50 px-2 pt-2 shrink-0">
+            <div className="flex border-b border-fouzar-border-strong/50 px-2 pt-2 shrink-0">
               {tabs.map(tab => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
@@ -341,14 +341,14 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose 
                   <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                     className="flex-1 flex flex-col items-center gap-1 py-2 px-1 relative cursor-pointer transition-colors group">
                     <div className="flex items-center gap-1">
-                      <Icon className={`w-3 h-3 transition-colors ${isActive ? 'text-[#7c5cfc]' : 'text-[#6b6b8a] group-hover:text-[#f0f0ff]'}`} />
+                      <Icon className={`w-3 h-3 transition-colors ${isActive ? 'text-[#7c5cfc]' : 'text-fouzar-text-secondary group-hover:text-fouzar-text-primary'}`} />
                       {tab.badge !== undefined && tab.badge > 0 && (
-                        <span className={`text-[6.5px] font-mono font-bold px-1 py-0.5 rounded-full ${isActive ? 'bg-[#7c5cfc] text-white' : 'bg-[#2a2a3a] text-[#6b6b8a]'}`}>
+                        <span className={`text-[6.5px] font-mono font-bold px-1 py-0.5 rounded-full ${isActive ? 'bg-[#7c5cfc] text-fouzar-text-primary' : 'bg-[#2a2a3a] text-fouzar-text-secondary'}`}>
                           {tab.badge}
                         </span>
                       )}
                     </div>
-                    <span className={`text-[7.5px] font-mono uppercase tracking-wider transition-colors ${isActive ? 'text-[#f0f0ff]' : 'text-[#6b6b8a] group-hover:text-[#f0f0ff]'}`}>
+                    <span className={`text-[7.5px] font-mono uppercase tracking-wider transition-colors ${isActive ? 'text-fouzar-text-primary' : 'text-fouzar-text-secondary group-hover:text-fouzar-text-primary'}`}>
                       {tab.label}
                     </span>
                     {isActive && <div className="absolute bottom-0 left-1 right-1 h-[2px] bg-[#7c5cfc] rounded-t-full" />}
@@ -364,7 +364,7 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose 
               {activeTab === 'tasks' && (
                 <>
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-[7.5px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a]">Upcoming Tasks & Classes</span>
+                    <span className="text-[7.5px] font-mono uppercase tracking-[0.25em] text-fouzar-text-secondary">Upcoming Tasks & Classes</span>
                     <span className={`text-[7px] font-mono uppercase ${lmsSource === 'live' ? 'text-[#00d4ff]' : lmsSource === 'error' ? 'text-[#ff2d55]' : 'text-[#f5a623]'}`}>
                       {lmsSource === 'live' ? '● Live' : lmsSource === 'error' ? '⚠ Error' : '○ Demo'}
                     </span>
@@ -388,8 +388,8 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose 
                             return (
                               <FascaCard key={dl.id} className="p-3.5 flex flex-col gap-2.5">
                                 <div className="flex justify-between items-start gap-2">
-                                  <p className="text-[10.5px] font-bold text-[#f0f0ff] leading-snug flex-1">{dl.title}</p>
-                                  <span className={`text-[7px] font-mono uppercase tracking-wider shrink-0 ${isCritical ? 'text-[#ff2d55] font-bold' : isUrgent ? 'text-[#f5a623]' : 'text-[#6b6b8a]'}`}>
+                                  <p className="text-[10.5px] font-bold text-fouzar-text-primary leading-snug flex-1">{dl.title}</p>
+                                  <span className={`text-[7px] font-mono uppercase tracking-wider shrink-0 ${isCritical ? 'text-[#ff2d55] font-bold' : isUrgent ? 'text-[#f5a623]' : 'text-fouzar-text-secondary'}`}>
                                     {dl.timeLeftLabel}
                                   </span>
                                 </div>
@@ -405,9 +405,9 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose 
                                   )}
                                 </div>
                                 {courseFiles.length > 0 && (
-                                  <div className="border-t border-[#2a2a3a]/40 pt-2">
+                                  <div className="border-t border-fouzar-border-strong/40 pt-2">
                                     <button onClick={() => setOpenFileDrawer(isDrawerOpen ? null : drawerKey)}
-                                      className="flex items-center gap-1.5 text-[7px] font-mono text-[#6b6b8a] hover:text-[#f0f0ff] uppercase tracking-wider transition-colors cursor-pointer w-full">
+                                      className="flex items-center gap-1.5 text-[7px] font-mono text-fouzar-text-secondary hover:text-fouzar-text-primary uppercase tracking-wider transition-colors cursor-pointer w-full">
                                       {isDrawerOpen ? <ChevronDown className="w-2.5 h-2.5" /> : <ChevronRight className="w-2.5 h-2.5" />}
                                       <BookOpen className="w-2.5 h-2.5" /> Course Materials
                                       <span className="ml-auto opacity-50">{courseFiles.length} file{courseFiles.length !== 1 ? 's' : ''}</span>
@@ -420,8 +420,8 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose 
                                               className="flex items-center gap-2 w-full p-1.5 rounded-[4px] hover:bg-white/5 text-left group transition-colors cursor-pointer">
                                               <FileText className="w-2.5 h-2.5 text-[#7c5cfc] shrink-0" />
                                               <div className="flex-1 min-w-0">
-                                                <span className="text-[7.5px] font-mono text-[#f0f0ff]/80 group-hover:text-[#f0f0ff] truncate block">{file.name}</span>
-                                                {file.fileSize > 0 && <span className="text-[6px] font-mono text-[#6b6b8a]">{fmt(file.fileSize)}</span>}
+                                                <span className="text-[7.5px] font-mono text-fouzar-text-primary/80 group-hover:text-fouzar-text-primary truncate block">{file.name}</span>
+                                                {file.fileSize > 0 && <span className="text-[6px] font-mono text-fouzar-text-secondary">{fmt(file.fileSize)}</span>}
                                               </div>
                                               <span className="text-[6px] font-mono text-[#7c5cfc]/40 group-hover:text-[#7c5cfc] shrink-0">VIEW →</span>
                                             </button>
@@ -442,20 +442,20 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose 
                   {/* Grade summary */}
                   {Object.keys(grades).length > 0 && (
                     <div className="mt-6">
-                      <span className="text-[7.5px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a] block mb-2">Semester Grades</span>
+                      <span className="text-[7.5px] font-mono uppercase tracking-[0.25em] text-fouzar-text-secondary block mb-2">Semester Grades</span>
                       <div className="space-y-1.5">
                         {Object.values(grades).map(g => (
-                          <div key={g.courseId} className="flex items-center justify-between bg-[#16161f] border border-[#2a2a3a] px-3 py-2">
+                          <div key={g.courseId} className="flex items-center justify-between bg-fouzar-card border border-fouzar-border-strong px-3 py-2">
                             <div className="min-w-0 flex-1">
                               <span className="text-[8px] font-mono uppercase" style={{ color: courseColor(g.courseShortName) }}>{g.courseShortName}</span>
-                              <p className="text-[7px] font-mono text-[#6b6b8a] truncate">{g.courseName}</p>
+                              <p className="text-[7px] font-mono text-fouzar-text-secondary truncate">{g.courseName}</p>
                             </div>
                             {g.gradePercent != null ? (
                               <div className="text-right shrink-0 ml-3">
                                 <span className="text-sm font-bold font-serif" style={{ color: gradeColour(g.letterGrade) }}>{g.letterGrade}</span>
-                                <p className="text-[7px] font-mono text-[#6b6b8a]">{g.gradePercent.toFixed(1)}%</p>
+                                <p className="text-[7px] font-mono text-fouzar-text-secondary">{g.gradePercent.toFixed(1)}%</p>
                               </div>
-                            ) : <span className="text-[8px] font-mono text-[#6b6b8a]">—</span>}
+                            ) : <span className="text-[8px] font-mono text-fouzar-text-secondary">—</span>}
                           </div>
                         ))}
                       </div>
@@ -468,7 +468,7 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose 
               {activeTab === 'assignments' && (
                 <>
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-[7.5px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a]">Assignments by Subject</span>
+                    <span className="text-[7.5px] font-mono uppercase tracking-[0.25em] text-fouzar-text-secondary">Assignments by Subject</span>
                     <div className="flex gap-2 items-center">
                       {(['overdue','new','submitted'] as const).map(s => (
                         <span key={s} className="flex items-center gap-0.5 text-[6px] font-mono" style={{ color: STATUS_CFG[s].color }}>
@@ -495,7 +495,7 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose 
                             return (
                               <FascaCard key={a.id} className="p-3.5 flex flex-col gap-2">
                                 <div className="flex items-start justify-between gap-2">
-                                  <p className="text-[10.5px] font-bold text-[#f0f0ff] leading-snug flex-1">{a.title}</p>
+                                  <p className="text-[10.5px] font-bold text-fouzar-text-primary leading-snug flex-1">{a.title}</p>
                                   <span className="flex items-center gap-1 text-[6.5px] font-mono font-bold uppercase px-1.5 py-0.5 rounded-[4px] shrink-0"
                                     style={{ color: cfg.color, backgroundColor: `${cfg.color}15`, border: `1px solid ${cfg.color}30` }}>
                                     <StatusIcon className="w-2 h-2" /> {cfg.label}
@@ -503,13 +503,13 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose 
                                 </div>
                                 <div className="flex items-center justify-between">
                                   {secsLeft !== null ? (
-                                    <span className={`text-[7.5px] font-mono ${a.status === 'overdue' ? 'text-[#ff2d55]' : secsLeft < 86400 ? 'text-[#f5a623]' : 'text-[#6b6b8a]'}`}>
+                                    <span className={`text-[7.5px] font-mono ${a.status === 'overdue' ? 'text-[#ff2d55]' : secsLeft < 86400 ? 'text-[#f5a623]' : 'text-fouzar-text-secondary'}`}>
                                       {a.status === 'overdue' ? '⚠ Past due' : `Due in ${fmtCountdown(secsLeft)}`}
                                       {a.dueDate && ` · ${new Date(a.dueDate).toLocaleDateString([], { month: 'short', day: 'numeric' })}`}
                                     </span>
-                                  ) : <span className="text-[7.5px] font-mono text-[#6b6b8a]">No due date</span>}
+                                  ) : <span className="text-[7.5px] font-mono text-fouzar-text-secondary">No due date</span>}
                                   <button onClick={openInPortal}
-                                    className="text-[7px] font-mono uppercase tracking-wider cursor-pointer transition-colors hover:text-[#f0f0ff] text-[#7c5cfc]">
+                                    className="text-[7px] font-mono uppercase tracking-wider cursor-pointer transition-colors hover:text-fouzar-text-primary text-[#7c5cfc]">
                                     {a.status === 'submitted' ? 'View →' : 'Submit →'}
                                   </button>
                                 </div>
@@ -526,7 +526,7 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose 
               {/* ─── QUIZZES ─────────────────────────────────────── */}
               {activeTab === 'quizzes' && (
                 <>
-                  <span className="text-[7.5px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a] block mb-3">Quizzes by Subject</span>
+                  <span className="text-[7.5px] font-mono uppercase tracking-[0.25em] text-fouzar-text-secondary block mb-3">Quizzes by Subject</span>
 
                   {dataLoading ? <Skeletons /> :
                    quizzes.length === 0 ? (
@@ -545,7 +545,7 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose 
                             return (
                               <FascaCard key={q.id} className="p-3.5 flex flex-col gap-2">
                                 <div className="flex items-start justify-between gap-2">
-                                  <p className="text-[10.5px] font-bold text-[#f0f0ff] leading-snug flex-1">{q.title}</p>
+                                  <p className="text-[10.5px] font-bold text-fouzar-text-primary leading-snug flex-1">{q.title}</p>
                                   {isOpen ? (
                                     <span className="text-[6.5px] font-mono font-bold px-1.5 py-0.5 rounded-[4px] text-[#00d4ff] bg-[#00d4ff]/10 border border-[#00d4ff]/30 shrink-0 animate-pulse">
                                       OPEN NOW
@@ -556,17 +556,17 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose 
                                 </div>
                                 <div className="flex items-center gap-3 flex-wrap">
                                   {q.timeLimit && (
-                                    <span className="flex items-center gap-1 text-[7px] font-mono text-[#6b6b8a]">
+                                    <span className="flex items-center gap-1 text-[7px] font-mono text-fouzar-text-secondary">
                                       <Timer className="w-2.5 h-2.5" /> {fmtTimeLimit(q.timeLimit)}
                                     </span>
                                   )}
                                   {q.attemptsAllowed > 0 && (
-                                    <span className="text-[7px] font-mono text-[#6b6b8a]">
+                                    <span className="text-[7px] font-mono text-fouzar-text-secondary">
                                       {q.attemptsAllowed === -1 ? '∞ attempts' : `${q.attemptsAllowed} attempt${q.attemptsAllowed !== 1 ? 's' : ''}`}
                                     </span>
                                   )}
                                   {secsToClose !== null && (
-                                    <span className={`text-[7px] font-mono ml-auto ${secsToClose < 3600 ? 'text-[#ff2d55] font-bold' : secsToClose < 86400 ? 'text-[#f5a623]' : 'text-[#6b6b8a]'}`}>
+                                    <span className={`text-[7px] font-mono ml-auto ${secsToClose < 3600 ? 'text-[#ff2d55] font-bold' : secsToClose < 86400 ? 'text-[#f5a623]' : 'text-fouzar-text-secondary'}`}>
                                       Closes in {fmtCountdown(secsToClose)}
                                     </span>
                                   )}
@@ -595,7 +595,7 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose 
               {/* ─── FORUMS ──────────────────────────────────────── */}
               {activeTab === 'forums' && (
                 <>
-                  <span className="text-[7.5px] font-mono uppercase tracking-[0.25em] text-[#6b6b8a] block mb-3">Discussion Forums by Subject</span>
+                  <span className="text-[7.5px] font-mono uppercase tracking-[0.25em] text-fouzar-text-secondary block mb-3">Discussion Forums by Subject</span>
 
                   {dataLoading ? <Skeletons /> :
                    forums.length === 0 ? (
@@ -609,20 +609,20 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose 
                           {items.map(f => (
                             <FascaCard key={f.id} className="p-3.5 flex flex-col gap-2">
                               <div className="flex items-start justify-between gap-2">
-                                <p className="text-[10.5px] font-bold text-[#f0f0ff] leading-snug flex-1">{f.name}</p>
+                                <p className="text-[10.5px] font-bold text-fouzar-text-primary leading-snug flex-1">{f.name}</p>
                                 {f.unreadCount > 0 && (
-                                  <span className="text-[6.5px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-[#7c5cfc] text-white shrink-0">
+                                  <span className="text-[6.5px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-[#7c5cfc] text-fouzar-text-primary shrink-0">
                                     {f.unreadCount} new
                                   </span>
                                 )}
                               </div>
                               <div className="flex items-center justify-between">
-                                <span className="text-[7px] font-mono text-[#6b6b8a] flex items-center gap-1">
+                                <span className="text-[7px] font-mono text-fouzar-text-secondary flex items-center gap-1">
                                   <MessageSquare className="w-2.5 h-2.5" />
                                   {f.discussionCount} discussion{f.discussionCount !== 1 ? 's' : ''}
                                 </span>
                                 <button onClick={openInPortal}
-                                  className={`text-[7px] font-mono uppercase tracking-wider cursor-pointer transition-colors hover:text-[#f0f0ff] ${f.unreadCount > 0 ? 'text-[#7c5cfc] font-bold' : 'text-[#6b6b8a]'}`}>
+                                  className={`text-[7px] font-mono uppercase tracking-wider cursor-pointer transition-colors hover:text-fouzar-text-primary ${f.unreadCount > 0 ? 'text-[#7c5cfc] font-bold' : 'text-fouzar-text-secondary'}`}>
                                   {f.unreadCount > 0 ? 'Read new →' : 'View →'}
                                 </button>
                               </div>
@@ -637,9 +637,9 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose 
             </div>
 
             {/* ── Footer status bar ── */}
-            <div className="border-t border-[#2a2a3a]/40 px-5 py-2.5 shrink-0 flex items-center justify-between text-[7px] font-mono text-[#6b6b8a] uppercase tracking-wider">
+            <div className="border-t border-fouzar-border-strong/40 px-5 py-2.5 shrink-0 flex items-center justify-between text-[7px] font-mono text-fouzar-text-secondary uppercase tracking-wider">
               <span>{lmsSource === 'live' ? 'Connected Live to UMT Portal' : syncTimestamp}</span>
-              <span className={lmsSource === 'live' ? 'text-[#00d4ff]' : 'text-[#6b6b8a]'}>{lmsSource === 'live' ? '● Live' : '○ Demo'}</span>
+              <span className={lmsSource === 'live' ? 'text-[#00d4ff]' : 'text-fouzar-text-secondary'}>{lmsSource === 'live' ? '● Live' : '○ Demo'}</span>
             </div>
           </motion.div>
         )}
@@ -649,20 +649,20 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose 
       <AnimatePresence>
         {showConnectModal && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-[#0a0a0f]/90 backdrop-blur-md flex items-center justify-center p-4">
+            className="fixed inset-0 z-50 bg-fouzar-bg/90 backdrop-blur-md flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.95, y: 15 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 15 }}
-              className="w-full max-w-md bg-[#16161f] border border-[#7c5cfc] rounded-[6px] shadow-2xl p-6">
+              className="w-full max-w-md bg-fouzar-card border border-[#7c5cfc] rounded-[6px] shadow-2xl p-6">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h4 className="font-serif text-sm font-bold text-[#f0f0ff]">Connect My University</h4>
-                  <p className="text-[8px] font-mono text-[#6b6b8a] mt-0.5">Sync deadlines, assignments, quizzes, grades &amp; forums</p>
+                  <h4 className="font-serif text-sm font-bold text-fouzar-text-primary">Connect My University</h4>
+                  <p className="text-[8px] font-mono text-fouzar-text-secondary mt-0.5">Sync deadlines, assignments, quizzes, grades &amp; forums</p>
                 </div>
-                <button onClick={() => setShowConnectModal(false)} className="p-1 hover:bg-white/5 rounded-[6px] text-[#6b6b8a] hover:text-[#f0f0ff] cursor-pointer">
+                <button onClick={() => setShowConnectModal(false)} className="p-1 hover:bg-white/5 rounded-[6px] text-fouzar-text-secondary hover:text-fouzar-text-primary cursor-pointer">
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
 
-              <div className="flex bg-[#0a0a0f]/40 border-b border-[#2a2a3a] mb-5">
+              <div className="flex bg-fouzar-bg/40 border-b border-fouzar-border-strong mb-5">
                 {(['moodle','canvas','blackboard','token'] as const).map(tab => (
                   <button key={tab} onClick={() => { setActiveLmsTab(tab); setErrorMsg(''); }}
                     className="flex-1 py-2 font-mono text-[8.5px] uppercase tracking-widest text-center cursor-pointer relative"
@@ -679,8 +679,8 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose 
                     <motion.circle cx="25" cy="25" r="20" stroke="currentColor" strokeWidth="3" fill="transparent" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.5 }} />
                     <motion.path d="M17 25L23 31L33 19" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="transparent" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 0.4, duration: 0.4 }} />
                   </motion.svg>
-                  <h5 className="text-xs font-bold text-[#f0f0ff] uppercase tracking-widest mt-4">Connected!</h5>
-                  <p className="text-[8.5px] font-mono text-[#6b6b8a] mt-1">Pulling your subjects, teachers, assignments &amp; forums...</p>
+                  <h5 className="text-xs font-bold text-fouzar-text-primary uppercase tracking-widest mt-4">Connected!</h5>
+                  <p className="text-[8.5px] font-mono text-fouzar-text-secondary mt-1">Pulling your subjects, teachers, assignments &amp; forums...</p>
                 </div>
               ) : (
                 <>
@@ -688,26 +688,26 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose 
                     {(activeLmsTab === 'moodle' || activeLmsTab === 'canvas') ? (
                       <div className="space-y-3">
                         <div className="flex flex-col gap-1.5">
-                          <span className="text-[8px] font-mono uppercase text-[#6b6b8a]">{activeLmsTab === 'canvas' ? 'Canvas URL' : 'University Portal URL'}</span>
-                          <FascaInput type="url" value={baseUrl} onChange={e => setBaseUrl(e.target.value)} placeholder={activeLmsTab === 'canvas' ? 'https://canvas.university.edu' : 'https://lms.university.edu'} className="rounded-none border border-[#2a2a3a] focus:border-[#7c5cfc]" />
+                          <span className="text-[8px] font-mono uppercase text-fouzar-text-secondary">{activeLmsTab === 'canvas' ? 'Canvas URL' : 'University Portal URL'}</span>
+                          <FascaInput type="url" value={baseUrl} onChange={e => setBaseUrl(e.target.value)} placeholder={activeLmsTab === 'canvas' ? 'https://canvas.university.edu' : 'https://lms.university.edu'} className="rounded-none border border-fouzar-border-strong focus:border-[#7c5cfc]" />
                         </div>
                         <div className="flex flex-col gap-1.5">
-                          <span className="text-[8px] font-mono uppercase text-[#6b6b8a]">{activeLmsTab === 'canvas' ? 'Access Token' : 'Web Service Token'}</span>
-                          <FascaInput type="password" value={tokenValue} onChange={e => setTokenValue(e.target.value)} placeholder="Paste your token here" className="rounded-none border border-[#2a2a3a] focus:border-[#7c5cfc]" />
+                          <span className="text-[8px] font-mono uppercase text-fouzar-text-secondary">{activeLmsTab === 'canvas' ? 'Access Token' : 'Web Service Token'}</span>
+                          <FascaInput type="password" value={tokenValue} onChange={e => setTokenValue(e.target.value)} placeholder="Paste your token here" className="rounded-none border border-fouzar-border-strong focus:border-[#7c5cfc]" />
                         </div>
-                        <p className="text-[7px] font-mono text-[#6b6b8a]/70 leading-relaxed">
+                        <p className="text-[7px] font-mono text-fouzar-text-secondary/70 leading-relaxed">
                           {activeLmsTab === 'canvas' ? 'Go to Account → Settings → Approved Integrations to create a token.' : 'Ask your IT department for a Moodle web service token with full course access.'}
                         </p>
                       </div>
                     ) : activeLmsTab === 'token' ? (
                       <div className="flex flex-col gap-1.5">
-                        <span className="text-[8px] font-mono uppercase text-[#6b6b8a]">Manual Token</span>
-                        <FascaInput type="password" value={tokenValue} onChange={e => setTokenValue(e.target.value)} placeholder="Paste your token here" className="rounded-none border border-[#2a2a3a] focus:border-[#7c5cfc]" />
+                        <span className="text-[8px] font-mono uppercase text-fouzar-text-secondary">Manual Token</span>
+                        <FascaInput type="password" value={tokenValue} onChange={e => setTokenValue(e.target.value)} placeholder="Paste your token here" className="rounded-none border border-fouzar-border-strong focus:border-[#7c5cfc]" />
                       </div>
                     ) : (
-                      <div className="py-8 border border-dashed border-[#2a2a3a] text-center flex flex-col items-center p-4">
-                        <AlertCircle className="w-6 h-6 text-[#6b6b8a] mb-2" />
-                        <span className="text-[10px] font-mono text-[#6b6b8a] uppercase">{activeLmsTab.toUpperCase()} support coming soon.</span>
+                      <div className="py-8 border border-dashed border-fouzar-border-strong text-center flex flex-col items-center p-4">
+                        <AlertCircle className="w-6 h-6 text-fouzar-text-secondary mb-2" />
+                        <span className="text-[10px] font-mono text-fouzar-text-secondary uppercase">{activeLmsTab.toUpperCase()} support coming soon.</span>
                       </div>
                     )}
                   </div>
@@ -718,7 +718,7 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose 
                     </div>
                   )}
                   <div className="flex gap-3 mt-5">
-                    <FascaButton onClick={() => setShowConnectModal(false)} variant="ghost-violet" className="flex-1 rounded-[6px] font-bold py-2 text-[9px] border border-[#2a2a3a]" disabled={isLoading}>Cancel</FascaButton>
+                    <FascaButton onClick={() => setShowConnectModal(false)} variant="ghost-violet" className="flex-1 rounded-[6px] font-bold py-2 text-[9px] border border-fouzar-border-strong" disabled={isLoading}>Cancel</FascaButton>
                     <FascaButton onClick={handleLinkGateway} variant="solid-violet" className="flex-1 rounded-[6px] font-bold py-2 text-[9px]"
                       disabled={isLoading || (activeLmsTab !== 'moodle' && activeLmsTab !== 'canvas' && activeLmsTab !== 'token')}>
                       {isLoading ? 'Connecting...' : 'Connect'}
