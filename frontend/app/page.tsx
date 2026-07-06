@@ -23,7 +23,7 @@ export default function LandingPage() {
       tag: 'DIGITAL WORKSPACE',
       title: 'Unified Study Environment',
       badge: 'ONLINE CLOUD SYNC',
-      color: '#0ea5e9', // Sky Blue
+      color: '#7c5cfc', // Fasca Violet
       accent: 'rgba(6,182,212,0.2)', // Cyan
     },
     {
@@ -31,16 +31,16 @@ export default function LandingPage() {
       tag: 'DEEP FOCUS',
       title: 'Distraction-Free Flow State',
       badge: 'FOCUS SHIELD ACTIVE',
-      color: '#eab308', // Yellow
-      accent: 'rgba(234,88,12,0.2)', // Orange
+      color: '#ff2d55', // Fasca Red
+      accent: 'rgba(236,72,153,0.2)', // Pink
     },
     {
       src: '/slide3.jpg',
       tag: 'ACADEMIC TRACKING',
       title: 'Smart Attendance & Marks',
       badge: 'GRADES SYNCED',
-      color: '#ef4444', // Red
-      accent: 'rgba(168,85,247,0.2)', // Purple
+      color: '#06b6d4', // Fasca Cyan
+      accent: 'rgba(124,92,252,0.2)', // Violet
     }
   ];
 
