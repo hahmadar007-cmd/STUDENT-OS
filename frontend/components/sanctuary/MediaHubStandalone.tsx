@@ -41,7 +41,7 @@ export function MediaHubStandalone({
     setActiveVideo(null);
     try {
       const res = await fetch(
-        `${getBackendUrl()}/youtube/standalone-search?q=${encodeURIComponent(query)}&maxResults=20`,
+        `${getBackendUrl()}/youtube/standalone-search?q=${encodeURIComponent(query)}&maxResults=20&limit=20`,
         { headers: { Authorization: `Bearer ${getAuthToken()}` } }
       );
       if (!res.ok) throw new Error("Search failed");
