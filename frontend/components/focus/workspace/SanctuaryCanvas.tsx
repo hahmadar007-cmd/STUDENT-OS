@@ -460,9 +460,9 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
             <MediaHubStandalone
               folderId={activeFolderId}
               onVideoSelect={(url, videoId, title) => {
-                // Video selected
+                // Video selected - just sync the global embed URL for other components if needed,
+                // but keep the user in the YT Search tab since it plays inline.
                 setEmbedUrl(`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`);
-                setActiveSplitTabs(prev => ({ ...prev, left: 'media' }));
               }}
             />
           </div>
