@@ -455,8 +455,8 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
     
     if (tab === 'youtube') {
       return (
-        <section className={`flex flex-col overflow-hidden border-fouzar-border flex-1 h-full w-full ${isGreenhouse ? 'fouzar-glass m-2 rounded-[var(--fouzar-radius-lg)]' : ''}`}>
-          <div className="flex-1 min-h-[280px] lg:min-h-0 bg-fouzar-surface/40 backdrop-blur-xl border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-6 flex flex-col overflow-hidden">
+        <section className={`flex flex-col overflow-hidden border-fouzar-border flex-1 min-h-0 w-full ${isGreenhouse ? 'fouzar-glass m-2 rounded-[var(--fouzar-radius-lg)]' : ''}`}>
+          <div className="flex-1 min-h-0 bg-fouzar-surface/40 backdrop-blur-xl border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-6 flex flex-col overflow-hidden">
             <MediaHubStandalone
               folderId={activeFolderId}
               onVideoSelect={(url, videoId, title) => {
@@ -497,7 +497,7 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
   };
 
   return (
-    <div className="fouzar-canvas flex flex-col h-full overflow-hidden bg-fouzar-bg relative">
+    <div className="fouzar-canvas flex-1 min-h-0 flex flex-col overflow-hidden bg-fouzar-bg relative">
       {/* Ambient glow */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div

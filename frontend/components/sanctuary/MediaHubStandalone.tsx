@@ -41,7 +41,7 @@ export function MediaHubStandalone({
     setActiveVideo(null);
     try {
       const res = await fetch(
-        `${getBackendUrl()}/youtube/standalone-search?q=${encodeURIComponent(query)}`,
+        `${getBackendUrl()}/youtube/standalone-search?q=${encodeURIComponent(query)}&maxResults=20`,
         { headers: { Authorization: `Bearer ${getAuthToken()}` } }
       );
       if (!res.ok) throw new Error("Search failed");
@@ -83,7 +83,7 @@ export function MediaHubStandalone({
   };
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden">
+    <div className="w-full flex-1 min-h-0 flex flex-col overflow-hidden">
 
       {/* ── Search bar ─────────────────────────────────────── */}
       <div className={`shrink-0 border-b border-slate-800/50 transition-all ${isSearchMinimized ? 'pb-2' : 'pb-4'}`}>
