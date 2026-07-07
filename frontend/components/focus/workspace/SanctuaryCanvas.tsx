@@ -17,6 +17,7 @@ import {
   Search,
   Sparkles,
   X,
+  FileText,
 } from 'lucide-react';
 import { useFouzar } from '../../../lib/FouzarContext';
 import { DocumentViewer } from '../../documents/DocumentViewer';
@@ -264,14 +265,6 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
                   onOpenFile={(doc) => setActiveDoc(doc)}
                 />
               </div>
-              {!isFlowActive && (
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Sanctuary notebook — capture formulas, definitions, insights..."
-                  className="mt-4 h-14 bg-fouzar-elevated/30 border border-fouzar-border rounded-[var(--fouzar-radius-md)] p-2 font-mono text-[9px] resize-none focus:outline-none focus:shadow-[var(--fouzar-focus-ring)] shrink-0"
-                />
-              )}
             </div>
           )}
         </section>
@@ -460,7 +453,7 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
       );
     }
     
-        if (tab === 'youtube') {
+    if (tab === 'youtube') {
       return (
         <section className={`flex flex-col overflow-hidden border-fouzar-border flex-1 h-full w-full ${isGreenhouse ? 'fouzar-glass m-2 rounded-[var(--fouzar-radius-lg)]' : ''}`}>
           <div className="flex-1 min-h-[280px] lg:min-h-0 bg-fouzar-surface/40 backdrop-blur-xl border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-6 flex flex-col overflow-hidden">
@@ -471,6 +464,29 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
                 setEmbedUrl(`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`);
                 setActiveSplitTabs(prev => ({ ...prev, left: 'media' }));
               }}
+            />
+          </div>
+        </section>
+      );
+    }
+    
+    if (tab === 'notes') {
+      return (
+        <section className={`flex flex-col overflow-hidden border-fouzar-border flex-1 h-full w-full ${isGreenhouse ? 'fouzar-glass m-2 rounded-[var(--fouzar-radius-lg)]' : ''}`}>
+          <div className="flex-1 min-h-[280px] lg:min-h-0 bg-fouzar-surface/40 backdrop-blur-xl border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-6 flex flex-col overflow-hidden">
+            <div className="mb-4">
+              <h3 className="font-serif text-xs font-bold uppercase tracking-wider text-fouzar-text-primary">
+                Sanctuary Notebook
+              </h3>
+              <p className="text-[9.5px] text-fouzar-text-secondary mt-1">
+                Capture formulas, definitions, and insights. Auto-saves locally.
+              </p>
+            </div>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Sanctuary notebook — capture formulas, definitions, insights..."
+              className="flex-1 bg-fouzar-elevated/30 border border-fouzar-border rounded-[var(--fouzar-radius-md)] p-4 font-mono text-sm resize-none focus:outline-none focus:shadow-[var(--fouzar-focus-ring)]"
             />
           </div>
         </section>
@@ -519,8 +535,9 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
           {[
             { id: 'material', icon: BookOpen, label: 'Materials' },
             { id: 'media', icon: Play, label: 'Media' },
-            { id: 'web', icon: Globe, label: 'Web Hub' },
             { id: 'youtube', icon: MonitorPlay, label: 'YT Search' },
+            { id: 'notes', icon: FileText, label: 'Notes' },
+            { id: 'web', icon: Globe, label: 'Web Hub' },
           ].map((v) => {
             const Icon = v.icon;
             return (
@@ -561,8 +578,9 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
             >
               <option value="material">Materials</option>
               <option value="media">Media</option>
-              <option value="web">Web Hub</option>
               <option value="youtube">YT Search</option>
+              <option value="notes">Notes</option>
+              <option value="web">Web Hub</option>
             </select>
           )}
         </div>

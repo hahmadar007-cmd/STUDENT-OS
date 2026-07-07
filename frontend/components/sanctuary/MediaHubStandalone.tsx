@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Search, Play, Loader2, Tv, Clock, User, X, ChevronDown } from "lucide-react";
+import { Search, Play, Loader2, Tv, Clock, User, X, ChevronDown, Minimize2, Maximize2 } from "lucide-react";
 import { getBackendUrl, getAuthToken } from "../../lib/api";
 
 interface SearchResult {
@@ -25,6 +25,7 @@ export function MediaHubStandalone({
   const [error, setError] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
   const [activeVideo, setActiveVideo] = useState<SearchResult | null>(null);
+  const [isSearchMinimized, setIsSearchMinimized] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
 
@@ -55,6 +56,8 @@ export function MediaHubStandalone({
 
   const handleSelect = async (video: SearchResult) => {
     setActiveVideo(video);
+    // Auto-minimize search if on smaller screens or just for better view
+    setIsSearchMinimized(true);
     // Scroll player into view smoothly
     setTimeout(() => playerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
 
@@ -81,39 +84,51 @@ export function MediaHubStandalone({
     <div className="w-full h-full flex flex-col overflow-hidden">
 
       {/* ── Search bar ─────────────────────────────────────── */}
-      <div className="shrink-0 pb-4 border-b border-slate-800/50">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-6 h-6 rounded-lg bg-red-500/20 border border-red-500/30 flex items-center justify-center">
-            <Tv className="w-3.5 h-3.5 text-red-400" />
+      <div className={`shrink-0 border-b border-slate-800/50 transition-all ${isSearchMinimized ? 'pb-2' : 'pb-4'}`}>
+        <div className="flex items-center justify-between mb-3 mt-1">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-lg bg-red-500/20 border border-red-500/30 flex items-center justify-center">
+              <Tv className="w-3.5 h-3.5 text-red-400" />
+            </div>
+            <span className="text-sm font-sans font-medium uppercase tracking-wider text-slate-400">YT Search</span>
+            <div className="ml-2 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-xs font-mono text-emerald-400 uppercase">Live</span>
+            </div>
           </div>
-          <span className="text-sm font-sans font-medium uppercase tracking-wider text-slate-400">YT Search</span>
-          <div className="ml-auto flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-xs font-mono text-emerald-400 uppercase">Live</span>
-          </div>
+          
+          <button
+            onClick={() => setIsSearchMinimized(!isSearchMinimized)}
+            className="p-1.5 rounded-lg hover:bg-slate-800/80 text-slate-400 hover:text-fouzar-text-primary transition-colors cursor-pointer"
+            title={isSearchMinimized ? "Expand Search" : "Minimize Search"}
+          >
+            {isSearchMinimized ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
+          </button>
         </div>
 
-        <form onSubmit={handleSearch} className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-fouzar-text-secondary pointer-events-none" />
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search YouTube..."
-              className="w-full bg-slate-900/70 border border-slate-700/60 hover:border-slate-600 focus:border-red-500/50 rounded-xl pl-9 pr-4 py-2.5 text-sm text-fouzar-text-primary placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-red-500/20 transition-all"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading || !query.trim()}
-            className="shrink-0 px-4 py-2.5 rounded-xl text-sm font-semibold text-fouzar-text-primary transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ background: 'linear-gradient(135deg,#ef4444,#dc2626)', boxShadow: '0 0 16px rgba(239,68,68,0.3)' }}
-          >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-          </button>
-        </form>
+        {!isSearchMinimized && (
+          <form onSubmit={handleSearch} className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-fouzar-text-secondary pointer-events-none" />
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search YouTube..."
+                className="w-full bg-slate-900/70 border border-slate-700/60 hover:border-slate-600 focus:border-red-500/50 rounded-xl pl-9 pr-4 py-2.5 text-sm text-fouzar-text-primary placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-red-500/20 transition-all"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading || !query.trim()}
+              className="shrink-0 px-4 py-2.5 rounded-xl text-sm font-semibold text-fouzar-text-primary transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{ background: 'linear-gradient(135deg,#ef4444,#dc2626)', boxShadow: '0 0 16px rgba(239,68,68,0.3)' }}
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+            </button>
+          </form>
+        )}
       </div>
 
       {/* ── Scrollable content area ─────────────────────────── */}
