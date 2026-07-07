@@ -183,7 +183,7 @@ export function MediaHubStandalone({
       )}
 
       {/* ── Scrollable content area ─────────────────────────── */}
-      <div className="flex-1 overflow-y-auto pr-2 pb-4 space-y-4">
+      <div className="flex-1 min-h-0 overflow-y-auto pr-2 pb-4 space-y-4">
         {/* Error */}
         {error && (
           <div className="px-4 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-sans">
@@ -193,7 +193,7 @@ export function MediaHubStandalone({
 
         {/* Loading skeleton */}
         {loading && (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="rounded-xl overflow-hidden border border-slate-800/60 bg-slate-900/40 animate-pulse">
                 <div className="aspect-video bg-slate-800/60" />
@@ -244,7 +244,7 @@ export function MediaHubStandalone({
                 {results.length} results — click to play
               </span>
             )}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {results.map((video) => (
                 <div
                   key={video.videoId}
