@@ -298,7 +298,7 @@ export default function StudyGroupRoom() {
 
     if (tab === 'youtube') {
       return (
-        <section className={`flex flex-col overflow-hidden flex-1 h-full w-full bg-slate-900/40 rounded-xl`}>
+        <section className={`flex flex-col overflow-hidden flex-1 min-h-0 w-full bg-slate-900/40 rounded-xl`}>
           <MediaHubStandalone folderId={null} onVideoSelect={() => {}} />
         </section>
       );
@@ -515,15 +515,15 @@ export default function StudyGroupRoom() {
             <div className="flex-1 flex flex-col overflow-hidden relative">
               {activeSplitTabs.right ? (
                 <ResizablePanel direction="horizontal" initialSize={500} minSize={300}>
-                  <div className="h-full w-full flex flex-col pr-3 overflow-hidden">
+                  <div className="flex-1 min-h-0 w-full flex flex-col pr-3 overflow-hidden">
                     {renderTabContent(activeSplitTabs.left)}
                   </div>
-                  <div className="h-full w-full flex flex-col pl-3 border-l border-fouzar-border/30 overflow-hidden">
+                  <div className="flex-1 min-h-0 w-full flex flex-col pl-3 border-l border-fouzar-border/30 overflow-hidden">
                     {renderTabContent(activeSplitTabs.right)}
                   </div>
                 </ResizablePanel>
               ) : (
-                <div className="h-full w-full flex flex-col overflow-hidden">
+                <div className="flex-1 min-h-0 w-full flex flex-col overflow-hidden">
                   {renderTabContent(activeSplitTabs.left)}
                 </div>
               )}
