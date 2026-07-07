@@ -132,7 +132,7 @@ export const ResizablePanel: React.FC<ResizablePanelProps> = ({
   return (
     <div 
       ref={containerRef}
-      className={`flex ${isHorizontal ? 'flex-row' : 'flex-col'} w-full h-full overflow-hidden ${className}`}
+      className={`flex ${isHorizontal ? 'flex-row' : 'flex-col'} w-full flex-1 min-h-0 overflow-hidden ${className}`}
     >
       {renderPanel(0)}
       

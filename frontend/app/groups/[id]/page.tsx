@@ -417,7 +417,7 @@ export default function StudyGroupRoom() {
         <ResizablePanel direction="horizontal" initialSize={700} minSize={400} collapsed={!isChatOpen}>
         
         {/* Left slide canvas (grows if chat is closed) */}
-        <div className={`flex flex-col justify-between h-full w-full p-6 ${isFlowActive ? 'deep-flow-blur' : ''}`}>
+        <div className={`flex flex-col justify-between flex-1 min-h-0 w-full p-6 ${isFlowActive ? 'deep-flow-blur' : ''}`}>
           
           <div className="flex-1 flex flex-col p-8 bg-fouzar-surface/40 backdrop-blur-md border border-fouzar-border/60 rounded-[8px] relative overflow-hidden shadow-2xl">
             
