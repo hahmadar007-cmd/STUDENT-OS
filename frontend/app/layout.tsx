@@ -7,7 +7,7 @@
 // ============================================================================
 
 import type { Metadata } from "next";
-import { Space_Grotesk, Inter, JetBrains_Mono, Grenze_Gotisch } from "next/font/google";
+import { Space_Grotesk, Inter, JetBrains_Mono, UnifrakturMaguntia } from "next/font/google";
 import "./globals.css";
 import { FouzarProvider } from "../lib/FouzarContext";
 import { ThemeProvider } from "../lib/ThemeContext";
@@ -30,15 +30,15 @@ const jetbrains = JetBrains_Mono({
   subsets: ["latin"],
 });
 
-const grenzeGotisch = Grenze_Gotisch({
+const grenzeGotisch = UnifrakturMaguntia({
   variable: "--font-gothic",
   subsets: ["latin"],
-  weight: ["400", "700"],
+  weight: ["400"],
 });
 
 export const metadata: Metadata = {
   title: "Fouzar | High-Performance Study Engine",
-  description: "Futuristic digital garden and contextual focus room for high-performance SaaS builders.",
+  description: "Fouzar is a high-performance student OS with Pomodoro, Diary, and AI tools.",
 };
 
 export default function RootLayout({

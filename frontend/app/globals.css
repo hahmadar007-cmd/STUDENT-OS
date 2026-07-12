@@ -15,7 +15,7 @@
   --fouzar-font-sans: var(--font-sans), 'Inter', system-ui, sans-serif;
   --fouzar-font-display: var(--font-serif), 'Space Grotesk', sans-serif;
   --fouzar-font-mono: var(--font-mono), 'JetBrains Mono', monospace;
-  --fouzar-font-gothic: var(--font-gothic), 'Grenze Gotisch', serif;
+  --fouzar-font-gothic: var(--font-gothic), 'UnifrakturMaguntia', serif;
 
   --fouzar-text-xs: 0.75rem;
   --fouzar-text-sm: 0.8125rem;
