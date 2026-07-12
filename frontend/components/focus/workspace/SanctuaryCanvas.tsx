@@ -120,7 +120,7 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
     [handleStartPresenting, onPresentFile],
   );
 
-  const [activeSplitTabs, setActiveSplitTabs] = useState<{ left: string; right: string | null }>({ left: 'material', right: 'media' });
+  const [activeSplitTabs, setActiveSplitTabs] = useState<{ left: string; right: string | null }>({ left: 'material', right: 'youtube' });
   const [videoInput, setVideoInput] = useState('');
   const [embedUrl, setEmbedUrl] = useState('https://www.youtube.com/embed/jfKfPfyJRdk?rel=0&modestbranding=1&enablejsapi=1');
   const [notes, setNotes] = useState('');
@@ -273,38 +273,7 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
         </section>
       );
     }
-    
-    if (tab === 'media') {
-      return (
-        <section className={`flex flex-col overflow-hidden flex-1 h-full w-full`}>
-          <div className="flex-1 bg-black/50 relative">
-            <iframe
-              src={embedUrl}
-              title="Fouzar lecture sandbox"
-              className="absolute inset-0 w-full h-full border-0"
-              allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-          {!isFlowActive && (
-            <form onSubmit={handleSetVideo} className="p-3 border-t border-fouzar-border flex gap-2 bg-fouzar-surface">
-              <input
-                value={videoInput}
-                onChange={(e) => setVideoInput(e.target.value)}
-                placeholder="Paste YouTube lecture URL..."
-                className="flex-1 bg-fouzar-elevated border border-fouzar-border px-3 py-1.5 text-[10px] font-mono rounded-[var(--fouzar-radius-md)] focus:outline-none"
-              />
-              <button
-                type="submit"
-                className="px-4 py-1.5 bg-fouzar-accent/10 border border-fouzar-accent/30 text-fouzar-accent font-mono text-[8px] uppercase rounded-[var(--fouzar-radius-md)]"
-              >
-                Load
-              </button>
-            </form>
-          )}
-        </section>
-      );
-    }
+
     
     if (tab === 'web') {
       return (
@@ -545,8 +514,7 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
         <div className="flex items-center gap-1">
           {[
             { id: 'material', icon: BookOpen, label: 'Materials' },
-            { id: 'media', icon: Play, label: 'Media' },
-            { id: 'youtube', icon: MonitorPlay, label: 'YT Search' },
+            { id: 'youtube', icon: Play, label: 'YouTube' },
             { id: 'notes', icon: FileText, label: 'Notes' },
             { id: 'web', icon: Globe, label: 'Web Hub' },
           ].map((v) => {
@@ -571,7 +539,7 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
           <div className="w-[1px] h-4 bg-fouzar-border mx-1" />
           {/* Split toggle */}
           <button
-            onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: prev.right ? null : 'media' }))}
+            onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: prev.right ? null : 'youtube' }))}
             disabled={isFlowActive}
             className={`px-2.5 py-1 flex items-center gap-1 font-mono text-[7px] uppercase tracking-wider rounded-[var(--fouzar-radius-sm)] transition-colors ${
               activeSplitTabs.right
@@ -588,8 +556,7 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
               {[
                 { id: 'material', label: 'Slides' },
                 { id: 'notes',    label: 'Notes'  },
-                { id: 'media',    label: 'Video'  },
-                { id: 'youtube',  label: 'YT'     },
+                { id: 'youtube',  label: 'YouTube'},
                 { id: 'web',      label: 'Web'    },
                 { id: 'lounge',   label: 'Lounge' },
               ].map((opt) => (

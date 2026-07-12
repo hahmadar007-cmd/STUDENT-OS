@@ -304,13 +304,6 @@ export default function StudyGroupRoom() {
       );
     }
 
-    if (tab === 'watch') {
-      return (
-        <div className="flex-1 flex flex-col h-full min-h-[300px] w-full">
-          <GroupWatchParty groupId={groupId as string} />
-        </div>
-      );
-    }
 
     if (tab === 'notepad') {
       return (
@@ -627,8 +620,7 @@ export default function StudyGroupRoom() {
                 {[
                   { id: 'slides', label: 'Slides' },
                   { id: 'notepad', label: 'Notepad' },
-                  { id: 'watch', label: 'Watch Party' },
-                  { id: 'youtube', label: 'YT Search' },
+                  { id: 'youtube', label: 'YouTube' },
                   { id: 'lounge', label: 'Live Lounge' },
                   { id: 'web', label: 'Web Hub' },
                 ].map((v) => {
@@ -640,10 +632,10 @@ export default function StudyGroupRoom() {
                       disabled={isFlowActive}
                       className={`px-3 py-1 text-xs font-sans uppercase tracking-wider rounded-[4px] transition-colors ${
                         isActive 
-                          ? (v.id === 'watch' || v.id === 'youtube' ? 'bg-red-500 text-fouzar-text-primary shadow-[0_0_8px_rgba(239,68,68,0.5)]' 
+                          ? (v.id === 'youtube' ? 'bg-red-500 text-fouzar-text-primary shadow-[0_0_8px_rgba(239,68,68,0.5)]' 
                             : v.id === 'web' ? 'bg-indigo-500 text-fouzar-text-primary shadow-[0_0_8px_rgba(99,102,241,0.5)]'
                             : 'bg-fouzar-accent text-fouzar-text-primary')
-                          : (v.id === 'watch' || v.id === 'youtube' ? 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-red-500/10'
+                          : (v.id === 'youtube' ? 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-red-500/10'
                             : v.id === 'web' ? 'text-indigo-400 hover:text-fouzar-text-primary hover:bg-indigo-500/10'
                             : 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-white/5')
                       } disabled:opacity-30`}
@@ -678,8 +670,7 @@ export default function StudyGroupRoom() {
                     {[
                       { id: 'slides',  label: 'Slides' },
                       { id: 'notepad', label: 'Notepad' },
-                      { id: 'watch',   label: 'Watch' },
-                      { id: 'youtube', label: 'YT' },
+                      { id: 'youtube', label: 'YouTube' },
                       { id: 'web',     label: 'Web' },
                       { id: 'lounge',  label: 'Lounge' },
                     ].map((opt) => (

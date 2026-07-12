@@ -35,6 +35,27 @@ export function MediaHubStandalone({
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
+    
+    // Check if it's a direct YouTube URL
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#&?]*).*/;
+    const match = query.match(regExp);
+    if (match && match[2].length === 11) {
+      const videoId = match[2];
+      setActiveVideo({
+        videoId,
+        title: "Pasted YouTube Video",
+        thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+        author: "Direct Link",
+        duration: "Live",
+      });
+      setIsSearchMinimized(true);
+      setIsVideoMinimized(false);
+      setTimeout(() => playerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+      onVideoSelect(`https://www.youtube.com/watch?v=${videoId}`, videoId, "Pasted YouTube Video");
+      setQuery("");
+      return;
+    }
+
     setLoading(true);
     setError("");
     setHasSearched(true);
@@ -145,16 +166,17 @@ export function MediaHubStandalone({
             <div className="flex items-center gap-1 shrink-0 ml-2">
               <button
                 onClick={() => setIsVideoMinimized(!isVideoMinimized)}
-                className="p-1 rounded-lg hover:bg-slate-700/50 text-slate-400 hover:text-fouzar-text-primary transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg hover:bg-slate-700/50 text-slate-400 hover:text-fouzar-text-primary transition-colors cursor-pointer"
                 title={isVideoMinimized ? "Expand Video" : "Minimize Video"}
               >
                 {isVideoMinimized ? <Maximize2 className="w-3.5 h-3.5" /> : <Minimize2 className="w-3.5 h-3.5" />}
               </button>
               <button
                 onClick={() => setActiveVideo(null)}
-                className="p-1 rounded-lg hover:bg-slate-700/50 text-slate-400 hover:text-fouzar-text-primary transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 ml-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 transition-colors cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
+                <span className="text-[10px] font-mono uppercase tracking-wider font-bold">Leave Video</span>
               </button>
             </div>
           </div>
