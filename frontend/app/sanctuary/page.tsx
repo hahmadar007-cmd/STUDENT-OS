@@ -985,7 +985,7 @@ export default function PersonalSanctuaryPage() {
         >
           {/* Left — Subject Spaces */}
           <motion.aside
-            className={`border-b lg:border-b-0 lg:border-r border-fouzar-border p-4 space-y-6 overflow-y-auto scrollbar-none shrink-0 ${
+            className={`border-b lg:border-b-0 lg:border-r border-fouzar-border p-3 space-y-4 overflow-y-auto scrollbar-none shrink-0 flex flex-col ${
               isShielded ? 'lg:w-0 lg:opacity-0 lg:pointer-events-none lg:p-0 lg:border-r-0' : 'h-full'
             }`}
             animate={{
@@ -994,8 +994,8 @@ export default function PersonalSanctuaryPage() {
             }}
             transition={{ duration: 0.68, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div>
-              <div className="flex items-center justify-between w-full mb-3 shrink-0">
+            <div className="flex-1 min-h-[200px] flex flex-col overflow-hidden">
+              <div className="flex items-center justify-between w-full mb-1.5 shrink-0">
                 <div className="flex items-center gap-2">
                   <Layers className="w-3 h-3 text-fouzar-accent" />
                   <h2 className="font-mono text-[9px] uppercase tracking-widest text-fouzar-text-secondary">
@@ -1282,9 +1282,9 @@ export default function PersonalSanctuaryPage() {
 
           {/* Right — Integrated AI */}
           <aside
-            className="border-t lg:border-t-0 lg:border-l border-fouzar-border p-4 flex flex-col shrink-0 min-h-[360px] lg:min-h-0 h-full overflow-hidden"
+            className="border-t lg:border-t-0 lg:border-l border-fouzar-border p-3 flex flex-col shrink-0 min-h-[360px] lg:min-h-0 h-full overflow-hidden"
           >
-            <div className="flex items-center justify-between w-full mb-3 shrink-0">
+            <div className="flex items-center justify-between w-full mb-1.5 shrink-0">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-fouzar-accent" />
                 <h2 className="font-mono text-[9px] uppercase tracking-widest text-fouzar-text-secondary">
@@ -1301,6 +1301,7 @@ export default function PersonalSanctuaryPage() {
                 slideId={null}
                 storageKey={aiStorageKey}
                 placeholder="Ask AI to explain concepts, plan your week, or summarize notes..."
+                compact={true}
               />
             </div>
           </aside>
