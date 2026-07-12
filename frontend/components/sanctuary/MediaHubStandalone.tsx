@@ -123,7 +123,7 @@ export function MediaHubStandalone({
   return (
     <div className="w-full flex-1 min-h-0 flex flex-col overflow-hidden">
 
-      {/* ── Search bar ─────────────────────────────────────── */}
+      {/* -- Search bar --------------------------------------- */}
       <div className="shrink-0 border-b border-slate-800/50 transition-all pb-4">
         <div className="flex items-center justify-between mb-3 mt-1">
           <div className="flex items-center gap-2">
@@ -162,7 +162,7 @@ export function MediaHubStandalone({
         )}
       </div>
 
-      {/* ── Fixed Inline Player ─────────────────────────────── */}
+      {/* -- Fixed Inline Player ------------------------------- */}
       {activeVideo && (
         <div ref={playerRef} className="shrink-0 mb-4 rounded-2xl overflow-hidden border border-red-500/20 shadow-[0_0_30px_rgba(239,68,68,0.1)]">
           {/* Player header */}
@@ -212,7 +212,7 @@ export function MediaHubStandalone({
         </div>
       )}
 
-      {/* ── Scrollable content area ─────────────────────────── */}
+      {/* -- Scrollable content area --------------------------- */}
       <div className="flex-1 min-h-0 overflow-y-auto pr-2 pb-4 space-y-4">
         {/* Error */}
         {error && (
