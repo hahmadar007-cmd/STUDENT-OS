@@ -49,16 +49,7 @@ export default function LandingPage() {
         style={{ y: heroY, opacity: heroOpacity }}
         className="relative pt-40 pb-20 px-6 max-w-6xl mx-auto w-full flex flex-col items-center text-center z-10 min-h-screen"
       >
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0, filter: 'blur(10px)' }}
-          animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
-          transition={{ duration: 1, ease: "easeOut" }}
-          className="mb-8 p-4 rounded-full bg-white/[0.03] border border-white/[0.05] backdrop-blur-xl"
-        >
-          <span className="text-xs font-mono uppercase tracking-[0.2em] text-[#b582ff]">
-            Fasca OS 2.0 is Live
-          </span>
-        </motion.div>
+
 
         <motion.h1
           initial={{ y: 30, opacity: 0 }}
