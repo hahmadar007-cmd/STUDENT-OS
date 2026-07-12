@@ -96,7 +96,6 @@ export const DiaryLockScreen: React.FC<DiaryLockScreenProps> = ({ hasSetPin, onV
             <FascaButton 
               type="submit" 
               variant="solid" 
-              size="lg" 
               className="w-3/4 rounded-full mt-4"
               loading={loading}
             >
