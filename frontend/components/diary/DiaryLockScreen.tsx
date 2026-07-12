@@ -101,7 +101,6 @@ export const DiaryLockScreen: React.FC<DiaryLockScreenProps> = ({ hasSetPin, onV
                 onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
                 placeholder="••••"
                 className="w-full bg-transparent border-b border-[#d4af37]/30 text-center text-3xl font-mono text-[#e5d395] tracking-[0.5em] focus:outline-none focus:border-[#d4af37] transition-all pb-2 px-4 shadow-[0_10px_10px_-10px_rgba(212,175,55,0.1)]"
-                autoFocus
               />
             </div>
 

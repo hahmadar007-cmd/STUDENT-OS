@@ -16,7 +16,7 @@ async function bootstrap() {
   app.enableCors({
     origin: '*',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-gemini-key', 'x-openai-key', 'x-anthropic-key', 'x-deepseek-key', 'x-custom-key', 'x-custom-url', 'x-openrouter-key'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-gemini-key', 'x-openai-key', 'x-anthropic-key', 'x-deepseek-key', 'x-custom-key', 'x-custom-url', 'x-openrouter-key', 'x-diary-token'],
   });
   app.useGlobalPipes(
     new ValidationPipe({
