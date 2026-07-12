@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, Sparkles, Paperclip, X, History, Plus, MessageSquare } from 'lucide-react';
+import { Send, Bot, Sparkles, Paperclip, X, History, Plus, MessageSquare, Maximize2, Minimize2 } from 'lucide-react';
 import { askAi, indexDocument, indexDocumentFile } from '../../lib/api';
 import { useFouzar } from '../../lib/FouzarContext';
 import { useAiProviders } from '../../hooks/useAiProviders';
@@ -165,6 +165,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
   const [attachedFile, setAttachedFile] = useState<{ name: string; text: string; id: string } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isMaximized, setIsMaximized] = useState(false);
 
   useEffect(() => {
     if (!storageKey || typeof window === 'undefined') return;
@@ -526,8 +527,8 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`relative flex flex-col h-full bg-fouzar-surface border border-fouzar-border rounded-[var(--fouzar-radius-md)] shadow-[var(--fouzar-shadow-sm)] ${
-        compact ? 'p-3' : 'p-4'
+      className={`relative flex flex-col h-full bg-black/10 backdrop-blur-md border border-fouzar-accent/20 rounded-2xl shadow-[var(--fouzar-glow-primary)] transition-all duration-300 ${
+        isMaximized ? 'fixed inset-0 z-[100] p-6 lg:p-12 bg-black/60 backdrop-blur-2xl border-none shadow-none rounded-none' : (compact ? 'p-3' : 'p-4')
       }`}
     >
       {isDragging && (
@@ -591,7 +592,8 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
             </div>
           </div>
         </div>
-        {/* Engine selector — shows user's configured engines only (BYOK) */}
+        <div className="flex items-center gap-2">
+          {/* Engine selector — shows user's configured engines only (BYOK) */}
         <select
           value={activeEngine ? activeEngine.id : ''}
           onChange={async (e) => {
@@ -624,6 +626,14 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
             </>
           )}
         </select>
+        <button
+          onClick={() => setIsMaximized(!isMaximized)}
+          className="p-1.5 rounded-full bg-fouzar-accent/10 border border-fouzar-accent/30 text-fouzar-accent hover:bg-fouzar-accent/20 transition-colors ml-2"
+          title={isMaximized ? "Minimize" : "Maximize"}
+        >
+          {isMaximized ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+        </button>
+        </div>
       </div>
 
       {messages.length === 0 && engines.length === 0 && (
@@ -668,13 +678,13 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
             key={msg.id}
             className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
           >
-            <div
-              className={`text-[10px] leading-relaxed max-w-[92%] p-2.5 rounded-[var(--fouzar-radius-md)] ${
-                msg.role === 'user'
-                  ? 'bg-fouzar-accent/10 border border-fouzar-accent/25 text-fouzar-text-primary whitespace-pre-wrap'
-                  : 'bg-fouzar-elevated border border-fouzar-border text-fouzar-text-primary/90'
-              }`}
-            >
+              <div
+                className={`max-w-[90%] px-4 py-2.5 rounded-2xl font-sans text-[11px] leading-relaxed shadow-sm ${
+                  msg.role === 'user'
+                    ? 'bg-fouzar-accent text-fouzar-text-inverse rounded-tr-none'
+                    : 'bg-black/40 border border-fouzar-border backdrop-blur-sm text-fouzar-text-primary rounded-tl-none'
+                }`}
+              >
               {msg.role === 'user' ? (
                 msg.content
               ) : (
@@ -736,33 +746,38 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
             accept=".pdf,.pptx,.txt,.md,.js,.ts,.tsx,.py,.css,.html,.cpp,.java"
             className="hidden"
           />
+        <div className="flex items-end gap-2 bg-black/40 backdrop-blur-md border border-fouzar-border/50 p-1.5 rounded-3xl shadow-inner focus-within:border-fouzar-accent/50 focus-within:shadow-[var(--fouzar-glow-primary)] transition-all">
           <button
             type="button"
-            disabled={isUploading || isLoading}
             onClick={handleAttachFileClick}
-            className="p-2 border border-fouzar-border text-fouzar-text-secondary hover:text-fouzar-accent rounded-[var(--fouzar-radius-md)] hover:bg-fouzar-elevated/40 disabled:opacity-40 cursor-pointer animate-none"
-            title="Attach study slides, PDF, or code files"
+            className="p-2.5 text-fouzar-text-tertiary hover:text-fouzar-accent transition-colors shrink-0 rounded-full hover:bg-fouzar-accent/10"
+            title="Attach file"
           >
-            {isUploading ? (
-              <span className="w-4 h-4 block border-2 border-fouzar-accent border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <Paperclip className="w-4 h-4" />
-            )}
+            <Paperclip className="w-4 h-4" />
           </button>
-
-          <input
+          
+          <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSend(e);
+              }
+            }}
             placeholder={placeholder}
-            className="flex-1 bg-fouzar-elevated/50 border border-fouzar-border px-3 py-2 text-[10px] rounded-[var(--fouzar-radius-md)] focus:outline-none focus:shadow-[var(--fouzar-focus-ring)]"
+            className="flex-1 bg-transparent border-none text-[11px] text-fouzar-text-primary font-sans leading-relaxed focus:outline-none resize-none min-h-[40px] max-h-[120px] scrollbar-thin py-2.5 px-1"
+            rows={1}
           />
+          
           <button
             type="submit"
-            disabled={isLoading || isUploading}
-            className="p-2 bg-fouzar-accent text-fouzar-text-inverse rounded-[var(--fouzar-radius-md)] hover:opacity-90 disabled:opacity-40"
+            disabled={!input.trim() || isLoading}
+            className="p-2.5 bg-fouzar-accent text-fouzar-text-inverse rounded-full hover:shadow-[var(--fouzar-glow-primary)] disabled:opacity-50 disabled:hover:shadow-none transition-all shrink-0 shadow-md"
           >
             <Send className="w-4 h-4" />
           </button>
+        </div>
         </form>
       </div>
     </div>

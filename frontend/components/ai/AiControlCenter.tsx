@@ -226,7 +226,7 @@ function AddProviderModal({ onClose, onAdded, nextColorIndex }: AddModalProps) {
             )}
             {validationStatus === 'ok' && (
               <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                className="flex items-center gap-2 font-mono text-[10px] text-emerald-400 bg-emerald-500/[0.08] border border-emerald-500/25 rounded-lg px-3 py-2">
+                className="flex items-center gap-2 font-mono text-[10px] text-fouzar-accent bg-fouzar-accent/[0.08] border border-fouzar-accent/25 rounded-lg px-3 py-2">
                 <CheckCircle className="w-3 h-3 shrink-0" /> {validationMsg}
               </motion.div>
             )}

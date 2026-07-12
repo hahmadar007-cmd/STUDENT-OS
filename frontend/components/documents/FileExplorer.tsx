@@ -15,7 +15,9 @@ import {
   FolderInput,
   ChevronLeft,
   ChevronDown,
-  Plus
+  Plus,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 import { useFouzar, LmsRepositoryItem, FouzarFolder } from '../../lib/FouzarContext';
 import { buildRepositoryEntryFromFile } from '../../lib/repositoryUpload';
@@ -57,6 +59,9 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
   // New folder creation state
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
+
+  // Maximize state
+  const [isMaximized, setIsMaximized] = useState(false);
 
   // Moving item state
   const [movingItem, setMovingItem] = useState<{
@@ -262,10 +267,11 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden text-xs">
+    <div className={`flex flex-col h-full bg-fouzar-bg transition-all duration-300 ${isMaximized ? 'fixed inset-0 z-[100] p-6 md:p-12' : ''}`}>
       
-      {/* Breadcrumb Navigation Path */}
-      <div className="flex items-center gap-1.5 font-mono text-[9px] text-fouzar-text-secondary uppercase mb-3 overflow-x-auto whitespace-nowrap scrollbar-none py-1 border-b border-fouzar-border/10 shrink-0">
+      {/* Header Breadcrumbs & Controls */}
+      <div className="flex items-center justify-between mb-4 shrink-0 overflow-x-auto scrollbar-none pb-1">
+        <div className="flex items-center gap-1.5 font-mono text-[9px] text-fouzar-text-secondary uppercase whitespace-nowrap overflow-x-auto scrollbar-none py-1">
         {currentDirId !== effectiveRootFolderId && (
           <button
             type="button"
@@ -303,6 +309,14 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
             </React.Fragment>
           );
         })}
+        </div>
+        <button
+          onClick={() => setIsMaximized(!isMaximized)}
+          className="p-1.5 rounded-lg hover:bg-white/5 text-fouzar-text-tertiary hover:text-fouzar-accent transition-colors ml-auto shrink-0"
+          title={isMaximized ? "Minimize" : "Maximize"}
+        >
+          {isMaximized ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+        </button>
       </div>
 
       {/* Explorer Controls */}
@@ -447,137 +461,155 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
             )}
           </div>
         ) : (
-          <div className={isCompact ? 'space-y-1' : 'grid grid-cols-1 sm:grid-cols-2 gap-2'}>
+          <div className="flex flex-col gap-6">
             
-            {/* Render subdirectories */}
-            {displayedFolders.map((folder) => (
-              <motion.div
-                key={folder.id}
-                layout
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.98 }}
-                onClick={(e) => e.stopPropagation()}
-                className={`group flex items-center justify-between p-2.5 bg-fouzar-elevated/20 border rounded-[var(--fouzar-radius-md)] transition-colors ${
-                  selectedItemId === folder.id
-                    ? 'border-fouzar-accent shadow-[0_0_10px_rgba(124,92,252,0.15)] bg-fouzar-accent/5'
-                    : 'border-fouzar-border hover:border-fouzar-accent/40'
-                }`}
-              >
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedItemId(folder.id);
-                  }}
-                  onDoubleClick={(e) => {
-                    e.stopPropagation();
-                    setCurrentDirId(folder.id);
-                    setSelectedItemId(null);
-                  }}
-                  className="flex items-center gap-2.5 flex-1 min-w-0 text-left cursor-pointer"
-                >
-                  <Folder className="w-4 h-4 text-fouzar-accent shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-fouzar-text-primary truncate">{folder.name}</p>
-                    <p className="font-mono text-[7px] text-fouzar-text-secondary uppercase mt-0.5">
-                      Folder
-                    </p>
-                  </div>
-                </button>
+            {/* Folders Section */}
+            {displayedFolders.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="font-mono text-[9px] uppercase tracking-widest text-fouzar-text-tertiary flex items-center gap-2">
+                  <Folder className="w-3.5 h-3.5" /> Folders
+                </h3>
+                <div className={isMaximized ? 'grid grid-cols-2 md:grid-cols-4 gap-2' : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2'}>
+                  {displayedFolders.map((folder) => (
+                    <motion.div
+                      key={folder.id}
+                      layout
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.98 }}
+                      onClick={(e) => e.stopPropagation()}
+                      className={`group flex items-center justify-between p-2.5 bg-fouzar-elevated/20 border rounded-[var(--fouzar-radius-md)] transition-colors ${
+                        selectedItemId === folder.id
+                          ? 'border-fouzar-accent shadow-[0_0_10px_rgba(124,92,252,0.15)] bg-fouzar-accent/5'
+                          : 'border-fouzar-border hover:border-fouzar-accent/40'
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedItemId(folder.id);
+                        }}
+                        onDoubleClick={(e) => {
+                          e.stopPropagation();
+                          setCurrentDirId(folder.id);
+                          setSelectedItemId(null);
+                        }}
+                        className="flex items-center gap-2.5 flex-1 min-w-0 text-left cursor-pointer"
+                      >
+                        <Folder className="w-4 h-4 text-fouzar-accent shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-fouzar-text-primary truncate">{folder.name}</p>
+                          <p className="font-mono text-[7px] text-fouzar-text-secondary uppercase mt-0.5">
+                            Folder
+                          </p>
+                        </div>
+                      </button>
 
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMovingItem({ type: 'folder', id: folder.id, name: folder.name });
-                    }}
-                    className="p-1 text-fouzar-text-tertiary hover:text-fouzar-accent transition-colors cursor-pointer"
-                    title="Move Folder"
-                  >
-                    <FolderInput className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteFolder(folder.id);
-                    }}
-                    className="p-1 text-fouzar-text-tertiary hover:text-fouzar-signal transition-colors cursor-pointer"
-                    title="Delete Folder"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setMovingItem({ type: 'folder', id: folder.id, name: folder.name });
+                          }}
+                          className="p-1 text-fouzar-text-tertiary hover:text-fouzar-accent transition-colors cursor-pointer"
+                          title="Move Folder"
+                        >
+                          <FolderInput className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteFolder(folder.id);
+                          }}
+                          className="p-1 text-fouzar-text-tertiary hover:text-fouzar-signal transition-colors cursor-pointer"
+                          title="Delete Folder"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))}
                 </div>
-              </motion.div>
-            ))}
+              </div>
+            )}
 
-            {/* Render Files */}
-            <AnimatePresence>
-              {displayedFiles.map((doc) => (
-                <motion.div
-                  key={doc.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                  onClick={(e) => e.stopPropagation()}
-                  className={`group flex items-center justify-between p-2.5 bg-fouzar-elevated/30 border rounded-[var(--fouzar-radius-md)] transition-colors ${
-                    selectedItemId === doc.id
-                      ? 'border-fouzar-accent shadow-[0_0_10px_rgba(124,92,252,0.15)] bg-fouzar-accent/5'
-                      : 'border-fouzar-border hover:border-fouzar-accent/40'
-                  }`}
-                >
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedItemId(doc.id);
-                    }}
-                    onDoubleClick={(e) => {
-                      e.stopPropagation();
-                      onOpenFile?.(doc);
-                      setSelectedItemId(null);
-                    }}
-                    className="flex items-center gap-2.5 flex-1 min-w-0 text-left cursor-pointer"
-                  >
-                    {getFileIcon(doc.fileName)}
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-fouzar-text-primary truncate">{doc.fileName}</p>
-                      <p className="font-mono text-[7px] text-fouzar-text-secondary uppercase mt-0.5">
-                        {doc.courseCode} · {doc.category} · {doc.sizeLabel}
-                      </p>
-                    </div>
-                  </button>
+            {/* Files Section */}
+            {displayedFiles.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="font-mono text-[9px] uppercase tracking-widest text-fouzar-text-tertiary flex items-center gap-2">
+                  <FileText className="w-3.5 h-3.5" /> Documents
+                </h3>
+                <div className={isMaximized ? 'grid grid-cols-2 md:grid-cols-4 gap-2' : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2'}>
+                  <AnimatePresence>
+                    {displayedFiles.map((doc) => (
+                      <motion.div
+                        key={doc.id}
+                        layout
+                        initial={{ opacity: 0, scale: 0.98 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.98 }}
+                        onClick={(e) => e.stopPropagation()}
+                        className={`group flex items-center justify-between p-2.5 bg-fouzar-elevated/30 border rounded-[var(--fouzar-radius-md)] transition-colors ${
+                          selectedItemId === doc.id
+                            ? 'border-fouzar-accent shadow-[0_0_10px_rgba(124,92,252,0.15)] bg-fouzar-accent/5'
+                            : 'border-fouzar-border hover:border-fouzar-accent/40'
+                        }`}
+                      >
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedItemId(doc.id);
+                          }}
+                          onDoubleClick={(e) => {
+                            e.stopPropagation();
+                            onOpenFile?.(doc);
+                            setSelectedItemId(null);
+                          }}
+                          className="flex items-center gap-2.5 flex-1 min-w-0 text-left cursor-pointer"
+                        >
+                          {getFileIcon(doc.fileName)}
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-fouzar-text-primary truncate">{doc.fileName}</p>
+                            <p className="font-mono text-[7px] text-fouzar-text-secondary uppercase mt-0.5">
+                              {doc.courseCode} · {doc.category} · {doc.sizeLabel}
+                            </p>
+                          </div>
+                        </button>
 
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setMovingItem({ type: 'file', id: doc.id, name: doc.fileName });
-                      }}
-                      className="p-1 text-fouzar-text-tertiary hover:text-fouzar-accent transition-colors cursor-pointer"
-                      title="Move File"
-                    >
-                      <FolderInput className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeRepositoryItem(doc.id);
-                      }}
-                      className="p-1 text-fouzar-text-tertiary hover:text-fouzar-signal transition-colors cursor-pointer"
-                      title="Delete File"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setMovingItem({ type: 'file', id: doc.id, name: doc.fileName });
+                            }}
+                            className="p-1 text-fouzar-text-tertiary hover:text-fouzar-accent transition-colors cursor-pointer"
+                            title="Move File"
+                          >
+                            <FolderInput className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeRepositoryItem(doc.id);
+                            }}
+                            className="p-1 text-fouzar-text-tertiary hover:text-fouzar-signal transition-colors cursor-pointer"
+                            title="Delete File"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

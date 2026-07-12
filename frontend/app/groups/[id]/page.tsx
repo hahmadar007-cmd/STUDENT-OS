@@ -361,15 +361,15 @@ export default function StudyGroupRoom() {
                 name: 'ChatGPT',
                 desc: 'Free access to GPT-4o mini and standard chat by OpenAI.',
                 url: 'https://chatgpt.com',
-                color: 'border-emerald-500/20 hover:border-emerald-500/40 bg-emerald-500/5',
-                textColor: 'text-emerald-400',
+                color: 'border-fouzar-accent/20 hover:border-fouzar-accent/40 bg-fouzar-accent/5',
+                textColor: 'text-fouzar-accent',
               },
               {
                 name: 'Claude AI',
                 desc: 'Free access to Claude 3.5 Sonnet conversational model by Anthropic.',
                 url: 'https://claude.ai',
-                color: 'border-amber-500/20 hover:border-amber-500/40 bg-amber-500/5',
-                textColor: 'text-amber-400',
+                color: 'border-fouzar-accent/20 hover:border-fouzar-accent/40 bg-fouzar-accent/5',
+                textColor: 'text-fouzar-accent',
               },
             ].map((preset) => (
               <a
@@ -465,7 +465,7 @@ export default function StudyGroupRoom() {
                         }}
                         className={`px-3 py-1.5 font-mono text-[8px] uppercase tracking-wider rounded-[var(--fouzar-radius-sm)] border transition-all ${
                           isFed
-                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-bold'
+                            ? 'bg-fouzar-accent/10 border-fouzar-accent/30 text-fouzar-accent font-bold'
                             : 'bg-fouzar-elevated hover:bg-fouzar-accent/15 border-fouzar-border hover:border-fouzar-accent/30 text-fouzar-text-primary'
                         }`}
                       >

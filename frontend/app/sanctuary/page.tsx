@@ -25,6 +25,7 @@ import {
   PanelLeft,
   PanelRight,
 } from 'lucide-react';
+import ThemeSwitcher from '../../components/ui/ThemeSwitcher';
 import Link from 'next/link';
 import { FouzarLogo } from '../../components/logo/FouzarLogo';
 import { IntegratedAiChat } from '../../components/ai/IntegratedAiChat';
@@ -180,6 +181,9 @@ export default function PersonalSanctuaryPage() {
   const [newSubjectCode, setNewSubjectCode] = useState('');
   const [addSubjectError, setAddSubjectError] = useState<string | null>(null);
 
+  const openSlide = (id: string, type: string, title: string) => {
+    // Logic placeholder
+  };
 
   const handleWebSearchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -297,7 +301,7 @@ export default function PersonalSanctuaryPage() {
     : 'fouzar-semester-guest';
   const aiStorageKey = fouzarUser?.id
     ? `fouzar-sanctuary-ai-${fouzarUser.id}`
-    : 'fouzar-sanctuary-ai-guest';
+    : `fouzar-sanctuary-ai-guest`;
 
   const activeFolder = folders.find((f) => f.id === activeFolderId);
   const filteredRepository = repository.filter((doc) => {
@@ -373,9 +377,6 @@ export default function PersonalSanctuaryPage() {
     setSemester(value);
     localStorage.setItem(semesterKey, value);
   };
-
-
-
 
   const handleDeepFlow = async () => {
     armDeepFlow();
@@ -508,12 +509,12 @@ export default function PersonalSanctuaryPage() {
                                 <div className="flex items-center justify-between mb-2">
                                   <span className={`font-mono text-[11px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${
                                     isPpt 
-                                      ? 'bg-fouzar-amber/10 border-fouzar-amber/20 text-fouzar-amber' 
-                                      : 'bg-fouzar-signal/10 border-fouzar-signal/20 text-fouzar-signal'
+                                      ? 'bg-fouzar-accent/10 border-fouzar-accent/20 text-fouzar-accent' 
+                                      : 'bg-fouzar-accent/10 border-fouzar-accent/20 text-fouzar-accent'
                                   }`}>
                                     {isPpt ? 'PPTX Presentation' : 'PDF Document'}
                                   </span>
-                                  <FileText className={`w-4 h-4 ${isPpt ? 'text-fouzar-amber' : 'text-fouzar-signal'}`} />
+                                  <FileText className={`w-4 h-4 text-fouzar-accent`} />
                                 </div>
                                 <h4 className="font-sans text-sm font-semibold text-fouzar-text-primary leading-snug truncate" title={doc.fileName}>
                                   {doc.fileName}
@@ -642,22 +643,22 @@ export default function PersonalSanctuaryPage() {
                           name: 'DeepSeek Chat',
                           desc: 'Free conversational AI by DeepSeek. High quality reasoning models.',
                           url: 'https://chat.deepseek.com',
-                          color: 'border-blue-500/20 hover:border-blue-500/40 bg-blue-500/5',
-                          textColor: 'text-blue-400',
+                          color: 'border-fouzar-accent/20 hover:border-fouzar-accent/40 bg-fouzar-accent/5',
+                          textColor: 'text-fouzar-accent',
                         },
                         {
                           name: 'ChatGPT',
                           desc: 'Free access to GPT-4o mini and standard chat by OpenAI.',
                           url: 'https://chatgpt.com',
-                          color: 'border-emerald-500/20 hover:border-emerald-500/40 bg-emerald-500/5',
-                          textColor: 'text-emerald-400',
+                          color: 'border-fouzar-accent/20 hover:border-fouzar-accent/40 bg-fouzar-accent/5',
+                          textColor: 'text-fouzar-accent',
                         },
                         {
                           name: 'Claude AI',
                           desc: 'Free access to Claude 3.5 Sonnet conversational model by Anthropic.',
                           url: 'https://claude.ai',
-                          color: 'border-amber-500/20 hover:border-amber-500/40 bg-amber-500/5',
-                          textColor: 'text-amber-400',
+                          color: 'border-fouzar-accent/20 hover:border-fouzar-accent/40 bg-fouzar-accent/5',
+                          textColor: 'text-fouzar-accent',
                         },
                       ].map((preset) => (
                         <a
@@ -755,7 +756,7 @@ export default function PersonalSanctuaryPage() {
                                   }}
                                   className={`px-3 py-1.5 font-mono text-[8px] uppercase tracking-wider rounded-[var(--fouzar-radius-sm)] border transition-all ${
                                     isFed
-                                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-bold'
+                                      ? 'bg-fouzar-accent/10 border-fouzar-accent/30 text-fouzar-accent font-bold'
                                       : 'bg-fouzar-elevated hover:bg-fouzar-accent/15 border-fouzar-border hover:border-fouzar-accent/30 text-fouzar-text-primary'
                                   }`}
                                 >
@@ -960,7 +961,8 @@ export default function PersonalSanctuaryPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="hidden md:inline font-mono text-[7px] text-fouzar-ice uppercase tracking-widest">
+          <ThemeSwitcher />
+          <span className="hidden md:inline font-mono text-[7px] text-fouzar-ice uppercase tracking-widest ml-2 border-l border-fouzar-border pl-2">
             Private · Solo
           </span>
           <button

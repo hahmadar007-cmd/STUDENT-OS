@@ -304,8 +304,8 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
                   name: 'ChatGPT',
                   desc: 'Free access to GPT-4o mini and standard chat by OpenAI.',
                   url: 'https://chatgpt.com',
-                  color: 'border-emerald-500/20 hover:border-emerald-500/40 bg-emerald-500/5',
-                  textColor: 'text-emerald-400',
+                  color: 'border-fouzar-accent/20 hover:border-fouzar-accent/40 bg-fouzar-accent/5',
+                  textColor: 'text-fouzar-accent',
                 },
                 {
                   name: 'Claude AI',
@@ -408,8 +408,8 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
                           }}
                           className={`px-3 py-1.5 font-mono text-[7.5px] uppercase tracking-wider rounded-[var(--fouzar-radius-sm)] border cursor-pointer shrink-0 transition-all ${
                             isFed
-                              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-bold'
-                              : 'bg-fouzar-elevated hover:bg-fouzar-accent/15 border-fouzar-border hover:border-fouzar-accent/30 text-fouzar-text-primary'
+                              ? 'bg-fouzar-accent/10 border-fouzar-accent/30 text-fouzar-accent font-bold'
+                              : 'bg-black/20 border-fouzar-border text-fouzar-text-secondary hover:text-fouzar-text-primary hover:border-fouzar-border-strong'
                           }`}
                         >
                           {isFed ? 'Context Sent!' : 'Send to AI'}
