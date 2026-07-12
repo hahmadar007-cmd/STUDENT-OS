@@ -12,10 +12,6 @@ interface SearchResult {
   duration: string;
 }
 
-let cachedQuery = "";
-let cachedResults: SearchResult[] = [];
-let cachedActiveVideo: SearchResult | null = null;
-
 export function MediaHubStandalone({
   folderId,
   onVideoSelect,
@@ -23,31 +19,16 @@ export function MediaHubStandalone({
   folderId: string | null;
   onVideoSelect: (url: string, videoId: string, title: string) => void;
 }) {
-  const [query, setQuery] = useState(cachedQuery);
-  const [results, setResults] = useState<SearchResult[]>(cachedResults);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [hasSearched, setHasSearched] = useState(cachedResults.length > 0 || cachedActiveVideo !== null);
-  const [activeVideo, setActiveVideoState] = useState<SearchResult | null>(cachedActiveVideo);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [activeVideo, setActiveVideo] = useState<SearchResult | null>(null);
+  const [isSearchMinimized, setIsSearchMinimized] = useState(false);
   const [isVideoMinimized, setIsVideoMinimized] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
-
-  // Custom setter to update cache simultaneously
-  const setActiveVideo = (video: SearchResult | null) => {
-    setActiveVideoState(video);
-    cachedActiveVideo = video;
-  };
-
-  const setQueryAndCache = (q: string) => {
-    setQuery(q);
-    cachedQuery = q;
-  };
-
-  const setResultsAndCache = (res: SearchResult[]) => {
-    setResults(res);
-    cachedResults = res;
-  };
 
   const SUGGESTIONS = ["Machine Learning", "Data Structures", "React Tutorial", "Physics Lectures", "Mathematics"];
 
@@ -60,18 +41,18 @@ export function MediaHubStandalone({
     const match = query.match(regExp);
     if (match && match[2].length === 11) {
       const videoId = match[2];
-      const newVideo = {
+      setActiveVideo({
         videoId,
         title: "Pasted YouTube Video",
         thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
         author: "Direct Link",
         duration: "Live",
-      };
-      setActiveVideo(newVideo);
+      });
+      setIsSearchMinimized(true);
       setIsVideoMinimized(false);
       setTimeout(() => playerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
       onVideoSelect(`https://www.youtube.com/watch?v=${videoId}`, videoId, "Pasted YouTube Video");
-      setQueryAndCache("");
+      setQuery("");
       return;
     }
 
@@ -86,7 +67,7 @@ export function MediaHubStandalone({
       );
       if (!res.ok) throw new Error("Search failed");
       const data = await res.json();
-      setResultsAndCache(data);
+      setResults(data);
       if (data.length === 0) setError("No results found. Try a different search.");
     } catch {
       setError("Search failed. Please try again.");
@@ -97,6 +78,8 @@ export function MediaHubStandalone({
 
   const handleSelect = async (video: SearchResult) => {
     setActiveVideo(video);
+    // Auto-minimize search if on smaller screens or just for better view
+    setIsSearchMinimized(true);
     setIsVideoMinimized(false);
     // Scroll player into view smoothly
     setTimeout(() => playerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
@@ -113,7 +96,7 @@ export function MediaHubStandalone({
   };
 
   const quickSearch = (term: string) => {
-    setQueryAndCache(term);
+    setQuery(term);
     setTimeout(() => {
       const form = inputRef.current?.closest("form");
       form?.requestSubmit();
@@ -123,8 +106,8 @@ export function MediaHubStandalone({
   return (
     <div className="w-full flex-1 min-h-0 flex flex-col overflow-hidden">
 
-      {/* -- Search bar --------------------------------------- */}
-      <div className="shrink-0 border-b border-slate-800/50 transition-all pb-4">
+      {/* ── Search bar ─────────────────────────────────────── */}
+      <div className={`shrink-0 border-b border-slate-800/50 transition-all ${isSearchMinimized ? 'pb-2' : 'pb-4'}`}>
         <div className="flex items-center justify-between mb-3 mt-1">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-lg bg-red-500/20 border border-red-500/30 flex items-center justify-center">
@@ -136,16 +119,25 @@ export function MediaHubStandalone({
               <span className="text-xs font-mono text-emerald-400 uppercase">Live</span>
             </div>
           </div>
+          
+          <button
+            onClick={() => setIsSearchMinimized(!isSearchMinimized)}
+            className="p-1.5 rounded-lg hover:bg-slate-800/80 text-slate-400 hover:text-fouzar-text-primary transition-colors cursor-pointer"
+            title={isSearchMinimized ? "Expand Search" : "Minimize Search"}
+          >
+            {isSearchMinimized ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
+          </button>
         </div>
 
-        <form onSubmit={handleSearch} className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-fouzar-text-secondary pointer-events-none" />
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onChange={(e) => setQueryAndCache(e.target.value)}
+        {!isSearchMinimized && (
+          <form onSubmit={handleSearch} className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-fouzar-text-secondary pointer-events-none" />
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search YouTube..."
                 className="w-full bg-slate-900/70 border border-slate-700/60 hover:border-slate-600 focus:border-red-500/50 rounded-xl pl-9 pr-4 py-2.5 text-sm text-fouzar-text-primary placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-red-500/20 transition-all"
               />
@@ -159,9 +151,10 @@ export function MediaHubStandalone({
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
             </button>
           </form>
+        )}
       </div>
 
-      {/* -- Fixed Inline Player ------------------------------- */}
+      {/* ── Fixed Inline Player ─────────────────────────────── */}
       {activeVideo && (
         <div ref={playerRef} className="shrink-0 mb-4 rounded-2xl overflow-hidden border border-red-500/20 shadow-[0_0_30px_rgba(239,68,68,0.1)]">
           {/* Player header */}
@@ -173,17 +166,17 @@ export function MediaHubStandalone({
             <div className="flex items-center gap-1 shrink-0 ml-2">
               <button
                 onClick={() => setIsVideoMinimized(!isVideoMinimized)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 ml-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg hover:bg-slate-700/50 text-slate-400 hover:text-fouzar-text-primary transition-colors cursor-pointer"
                 title={isVideoMinimized ? "Expand Video" : "Minimize Video"}
               >
                 {isVideoMinimized ? <Maximize2 className="w-3.5 h-3.5" /> : <Minimize2 className="w-3.5 h-3.5" />}
               </button>
               <button
                 onClick={() => setActiveVideo(null)}
-                className="flex items-center gap-1.5 px-3 py-1.5 ml-2 rounded-lg bg-red-500 hover:bg-red-600 text-white shadow-[0_0_10px_rgba(239,68,68,0.4)] transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 ml-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 transition-colors cursor-pointer"
               >
-                <X className="w-4 h-4" />
-                <span className="text-[11px] font-sans font-bold tracking-wide">Close Video</span>
+                <X className="w-3.5 h-3.5" />
+                <span className="text-[10px] font-mono uppercase tracking-wider font-bold">Leave Video</span>
               </button>
             </div>
           </div>
@@ -211,7 +204,7 @@ export function MediaHubStandalone({
         </div>
       )}
 
-      {/* -- Scrollable content area --------------------------- */}
+      {/* ── Scrollable content area ─────────────────────────── */}
       <div className="flex-1 min-h-0 overflow-y-auto pr-2 pb-4 space-y-4">
         {/* Error */}
         {error && (
