@@ -14,14 +14,15 @@ interface FascaLogoProps {
  * FascaLogo Component
  * Renders the custom SVG bat-wing F letterform and Space Grotesk wordmark.
  */
-export const FascaLogo: React.FC<FascaLogoProps> = ({
+export const FascaLogo: React.FC<FascaLogoProps & { layout?: 'horizontal' | 'vertical' }> = ({
   size = 32,
   showWordmark = true,
   className = '',
   linkTo,
+  layout = 'horizontal'
 }) => {
   const content = (
-    <div className={`inline-flex items-center gap-3 select-none ${className}`}>
+    <div className={`inline-flex ${layout === 'vertical' ? 'flex-col justify-center' : 'items-center gap-3'} select-none ${className}`}>
       <svg
         width={size}
         height={size}
@@ -31,35 +32,32 @@ export const FascaLogo: React.FC<FascaLogoProps> = ({
         className="shrink-0"
       >
         <defs>
-          {/* Subtle inner glow filter */}
+          <linearGradient id="fasca-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#7c5cfc" />
+            <stop offset="100%" stopColor="#b582ff" />
+          </linearGradient>
           <filter id="fasca-inner-glow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="1" result="blur" />
+            <feGaussianBlur stdDeviation="0.5" result="blur" />
             <feComposite in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="shadowDiff" />
-            <feFlood floodColor="#7c5cfc" floodOpacity="0.9" />
+            <feFlood floodColor="#ffffff" floodOpacity="0.4" />
             <feComposite in2="shadowDiff" operator="in" />
             <feComposite in2="SourceGraphic" operator="over" />
           </filter>
-          {/* Glow backdrop shadow filter */}
           <filter id="fasca-drop-glow" x="-10%" y="-10%" width="120%" height="120%">
-            <feDropShadow dx="0" dy="2" stdDeviation="4" floodColor="#7c5cfc" floodOpacity="0.3" />
+            <feDropShadow dx="0" dy="2" stdDeviation="4" floodColor="#7c5cfc" floodOpacity="0.4" />
           </filter>
         </defs>
 
-        {/* Bat-wing sharp F letterform */}
         <path
           d="M10,8 H15.5 L31.5,4.5 C29.5,10.5 23.5,12.5 15.5,12.5 V19 L26.5,24.5 C22.5,22.5 18.5,20.5 15.5,20.5 V34.5 H10 V8 Z"
-          fill="#7c5cfc"
+          fill="url(#fasca-gradient)"
           filter="url(#fasca-inner-glow) url(#fasca-drop-glow)"
-          stroke="#7c5cfc"
-          strokeWidth="0.5"
-          strokeLinejoin="miter"
-          strokeMiterlimit="3"
         />
       </svg>
 
       {showWordmark && (
         <span 
-          className="font-serif text-lg font-bold tracking-[0.2em] text-fouzar-text-primary leading-none"
+          className={`font-serif font-bold tracking-[0.25em] text-white leading-none ${layout === 'vertical' ? 'mt-2 text-xl' : 'text-lg'}`}
           style={{ fontFamily: 'var(--font-serif), sans-serif' }}
         >
           FASCA

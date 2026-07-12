@@ -1,422 +1,220 @@
-// ============================================================================
-// Copyright (c) 2025 hahmadar007-cmd. All Rights Reserved.
-// STUDENT-OS — Proprietary & Confidential Software.
-// Unauthorized copying, modification, distribution, or use of this file,
-// via any medium, is strictly prohibited and punishable by law.
-// See LICENSE file for full legal terms and penalties.
-// ============================================================================
-
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowDown, Users, Cpu, Shield, Plug, ArrowRight } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowDown } from 'lucide-react';
 import { FascaLogo } from '../components/logo/FascaLogo';
-import { FascaButton } from '../components/ui/FascaButton';
+
+interface BentoCardProps {
+  title: string;
+  subtitle: string;
+  imageSrc: string;
+  colSpan?: string;
+  rowSpan?: string;
+  delay?: number;
+}
+
+const BentoCard: React.FC<BentoCardProps> = ({ title, subtitle, imageSrc, colSpan = "col-span-1", rowSpan = "row-span-1", delay = 0 }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 30 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, margin: "-50px" }}
+    transition={{ duration: 0.8, delay, ease: [0.16, 1, 0.3, 1] }}
+    className={`relative overflow-hidden rounded-2xl bg-[#161623] border border-[#2a2a3a] group cursor-pointer ${colSpan} ${rowSpan}`}
+  >
+    {/* Background Image */}
+    <div className="absolute inset-0 w-full h-full">
+      <img
+        src={imageSrc}
+        alt={title}
+        className="w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700 ease-in-out"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/40 to-transparent pointer-events-none" />
+    </div>
+
+    {/* Content overlay */}
+    <div className="absolute bottom-0 left-0 w-full p-6 sm:p-8 flex flex-col justify-end">
+      <h3 className="font-serif text-xl sm:text-2xl font-bold text-white mb-2 translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+        {title}
+      </h3>
+      <p className="text-xs sm:text-sm font-mono tracking-widest text-[#b582ff] uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+        {subtitle}
+      </p>
+    </div>
+  </motion.div>
+);
 
 export default function LandingPage() {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const slides = [
-    {
-      src: '/slide1.jpg',
-      tag: 'DIGITAL WORKSPACE',
-      title: 'Unified Study Environment',
-      badge: 'ONLINE CLOUD SYNC',
-      color: '#7c5cfc', // Fasca Violet
-      accent: 'rgba(6,182,212,0.2)', // Cyan
-    },
-    {
-      src: '/slide2.png',
-      tag: 'DEEP FOCUS',
-      title: 'Distraction-Free Flow State',
-      badge: 'FOCUS SHIELD ACTIVE',
-      color: '#ff2d55', // Fasca Red
-      accent: 'rgba(236,72,153,0.2)', // Pink
-    },
-    {
-      src: '/slide3.jpg',
-      tag: 'ACADEMIC TRACKING',
-      title: 'Smart Attendance & Marks',
-      badge: 'GRADES SYNCED',
-      color: '#06b6d4', // Fasca Cyan
-      accent: 'rgba(124,92,252,0.2)', // Violet
-    }
-  ];
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const scrollToInfo = () => {
-    document.getElementById('info-section')?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToFeatures = () => {
+    document.getElementById('bento-features')?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
-    <div className="flex flex-col min-h-screen relative select-none bg-fouzar-bg text-fouzar-text-primary font-sans antialiased overflow-x-hidden">
+    <div className="flex flex-col min-h-screen relative select-none bg-[#0a0a0f] text-[#d1d1d6] font-sans antialiased overflow-x-hidden selection:bg-[#7c5cfc] selection:text-white">
       
-      {/* Background radial grid */}
-      <motion.div
-        animate={{ opacity: [0.08, 0.2, 0.08] }}
-        transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
-        className="absolute inset-0 pointer-events-none z-0"
-        style={{
-          backgroundImage: 'radial-gradient(#2a2a3a 1.2px, transparent 1.2px)',
-          backgroundSize: '24px 24px',
-        }}
-      />
+      {/* Mystical dark background grid & gradient */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1a1a24_1px,transparent_1px),linear-gradient(to_bottom,#1a1a24_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-20" />
+        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#7c5cfc] rounded-full blur-[150px] opacity-10 mix-blend-screen" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[#ff2d55] rounded-full blur-[150px] opacity-5 mix-blend-screen" />
+      </div>
 
       {/* Navigation Bar */}
       <nav className="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between z-10 relative">
         <Link href="/" className="cursor-pointer">
-          <FascaLogo showWordmark={true} size={30} />
+          <FascaLogo showWordmark={true} size={30} layout="horizontal" />
         </Link>
-        <div className="flex items-center gap-3">
-          <Link href="/auth?tab=login">
-            <FascaButton variant="ghost-violet" className="text-[9px] font-mono uppercase tracking-widest px-4 py-1.5 rounded-[6px]">
-              SIGN IN
-            </FascaButton>
+        <div className="flex items-center gap-4">
+          <Link href="/auth?tab=login" className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#8e8e93] hover:text-white transition-colors duration-300">
+            Sign In
           </Link>
-          <Link href="/auth?tab=register">
-            <FascaButton variant="solid-violet" className="text-[9px] font-mono uppercase tracking-widest px-4 py-1.5 rounded-[6px]">
-              SIGN UP
-            </FascaButton>
+          <Link href="/auth?tab=register" className="relative group px-5 py-2 overflow-hidden rounded-md border border-[#7c5cfc]/50 hover:border-[#7c5cfc]">
+            <div className="absolute inset-0 bg-[#7c5cfc] opacity-10 group-hover:opacity-20 transition-opacity duration-300" />
+            <span className="relative text-[10px] font-mono uppercase tracking-[0.2em] font-bold text-[#b582ff] group-hover:text-white transition-colors duration-300">
+              Enter OS
+            </span>
           </Link>
         </div>
-
       </nav>
 
-      {/* Hero Body Container */}
-      <main className="flex-1 flex flex-col justify-center max-w-7xl mx-auto px-6 z-10 relative py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      {/* Hero Section */}
+      <main className="flex-1 flex flex-col items-center justify-center max-w-5xl mx-auto px-6 z-10 relative pt-20 pb-16 text-center">
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0, filter: 'blur(10px)' }}
+          animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
+          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+          className="mb-8"
+        >
+          <FascaLogo showWordmark={false} size={70} />
+        </motion.div>
+
+        <motion.h1
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.8 }}
+          className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.1] mb-6"
+        >
+          The <span className="font-serif text-[#b582ff] font-normal text-5xl md:text-7xl lg:text-8xl italic pr-2">Ultimate</span> OS <br /> for Students.
+        </motion.h1>
+
+        <motion.p
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.5, duration: 0.8 }}
+          className="text-[#8e8e93] text-sm md:text-base font-light max-w-2xl leading-relaxed mb-10"
+        >
+          Unlock your dark academia potential. Secret diaries, immersive focus rooms, synchronized YouTube watch parties, AI tutors, and encrypted cloud storage—all in one premium digital workspace.
+        </motion.p>
+
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.7, duration: 0.8 }}
+          className="flex flex-col sm:flex-row gap-4 items-center"
+        >
+          <Link href="/auth" className="relative group p-[1px] bg-transparent rounded-lg overflow-hidden cursor-pointer active:scale-95 transition-transform duration-200 block w-full sm:w-auto">
+            <div className="absolute inset-0 bg-gradient-to-r from-[#7c5cfc] via-[#ff2d55] to-[#7c5cfc] opacity-70 group-hover:opacity-100 blur-[2px] transition-opacity duration-300" />
+            <div className="relative px-12 py-4 bg-[#0a0a0f] group-hover:bg-transparent transition-colors duration-300 rounded-lg flex items-center justify-center">
+              <span className="text-[11px] font-mono font-bold uppercase tracking-[0.25em] text-white group-hover:text-black">
+                INITIATE SYSTEM
+              </span>
+            </div>
+          </Link>
           
-          {/* Left Column: Copy/CTAs */}
-          <div className="lg:col-span-5 flex flex-col items-center lg:items-start text-center lg:text-left">
-            {/* Fasca Logo Reveal */}
-            <motion.div
-              initial={{ clipPath: 'polygon(50% 0%, 50% 0%, 50% 100%, 50% 100%)', scale: 0.9, opacity: 0 }}
-              animate={{ clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)', scale: 1, opacity: 1 }}
-              transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-              className="mb-8"
-            >
-              <FascaLogo showWordmark={false} size={84} />
-            </motion.div>
-
-            {/* Tagline */}
-            <motion.div
-              initial={{ y: 15, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.6 }}
-            >
-              <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold tracking-[0.05em] text-fouzar-text-primary leading-none mb-6">
-                Study like you mean it.
-              </h1>
-            </motion.div>
-
-            {/* Subtext */}
-            <motion.div
-              initial={{ y: 15, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.5, duration: 0.6 }}
-            >
-              <p className="text-fouzar-text-secondary text-xs md:text-sm font-light max-w-lg leading-relaxed mb-10">
-                Real-time collaboration. AI that knows your slide. Focus mode your peers will notice.
-              </p>
-            </motion.div>
-
-            {/* CTA Buttons Row */}
-            <motion.div
-              initial={{ y: 15, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.7, duration: 0.6 }}
-              className="flex flex-col sm:flex-row gap-4 items-center"
-            >
-              <div className="relative group p-[1px] bg-transparent rounded-none overflow-hidden cursor-pointer active:scale-98">
-                <Link href="/auth" className="block w-full h-full rounded-none">
-                  {/* Violet gradient border backdrop */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#7c5cfc] via-[#aa9cfc] to-[#7c5cfc] transition-opacity duration-300 group-hover:opacity-0" />
-                  {/* Solid violet background on hover */}
-                  <div className="absolute inset-0 bg-[#7c5cfc] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  {/* Inner text container */}
-                  <div className="relative px-10 py-4 bg-fouzar-bg text-fouzar-text-primary group-hover:bg-transparent group-hover:text-[#0a0a0f] transition-all duration-300 text-[10px] font-mono font-bold uppercase tracking-[0.25em] rounded-none">
-                    ENTER FASCA
-                  </div>
-                </Link>
-              </div>
-
-              <FascaButton
-                variant="ghost-violet"
-                onClick={scrollToInfo}
-                className="text-[9px] font-mono uppercase tracking-widest px-6 py-4 rounded-none border border-fouzar-border-strong flex items-center gap-2"
-              >
-                EXPLORE INFO <ArrowDown className="w-3.5 h-3.5 animate-bounce" />
-              </FascaButton>
-            </motion.div>
-          </div>
-
-          {/* Right Column: Hero Graphic Preview (Interactive Carousel) */}
-          <div className="lg:col-span-7 flex flex-col items-center">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.8 }}
-              className="relative w-full max-w-lg aspect-[16/9] border rounded-none overflow-hidden bg-fouzar-surface/60 p-1.5 shadow-[0_0_50px_-12px_rgba(124,92,252,0.3)] group cursor-pointer transition-colors duration-500"
-              style={{ borderColor: `${slides[currentSlide].color}30` }}
-            >
-                <div 
-                  className="absolute inset-0 bg-gradient-to-tr pointer-events-none transition-all duration-700" 
-                  style={{
-                    backgroundImage: `linear-gradient(to top right, ${slides[currentSlide].color}20, transparent, ${slides[currentSlide].accent})`
-                  }}
-                />
-              
-              {/* The Image Wrapper with Framer Motion AnimatePresence for transitions */}
-              <div className="w-full h-full overflow-hidden relative">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={currentSlide}
-                    initial={{ opacity: 0, scale: 1.02 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.5 }}
-                    className="w-full h-full relative"
-                  >
-                    <img 
-                      src={slides[currentSlide].src} 
-                      alt={slides[currentSlide].title} 
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-transparent to-transparent opacity-85" />
-                    
-                    {/* Floating tags */}
-                    <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end z-10">
-                      <div className="flex flex-col">
-                        <span 
-                          className="text-[8.5px] font-mono uppercase tracking-[0.25em] transition-colors duration-500 font-bold"
-                          style={{ color: slides[currentSlide].color }}
-                        >
-                          {slides[currentSlide].tag}
-                        </span>
-                        <span className="text-xs font-serif font-bold text-fouzar-text-primary mt-0.5">
-                          {slides[currentSlide].title}
-                        </span>
-                      </div>
-                      <span 
-                        className="text-[7.5px] font-mono text-fouzar-text-secondary uppercase tracking-wider bg-fouzar-bg/80 px-2 py-0.5 border"
-                        style={{ borderColor: `${slides[currentSlide].color}30` }}
-                      >
-                        {slides[currentSlide].badge}
-                      </span>
-                    </div>
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-
-              {/* Slider Dots Overlay */}
-              <div className="absolute top-4 right-4 flex gap-1.5 z-20">
-                {slides.map((_, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setCurrentSlide(idx)}
-                    className="w-2.5 h-2.5 rounded-full cursor-pointer transition-all duration-300"
-                    style={{
-                      backgroundColor: currentSlide === idx ? slides[idx].color : '#2a2a3a',
-                      transform: currentSlide === idx ? 'scale(1.2)' : 'scale(1)',
-                    }}
-                  />
-                ))}
-              </div>
-            </motion.div>
-          </div>
-
-        </div>
-
-        {/* Scroll indicator for mobile/desktop */}
-        <div className="flex justify-center mt-12 lg:mt-6">
           <button 
-            onClick={scrollToInfo}
-            className="flex flex-col items-center gap-1 text-[7.5px] font-mono uppercase tracking-[0.3em] text-fouzar-text-secondary hover:text-[#7c5cfc] transition-colors cursor-pointer bg-transparent border-none"
+            onClick={scrollToFeatures}
+            className="flex items-center gap-2 px-8 py-4 text-[10px] font-mono uppercase tracking-[0.2em] text-[#8e8e93] hover:text-white transition-colors duration-300 cursor-pointer"
           >
-            <span>SCROLL TO EXPLORE</span>
-            <ArrowDown className="w-3.5 h-3.5 animate-bounce mt-1 text-[#7c5cfc]" />
+            Explore <ArrowDown className="w-3.5 h-3.5 animate-bounce" />
           </button>
-        </div>
+        </motion.div>
       </main>
 
-      {/* Scroll Down Page Section (Detailed information) */}
-      <section 
-        id="info-section" 
-        className="w-full min-h-screen bg-fouzar-surface/80 border-t border-fouzar-border-strong/40 relative z-10 py-24 flex flex-col justify-center"
-      >
-        {/* Subtle grid backdrop inside the section */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#161623_1px,transparent_1px),linear-gradient(to_bottom,#161623_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-30 pointer-events-none" />
+      {/* Bento Grid Feature Showcase */}
+      <section id="bento-features" className="w-full max-w-7xl mx-auto px-6 py-20 z-10 relative">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="mb-12"
+        >
+          <h2 className="text-2xl md:text-3xl font-serif font-bold text-white mb-2">Core Protocols</h2>
+          <div className="w-12 h-1 bg-gradient-to-r from-[#7c5cfc] to-transparent rounded-full" />
+        </motion.div>
 
-        <div className="max-w-7xl mx-auto px-6 w-full grid grid-cols-1 lg:grid-cols-12 gap-16 items-center relative">
+        {/* The Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 auto-rows-[250px] gap-4 md:gap-6">
           
-          {/* Left Column: Large Styled Polaroid/Framed Image */}
-          <div className="lg:col-span-6 flex justify-center order-last lg:order-first">
-            <motion.div 
-              whileInView={{ opacity: 1, x: 0 }}
-              initial={{ opacity: 0, x: -30 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-              className="w-full max-w-md bg-fouzar-card border border-fouzar-border-strong p-4 shadow-2xl relative"
-            >
-              {/* Top editor bar styling */}
-              <div className="flex items-center justify-between pb-3 mb-4 border-b border-fouzar-border-strong">
-                <div className="flex gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-[#ff2d55]" />
-                  <div className="w-2 h-2 rounded-full bg-[#ffcc00]" />
-                  <div className="w-2 h-2 rounded-full bg-[#00cd46]" />
-                </div>
-                <span className="text-[7.5px] font-mono text-fouzar-text-secondary uppercase tracking-widest">
-                  study_materials.png
-                </span>
-              </div>
+          {/* Box 1: Focus Room */}
+          <BentoCard 
+            title="Focus Room & YouTube"
+            subtitle="Sync videos. Defeat distractions."
+            imageSrc="/focus-room.png"
+            colSpan="col-span-1 md:col-span-2 lg:col-span-2"
+            rowSpan="row-span-1 md:row-span-2"
+            delay={0.1}
+          />
 
-              {/* Styled Image */}
-              <div className="aspect-square bg-rose-950/20 overflow-hidden relative border border-fouzar-border-strong">
-                <img 
-                  src="/study-book.png" 
-                  alt="Student OS Study Assets" 
-                  className="w-full h-full object-cover opacity-80 hover:opacity-100 transition-all duration-700"
-                />
-                
-                {/* Cyberpunk grid overlay (pink/magenta glow) */}
-                <div className="absolute inset-0 bg-[linear-gradient(to_right,#ff2d55_1px,transparent_1px),linear-gradient(to_bottom,#ff2d55_1px,transparent_1px)] bg-[size:20px_20px] mix-blend-overlay opacity-25 pointer-events-none" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#16161f] via-transparent to-transparent opacity-90" />
-                
-                {/* Overlay details */}
-                <div className="absolute bottom-4 left-4">
-                  <p className="text-[8px] font-mono text-[#ff2d55] uppercase tracking-widest font-bold">
-                    STUDY CORE ASSETS V1.0
-                  </p>
-                  <p className="text-lg font-serif font-bold text-fouzar-text-primary mt-0.5">
-                    Interactive Study Ledger
-                  </p>
-                </div>
-              </div>
+          {/* Box 2: Diary Lockscreen */}
+          <BentoCard 
+            title="Secret Diary"
+            subtitle="Encrypted. Personal. Yours."
+            imageSrc="/diary-lockscreen.png"
+            colSpan="col-span-1 lg:col-span-1"
+            rowSpan="row-span-1"
+            delay={0.2}
+          />
 
-              <div className="mt-4 flex items-center justify-between text-[7.5px] font-mono text-fouzar-text-secondary uppercase tracking-wider">
-                <span>RESOURCE CACHE STABLE</span>
-                <span className="text-[#00cd46] animate-pulse">● DATABASE CONNECTED</span>
-              </div>
-            </motion.div>
-          </div>
+          {/* Box 3: AI Tutor */}
+          <BentoCard 
+            title="AI Ecosystem"
+            subtitle="Flashcards. Quizzes. Slides."
+            imageSrc="/ai-tutor.png"
+            colSpan="col-span-1 lg:col-span-1"
+            rowSpan="row-span-1 md:row-span-2"
+            delay={0.3}
+          />
 
-          {/* Right Column: Information about the Website */}
-          <div className="lg:col-span-6 flex flex-col text-left">
-            <motion.div
-              whileInView={{ opacity: 1, y: 0 }}
-              initial={{ opacity: 0, y: 30 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className="space-y-6"
-            >
-              <div className="inline-block border-l-2 border-[#ff2d55] pl-3">
-                <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#ff2d55]">
-                  ABOUT THE PLATFORM
-                </span>
-                <h2 className="font-serif text-3xl md:text-4xl font-bold tracking-[0.02em] text-fouzar-text-primary mt-1">
-                  What is Student OS?
-                </h2>
-              </div>
+          {/* Box 4: Chat Preview */}
+          <BentoCard 
+            title="Real-Time Comms"
+            subtitle="Study Groups & Direct Chat."
+            imageSrc="/chat-preview.png"
+            colSpan="col-span-1 lg:col-span-1"
+            rowSpan="row-span-1"
+            delay={0.4}
+          />
 
-              <p className="text-fouzar-text-secondary text-xs font-light leading-relaxed">
-                Fasca Student OS is a custom-engineered workspace crafted specifically for academic focus and collaboration. It merges peer presence networking, interactive slide-synced classrooms, and direct AI companion assets to redefine how you approach study sessions.
-              </p>
+          {/* Box 5: AWS Cloud */}
+          <BentoCard 
+            title="AWS Cloud Drive"
+            subtitle="Infinite Storage. Secure."
+            imageSrc="/cloud-preview.png"
+            colSpan="col-span-1 md:col-span-2 lg:col-span-2"
+            rowSpan="row-span-1"
+            delay={0.5}
+          />
 
-              {/* Grid of Key Features */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4">
-                
-                {/* Feature 1 */}
-                <div className="space-y-2 border-t border-fouzar-border-strong/60 pt-4">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-[#ff2d55]" />
-                    <h3 className="font-mono text-[10px] uppercase font-bold tracking-wider text-fouzar-text-primary">
-                      Study Circles
-                    </h3>
-                  </div>
-                  <p className="text-fouzar-text-secondary text-[9px] font-mono leading-relaxed uppercase">
-                    Connect in peer-to-peer study streams with live presence indicators and shared sync targets.
-                  </p>
-                </div>
-
-                {/* Feature 2 */}
-                <div className="space-y-2 border-t border-fouzar-border-strong/60 pt-4">
-                  <div className="flex items-center gap-2">
-                    <Cpu className="w-4 h-4 text-[#ff2d55]" />
-                    <h3 className="font-mono text-[10px] uppercase font-bold tracking-wider text-fouzar-text-primary">
-                      AI Core Guidance
-                    </h3>
-                  </div>
-                  <p className="text-fouzar-text-secondary text-[9px] font-mono leading-relaxed uppercase">
-                    Your AI companion understands your slide deck context and assists you instantly with queries.
-                  </p>
-                </div>
-
-                {/* Feature 3 */}
-                <div className="space-y-2 border-t border-fouzar-border-strong/60 pt-4">
-                  <div className="flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-[#ff2d55]" />
-                    <h3 className="font-mono text-[10px] uppercase font-bold tracking-wider text-fouzar-text-primary">
-                      Deep Focus Shield
-                    </h3>
-                  </div>
-                  <p className="text-fouzar-text-secondary text-[9px] font-mono leading-relaxed uppercase">
-                    Trigger custom cognitive flow timers and shield block configurations to silence notifications.
-                  </p>
-                </div>
-
-                {/* Feature 4 */}
-                <div className="space-y-2 border-t border-fouzar-border-strong/60 pt-4">
-                  <div className="flex items-center gap-2">
-                    <Plug className="w-4 h-4 text-[#ff2d55]" />
-                    <h3 className="font-mono text-[10px] uppercase font-bold tracking-wider text-fouzar-text-primary">
-                      LMS Bridge Panel
-                    </h3>
-                  </div>
-                  <p className="text-fouzar-text-secondary text-[9px] font-mono leading-relaxed uppercase">
-                    Bridge deadlines and course materials from Canvas, Blackboard, or external calendars.
-                  </p>
-                </div>
-
-              </div>
-
-              {/* Secondary CTA */}
-              <div className="pt-6">
-                <Link href="/auth">
-                  <FascaButton
-                    variant="solid-violet"
-                    className="text-[9px] font-mono uppercase tracking-widest px-8 py-3 rounded-none flex items-center gap-2"
-                  >
-                    GET STARTED NOW <ArrowRight className="w-3.5 h-3.5" />
-                  </FascaButton>
-                </Link>
-              </div>
-
-            </motion.div>
-          </div>
+          {/* Box 6: Ledger */}
+          <BentoCard 
+            title="Academic Ledger"
+            subtitle="GPA Tracker & Attendance."
+            imageSrc="/ledger-preview.png"
+            colSpan="col-span-1 md:col-span-1 lg:col-span-2"
+            rowSpan="row-span-1"
+            delay={0.6}
+          />
 
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="w-full max-w-7xl mx-auto px-6 py-6 border-t border-fouzar-border-strong/40 flex items-center justify-between text-[8px] font-mono text-fouzar-text-secondary z-10 uppercase tracking-widest relative">
-        <div className="flex items-center gap-2.5">
-          <span>FASCA</span>
-          <span className="w-[1.5px] h-2.5 bg-[#2a2a3a]" />
-          <span>V1.0</span>
-        </div>
-        <span className="text-fouzar-text-secondary">
-          © 2025 hahmadar007-cmd — All Rights Reserved. Proprietary & Confidential.
-        </span>
+      <footer className="w-full border-t border-[#2a2a3a] py-8 text-center z-10 relative bg-[#0a0a0f]">
+        <p className="text-[10px] font-mono text-[#8e8e93] uppercase tracking-[0.2em]">
+          &copy; {new Date().getFullYear()} Fasca Student OS. All Systems Nominal.
+        </p>
       </footer>
-
     </div>
   );
 }
