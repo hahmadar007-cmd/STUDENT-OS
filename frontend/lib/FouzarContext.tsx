@@ -133,7 +133,7 @@ export interface FouzarContextValue {
 
   /* --- Personal LMS Hub (Pillar 4) --- */
   repository: LmsRepositoryItem[];
-  addRepositoryItem: (item: Omit<LmsRepositoryItem, 'id' | 'uploadedAt'>) => void;
+  addRepositoryItem: (item: any) => void;
   removeRepositoryItem: (id: string) => void;
   updateRepositoryItem: (id: string, patch: Partial<LmsRepositoryItem>) => void;
   activeDoc: LmsRepositoryItem | null;
@@ -554,11 +554,11 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, []);
 
   const addRepositoryItem = useCallback(
-    (item: Omit<LmsRepositoryItem, 'id' | 'uploadedAt'>) => {
+    (item: any) => {
       const entry: LmsRepositoryItem = {
-        ...item,
         id: `doc-${Date.now()}`,
         uploadedAt: new Date().toISOString(),
+        ...item,
       };
       setRepository((prev) => {
         const next = [entry, ...prev];

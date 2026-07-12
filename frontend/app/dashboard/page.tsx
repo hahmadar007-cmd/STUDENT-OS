@@ -41,6 +41,7 @@ import { AdminMembersPanel } from '../../components/ui/AdminMembersPanel';
 import { LmsBridgePanel } from '../../components/social/LmsBridgePanel';
 import { FocusShieldPanel } from '../../components/focus/FocusShieldPanel';
 import { AiControlCenter } from '../../components/ai/AiControlCenter';
+import { DiaryPanel } from '../../components/diary/DiaryPanel';
 import { AcademicInfoPanel } from '../../components/academic/AcademicInfoPanel';
 import { useAuth } from '../../hooks/useAuth';
 import { useSocket } from '../../hooks/useSocket';
@@ -1381,6 +1382,19 @@ export default function DashboardPage() {
             <Tooltip text="Connect your own AI API keys (OpenAI, Anthropic, Gemini, or local Ollama). Keys are encrypted with AES-256 before storage. Only one engine can be active at a time." />
           </div>
           {user && <AiControlCenter />}
+        </div>
+
+        {/* 7. Personal Diary Section */}
+        <div id="diary-section" className="space-y-4 w-full border-t border-fouzar-border-strong/20 pt-6 pb-6 scroll-mt-6">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-fouzar-text-secondary">
+              Personal Journal
+            </span>
+            <Tooltip text="A highly secure, distraction-free environment for writers. Locked behind a passcode." />
+          </div>
+          <div className="w-full h-[600px] rounded-xl shadow-lg border border-fouzar-border/30 overflow-hidden">
+            <DiaryPanel />
+          </div>
         </div>
 
         {/* Footer with open-source link */}

@@ -169,31 +169,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     });
   }, [repository, currentDirId, searchQuery, sortBy]);
 
-  // File Upload Action
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    try {
-      let folderCode = 'GEN';
-      if (currentDirId) {
-        const dir = folders.find((f) => f.id === currentDirId);
-        if (dir) folderCode = dir.code;
-      }
-      const entry = await buildRepositoryEntryFromFile(file, folderCode);
-      addRepositoryItem({
-        ...entry,
-        folderId: currentDirId || 'general',
-      });
-    } catch (err) {
-      console.error('Failed to upload file:', err);
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
-  };
+
 
   // Folder Creation Action
   const handleCreateFolder = (e: React.FormEvent) => {

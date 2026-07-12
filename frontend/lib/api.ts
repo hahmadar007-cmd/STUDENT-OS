@@ -432,6 +432,7 @@ export const deleteGroup = (groupId: string) => {
   return apiRequest(`/groups/${groupId}`, 'DELETE');
 };
 
+
 export const renameGroup = (groupId: string, name: string) => {
   return apiRequest(`/groups/${groupId}`, 'PATCH', { name });
 };
@@ -549,4 +550,30 @@ export const uploadGroupFile = (
 /** Delete a file from the shared group drive. */
 export const deleteGroupFile = (groupId: string, fileId: string): Promise<{ success: boolean }> => {
   return apiRequest(`/groups/${groupId}/files/${fileId}`, 'DELETE');
+};
+
+/* --- Personal Diary --- */
+
+export const getDiaryStatus = async () => {
+  return apiRequest('/diary/status', 'GET');
+};
+
+export const setupDiaryPin = async (pin: string) => {
+  return apiRequest('/diary/setup-pin', 'POST', { pin });
+};
+
+export const verifyDiaryPin = async (pin: string) => {
+  return apiRequest('/diary/verify-pin', 'POST', { pin });
+};
+
+export const getDiaryEntries = async (diaryToken: string) => {
+  return apiRequest('/diary', 'GET', undefined, { 'x-diary-token': `Bearer ${diaryToken}` });
+};
+
+export const createDiaryEntry = async (diaryToken: string, title: string, content: string) => {
+  return apiRequest('/diary', 'POST', { title, content }, { 'x-diary-token': `Bearer ${diaryToken}` });
+};
+
+export const deleteDiaryEntry = async (diaryToken: string, id: string) => {
+  return apiRequest(`/diary/${id}`, 'DELETE', undefined, { 'x-diary-token': `Bearer ${diaryToken}` });
 };

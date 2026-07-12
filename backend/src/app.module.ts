@@ -14,6 +14,7 @@ import { UsersModule } from './users/users.module';
 import { VideosModule } from './videos/videos.module';
 import { SubjectsModule } from './subjects/subjects.module';
 import { MaterialsModule } from './materials/materials.module';
+import { DiaryModule } from './diary/diary.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { MaterialsModule } from './materials/materials.module';
     }),
     SubjectsModule,
     MaterialsModule,
+    DiaryModule,
   ],
   controllers: [AppController, SocialController],
   providers: [AppService],
