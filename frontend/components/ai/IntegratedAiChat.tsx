@@ -5,7 +5,7 @@ import { Send, Bot, Sparkles, Paperclip, X, History, Plus, MessageSquare } from 
 import { askAi, indexDocument, indexDocumentFile } from '../../lib/api';
 import { useFouzar } from '../../lib/FouzarContext';
 import { useAiProviders } from '../../hooks/useAiProviders';
-import { formatAiError, PROVIDER_META, resolveModelId } from '../../lib/aiConfig';
+import { formatAiError, PROVIDER_META, resolveModelId, type AiProviderConfig } from '../../lib/aiConfig';
 import { extractTextFromPdf } from '../documents/DocumentViewer';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -158,7 +158,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
-  const engines = useConfiguredEngines();
+  const { providers: engines } = useAiProviders();
   const activeEngine = engines.find(e => e.isActive) ?? null;
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -498,7 +498,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
       };
 
       const modelName = activeEngine?.name ?? aiModel;
-      const res = await askAi(userMsg.content, slideId, modelName, extraContext, activeEngine ?? undefined);
+      const res = await askAi(userMsg.content, slideId, modelName, extraContext);
       setMessages((prev) => [
         ...prev,
         {
@@ -600,7 +600,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
             try {
               const raw = localStorage.getItem(AI_PROVIDERS_KEY);
               if (raw) {
-                const all: StoredProvider[] = JSON.parse(raw);
+                const all: AiProviderConfig[] = JSON.parse(raw);
                 const updated = all.map(p => ({ ...p, isActive: p.id === selectedId }));
                 localStorage.setItem(AI_PROVIDERS_KEY, JSON.stringify(updated));
                 window.dispatchEvent(new Event('storage'));

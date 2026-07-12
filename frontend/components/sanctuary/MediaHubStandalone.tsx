@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Search, Play, Loader2, Tv, Clock, User, X, ChevronDown, Minimize2, Maximize2 } from "lucide-react";
 import { getBackendUrl, getAuthToken } from "../../lib/api";
 
@@ -19,16 +19,50 @@ export function MediaHubStandalone({
   folderId: string | null;
   onVideoSelect: (url: string, videoId: string, title: string) => void;
 }) {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SearchResult[]>([]);
+  const [query, setQueryState] = useState("");
+  const [results, setResultsState] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
-  const [activeVideo, setActiveVideo] = useState<SearchResult | null>(null);
+  const [activeVideo, setActiveVideoState] = useState<SearchResult | null>(null);
   const [isSearchMinimized, setIsSearchMinimized] = useState(false);
   const [isVideoMinimized, setIsVideoMinimized] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
+
+  const setQuery = (q: string) => {
+    setQueryState(q);
+    sessionStorage.setItem('yt_query', q);
+  };
+
+  const setResults = (r: SearchResult[]) => {
+    setResultsState(r);
+    sessionStorage.setItem('yt_results', JSON.stringify(r));
+  };
+
+  const setActiveVideo = (v: SearchResult | null) => {
+    setActiveVideoState(v);
+    if (v) sessionStorage.setItem('yt_active_video', JSON.stringify(v));
+    else sessionStorage.removeItem('yt_active_video');
+  };
+
+  useEffect(() => {
+    try {
+      const savedQ = sessionStorage.getItem('yt_query');
+      const savedR = sessionStorage.getItem('yt_results');
+      const savedV = sessionStorage.getItem('yt_active_video');
+      if (savedQ) setQueryState(savedQ);
+      if (savedR) {
+        const parsed = JSON.parse(savedR);
+        setResultsState(parsed);
+        if (parsed.length > 0) setHasSearched(true);
+      }
+      if (savedV) {
+        setActiveVideoState(JSON.parse(savedV));
+        setHasSearched(true);
+      }
+    } catch (e) {}
+  }, []);
 
   const SUGGESTIONS = ["Machine Learning", "Data Structures", "React Tutorial", "Physics Lectures", "Mathematics"];
 

@@ -67,6 +67,7 @@ export async function extractTextFromPdf(blob: Blob): Promise<{ fullText: string
 const CustomPdfViewer = ({
   fileUrl,
   className = '',
+  onClose,
   onPageChange,
   initialPage = 1,
 }: {
