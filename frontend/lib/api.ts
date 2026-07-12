@@ -566,6 +566,10 @@ export const verifyDiaryPin = async (pin: string) => {
   return apiRequest('/diary/verify-pin', 'POST', { pin });
 };
 
+export const changeDiaryPin = async (diaryToken: string, oldPin: string, newPin: string) => {
+  return apiRequest('/diary/change-pin', 'POST', { oldPin, newPin }, { 'x-diary-token': `Bearer ${diaryToken}` });
+};
+
 export const getDiaryEntries = async (diaryToken: string) => {
   return apiRequest('/diary', 'GET', undefined, { 'x-diary-token': `Bearer ${diaryToken}` });
 };

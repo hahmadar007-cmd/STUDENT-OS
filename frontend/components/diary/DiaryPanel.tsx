@@ -52,8 +52,11 @@ export const DiaryPanel: React.FC = () => {
     }
   };
 
+  const [isMaximized, setIsMaximized] = useState(false);
+
   const handleLock = () => {
     setDiaryToken(null);
+    setIsMaximized(false);
   };
 
   if (loading) {
@@ -74,5 +77,16 @@ export const DiaryPanel: React.FC = () => {
     );
   }
 
-  return <DiaryWriter diaryToken={diaryToken} onLock={handleLock} />;
+  return (
+    <div className={isMaximized ? "fixed inset-0 z-[100] bg-[#050505]/95 backdrop-blur-md p-6 flex items-center justify-center animate-none" : "w-full h-full"}>
+      <div className={isMaximized ? "w-full h-full max-w-6xl shadow-2xl relative border border-white/10 rounded-xl overflow-hidden" : "w-full h-full"}>
+        <DiaryWriter 
+          diaryToken={diaryToken} 
+          onLock={handleLock} 
+          isMaximized={isMaximized}
+          onToggleMaximize={() => setIsMaximized(!isMaximized)}
+        />
+      </div>
+    </div>
+  );
 };

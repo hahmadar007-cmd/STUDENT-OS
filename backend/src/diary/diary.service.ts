@@ -33,6 +33,25 @@ export class DiaryService {
     return { success: true };
   }
 
+  async changePin(userId: string, oldPin: string, newPin: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.diaryPin) {
+      throw new BadRequestException('Diary PIN not set up');
+    }
+
+    const isValid = await bcrypt.compare(oldPin, user.diaryPin);
+    if (!isValid) {
+      throw new UnauthorizedException('Invalid current passcode');
+    }
+
+    const hashedPin = await bcrypt.hash(newPin, BCRYPT_ROUNDS);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { diaryPin: hashedPin },
+    });
+    return { success: true };
+  }
+
   async verifyPin(userId: string, pin: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user || !user.diaryPin) {

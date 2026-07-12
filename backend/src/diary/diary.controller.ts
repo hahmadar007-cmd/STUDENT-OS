@@ -61,6 +61,15 @@ export class DiaryController {
     return this.diaryService.verifyPin(userId, body.pin);
   }
 
+  @Post('change-pin')
+  async changePin(
+    @Body() body: { oldPin: string; newPin: string },
+    @Headers('x-diary-token') diaryHeader?: string,
+  ) {
+    const userId = this.verifyDiaryAccess(diaryHeader);
+    return this.diaryService.changePin(userId, body.oldPin, body.newPin);
+  }
+
   // --- Protected Diary Routes ---
 
   @Get()
