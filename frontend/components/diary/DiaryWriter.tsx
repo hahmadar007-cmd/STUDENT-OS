@@ -86,8 +86,8 @@ export const DiaryWriter: React.FC<DiaryWriterProps> = ({ diaryToken, onLock }) 
       {/* Sidebar - History */}
       <div className="w-1/3 max-w-[300px] border-r border-[#e5e1d8] flex flex-col bg-[#f5f2eb]">
         <div className="p-4 border-b border-[#e5e1d8] flex justify-between items-center bg-[#eae6dc]">
-          <h2 className="font-bold text-lg flex items-center gap-2">
-            <FileText className="w-5 h-5" /> Journal
+          <h2 className="font-gothic text-xl tracking-wide lowercase flex items-center gap-2">
+            <FileText className="w-5 h-5" /> journal
           </h2>
           <button 
             onClick={onLock}
@@ -118,7 +118,7 @@ export const DiaryWriter: React.FC<DiaryWriterProps> = ({ diaryToken, onLock }) 
                 onClick={() => { setActiveEntry(entry); setIsDrafting(false); }}
                 className={`w-full text-left p-3 rounded transition-colors ${activeEntry?.id === entry.id && !isDrafting ? 'bg-[#e5e1d8] shadow-sm' : 'hover:bg-[#eae6dc]'}`}
               >
-                <h3 className="font-semibold text-sm truncate mb-1">{entry.title}</h3>
+                <h3 className="font-gothic text-base tracking-wide lowercase truncate mb-1">{entry.title}</h3>
                 <p className="text-xs font-sans text-black/50 flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
                   {new Date(entry.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -153,10 +153,10 @@ export const DiaryWriter: React.FC<DiaryWriterProps> = ({ diaryToken, onLock }) 
             
             <input
               type="text"
-              placeholder="Entry Title..."
+              placeholder="entry title..."
               value={draftTitle}
               onChange={(e) => setDraftTitle(e.target.value)}
-              className="w-full text-4xl font-bold bg-transparent border-none outline-none mb-6 placeholder:text-black/20"
+              className="w-full text-4xl font-gothic tracking-wide lowercase bg-transparent border-none outline-none mb-6 placeholder:text-black/20"
               autoFocus
             />
             
@@ -177,7 +177,7 @@ export const DiaryWriter: React.FC<DiaryWriterProps> = ({ diaryToken, onLock }) 
                   <span className="mx-2">•</span>
                   {new Date(activeEntry.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
                 </p>
-                <h1 className="text-4xl font-bold">{activeEntry.title}</h1>
+                <h1 className="text-4xl font-gothic tracking-wide lowercase">{activeEntry.title}</h1>
               </div>
               <button
                 onClick={() => handleDelete(activeEntry.id)}

@@ -83,14 +83,14 @@ export const DiaryLockScreen: React.FC<DiaryLockScreenProps> = ({ hasSetPin, onV
               <Book className="w-8 h-8 text-[#d4af37]/80" strokeWidth={1} />
             </div>
             
-            <h2 className="text-2xl font-serif tracking-[0.2em] uppercase mb-2 bg-gradient-to-br from-[#f1e5ac] via-[#d4af37] to-[#8a6d1c] text-transparent bg-clip-text drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
-              Personal Diary
+            <h2 className="text-4xl font-gothic tracking-[0.15em] lowercase mb-2 bg-gradient-to-br from-[#f1e5ac] via-[#d4af37] to-[#8a6d1c] text-transparent bg-clip-text drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
+              personal diary
             </h2>
-            <div className="w-12 h-[1px] bg-gradient-to-r from-transparent via-[#d4af37]/50 to-transparent mx-auto mb-8"></div>
+            <div className="w-12 h-[1px] bg-gradient-to-r from-transparent via-[#d4af37]/30 to-transparent mx-auto mb-8"></div>
           </motion.div>
           
-          <p className="text-[10px] text-fouzar-text-secondary/60 mb-6 font-mono tracking-[0.2em] uppercase">
-            {hasSetPin ? 'Enter Passcode' : 'Initialize Passcode'}
+          <p className="text-xs text-fouzar-text-secondary/60 mb-6 font-gothic tracking-[0.1em] lowercase">
+            {hasSetPin ? 'enter passcode' : 'initialize passcode'}
           </p>
 
           <form onSubmit={handleSubmit} className="w-full flex flex-col items-center space-y-8">
@@ -108,9 +108,9 @@ export const DiaryLockScreen: React.FC<DiaryLockScreenProps> = ({ hasSetPin, onV
             <button 
               type="submit" 
               disabled={loading || pin.length < 4}
-              className="text-[10px] font-mono tracking-[0.2em] uppercase text-[#d4af37]/70 hover:text-[#f1e5ac] transition-colors border border-[#d4af37]/20 hover:border-[#d4af37]/50 px-6 py-2 rounded-sm disabled:opacity-50 disabled:cursor-not-allowed bg-black/40 backdrop-blur-sm"
+              className="text-xs font-gothic tracking-[0.1em] lowercase text-[#d4af37]/70 hover:text-[#f1e5ac] transition-colors border border-[#d4af37]/20 hover:border-[#d4af37]/50 px-6 py-2 rounded-sm disabled:opacity-50 disabled:cursor-not-allowed bg-black/40 backdrop-blur-sm"
             >
-              {loading ? 'Decrypting...' : (hasSetPin ? 'Unlock' : 'Seal')}
+              {loading ? 'decrypting...' : (hasSetPin ? 'unlock' : 'seal')}
             </button>
           </form>
         </div>

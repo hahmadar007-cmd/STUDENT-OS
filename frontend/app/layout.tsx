@@ -7,7 +7,7 @@
 // ============================================================================
 
 import type { Metadata } from "next";
-import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
+import { Space_Grotesk, Inter, JetBrains_Mono, Grenze_Gotisch } from "next/font/google";
 import "./globals.css";
 import { FouzarProvider } from "../lib/FouzarContext";
 import { ThemeProvider } from "../lib/ThemeContext";
@@ -30,6 +30,12 @@ const jetbrains = JetBrains_Mono({
   subsets: ["latin"],
 });
 
+const grenzeGotisch = Grenze_Gotisch({
+  variable: "--font-gothic",
+  subsets: ["latin"],
+  weight: ["400", "700"],
+});
+
 export const metadata: Metadata = {
   title: "Fouzar | High-Performance Study Engine",
   description: "Futuristic digital garden and contextual focus room for high-performance SaaS builders.",
@@ -46,7 +52,7 @@ export default function RootLayout({
       data-theme="onyx"
       data-space="planning"
       data-flow="idle"
-      className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrains.variable} h-full antialiased`}
+      className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrains.variable} ${grenzeGotisch.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-fouzar-bg text-fouzar-text-primary antialiased select-none">
         <FouzarProvider>
