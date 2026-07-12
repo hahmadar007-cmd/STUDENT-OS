@@ -4,6 +4,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, Sparkles, Paperclip, X, History, Plus, MessageSquare } from 'lucide-react';
 import { askAi, indexDocument, indexDocumentFile } from '../../lib/api';
 import { useFouzar } from '../../lib/FouzarContext';
+import { useAiProviders } from '../../hooks/useAiProviders';
+import { formatAiError, PROVIDER_META, resolveModelId } from '../../lib/aiConfig';
 import { extractTextFromPdf } from '../documents/DocumentViewer';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -98,34 +100,6 @@ interface IntegratedAiChatProps {
 
 const AI_PROVIDERS_KEY = 'fasca_ai_providers_v1';
 
-interface StoredProvider {
-  id: string;
-  name: string;
-  isActive: boolean;
-  apiKeyRaw: string;
-  baseUrl: string | null;
-  providerType: 'OPENAI' | 'ANTHROPIC' | 'GEMINI' | 'CUSTOM';
-}
-
-function useConfiguredEngines() {
-  const [engines, setEngines] = useState<StoredProvider[]>([]);
-  useEffect(() => {
-    const load = () => {
-      try {
-        const raw = localStorage.getItem(AI_PROVIDERS_KEY);
-        if (raw) setEngines(JSON.parse(raw));
-        else setEngines([]);
-      } catch { setEngines([]); }
-    };
-    load();
-    // Re-sync when user switches tabs back or adds an engine
-    window.addEventListener('focus', load);
-    window.addEventListener('storage', load);
-    return () => { window.removeEventListener('focus', load); window.removeEventListener('storage', load); };
-  }, []);
-  return engines;
-}
-
 /**
  * Shared AI chat surface wired to POST /ai/chat.
  * Used in Personal Sanctuary and group study rooms — one API, consistent UX.
@@ -140,9 +114,10 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
 }) => {
   const { 
     aiModel, 
-    setAiModel, 
     activeDoc, 
-    activeDocText, 
+    activeDocText,
+    activeSlideContext,
+    activeSlidePage,
     activeVideoUrl, 
     activeVideoTimestamp,
     aiTriggerQuery,

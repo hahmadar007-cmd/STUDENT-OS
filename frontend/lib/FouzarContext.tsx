@@ -143,6 +143,11 @@ export interface FouzarContextValue {
   closeDoc: (id: string) => void;
   activeDocText: string | null;
   setActiveDocText: (text: string | null) => void;
+  /** Current page/slide text only — sent to AI as primary context */
+  activeSlideContext: string | null;
+  setActiveSlideContext: (text: string | null) => void;
+  activeSlidePage: number;
+  setActiveSlidePage: (page: number) => void;
   activeVideoUrl: string | null;
   setActiveVideoUrl: (url: string | null) => void;
   activeVideoTimestamp: number;
@@ -291,6 +296,8 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [openDocs, setOpenDocs] = useState<LmsRepositoryItem[]>([]);
   const [activeDocId, setActiveDocId] = useState<string | null>(null);
   const [activeDocText, setActiveDocText] = useState<string | null>(null);
+  const [activeSlideContext, setActiveSlideContext] = useState<string | null>(null);
+  const [activeSlidePage, setActiveSlidePage] = useState(1);
 
   const activeDoc = useMemo(() => openDocs.find((d) => d.id === activeDocId) || null, [openDocs, activeDocId]);
 
@@ -744,6 +751,10 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       closeDoc,
       activeDocText,
       setActiveDocText,
+      activeSlideContext,
+      setActiveSlideContext,
+      activeSlidePage,
+      setActiveSlidePage,
       activeVideoUrl,
       setActiveVideoUrl,
       activeVideoTimestamp,
@@ -791,6 +802,8 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setAccentColor,
       activeDoc,
       activeDocText,
+      activeSlideContext,
+      activeSlidePage,
       activeVideoUrl,
       activeVideoTimestamp,
     ],

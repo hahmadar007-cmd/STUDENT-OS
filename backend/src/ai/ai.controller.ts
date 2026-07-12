@@ -3,6 +3,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { AiService } from './ai.service';
 import { DocumentProcessorService } from './document-processor.service';
 import { VectorService } from './vector.service';
+import { extractApiKeys, MAX_INDEX_CHUNKS, primaryApiKey } from './ai-models';
 
 @Controller('ai')
 export class AiController {
@@ -44,8 +45,17 @@ export class AiController {
     @UploadedFile() file: any,
     @Headers() headers: Record<string, string>,
   ) {
-    const geminiKey = headers['x-gemini-key'] || process.env.GEMINI_API_KEY || '';
+    const keys = extractApiKeys(headers);
+    const apiKey = primaryApiKey(keys);
     const { courseId, documentId } = body;
+
+    if (!apiKey) {
+      return {
+        success: false,
+        chunksCount: 0,
+        message: 'No API key provided. Add and activate an AI engine first.',
+      };
+    }
 
     let chunks: { text: string; pageNum: number }[] = [];
     let pdfBase64: string | undefined = undefined;
@@ -88,11 +98,23 @@ export class AiController {
       }
     }
 
-    if (chunks.length > 0) {
-      await this.vectorService.indexChunks(courseId, documentId, chunks, geminiKey);
+    const limitedChunks = chunks.slice(0, MAX_INDEX_CHUNKS);
+    if (chunks.length > MAX_INDEX_CHUNKS) {
+      console.log(`Indexing capped at ${MAX_INDEX_CHUNKS} of ${chunks.length} chunks for ${documentId}`);
     }
 
-    return { success: true, chunksCount: chunks.length, chunks, pdfBase64 };
+    if (limitedChunks.length > 0) {
+      await this.vectorService.indexChunks(courseId, documentId, limitedChunks, apiKey, keys.providerType);
+    }
+
+    return {
+      success: true,
+      chunksCount: limitedChunks.length,
+      totalChunks: chunks.length,
+      truncated: chunks.length > MAX_INDEX_CHUNKS,
+      chunks: limitedChunks,
+      pdfBase64,
+    };
   }
 
   @Get('search')

@@ -1,5 +1,14 @@
 'use client';
 
+import {
+  buildProviderHeaders,
+  getActiveProvider,
+  getActiveProviderHeaders,
+  resolveModelId,
+  type AiProviderConfig,
+  type ProviderType,
+} from './aiConfig';
+
 export const getBackendUrl = (): string => {
   const envVal = process.env.NEXT_PUBLIC_API_URL;
   if (typeof window !== 'undefined') {
@@ -55,23 +64,11 @@ async function apiRequest(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  // Legacy fasca_ai_mode support (kept for backwards compat)
-  if (typeof window !== 'undefined') {
-    const aiMode = localStorage.getItem('fasca_ai_mode') || 'default';
-    const aiToken = localStorage.getItem('fasca_ai_token');
-    const aiUrl = localStorage.getItem('fasca_ai_url');
-    if (aiMode === 'gemini-personal' && aiToken) headers['x-gemini-key'] = aiToken;
-    else if (aiMode === 'openai-personal' && aiToken) headers['x-openai-key'] = aiToken;
-    else if (aiMode === 'deepseek-personal' && aiToken) headers['x-deepseek-key'] = aiToken;
-    else if (aiMode === 'custom' && aiUrl) {
-      headers['x-custom-url'] = aiUrl;
-      if (aiToken) headers['x-custom-key'] = aiToken;
-    }
-  }
-
-  // Inject any extra headers (e.g. AI provider keys from AI Control Center)
-  if (extraHeaders) {
+  // Inject BYOK provider headers (explicit extraHeaders take priority)
+  if (extraHeaders && Object.keys(extraHeaders).length > 0) {
     Object.assign(headers, extraHeaders);
+  } else if (typeof window !== 'undefined') {
+    Object.assign(headers, getActiveProviderHeaders());
   }
 
   const response = await fetch(`${API_URL}${endpoint}`, {
@@ -150,14 +147,13 @@ export const toggleAiProviderActive = (id: string) =>
 export const askAi = (
   prompt: string,
   slideId: string | null,
-  modelName: string,
+  _modelName?: string,
   extraContext?: {
     currentSlideText?: string;
     videoUrl?: string;
     videoTimestamp?: number;
     courseId?: string;
   },
-  activeEngine?: { name: string; apiKeyRaw: string; baseUrl: string | null }
 ) => {
   const token = getAuthToken();
   let userId = 'default-user';
@@ -168,70 +164,17 @@ export const askAi = (
     }
   } catch (e) {}
 
-  // ── BYOK: read active provider strictly from localStorage ─────────────────
-  const aiHeaders: Record<string, string> = {};
-  let resolvedModel = modelName;
-  let hasActiveEngine = false;
-
-  if (typeof window !== 'undefined') {
-    try {
-      const raw = localStorage.getItem('fasca_ai_providers_v1');
-      if (raw) {
-        const providers: Array<{
-          id: string;
-          name: string;
-          providerType: string;
-          apiKeyRaw: string;
-          baseUrl: string | null;
-          isActive: boolean;
-        }> = JSON.parse(raw);
-
-        const active = providers.find((p) => p.isActive);
-        if (active && active.providerType && active.apiKeyRaw) {
-          hasActiveEngine = true;
-          const pType = active.providerType.trim().toUpperCase();
-
-          // Always send explicit provider type — backend routes deterministically on this
-          aiHeaders['x-provider-type'] = pType;
-
-          if (pType === 'GEMINI') {
-            resolvedModel = (modelName && modelName.startsWith('gemini')) ? modelName : 'gemini-2.5-pro';
-            aiHeaders['x-gemini-key'] = active.apiKeyRaw;
-          } else if (pType === 'OPENAI') {
-            resolvedModel = (modelName && (modelName.startsWith('gpt') || modelName.startsWith('o1') || modelName.startsWith('o3'))) ? modelName : 'gpt-4o';
-            aiHeaders['x-openai-key'] = active.apiKeyRaw;
-          } else if (pType === 'ANTHROPIC') {
-            resolvedModel = (modelName && modelName.startsWith('claude')) ? modelName : 'claude-3-5-sonnet-20241022';
-            aiHeaders['x-anthropic-key'] = active.apiKeyRaw;
-          } else if (pType === 'DEEPSEEK') {
-            resolvedModel = 'deepseek-chat';
-            aiHeaders['x-deepseek-key'] = active.apiKeyRaw;
-          } else if (pType === 'OPENROUTER') {
-            resolvedModel = modelName || 'meta-llama/llama-3-8b-instruct:free';
-            aiHeaders['x-openrouter-key'] = active.apiKeyRaw;
-            if (active.baseUrl) aiHeaders['x-custom-url'] = active.baseUrl;
-          } else if (pType === 'CUSTOM') {
-            resolvedModel = modelName || 'custom-model';
-            aiHeaders['x-custom-key'] = active.apiKeyRaw;
-            if (active.baseUrl) aiHeaders['x-custom-url'] = active.baseUrl;
-          }
-        }
-      }
-    } catch (e) {
-      // localStorage parse failure — proceed, backend will return "configure an engine" message
-    }
-  }
-
-  // If no engine is active, send no key headers at all.
-  // The backend will return a friendly "configure an engine" message when x-provider-type is absent.
+  const active = getActiveProvider();
+  const aiHeaders = active ? buildProviderHeaders(active) : {};
+  const resolvedModel = active ? resolveModelId(active) : '';
 
   return apiRequest('/ai/chat', 'POST', {
-      userId,
-      prompt,
-      slideId,
-      modelName: resolvedModel,
-      ...extraContext,
-    }, aiHeaders);
+    userId,
+    prompt,
+    slideId,
+    modelName: resolvedModel,
+    ...extraContext,
+  }, aiHeaders);
 };
 
 /** BYOK key validation — calls POST /ai/validate and returns { ok, message }.
@@ -242,20 +185,18 @@ export const validateAiKey = async (
   baseUrl?: string,
   modelName?: string,
 ): Promise<{ ok: boolean; message: string }> => {
-  const pType = providerType.trim().toUpperCase();
-  const headers: Record<string, string> = {
-    'x-provider-type': pType,
-  };
-
-  if (pType === 'GEMINI')     headers['x-gemini-key']     = apiKey;
-  else if (pType === 'OPENAI')     headers['x-openai-key']     = apiKey;
-  else if (pType === 'ANTHROPIC')  headers['x-anthropic-key']  = apiKey;
-  else if (pType === 'DEEPSEEK')   headers['x-deepseek-key']   = apiKey;
-  else if (pType === 'OPENROUTER') headers['x-openrouter-key'] = apiKey;
-  else if (pType === 'CUSTOM') {
-    headers['x-custom-key'] = apiKey;
-    if (baseUrl) headers['x-custom-url'] = baseUrl;
-  }
+  const pType = providerType.trim().toUpperCase() as ProviderType;
+  const headers = buildProviderHeaders({
+    id: 'validate',
+    name: 'validate',
+    apiKeyRaw: apiKey,
+    baseUrl: baseUrl ?? null,
+    providerType: pType,
+    modelId: modelName || '',
+    isActive: true,
+    createdAt: '',
+    colorIndex: 0,
+  });
 
   try {
     const result = await apiRequest(
@@ -279,8 +220,8 @@ export const indexDocument = (
   return apiRequest('/ai/index-document', 'POST', {
     courseId,
     documentId,
-    chunks: JSON.stringify(chunks)
-  });
+    chunks: JSON.stringify(chunks),
+  }, getActiveProviderHeaders());
 };
 
 export const indexDocumentFile = (
@@ -290,7 +231,9 @@ export const indexDocumentFile = (
   fileName: string
 ) => {
   const token = getAuthToken();
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    ...getActiveProviderHeaders(),
+  };
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
@@ -303,7 +246,7 @@ export const indexDocumentFile = (
   return fetch(`${API_URL}/ai/index-document`, {
     method: 'POST',
     headers,
-    body: formData
+    body: formData,
   }).then((res) => {
     if (!res.ok) throw new Error('Failed to index document file');
     return res.json();

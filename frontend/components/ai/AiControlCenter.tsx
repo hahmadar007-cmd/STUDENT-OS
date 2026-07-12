@@ -1,55 +1,27 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, Trash2, ChevronDown, ChevronUp,
-  Loader2, Zap, Globe, Lock, X, Eye, EyeOff, AlertCircle, CheckCircle,
+  Loader2, Zap, Globe, Lock, X, Eye, EyeOff, AlertCircle, CheckCircle, Cpu,
 } from 'lucide-react';
 import { useFouzar } from '../../lib/FouzarContext';
-
-interface AiProvider {
-  id: string;
-  name: string;
-  apiKeyRaw: string;
-  baseUrl: string | null;
-  providerType?: string;
-  isActive: boolean;
-  createdAt: string;
-  colorIndex: number;
-}
-
-const STORAGE_KEY = 'fasca_ai_providers_v1';
-
-const CARD_COLORS = [
-  { color: '#7c5cfc', glow: 'rgba(124,92,252,0.35)' },
-  { color: '#06b6d4', glow: 'rgba(6,182,212,0.35)' },
-  { color: '#f472b6', glow: 'rgba(244,114,182,0.35)' },
-  { color: '#10b981', glow: 'rgba(16,185,129,0.35)' },
-  { color: '#f59e0b', glow: 'rgba(245,158,11,0.35)' },
-];
-
-function maskKey(key: string): string {
-  if (!key || key.length <= 4) return '••••';
-  return `••••••••${key.slice(-4)}`;
-}
-
-/** Non-authoritative helper: suggests a provider type based on key/name patterns.
- *  The user ALWAYS has final say via the Provider Type dropdown. */
-function inferProviderType(name: string, key: string): string {
-  const n = name.trim().toUpperCase();
-  const k = key.trim();
-  if (k.startsWith('sk-ant-') || n.includes('ANTHROPIC') || n.includes('CLAUDE')) return 'ANTHROPIC';
-  if (n.includes('DEEPSEEK')) return 'DEEPSEEK';
-  if (k.startsWith('sk-') || n.includes('OPENAI') || n.includes('GPT')) return 'OPENAI';
-  if (k.startsWith('AIza') || n.includes('GEMINI') || n.includes('GOOGLE')) return 'GEMINI';
-  if (n.includes('OPENROUTER')) return 'OPENROUTER';
-  return 'CUSTOM';
-}
+import { useAiProviders } from '../../hooks/useAiProviders';
+import {
+  CARD_COLORS,
+  PROVIDER_META,
+  defaultModelForProvider,
+  inferProviderType,
+  maskApiKey,
+  type AiProviderConfig,
+  type ProviderType,
+} from '../../lib/aiConfig';
+import { validateAiKey, addAiProvider, deleteAiProvider, toggleAiProviderActive } from '../../lib/api';
 
 interface AddModalProps {
   onClose: () => void;
-  onAdded: (p: AiProvider) => void;
+  onAdded: (p: AiProviderConfig) => void;
   nextColorIndex: number;
 }
 
@@ -61,40 +33,56 @@ function AddProviderModal({ onClose, onAdded, nextColorIndex }: AddModalProps) {
   const [error, setError] = useState('');
   const [validationStatus, setValidationStatus] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle');
   const [validationMsg, setValidationMsg] = useState('');
-  const [providerType, setProviderType] = useState('GEMINI');
+  const [providerType, setProviderType] = useState<ProviderType>('GEMINI');
+  const [modelId, setModelId] = useState(defaultModelForProvider('GEMINI'));
 
-  // Keep providerType suggestion updated as user types name/key
-  useEffect(() => {
-    setProviderType(inferProviderType(name, apiKey));
-    setValidationStatus('idle');
-    setValidationMsg('');
-  }, [name, apiKey]);
+  const palette = CARD_COLORS[nextColorIndex % CARD_COLORS.length];
+  const meta = PROVIDER_META[providerType];
 
-  // Reset validation when providerType changes explicitly
-  const handleProviderTypeChange = (val: string) => {
+  const handleProviderTypeChange = (val: ProviderType) => {
     setProviderType(val);
+    setModelId(defaultModelForProvider(val));
     setValidationStatus('idle');
     setValidationMsg('');
   };
 
-  const palette = CARD_COLORS[nextColorIndex % CARD_COLORS.length];
+  const handleNameOrKeyChange = (field: 'name' | 'apiKey', value: string) => {
+    if (field === 'name') setName(value);
+    else setApiKey(value);
+    const inferred = inferProviderType(field === 'name' ? value : name, field === 'apiKey' ? value : apiKey);
+    setProviderType(inferred);
+    setModelId(defaultModelForProvider(inferred));
+    setValidationStatus('idle');
+    setValidationMsg('');
+  };
+
+  const buildProvider = (): AiProviderConfig => ({
+    id: `ap_${Date.now()}`,
+    name: name.trim(),
+    apiKeyRaw: apiKey.trim(),
+    baseUrl: baseUrl.trim() || null,
+    providerType,
+    modelId,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    colorIndex: nextColorIndex % CARD_COLORS.length,
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) { setError('Engine name is required.'); return; }
     if (!apiKey.trim()) { setError('API key is required.'); return; }
+    if (meta.needsBaseUrl && !baseUrl.trim()) { setError('Base URL is required for custom endpoints.'); return; }
     setError('');
 
-    // ── Live key validation ──────────────────────────────────────────────────
     setValidationStatus('testing');
     setValidationMsg('Testing connection…');
     try {
-      const { validateAiKey } = await import('../../lib/api');
-      const result = await validateAiKey(providerType, apiKey.trim(), baseUrl.trim() || undefined);
+      const result = await validateAiKey(providerType, apiKey.trim(), baseUrl.trim() || undefined, modelId);
       if (!result.ok) {
         setValidationStatus('fail');
         setValidationMsg(result.message || 'Key validation failed.');
-        return; // Block save — user must fix the key
+        return;
       }
       setValidationStatus('ok');
       setValidationMsg(result.message || 'Connected ✓');
@@ -104,24 +92,10 @@ function AddProviderModal({ onClose, onAdded, nextColorIndex }: AddModalProps) {
       return;
     }
 
-    // ── Save engine (auto-activate: isActive = true) ─────────────────────────
-    let provider: AiProvider = {
-      id: `ap_${Date.now()}`,
-      name: name.trim(),
-      apiKeyRaw: apiKey.trim(),
-      baseUrl: baseUrl.trim() || null,
-      providerType: providerType,
-      isActive: true, // auto-activate — no need to click the card
-      createdAt: new Date().toISOString(),
-      colorIndex: nextColorIndex % CARD_COLORS.length,
-    };
-
+    let provider = buildProvider();
     try {
-      const { addAiProvider } = await import('../../lib/api');
-      const savedProvider = await addAiProvider(provider.name, provider.providerType || 'GEMINI', provider.apiKeyRaw, provider.baseUrl || undefined);
-      if (savedProvider && savedProvider.id) {
-        provider.id = savedProvider.id;
-      }
+      const saved = await addAiProvider(provider.name, provider.providerType, provider.apiKeyRaw, provider.baseUrl || undefined);
+      if (saved?.id) provider = { ...provider, id: saved.id };
     } catch (err) {
       console.error('Failed to save AI provider to backend:', err);
     }
@@ -130,23 +104,12 @@ function AddProviderModal({ onClose, onAdded, nextColorIndex }: AddModalProps) {
     onClose();
   };
 
-  // Optional escape hatch: save without validation
   const handleSaveAnyway = async () => {
     if (!name.trim() || !apiKey.trim()) return;
-    let provider: AiProvider = {
-      id: `ap_${Date.now()}`,
-      name: name.trim(),
-      apiKeyRaw: apiKey.trim(),
-      baseUrl: baseUrl.trim() || null,
-      providerType: providerType,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      colorIndex: nextColorIndex % CARD_COLORS.length,
-    };
+    let provider = buildProvider();
     try {
-      const { addAiProvider } = await import('../../lib/api');
-      const savedProvider = await addAiProvider(provider.name, provider.providerType || 'GEMINI', provider.apiKeyRaw, provider.baseUrl || undefined);
-      if (savedProvider && savedProvider.id) provider.id = savedProvider.id;
+      const saved = await addAiProvider(provider.name, provider.providerType, provider.apiKeyRaw, provider.baseUrl || undefined);
+      if (saved?.id) provider = { ...provider, id: saved.id };
     } catch {}
     onAdded(provider);
     onClose();
@@ -162,7 +125,7 @@ function AddProviderModal({ onClose, onAdded, nextColorIndex }: AddModalProps) {
       <motion.div
         initial={{ scale: 0.92, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.92, y: 20 }}
         transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-        className="w-full max-w-sm"
+        className="w-full max-w-md max-h-[90vh] overflow-y-auto"
         style={{
           background: 'var(--fouzar-surface)',
           border: `1px solid ${palette.color}40`,
@@ -170,8 +133,11 @@ function AddProviderModal({ onClose, onAdded, nextColorIndex }: AddModalProps) {
           boxShadow: `0 0 40px ${palette.glow}, 0 24px 48px rgba(0,0,0,0.5)`,
         }}
       >
-        <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-          <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-fouzar-text-primary/60">Connect AI Engine</span>
+        <div className="flex items-center justify-between px-6 py-4 sticky top-0 z-10" style={{ background: 'var(--fouzar-surface)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+          <div className="flex items-center gap-2">
+            <Cpu className="w-4 h-4" style={{ color: palette.color }} />
+            <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-fouzar-text-primary/60">Connect AI Engine</span>
+          </div>
           <button onClick={onClose} className="text-fouzar-text-primary/30 hover:text-fouzar-text-primary/70 transition-colors cursor-pointer">
             <X className="w-4 h-4" />
           </button>
@@ -182,10 +148,39 @@ function AddProviderModal({ onClose, onAdded, nextColorIndex }: AddModalProps) {
             <label className="font-mono text-[9px] uppercase tracking-[0.2em] text-fouzar-text-primary/40">Engine Name</label>
             <input
               value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="e.g. My Gemini Key"
+              onChange={e => handleNameOrKeyChange('name', e.target.value)}
+              placeholder="e.g. My Study AI"
               className="w-full bg-white/[0.04] border border-fouzar-border-subtle rounded-lg px-3 py-2.5 text-sm text-fouzar-text-primary/90 placeholder-white/20 font-mono focus:outline-none focus:border-white/25 transition-colors"
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="font-mono text-[9px] uppercase tracking-[0.2em] text-fouzar-text-primary/40">Provider</label>
+              <select
+                value={providerType}
+                onChange={e => handleProviderTypeChange(e.target.value as ProviderType)}
+                className="w-full bg-white/[0.04] border border-fouzar-border-subtle rounded-lg px-3 py-2.5 text-sm text-fouzar-text-primary/90 font-mono focus:outline-none focus:border-white/25 cursor-pointer"
+              >
+                {(Object.keys(PROVIDER_META) as ProviderType[]).map(pt => (
+                  <option key={pt} value={pt} className="bg-fouzar-bg">{PROVIDER_META[pt].label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="font-mono text-[9px] uppercase tracking-[0.2em] text-fouzar-text-primary/40">Model</label>
+              <select
+                value={modelId}
+                onChange={e => setModelId(e.target.value)}
+                className="w-full bg-white/[0.04] border border-fouzar-border-subtle rounded-lg px-3 py-2.5 text-sm text-fouzar-text-primary/90 font-mono focus:outline-none focus:border-white/25 cursor-pointer"
+              >
+                {meta.models.map(m => (
+                  <option key={m.id} value={m.id} className="bg-fouzar-bg">
+                    {m.label} {m.tier === 'free' ? '★' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="space-y-1.5">
@@ -194,53 +189,34 @@ function AddProviderModal({ onClose, onAdded, nextColorIndex }: AddModalProps) {
               <input
                 type={showKey ? 'text' : 'password'}
                 value={apiKey}
-                onChange={e => setApiKey(e.target.value)}
-                placeholder="sk-•••••••••••••••"
+                onChange={e => handleNameOrKeyChange('apiKey', e.target.value)}
+                placeholder={meta.keyPlaceholder}
                 className="w-full bg-white/[0.04] border border-fouzar-border-subtle rounded-lg px-3 pr-10 py-2.5 text-sm text-fouzar-text-primary/90 placeholder-white/20 font-mono focus:outline-none focus:border-white/25 transition-colors"
               />
-              <button
-                type="button"
-                onClick={() => setShowKey(!showKey)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-fouzar-text-primary/30 hover:text-fouzar-text-primary/60 cursor-pointer"
-              >
+              <button type="button" onClick={() => setShowKey(!showKey)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-fouzar-text-primary/30 hover:text-fouzar-text-primary/60 cursor-pointer">
                 {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               </button>
             </div>
             <p className="font-mono text-[8px] text-fouzar-text-primary/25 flex items-center gap-1">
-              <Lock className="w-2.5 h-2.5" /> Stored locally in your browser only
+              <Lock className="w-2.5 h-2.5" /> {meta.keyHint}
             </p>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="font-mono text-[9px] uppercase tracking-[0.2em] text-fouzar-text-primary/40">
-              Base URL <span className="text-fouzar-text-primary/20 normal-case">(optional — for Ollama / custom endpoints)</span>
-            </label>
-            <input
-              value={baseUrl}
-              onChange={e => setBaseUrl(e.target.value)}
-              placeholder="https://openrouter.ai/api/v1"
-              className="w-full bg-white/[0.04] border border-fouzar-border-subtle rounded-lg px-3 py-2.5 text-sm text-fouzar-text-primary/90 placeholder-white/20 font-mono focus:outline-none focus:border-white/25 transition-colors"
-            />
-          </div>
+          {(meta.needsBaseUrl || providerType === 'OPENROUTER') && (
+            <div className="space-y-1.5">
+              <label className="font-mono text-[9px] uppercase tracking-[0.2em] text-fouzar-text-primary/40">
+                Base URL {providerType !== 'CUSTOM' && <span className="text-fouzar-text-primary/20 normal-case">(optional)</span>}
+              </label>
+              <input
+                value={baseUrl}
+                onChange={e => setBaseUrl(e.target.value)}
+                placeholder={providerType === 'CUSTOM' ? 'http://localhost:11434/v1' : 'https://openrouter.ai/api/v1'}
+                className="w-full bg-white/[0.04] border border-fouzar-border-subtle rounded-lg px-3 py-2.5 text-sm text-fouzar-text-primary/90 placeholder-white/20 font-mono focus:outline-none focus:border-white/25 transition-colors"
+              />
+            </div>
+          )}
 
-          <div className="space-y-1.5">
-            <label className="font-mono text-[9px] uppercase tracking-[0.2em] text-fouzar-text-primary/40">Provider Type</label>
-            <select
-              value={providerType}
-              onChange={e => handleProviderTypeChange(e.target.value)}
-              className="w-full bg-white/[0.04] border border-fouzar-border-subtle rounded-lg px-3 py-2.5 text-sm text-fouzar-text-primary/90 font-mono focus:outline-none focus:border-white/25 transition-colors cursor-pointer"
-            >
-              <option value="GEMINI" className="bg-fouzar-bg">GEMINI</option>
-              <option value="OPENAI" className="bg-fouzar-bg">OPENAI</option>
-              <option value="ANTHROPIC" className="bg-fouzar-bg">ANTHROPIC</option>
-              <option value="DEEPSEEK" className="bg-fouzar-bg">DEEPSEEK</option>
-              <option value="OPENROUTER" className="bg-fouzar-bg">OPENROUTER</option>
-              <option value="CUSTOM" className="bg-fouzar-bg">CUSTOM (Ollama/Local)</option>
-            </select>
-            <p className="font-mono text-[8px] text-fouzar-text-primary/25">Single source of truth — pre-filled from key pattern, override as needed.</p>
-          </div>
-
-          {/* Validation status */}
           <AnimatePresence>
             {validationStatus === 'testing' && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -257,41 +233,28 @@ function AddProviderModal({ onClose, onAdded, nextColorIndex }: AddModalProps) {
             {validationStatus === 'fail' && (
               <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                 className="flex flex-col gap-1.5 bg-[#ff4d6d]/[0.08] border border-[#ff4d6d]/25 rounded-lg px-3 py-2">
-                <div className="flex items-center gap-2 font-mono text-[10px] text-[#ff4d6d]">
-                  <AlertCircle className="w-3 h-3 shrink-0" /> {validationMsg}
+                <div className="flex items-start gap-2 font-mono text-[10px] text-[#ff4d6d]">
+                  <AlertCircle className="w-3 h-3 shrink-0 mt-0.5" />
+                  <span className="leading-relaxed">{validationMsg}</span>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleSaveAnyway}
-                  className="text-left font-mono text-[8px] text-fouzar-text-primary/25 hover:text-fouzar-text-primary/50 underline transition-colors cursor-pointer"
-                >
+                <button type="button" onClick={handleSaveAnyway}
+                  className="text-left font-mono text-[8px] text-fouzar-text-primary/25 hover:text-fouzar-text-primary/50 underline transition-colors cursor-pointer">
                   Save anyway (skip validation)
                 </button>
               </motion.div>
             )}
             {error && validationStatus === 'idle' && (
-              <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                 className="flex items-center gap-2 text-[#ff4d6d] font-mono text-[10px] bg-[#ff4d6d]/10 border border-[#ff4d6d]/20 rounded-lg px-3 py-2">
                 <AlertCircle className="w-3 h-3 shrink-0" />{error}
               </motion.div>
             )}
           </AnimatePresence>
 
-          <button
-            type="submit"
-            disabled={validationStatus === 'testing'}
-            className="w-full py-3 rounded-lg font-mono text-[11px] uppercase tracking-[0.2em] font-bold cursor-pointer flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-wait"
-            style={{
-              background: `linear-gradient(135deg,${palette.color}20,${palette.color}10)`,
-              border: `1px solid ${palette.color}60`,
-              color: palette.color,
-            }}
-          >
-            {validationStatus === 'testing' ? (
-              <><Loader2 className="w-4 h-4 animate-spin" /> Testing…</>
-            ) : (
-              <><Plus className="w-4 h-4" /> Test &amp; Add Engine</>
-            )}
+          <button type="submit" disabled={validationStatus === 'testing'}
+            className="w-full py-3 rounded-lg font-mono text-[11px] uppercase tracking-[0.2em] font-bold cursor-pointer flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+            style={{ background: `linear-gradient(135deg,${palette.color}20,${palette.color}10)`, border: `1px solid ${palette.color}60`, color: palette.color }}>
+            {validationStatus === 'testing' ? <><Loader2 className="w-4 h-4 animate-spin" /> Testing…</> : <><Plus className="w-4 h-4" /> Test &amp; Add Engine</>}
           </button>
         </form>
       </motion.div>
@@ -299,104 +262,54 @@ function AddProviderModal({ onClose, onAdded, nextColorIndex }: AddModalProps) {
   );
 }
 
-
 export function AiControlCenter() {
-  const [providers, setProviders] = useState<AiProvider[]>([]);
+  const { providers, setProviders, activeProvider } = useAiProviders();
   const [showAddModal, setShowAddModal] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(true);
   const [isMutating, setIsMutating] = useState(false);
   const { setAiModel } = useFouzar();
 
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setProviders(JSON.parse(raw));
-    } catch {}
-  }, []);
-
-  const save = useCallback((data: AiProvider[]) => {
-    setProviders(data);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    window.dispatchEvent(new Event('storage'));
-  }, []);
-
-  const handleAdded = (p: AiProvider) => {
-    // If new engine is auto-activated, deactivate all existing ones (one active at a time)
+  const handleAdded = (p: AiProviderConfig) => {
     const updated = p.isActive
       ? [p, ...providers.map(existing => ({ ...existing, isActive: false }))]
       : [p, ...providers];
-    save(updated);
+    setProviders(updated);
+    setAiModel(p.modelId);
   };
 
   const handleToggle = async (id: string) => {
     if (isMutating) return;
     setIsMutating(true);
-    
     const target = providers.find(p => p.id === id);
-    if (!target) {
-      setIsMutating(false);
-      return;
-    }
-    
-    const isCurrentlyActive = target.isActive;
-    const nextActiveState = !isCurrentlyActive;
-    
-    const nextProvidersState = providers.map(p => ({
-      ...p,
-      isActive: p.id === id ? nextActiveState : false
-    }));
-    save(nextProvidersState);
+    if (!target) { setIsMutating(false); return; }
 
-    if (!nextActiveState) {
-      setAiModel('');
-    }
+    const nextActive = !target.isActive;
+    const next = providers.map(p => ({ ...p, isActive: p.id === id ? nextActive : false }));
+    setProviders(next);
+    setAiModel(nextActive ? target.modelId : '');
 
-    try {
-      const { toggleAiProviderActive } = await import('../../lib/api');
-      await toggleAiProviderActive(id);
-    } catch (err) {
-      console.error('Failed to sync toggle with backend:', err);
-    } finally {
-      setIsMutating(false);
-    }
+    try { await toggleAiProviderActive(id); } catch (err) { console.error('Toggle sync failed:', err); }
+    finally { setIsMutating(false); }
   };
 
   const handleDelete = async (id: string) => {
     if (isMutating) return;
     setIsMutating(true);
     setDeletingId(id);
-    
     const target = providers.find(p => p.id === id);
-    const updatedProviders = providers.filter(p => p.id !== id);
-    save(updatedProviders);
-    
-    if (target?.isActive) {
-      setAiModel('');
-    }
-
-    try {
-      const { deleteAiProvider } = await import('../../lib/api');
-      await deleteAiProvider(id);
-    } catch (err) {
-      console.error('Failed to sync delete with backend:', err);
-    } finally {
-      setDeletingId(null);
-      setIsMutating(false);
-    }
+    const next = providers.filter(p => p.id !== id);
+    setProviders(next);
+    if (target?.isActive) setAiModel('');
+    try { await deleteAiProvider(id); } catch (err) { console.error('Delete sync failed:', err); }
+    finally { setDeletingId(null); setIsMutating(false); }
   };
-
-  const activeProvider = providers.find(p => p.isActive);
 
   return (
     <>
       <AnimatePresence>
         {showAddModal && (
-          <AddProviderModal
-            onClose={() => setShowAddModal(false)}
-            onAdded={handleAdded}
-            nextColorIndex={providers.length}
-          />
+          <AddProviderModal onClose={() => setShowAddModal(false)} onAdded={handleAdded} nextColorIndex={providers.length} />
         )}
       </AnimatePresence>
 
@@ -405,7 +318,6 @@ export function AiControlCenter() {
         border: '1px solid rgba(124,92,252,0.2)',
         boxShadow: '0 0 30px rgba(124,92,252,0.08), 0 8px 32px rgba(0,0,0,0.4)',
       }}>
-        {/* Header */}
         <div
           className="flex items-center justify-between px-5 py-3.5 cursor-pointer select-none"
           style={{ borderBottom: expanded ? '1px solid rgba(255,255,255,0.05)' : 'none' }}
@@ -421,11 +333,9 @@ export function AiControlCenter() {
             <div>
               <h3 className="font-mono text-[11px] uppercase tracking-[0.2em] text-fouzar-text-primary/90 font-bold">AI Engines</h3>
               <p className="font-mono text-[8px] text-fouzar-text-primary/30 mt-0.5">
-                {providers.length === 0
-                  ? 'No engines configured'
-                  : activeProvider
-                    ? `Active: ${activeProvider.name}`
-                    : `${providers.length} engine${providers.length !== 1 ? 's' : ''} · none active`}
+                {activeProvider
+                  ? `${PROVIDER_META[activeProvider.providerType]?.label} · ${activeProvider.modelId}`
+                  : providers.length === 0 ? 'Bring your own API key (BYOK)' : `${providers.length} engine${providers.length !== 1 ? 's' : ''} · none active`}
               </p>
             </div>
           </div>
@@ -438,106 +348,81 @@ export function AiControlCenter() {
           </div>
         </div>
 
-        {/* Body */}
         <AnimatePresence>
           {expanded && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}
-            >
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}>
               <div className="px-5 py-4 space-y-3">
                 {providers.length === 0 && (
                   <div className="text-center py-6">
                     <div className="w-10 h-10 rounded-full bg-white/[0.03] border border-fouzar-border-subtle flex items-center justify-center mx-auto mb-3">
                       <Zap className="w-4 h-4 text-fouzar-text-primary/20" />
                     </div>
-                    <p className="font-mono text-[10px] text-fouzar-text-primary/30">No AI engines configured yet.</p>
-                    <p className="font-mono text-[9px] text-fouzar-text-primary/20 mt-1">Add one to power your AI features.</p>
+                    <p className="font-mono text-[10px] text-fouzar-text-primary/40 mb-1">No AI engine connected</p>
+                    <p className="font-mono text-[8px] text-fouzar-text-primary/25 leading-relaxed max-w-xs mx-auto">
+                      Add Gemini, OpenAI, Claude, DeepSeek, or OpenRouter. Keys stay in your browser.
+                    </p>
                   </div>
                 )}
 
-                <AnimatePresence>
-                  {providers.map(provider => {
-                    const palette = CARD_COLORS[provider.colorIndex ?? 0];
-                    const isDeleting = deletingId === provider.id;
-                    return (
-                      <motion.div
-                        key={provider.id}
-                        initial={{ opacity: 0, y: -8 }}
-                        animate={{ opacity: isDeleting ? 0 : 1, x: isDeleting ? 20 : 0 }}
-                        exit={{ opacity: 0, x: 20 }}
-                        transition={{ duration: 0.25 }}
-                        onClick={() => !isMutating && handleToggle(provider.id)}
-                        className={`relative rounded-lg p-3.5 transition-all select-none ${
-                          isMutating ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'
-                        } ${
-                          provider.isActive 
-                            ? 'border border-fouzar-primary/50 shadow-[0_0_15px_var(--fouzar-primary-shadow)]' 
-                            : 'border border-white/[0.06]'
-                        }`}
-                        style={{
-                          background: provider.isActive
-                            ? `linear-gradient(135deg,${palette.color}10,${palette.color}06)`
-                            : 'rgba(255,255,255,0.02)',
-                        }}
-                      >
-                        <div className="flex items-center gap-3">
-                          {/* Active glow dot */}
-                          <div className="w-2 h-2 rounded-full shrink-0 transition-all" style={{
-                            background: provider.isActive ? palette.color : 'rgba(255,255,255,0.12)',
-                            boxShadow: provider.isActive ? `0 0 8px ${palette.color}` : 'none',
-                          }} />
-
-                          <div className="flex-1 min-w-0">
-                            <span className="text-[11px] font-semibold text-fouzar-text-primary/90 truncate block">
-                              {provider.name}
+                {providers.map(provider => {
+                  const palette = CARD_COLORS[provider.colorIndex ?? 0];
+                  const pMeta = PROVIDER_META[provider.providerType];
+                  const isDeleting = deletingId === provider.id;
+                  return (
+                    <motion.div
+                      key={provider.id}
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: isDeleting ? 0 : 1, x: isDeleting ? 20 : 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      onClick={() => !isMutating && handleToggle(provider.id)}
+                      className={`relative rounded-lg p-3.5 transition-all select-none ${isMutating ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'} ${provider.isActive ? 'border border-fouzar-primary/50 shadow-[0_0_15px_var(--fouzar-primary-shadow)]' : 'border border-white/[0.06]'}`}
+                      style={{ background: provider.isActive ? `linear-gradient(135deg,${palette.color}10,${palette.color}06)` : 'rgba(255,255,255,0.02)' }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 rounded-full shrink-0" style={{
+                          background: provider.isActive ? pMeta?.color || palette.color : 'rgba(255,255,255,0.12)',
+                          boxShadow: provider.isActive ? `0 0 8px ${pMeta?.color || palette.color}` : 'none',
+                        }} />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[11px] font-semibold text-fouzar-text-primary/90 truncate block">{provider.name}</span>
+                          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                            <span className="font-mono text-[7px] uppercase px-1 py-0.5 rounded" style={{ background: `${pMeta?.color}15`, color: pMeta?.color }}>
+                              {pMeta?.label || provider.providerType}
                             </span>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="font-mono text-[8px] text-fouzar-text-primary/25 flex items-center gap-1">
-                                <Lock className="w-2 h-2" />{maskKey(provider.apiKeyRaw)}
-                              </span>
-                              {provider.baseUrl && (
-                                <span className="font-mono text-[8px] text-fouzar-text-primary/20 flex items-center gap-0.5">
-                                  <Globe className="w-2 h-2 shrink-0" />custom
-                                </span>
-                              )}
-                            </div>
+                            <span className="font-mono text-[7px] text-fouzar-text-primary/30 truncate max-w-[120px]">{provider.modelId}</span>
+                            <span className="font-mono text-[7px] text-fouzar-text-primary/20 flex items-center gap-0.5">
+                              <Lock className="w-2 h-2" />{maskApiKey(provider.apiKeyRaw)}
+                            </span>
                           </div>
-
-                          {provider.isActive && (
-                            <span className="font-mono text-[7px] uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0"
-                              style={{ background: `${palette.color}20`, color: palette.color, border: `1px solid ${palette.color}40` }}>
-                              Active
-                            </span>
-                          )}
-
-                          <button
-                            onClick={e => { e.stopPropagation(); !isMutating && handleDelete(provider.id); }}
-                            disabled={isMutating}
-                            className={`w-6 h-6 rounded flex items-center justify-center text-fouzar-text-primary/20 hover:text-[#ff4d6d] hover:bg-[#ff4d6d]/10 transition-all shrink-0 ${
-                              isMutating ? 'cursor-not-allowed' : 'cursor-pointer'
-                            }`}
-                            title="Remove engine"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
                         </div>
-                      </motion.div>
-                    );
-                  })}
-                </AnimatePresence>
+                        {provider.isActive && (
+                          <span className="font-mono text-[7px] uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0"
+                            style={{ background: `${palette.color}20`, color: palette.color, border: `1px solid ${palette.color}40` }}>
+                            Active
+                          </span>
+                        )}
+                        <button
+                          onClick={e => { e.stopPropagation(); !isMutating && handleDelete(provider.id); }}
+                          disabled={isMutating}
+                          className="w-6 h-6 rounded flex items-center justify-center text-fouzar-text-primary/20 hover:text-[#ff4d6d] hover:bg-[#ff4d6d]/10 transition-all shrink-0 cursor-pointer"
+                          title="Remove engine"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  );
+                })}
 
-                <button
-                  onClick={() => setShowAddModal(true)}
-                  className="w-full py-2.5 rounded-lg font-mono text-[9px] uppercase tracking-[0.2em] text-fouzar-text-primary/30 hover:text-[#7c5cfc] border border-dashed border-fouzar-border-subtle hover:border-[#7c5cfc]/40 hover:bg-[#7c5cfc]/[0.04] transition-all cursor-pointer flex items-center justify-center gap-2"
-                >
+                <button onClick={() => setShowAddModal(true)}
+                  className="w-full py-2.5 rounded-lg font-mono text-[9px] uppercase tracking-[0.2em] text-fouzar-text-primary/30 hover:text-[#7c5cfc] border border-dashed border-fouzar-border-subtle hover:border-[#7c5cfc]/40 hover:bg-[#7c5cfc]/[0.04] transition-all cursor-pointer flex items-center justify-center gap-2">
                   <Plus className="w-3.5 h-3.5" /> Add AI Engine
                 </button>
               </div>
 
               <div className="px-5 py-2.5 flex items-center gap-1.5" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
                 <Lock className="w-2.5 h-2.5 text-fouzar-text-primary/20 shrink-0" />
-                <p className="font-mono text-[8px] text-fouzar-text-primary/20">Keys stored locally. Click a card to activate. One engine active at a time.</p>
+                <p className="font-mono text-[8px] text-fouzar-text-primary/20">BYOK — your key, your quota. Click a card to activate. Use Flash/Mini models on free tiers.</p>
               </div>
             </motion.div>
           )}

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ChromaClient } from 'chromadb';
+import { MAX_INDEX_CHUNKS } from './ai-models';
 
 interface TextChunk {
   text: string;
@@ -73,8 +74,10 @@ export class VectorService {
     documentId: string,
     chunks: { text: string; pageNum: number }[],
     apiKey: string,
+    providerType?: string,
   ) {
-    console.log(`Indexing ${chunks.length} chunks for document: ${documentId} in course: ${courseId}`);
+    const capped = chunks.slice(0, MAX_INDEX_CHUNKS);
+    console.log(`Indexing ${capped.length} chunks for document: ${documentId} in course: ${courseId}`);
     
     // Re-verify Chroma connection status
     if (!this.chromaConnected) {
@@ -82,9 +85,10 @@ export class VectorService {
     }
 
     const entriesToSave: InMemoryEntry[] = [];
+    const canEmbed = providerType === 'GEMINI' && !!apiKey;
 
-    for (const chunk of chunks) {
-      const embedding = await this.getEmbedding(chunk.text, apiKey);
+    for (const chunk of capped) {
+      const embedding = canEmbed ? await this.getEmbedding(chunk.text, apiKey) : [];
       if (embedding && embedding.length > 0) {
         entriesToSave.push({
           courseId,
@@ -92,6 +96,15 @@ export class VectorService {
           text: chunk.text,
           pageNum: chunk.pageNum,
           embedding,
+        });
+      } else if (!canEmbed) {
+        // Keyword-searchable fallback: store text without embedding
+        entriesToSave.push({
+          courseId,
+          documentId,
+          text: chunk.text,
+          pageNum: chunk.pageNum,
+          embedding: [],
         });
       }
     }

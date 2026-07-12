@@ -64,9 +64,20 @@ export async function extractTextFromPdf(blob: Blob): Promise<{ fullText: string
   });
 }
 
-const CustomPdfViewer = ({ fileUrl, className = "", onClose }: { fileUrl: string, className?: string, onClose?: () => void }) => {
+const CustomPdfViewer = ({
+  fileUrl,
+  className = '',
+  onPageChange,
+  initialPage = 1,
+}: {
+  fileUrl: string;
+  className?: string;
+  onClose?: () => void;
+  onPageChange?: (page: number) => void;
+  initialPage?: number;
+}) => {
   const [pdfDoc, setPdfDoc] = useState<any>(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(initialPage);
   const [totalPages, setTotalPages] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
@@ -200,6 +211,10 @@ const CustomPdfViewer = ({ fileUrl, className = "", onClose }: { fileUrl: string
     return () => container.removeEventListener('wheel', handleWheel);
   }, [totalPages]);
 
+  useEffect(() => {
+    onPageChange?.(currentPage);
+  }, [currentPage, onPageChange]);
+
   return (
     <div className={`relative flex flex-col bg-fouzar-bg overflow-hidden ${className}`} ref={containerRef}>
       {isLoading ? (
@@ -258,18 +273,39 @@ const formatFileSize = (bytes: number): string => {
 };
 
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClose, isInline = false }) => {
-  const { setActiveDocText, updateRepositoryItem } = useFouzar();
+  const { setActiveDocText, setActiveSlideContext, setActiveSlidePage, updateRepositoryItem } = useFouzar();
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [textContent, setTextContent] = useState<string | null>(null);
+  const [docChunks, setDocChunks] = useState<{ text: string; pageNum: number }[]>([]);
+  const [docMetaText, setDocMetaText] = useState('');
   const [loading, setLoading] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [showTextMode, setShowTextMode] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const applySlideContext = (page: number, chunks: { text: string; pageNum: number }[], meta: string) => {
+    const chunk = chunks.find((c) => c.pageNum === page);
+    const slideText = chunk?.text?.trim() || '';
+    setActiveSlidePage(page);
+    setActiveSlideContext(
+      slideText
+        ? `${meta}\n\n[CURRENT SLIDE — Page ${page}]\n${slideText}`
+        : meta,
+    );
+  };
+
+  const handlePdfPageChange = (page: number) => {
+    applySlideContext(page, docChunks, docMetaText);
+  };
+
   useEffect(() => {
-    if (!document?.storageId) return;
+    if (!document?.storageId) {
+      setActiveSlideContext(null);
+      setActiveSlidePage(1);
+      return;
+    }
 
     let dlUrl: string | null = null;
     let prvUrl: string | null = null;
@@ -280,6 +316,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
     setDownloadUrl(null);
     setPreviewUrl(null);
     setShowTextMode(false);
+    setDocChunks([]);
+    setDocMetaText('');
 
     getDocument(document.storageId)
       .then(async (stored) => {
@@ -293,11 +331,15 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
         setDownloadUrl(dlUrl);
 
         const metaText = `[Study Material: ${document.fileName}]\nCategory: ${document.category}\nCourse: ${document.courseCode}`;
+        setDocMetaText(metaText);
 
         if (stored.mimeType.startsWith('text/') || document.fileName.endsWith('.md') || document.fileName.endsWith('.txt') || document.fileName.endsWith('.js') || document.fileName.endsWith('.ts') || document.fileName.endsWith('.tsx') || document.fileName.endsWith('.py') || document.fileName.endsWith('.json') || document.fileName.endsWith('.css') || document.fileName.endsWith('.html') || document.fileName.endsWith('.cpp') || document.fileName.endsWith('.java')) {
           const text = await stored.blob.text();
+          const chunks = [{ text, pageNum: 1 }];
           setTextContent(text);
+          setDocChunks(chunks);
           setActiveDocText(`${metaText}\n\n[Content]:\n${text}`);
+          applySlideContext(1, chunks, metaText);
           // Index text file in Vector DB
           indexDocument(document.courseCode || 'general', document.id || document.storageId || 'text-doc', [{ text, pageNum: 1 }])
             .catch(e => console.error('Failed to index text file:', e));
@@ -308,8 +350,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
           // Extract and load PDF text contents asynchronously
           try {
             const { fullText, chunks } = await extractTextFromPdf(stored.blob);
+            setDocChunks(chunks);
             setActiveDocText(`${metaText}\n\n[Extracted Slide Content]:\n${fullText}`);
-            setTextContent(fullText); // Plain text view option
+            setTextContent(fullText);
+            applySlideContext(1, chunks, metaText);
             // Index PDF page chunks in Vector DB
             indexDocument(document.courseCode || 'general', document.id || document.storageId || 'pdf-doc', chunks)
               .catch(e => console.error('Failed to index PDF:', e));
@@ -332,9 +376,12 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
             try {
               const res = await indexDocumentFile(document.courseCode || 'general', document.id || document.storageId || 'pptx-doc', stored.blob, document.fileName);
               if (res && res.chunks) {
-                const fullText = res.chunks.map((c: any) => `--- Slide/Page ${c.pageNum} ---\n${c.text}`).join('\n\n');
+                const chunks = res.chunks as { text: string; pageNum: number }[];
+                const fullText = chunks.map((c) => `--- Slide/Page ${c.pageNum} ---\n${c.text}`).join('\n\n');
+                setDocChunks(chunks);
                 setActiveDocText(`${metaText}\n\n[Extracted PowerPoint Content]:\n${fullText}`);
                 setTextContent(fullText);
+                applySlideContext(1, chunks, metaText);
               }
             } catch (e) {
               console.error('Failed to retrieve PPTX chunks for cached preview:', e);
@@ -350,9 +397,12 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
                 document.fileName
               );
               if (res && res.chunks && res.chunks.length > 0) {
-                const fullText = res.chunks.map((c: any) => `--- Slide/Page ${c.pageNum} ---\n${c.text}`).join('\n\n');
+                const chunks = res.chunks as { text: string; pageNum: number }[];
+                const fullText = chunks.map((c) => `--- Slide/Page ${c.pageNum} ---\n${c.text}`).join('\n\n');
+                setDocChunks(chunks);
                 setActiveDocText(`${metaText}\n\n[Extracted PowerPoint Content]:\n${fullText}`);
                 setTextContent(fullText);
+                applySlideContext(1, chunks, metaText);
 
                 // If backend returned converted PDF base64 string, decode and cache it
                 if (res.pdfBase64) {
@@ -405,9 +455,12 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
             try {
               const res = await indexDocumentFile(document.courseCode || 'general', document.id || document.storageId || 'docx-doc', stored.blob, document.fileName);
               if (res && res.chunks) {
-                const fullText = res.chunks.map((c: any) => `--- Page ${c.pageNum} ---\n${c.text}`).join('\n\n');
+                const chunks = res.chunks as { text: string; pageNum: number }[];
+                const fullText = chunks.map((c) => `--- Page ${c.pageNum} ---\n${c.text}`).join('\n\n');
+                setDocChunks(chunks);
                 setActiveDocText(`${metaText}\n\n[Extracted Word Content]:\n${fullText}`);
                 setTextContent(fullText);
+                applySlideContext(1, chunks, metaText);
               }
             } catch (e) {
               console.error('Failed to retrieve DOCX chunks for cached preview:', e);
@@ -423,9 +476,12 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
                 document.fileName
               );
               if (res && res.chunks && res.chunks.length > 0) {
-                const fullText = res.chunks.map((c: any) => `--- Page ${c.pageNum} ---\n${c.text}`).join('\n\n');
+                const chunks = res.chunks as { text: string; pageNum: number }[];
+                const fullText = chunks.map((c) => `--- Page ${c.pageNum} ---\n${c.text}`).join('\n\n');
+                setDocChunks(chunks);
                 setActiveDocText(`${metaText}\n\n[Extracted Word Content]:\n${fullText}`);
                 setTextContent(fullText);
+                applySlideContext(1, chunks, metaText);
 
                 // If backend returned converted PDF base64 string, decode and cache it
                 if (res.pdfBase64) {
@@ -477,8 +533,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
       if (dlUrl) revokeObjectUrl(dlUrl);
       if (prvUrl) revokeObjectUrl(prvUrl);
       setActiveDocText(null);
+      setActiveSlideContext(null);
+      setActiveSlidePage(1);
     };
-  }, [document, setActiveDocText]);
+  }, [document, setActiveDocText, setActiveSlideContext, setActiveSlidePage]);
 
   if (!document) return null;
 
@@ -616,6 +674,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
               fileUrl={previewUrl}
               className="flex-1 w-full border-0"
               onClose={onClose}
+              onPageChange={handlePdfPageChange}
             />
           )}
 
