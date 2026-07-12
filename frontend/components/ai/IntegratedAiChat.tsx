@@ -660,11 +660,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
       )}
 
 
-      <div
-        className={`flex-1 overflow-y-auto space-y-2.5 scrollbar-none mb-3 ${
-          compact ? 'max-h-48' : 'min-h-[200px]'
-        }`}
-      >
+      <div className="flex-1 overflow-y-auto space-y-2.5 scrollbar-none mb-3 min-h-0">
         {messages.length === 0 && (
           <div className="text-center py-6 text-fouzar-text-tertiary">
             <Sparkles className="w-5 h-5 mx-auto mb-2 opacity-40" />
@@ -738,7 +734,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
             </span>
           )}
         </div>
-        <form onSubmit={(e) => handleSend(e)} className="flex gap-2">
+        <form onSubmit={(e) => handleSend(e)} className="flex w-full">
           <input
             type="file"
             ref={fileInputRef}
@@ -746,7 +742,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
             accept=".pdf,.pptx,.txt,.md,.js,.ts,.tsx,.py,.css,.html,.cpp,.java"
             className="hidden"
           />
-        <div className="flex items-end gap-2 bg-black/40 backdrop-blur-md border border-fouzar-border/50 p-1.5 rounded-3xl shadow-inner focus-within:border-fouzar-accent/50 focus-within:shadow-[var(--fouzar-glow-primary)] transition-all">
+        <div className="flex-1 flex items-end gap-2 bg-black/40 backdrop-blur-md border border-fouzar-border/50 p-1.5 rounded-3xl shadow-inner focus-within:border-fouzar-accent/50 focus-within:shadow-[var(--fouzar-glow-primary)] transition-all">
           <button
             type="button"
             onClick={handleAttachFileClick}
