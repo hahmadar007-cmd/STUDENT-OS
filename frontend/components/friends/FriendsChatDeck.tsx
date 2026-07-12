@@ -14,10 +14,13 @@ import {
   Download,
   X,
   Loader2,
+  MoreVertical,
+  UserMinus,
+  ShieldAlert,
 } from 'lucide-react';
 import { getSocket } from '../../lib/socket';
 import { getBackendUrl } from '../../lib/api';
-import { getFriends } from '../../lib/api';
+import { getFriends, blockUser, removeFriend } from '../../lib/api';
 
 interface Peer {
   id: string;
@@ -134,6 +137,7 @@ export function FriendsChatDeck({ peers }: FriendsChatDeckProps) {
   const activeRoomRef = useRef<string | null>(null);
   const pendingSent = useRef<Set<string>>(new Set());
   const dragCounter = useRef(0);
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
 
   // Decode the current user's ID from the stored JWT so we can build canonical DM room IDs.
   useEffect(() => {
@@ -510,8 +514,8 @@ export function FriendsChatDeck({ peers }: FriendsChatDeckProps) {
                   {statusLabel(selectedFriend.status)}
                 </p>
               </div>
-              <div className="ml-auto flex items-center gap-2">
-                <span className="text-[8px] font-mono text-zinc-600 bg-zinc-900 border border-white/[0.04] px-2 py-0.5 rounded-full">Encrypted</span>
+              <div className="ml-auto flex items-center gap-2 relative">
+                <span className="text-[8px] font-mono text-zinc-600 bg-zinc-900 border border-white/[0.04] px-2 py-0.5 rounded-full hidden sm:inline-block">Encrypted</span>
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
@@ -520,6 +524,52 @@ export function FriendsChatDeck({ peers }: FriendsChatDeckProps) {
                 >
                   <Paperclip className="w-3.5 h-3.5" />
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setShowOptionsMenu(!showOptionsMenu)}
+                  className="w-7 h-7 rounded-lg bg-zinc-800/60 border border-white/[0.06] flex items-center justify-center text-fouzar-text-secondary hover:text-zinc-200 hover:bg-zinc-700/60 transition-all cursor-pointer"
+                  title="Options"
+                >
+                  <MoreVertical className="w-3.5 h-3.5" />
+                </button>
+
+                {showOptionsMenu && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowOptionsMenu(false)} />
+                    <div className="absolute top-10 right-0 w-40 bg-zinc-900 border border-white/[0.06] rounded-xl shadow-2xl z-50 overflow-hidden py-1">
+                      <button
+                        onClick={async () => {
+                          setShowOptionsMenu(false);
+                          try {
+                            await removeFriend(selectedFriend.id);
+                            setLocalPeers(prev => prev.filter(p => p.id !== selectedFriend.id));
+                            setSelectedFriend(null);
+                          } catch (e) {
+                            console.error('Failed to remove friend', e);
+                          }
+                        }}
+                        className="w-full text-left px-3 py-2 text-xs font-medium text-zinc-300 hover:bg-white/[0.04] flex items-center gap-2 cursor-pointer transition-colors"
+                      >
+                        <UserMinus className="w-3.5 h-3.5" /> Remove Friend
+                      </button>
+                      <button
+                        onClick={async () => {
+                          setShowOptionsMenu(false);
+                          try {
+                            await blockUser(selectedFriend.id);
+                            setLocalPeers(prev => prev.filter(p => p.id !== selectedFriend.id));
+                            setSelectedFriend(null);
+                          } catch (e) {
+                            console.error('Failed to block user', e);
+                          }
+                        }}
+                        className="w-full text-left px-3 py-2 text-xs font-medium text-rose-400 hover:bg-rose-500/10 flex items-center gap-2 cursor-pointer transition-colors"
+                      >
+                        <ShieldAlert className="w-3.5 h-3.5" /> Block User
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 

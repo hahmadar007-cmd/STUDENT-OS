@@ -171,6 +171,24 @@ export class SocialController {
       throw new NotFoundException('User with this Connection ID not found');
     }
 
+    // Check if there is a block
+    const block = await this.prisma.userBlock.findFirst({
+      where: {
+        OR: [
+          { blockerId: userId, blockedId: targetUser.id },
+          { blockerId: targetUser.id, blockedId: userId },
+        ],
+      },
+    });
+
+    if (block) {
+      if (block.blockerId === userId) {
+        throw new BadRequestException('You have blocked this user. Unblock them to send a friend request.');
+      } else {
+        throw new BadRequestException('You cannot send a friend request to this user.');
+      }
+    }
+
     // Check if relation already exists
     const existing = await this.prisma.friendship.findFirst({
       where: {
@@ -294,5 +312,120 @@ export class SocialController {
       success: true,
       message: 'Friend removed successfully',
     };
+  }
+
+  @Post('friends/:friendId/block')
+  async blockUser(
+    @Headers('authorization') authHeader: string,
+    @Param('friendId') friendId: string,
+  ) {
+    const userId = this.getUserId(authHeader);
+
+    if (userId === friendId) {
+      throw new BadRequestException('You cannot block yourself');
+    }
+
+    // Check if already blocked
+    const existingBlock = await this.prisma.userBlock.findUnique({
+      where: {
+        blockerId_blockedId: {
+          blockerId: userId,
+          blockedId: friendId,
+        },
+      },
+    });
+
+    if (existingBlock) {
+      throw new BadRequestException('User is already blocked');
+    }
+
+    // Delete any existing friendship (pending or accepted) in both directions
+    await this.prisma.friendship.deleteMany({
+      where: {
+        OR: [
+          { userId: userId, friendId: friendId },
+          { userId: friendId, friendId: userId },
+        ],
+      },
+    });
+
+    // Create block record
+    await this.prisma.userBlock.create({
+      data: {
+        blockerId: userId,
+        blockedId: friendId,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'User blocked successfully',
+    };
+  }
+
+  @Delete('friends/:friendId/block')
+  async unblockUser(
+    @Headers('authorization') authHeader: string,
+    @Param('friendId') friendId: string,
+  ) {
+    const userId = this.getUserId(authHeader);
+
+    const block = await this.prisma.userBlock.findUnique({
+      where: {
+        blockerId_blockedId: {
+          blockerId: userId,
+          blockedId: friendId,
+        },
+      },
+    });
+
+    if (!block) {
+      throw new NotFoundException('Block record not found');
+    }
+
+    await this.prisma.userBlock.delete({
+      where: {
+        blockerId_blockedId: {
+          blockerId: userId,
+          blockedId: friendId,
+        },
+      },
+    });
+
+    return {
+      success: true,
+      message: 'User unblocked successfully',
+    };
+  }
+
+  @Get('friends/blocked')
+  async getBlockedUsers(@Headers('authorization') authHeader?: string) {
+    const userId = this.getUserId(authHeader);
+
+    const blocks = await this.prisma.userBlock.findMany({
+      where: {
+        blockerId: userId,
+      },
+      include: {
+        blocked: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            fouzarId: true,
+            avatarUrl: true,
+          },
+        },
+      },
+    });
+
+    return blocks.map((b: any) => ({
+      id: b.blocked.id,
+      name: b.blocked.name ?? b.blocked.email.split('@')[0],
+      email: b.blocked.email,
+      fouzarId: b.blocked.fouzarId,
+      avatarUrl: b.blocked.avatarUrl,
+      blockedAt: b.createdAt,
+    }));
   }
 }

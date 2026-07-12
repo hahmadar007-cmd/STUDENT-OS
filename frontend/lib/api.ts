@@ -461,6 +461,16 @@ export const removeFriend = (friendId: string) => {
   return apiRequest(`/social/friends/${friendId}`, 'DELETE');
 };
 
+export const blockUser = (friendId: string) => {
+  return apiRequest(`/social/friends/${friendId}/block`, 'POST');
+};
+
+export const unblockUser = (friendId: string) => {
+  return apiRequest(`/social/friends/${friendId}/block`, 'DELETE');
+};
+
+export const getBlockedUsers = () => apiRequest('/social/friends/blocked', 'GET');
+
 export const inviteMemberToGroup = (groupId: string, connectionId: string) => {
   return apiRequest(`/groups/${groupId}/members`, 'POST', { connectionId });
 };

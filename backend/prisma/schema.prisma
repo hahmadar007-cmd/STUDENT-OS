@@ -28,60 +28,62 @@ model University {
 }
 
 model User {
-  id                String        @id @default(uuid())
-  email             String        @unique
-  password          String?
-  name              String?
-  fouzarId          String?       @unique
-  avatarUrl         String?
-  universityId      String?
-  university        University?   @relation(fields: [universityId], references: [id])
-  courses           Course[]
-  createdGroups     Group[]       @relation("GroupCreator")
-  memberships       Membership[]
-  messages          ChatMessage[]
-  directMessages    DirectMessage[]
-  friendships       Friendship[]  @relation("UserFriendships")
-  friendOf          Friendship[]  @relation("FriendOfUser")
+  id             String          @id @default(uuid())
+  email          String          @unique
+  password       String?
+  name           String?
+  fouzarId       String?         @unique
+  avatarUrl      String?
+  universityId   String?
+  university     University?     @relation(fields: [universityId], references: [id])
+  courses        Course[]
+  createdGroups  Group[]         @relation("GroupCreator")
+  memberships    Membership[]
+  messages       ChatMessage[]
+  directMessages DirectMessage[]
+  friendships    Friendship[]    @relation("UserFriendships")
+  friendOf       Friendship[]    @relation("FriendOfUser")
+  blocks         UserBlock[]     @relation("UserBlocks")
+  blockedBy      UserBlock[]     @relation("BlockedUsers")
 
   // Focus Mode State
-  isFocusing        Boolean       @default(false)
-  focusStartedAt    DateTime?
+  isFocusing     Boolean   @default(false)
+  focusStartedAt DateTime?
 
   // AI Settings
-  preferredAiModel  String?
+  preferredAiModel String?
 
   // LMS Integration
-  lmsToken          String?
-  lmsBaseUrl        String?
-  lmsProvider       String?   @default("moodle")
+  lmsToken    String?
+  lmsBaseUrl  String?
+  lmsProvider String? @default("moodle")
 
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  passwordResetToken   String?  
-  passwordResetExpiry  DateTime?
+  passwordResetToken  String?
+  passwordResetExpiry DateTime?
 
   // Personal Diary Lock
-  diaryPin             String?
+  diaryPin String?
 
   // Admin flag – used for privileged endpoint access
-  isAdmin              Boolean       @default(false)
+  isAdmin Boolean @default(false)
 
   // AI Provider credentials
-  aiProviders          AiProvider[]
-  subjectVideos        SubjectVideo[]
+  aiProviders   AiProvider[]
+  subjectVideos SubjectVideo[]
 
   // Student Portal Integration
-  portalProfile        StudentPortalProfile?
+  portalProfile StudentPortalProfile?
 
   // Cloud Migration Storage
-  subjects             Subject[]
-  materials            Material[]
-  subjectLinks         SubjectLink[]
+  subjects     Subject[]
+  materials    Material[]
+  subjectLinks SubjectLink[]
 
   // Personal Diary
-  diaryEntries         DiaryEntry[]
+  diaryEntries DiaryEntry[]
 }
 
 model Course {
@@ -114,14 +116,14 @@ model Group {
 }
 
 model Membership {
-  id        String    @id @default(uuid())
-  groupId   String
-  group     Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role      GroupRole @default(MEMBER)
-  status    String    @default("ACCEPTED") // PENDING, ACCEPTED
-  joinedAt  DateTime  @default(now())
+  id       String    @id @default(uuid())
+  groupId  String
+  group    Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role     GroupRole @default(MEMBER)
+  status   String    @default("ACCEPTED") // PENDING, ACCEPTED
+  joinedAt DateTime  @default(now())
 
   @@unique([groupId, userId])
   @@index([userId])
@@ -147,7 +149,7 @@ model ChatMessage {
 // need a matching Group record in the database.
 model DirectMessage {
   id        String   @id @default(uuid())
-  roomId    String   // canonical sorted pair, e.g. "dm-<idA>-<idB>"
+  roomId    String // canonical sorted pair, e.g. "dm-<idA>-<idB>"
   senderId  String
   sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
   content   String
@@ -161,7 +163,7 @@ model AiConfig {
   id           String   @id @default(uuid())
   provider     String
   modelName    String
-  apiKey       String   // Points to the env variable name (e.g. GEMINI_API_KEY)
+  apiKey       String // Points to the env variable name (e.g. GEMINI_API_KEY)
   isActive     Boolean  @default(true)
   universityId String?
   userId       String?
@@ -186,15 +188,28 @@ model Friendship {
   @@index([friendId])
 }
 
+model UserBlock {
+  id        String   @id @default(uuid())
+  blockerId String
+  blocker   User     @relation("UserBlocks", fields: [blockerId], references: [id], onDelete: Cascade)
+  blockedId String
+  blocked   User     @relation("BlockedUsers", fields: [blockedId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+  @@index([blockedId])
+}
+
 model GroupFile {
-  id          String   @id @default(uuid())
-  groupId     String
-  group       Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  fileName    String
-  fileUrl     String
-  fileSize    String   @default("0 KB")
-  uploadedBy  String
-  createdAt   DateTime @default(now())
+  id         String   @id @default(uuid())
+  groupId    String
+  group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  fileName   String
+  fileUrl    String
+  fileSize   String   @default("0 KB")
+  uploadedBy String
+  createdAt  DateTime @default(now())
 
   @@index([groupId])
 }
@@ -216,8 +231,8 @@ model AiProvider {
   id           String       @id @default(uuid())
   name         String
   providerType ProviderType @default(CUSTOM)
-  apiKey       String       // AES-256-CBC encrypted before storage
-  baseUrl      String?      // For local/Ollama or custom OpenAI-compatible endpoints
+  apiKey       String // AES-256-CBC encrypted before storage
+  baseUrl      String? // For local/Ollama or custom OpenAI-compatible endpoints
   isActive     Boolean      @default(false)
   userId       String?
   user         User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -227,82 +242,82 @@ model AiProvider {
 }
 
 model StudentPortalProfile {
-  id            String           @id @default(uuid())
-  userId        String           @unique
-  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  portalUrl     String?
-  portalType    String?          // moodle, canvas, blackboard, custom
-  studentId     String?
-  gpa           Float?
-  cgpa          Float?
-  semester      String?
-  lastSyncedAt  DateTime?
-  syncStatus    String?          @default("never")
-  syncError     String?
-  attendance    AttendanceStat[]
-  transcript    TranscriptEntry[]
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  id           String            @id @default(uuid())
+  userId       String            @unique
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  portalUrl    String?
+  portalType   String? // moodle, canvas, blackboard, custom
+  studentId    String?
+  gpa          Float?
+  cgpa         Float?
+  semester     String?
+  lastSyncedAt DateTime?
+  syncStatus   String?           @default("never")
+  syncError    String?
+  attendance   AttendanceStat[]
+  transcript   TranscriptEntry[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
 }
 
 model AttendanceStat {
-  id           String               @id @default(uuid())
-  profileId    String
-  profile      StudentPortalProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  subjectCode  String               @default("")
-  subjectName  String
-  total        Int
-  attended     Int
-  percentage   Float
-  createdAt    DateTime             @default(now())
+  id          String               @id @default(uuid())
+  profileId   String
+  profile     StudentPortalProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  subjectCode String               @default("")
+  subjectName String
+  total       Int
+  attended    Int
+  percentage  Float
+  createdAt   DateTime             @default(now())
 
   @@index([profileId])
 }
 
 model TranscriptEntry {
-  id           String               @id @default(uuid())
-  profileId    String
-  profile      StudentPortalProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  subjectCode  String               @default("")
-  subjectName  String
-  creditHours  Int                  @default(3)
-  grade        String?
-  gradePoints  Float?
-  semester     String?
-  createdAt    DateTime             @default(now())
+  id          String               @id @default(uuid())
+  profileId   String
+  profile     StudentPortalProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  subjectCode String               @default("")
+  subjectName String
+  creditHours Int                  @default(3)
+  grade       String?
+  gradePoints Float?
+  semester    String?
+  createdAt   DateTime             @default(now())
 
   @@index([profileId])
 }
 
 model Subject {
-  id              String     @id @default(uuid())
+  id              String        @id @default(uuid())
   name            String
   code            String?
   parentSubjectId String?
   userId          String
-  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   materials       Material[]
   links           SubjectLink[]
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   @@index([userId])
 }
 
 model Material {
-  id          String   @id @default(uuid())
-  fileName    String
-  courseCode  String?
-  category    String   @default("other")
-  sizeLabel   String?
-  mimeType    String?
-  fileUrl     String
-  subjectId   String?
-  subject     Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(uuid())
+  fileName   String
+  courseCode String?
+  category   String   @default("other")
+  sizeLabel  String?
+  mimeType   String?
+  fileUrl    String
+  subjectId  String?
+  subject    Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([userId])
   @@index([subjectId])

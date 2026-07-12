@@ -52,6 +52,7 @@ import { toast } from '../../components/ui/Toast';
 import { ThemeSwitcher } from '../../components/theme/ThemeSwitcher';
 import { FriendsChatDeck } from '../../components/friends/FriendsChatDeck';
 import { NotificationBell } from '../../components/ui/NotificationBell';
+import { ConnectionsCenter } from '../../components/social/ConnectionsCenter';
 import { DmNotificationBell } from '../../components/ui/DmNotificationBell';
 
 const Tooltip = ({ text }: { text: string }) => {
@@ -1247,6 +1248,7 @@ export default function DashboardPage() {
               <div className="flex items-center gap-2">
                 <DmNotificationBell onClick={() => setActiveNav('friends')} />
                 <NotificationBell />
+                <ConnectionsCenter />
                 <ThemeSwitcher />
                 <button
                   type="button"
@@ -1270,6 +1272,7 @@ export default function DashboardPage() {
               <div className="flex items-center gap-3">
                 <DmNotificationBell onClick={() => setActiveNav('friends')} />
                 <NotificationBell />
+                <ConnectionsCenter align="right" />
                 <ThemeSwitcher />
                 <button
                   type="button"
