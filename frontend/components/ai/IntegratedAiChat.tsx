@@ -762,7 +762,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
               }
             }}
             placeholder={placeholder}
-            className="flex-1 bg-transparent border-none text-[11px] text-fouzar-text-primary font-sans leading-relaxed focus:outline-none resize-none min-h-[40px] max-h-[120px] scrollbar-thin py-2.5 px-1"
+            className="flex-1 bg-transparent border-none text-[11px] text-fouzar-text-primary font-sans leading-relaxed focus:outline-none resize-none min-h-[40px] max-h-[120px] scrollbar-none py-2.5 px-1"
             rows={1}
           />
           
