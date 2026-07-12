@@ -994,7 +994,7 @@ export default function PersonalSanctuaryPage() {
             }}
             transition={{ duration: 0.68, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div className="flex-1 min-h-[200px] flex flex-col overflow-hidden">
+            <div>
               <div className="flex items-center justify-between w-full mb-1.5 shrink-0">
                 <div className="flex items-center gap-2">
                   <Layers className="w-3 h-3 text-fouzar-accent" />
