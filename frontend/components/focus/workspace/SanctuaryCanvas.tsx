@@ -18,6 +18,8 @@ import {
   Sparkles,
   X,
   FileText,
+  Columns,
+  Video,
 } from 'lucide-react';
 import { useFouzar } from '../../../lib/FouzarContext';
 import { DocumentViewer } from '../../documents/DocumentViewer';
@@ -27,6 +29,7 @@ import { FileExplorer } from '../../documents/FileExplorer';
 import { useLivePresentation } from '../../../hooks/useLivePresentation';
 import { PresenterToast } from '../../groups/PresenterToast';
 import { MediaHubStandalone } from '../../sanctuary/MediaHubStandalone';
+import { LiveLounge } from '../../groups/LiveLounge';
 
 interface SlideData {
   number: number;
@@ -493,6 +496,14 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
       );
     }
     
+    if (tab === 'lounge') {
+      return (
+        <section className="flex-1 flex flex-col overflow-hidden h-full w-full">
+          <LiveLounge groupId={roomId} />
+        </section>
+      );
+    }
+
     return null;
   };
 
@@ -558,8 +569,9 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
             );
           })}
           <div className="w-[1px] h-4 bg-fouzar-border mx-1" />
+          {/* Split toggle */}
           <button
-            onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: prev.right ? null : (prev.left === 'media' ? 'material' : 'media') }))}
+            onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: prev.right ? null : 'media' }))}
             disabled={isFlowActive}
             className={`px-2.5 py-1 flex items-center gap-1 font-mono text-[7px] uppercase tracking-wider rounded-[var(--fouzar-radius-sm)] transition-colors ${
               activeSplitTabs.right
@@ -567,21 +579,34 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
                 : 'text-fouzar-text-secondary hover:text-fouzar-text-primary'
             } disabled:opacity-30`}
           >
-            <MonitorPlay className="w-3 h-3" />
+            <Columns className="w-3 h-3" />
             Split
           </button>
+          {/* Split right panel selector — pill buttons (no ugly select) */}
           {activeSplitTabs.right && !isFlowActive && (
-            <select
-              value={activeSplitTabs.right}
-              onChange={(e) => setActiveSplitTabs(prev => ({ ...prev, right: e.target.value }))}
-              className="bg-transparent border border-fouzar-border rounded-[var(--fouzar-radius-sm)] text-[7px] font-mono p-1 outline-none text-fouzar-text-primary uppercase cursor-pointer"
-            >
-              <option value="material">Materials</option>
-              <option value="media">Media</option>
-              <option value="youtube">YT Search</option>
-              <option value="notes">Notes</option>
-              <option value="web">Web Hub</option>
-            </select>
+            <div className="flex items-center gap-0.5 ml-1 bg-fouzar-elevated/40 border border-fouzar-border/50 rounded-full px-1 py-0.5">
+              {[
+                { id: 'material', label: 'Slides' },
+                { id: 'notes',    label: 'Notes'  },
+                { id: 'media',    label: 'Video'  },
+                { id: 'youtube',  label: 'YT'     },
+                { id: 'web',      label: 'Web'    },
+                { id: 'lounge',   label: 'Lounge' },
+              ].map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: opt.id }))}
+                  className={`px-2 py-0.5 font-mono text-[7px] uppercase tracking-wider rounded-full transition-all cursor-pointer ${
+                    activeSplitTabs.right === opt.id
+                      ? 'bg-indigo-500/30 text-indigo-300 font-bold'
+                      : 'text-fouzar-text-tertiary hover:text-fouzar-text-primary'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           )}
         </div>
 

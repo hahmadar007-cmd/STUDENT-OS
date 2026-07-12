@@ -662,7 +662,7 @@ export default function StudyGroupRoom() {
                     right: prev.right ? null : (prev.left === 'notepad' ? 'slides' : 'notepad') 
                   }))}
                   disabled={isFlowActive}
-                  className={`px-2.5 py-1 flex items-center gap-1 font-sans text-xs uppercase tracking-wider rounded-[4px] transition-colors ${
+                  className={`px-2.5 py-1 flex items-center gap-1 font-mono text-[7px] uppercase tracking-wider rounded-[var(--fouzar-radius-sm)] transition-colors ${
                     activeSplitTabs.right
                       ? 'bg-indigo-500/20 text-indigo-400'
                       : 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-white/5'
@@ -674,28 +674,26 @@ export default function StudyGroupRoom() {
                 
                 {/* Right panel picker (when split is active) */}
                 {activeSplitTabs.right && !isFlowActive && (
-                  <div className="flex items-center gap-1 ml-2 bg-fouzar-elevated/40 p-1 rounded-[4px] border border-fouzar-border/50">
-                    <span className="text-[11px] font-sans uppercase text-fouzar-text-tertiary px-1">Right:</span>
+                  <div className="flex items-center gap-0.5 ml-1 bg-fouzar-elevated/40 border border-fouzar-border/50 rounded-full px-1 py-0.5">
                     {[
+                      { id: 'slides',  label: 'Slides' },
                       { id: 'notepad', label: 'Notepad' },
-                      { id: 'slides', label: 'Slides' },
+                      { id: 'watch',   label: 'Watch' },
                       { id: 'youtube', label: 'YT' },
-                      { id: 'watch', label: 'Watch' },
-                      { id: 'web', label: 'Web' },
-                      { id: 'lounge', label: 'Lounge' },
-                    ].map((v) => (
+                      { id: 'web',     label: 'Web' },
+                      { id: 'lounge',  label: 'Lounge' },
+                    ].map((opt) => (
                       <button
-                        key={v.id}
-                        onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: v.id }))}
-                        className={`px-2 py-1 rounded-[4px] text-xs font-sans uppercase transition-all ${
-                          activeSplitTabs.right === v.id 
-                            ? (v.id === 'watch' || v.id === 'youtube' ? 'bg-red-500 text-fouzar-text-primary' 
-                              : v.id === 'web' ? 'bg-indigo-500 text-fouzar-text-primary'
-                              : 'bg-fouzar-accent text-fouzar-text-inverse')
-                            : 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-fouzar-accent/10'
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: opt.id }))}
+                        className={`px-2 py-0.5 font-mono text-[7px] uppercase tracking-wider rounded-full transition-all cursor-pointer ${
+                          activeSplitTabs.right === opt.id
+                            ? 'bg-indigo-500/30 text-indigo-300 font-bold'
+                            : 'text-fouzar-text-tertiary hover:text-fouzar-text-primary'
                         }`}
                       >
-                        {v.label}
+                        {opt.label}
                       </button>
                     ))}
                   </div>
