@@ -360,9 +360,6 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
     setFolders((prev) => {
       const next = [...prev, newFolder];
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(STORAGE_KEYS.folders, JSON.stringify(next));
-      }
       return next;
     });
   }, []);
@@ -565,9 +562,6 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       };
       setRepository((prev) => {
         const next = [entry, ...prev];
-        if (typeof window !== 'undefined') {
-          localStorage.setItem(STORAGE_KEYS.repository, JSON.stringify(next));
-        }
         return next;
       });
     },

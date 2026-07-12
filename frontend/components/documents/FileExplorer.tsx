@@ -20,7 +20,8 @@ import {
   Minimize2
 } from 'lucide-react';
 import { useFouzar, LmsRepositoryItem, FouzarFolder } from '../../lib/FouzarContext';
-import { buildRepositoryEntryFromFile } from '../../lib/repositoryUpload';
+import { UploadButton } from '../../utils/uploadthing';
+import { getAuthToken, getBackendUrl } from '../../lib/api';
 
 interface FileExplorerProps {
   isCompact?: boolean;
@@ -374,28 +375,59 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
           </button>
 
           {/* Upload Button */}
-          <button
-            type="button"
-            disabled={uploading}
-            onClick={() => fileInputRef.current?.click()}
-            className="p-1.5 bg-fouzar-accent/10 border border-fouzar-accent/30 text-fouzar-accent hover:bg-fouzar-accent/20 rounded-[var(--fouzar-radius-md)] cursor-pointer transition-colors flex items-center justify-center gap-1 px-3"
-            title="Upload File"
-          >
-            {uploading ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <>
-                <Upload className="w-3.5 h-3.5" />
-                <span className="font-mono text-[9px] uppercase tracking-wider font-bold">Upload</span>
-              </>
-            )}
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.md"
-            className="hidden"
-            onChange={handleFileUpload}
+          <UploadButton
+            endpoint="materialUploader"
+            onClientUploadComplete={async (res) => {
+              if (res && res.length > 0) {
+                const file = res[0];
+                const token = getAuthToken();
+                try {
+                  const apiRes = await fetch(`${getBackendUrl()}/materials`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                      fileName: file.name,
+                      fileUrl: file.url,
+                      sizeLabel: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+                      mimeType: file.type,
+                      subjectId: currentDirId === 'general' ? null : currentDirId,
+                      category: 'other'
+                    })
+                  });
+                  const material = await apiRes.json();
+                  addRepositoryItem({
+                    id: material.id,
+                    fileName: material.fileName,
+                    courseCode: material.courseCode || 'GEN',
+                    category: material.category,
+                    uploadedAt: material.createdAt,
+                    sizeLabel: material.sizeLabel || '0 MB',
+                    mimeType: material.mimeType,
+                    folderId: material.subjectId || 'general',
+                    fileUrl: material.fileUrl
+                  });
+                } catch (e) {
+                  console.error('Failed to save to backend', e);
+                }
+              }
+            }}
+            onUploadError={(error: Error) => {
+              alert(`ERROR! ${error.message}`);
+            }}
+            appearance={{
+              button: "p-1.5 bg-fouzar-accent/10 border border-fouzar-accent/30 text-fouzar-accent hover:bg-fouzar-accent/20 rounded-[var(--fouzar-radius-md)] cursor-pointer transition-colors flex items-center justify-center gap-1 px-3 min-w-[80px]",
+              allowedContent: "hidden"
+            }}
+            content={{
+              button({ ready, isUploading }) {
+                if (isUploading) return "UPLOADING...";
+                if (ready) return "UPLOAD";
+                return "LOADING...";
+              }
+            }}
           />
         </div>
       </div>
