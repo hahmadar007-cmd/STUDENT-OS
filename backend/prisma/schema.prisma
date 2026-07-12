@@ -71,6 +71,11 @@ model User {
 
   // Student Portal Integration
   portalProfile        StudentPortalProfile?
+
+  // Cloud Migration Storage
+  subjects             Subject[]
+  materials            Material[]
+  subjectLinks         SubjectLink[]
 }
 
 model Course {
@@ -261,4 +266,53 @@ model TranscriptEntry {
   createdAt    DateTime             @default(now())
 
   @@index([profileId])
+}
+
+model Subject {
+  id              String     @id @default(uuid())
+  name            String
+  code            String?
+  parentSubjectId String?
+  userId          String
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  materials       Material[]
+  links           SubjectLink[]
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([userId])
+}
+
+model Material {
+  id          String   @id @default(uuid())
+  fileName    String
+  courseCode  String?
+  category    String   @default("other")
+  sizeLabel   String?
+  mimeType    String?
+  fileUrl     String
+  subjectId   String?
+  subject     Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([subjectId])
+}
+
+model SubjectLink {
+  id        String   @id @default(uuid())
+  url       String
+  title     String
+  subjectId String
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([subjectId])
 }

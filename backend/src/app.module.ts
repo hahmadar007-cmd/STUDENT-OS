@@ -12,6 +12,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { PortalModule } from './portal/portal.module';
 import { UsersModule } from './users/users.module';
 import { VideosModule } from './videos/videos.module';
+import { SubjectsModule } from './subjects/subjects.module';
+import { MaterialsModule } from './materials/materials.module';
 
 @Module({
   imports: [
@@ -28,6 +30,8 @@ import { VideosModule } from './videos/videos.module';
       secret: process.env.JWT_SECRET || 'fasca-obsidian-secret-key-1337',
       signOptions: { expiresIn: '7d' },
     }),
+    SubjectsModule,
+    MaterialsModule,
   ],
   controllers: [AppController, SocialController],
   providers: [AppService],
