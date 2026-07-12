@@ -159,7 +159,6 @@ export function MediaHubStandalone({
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
             </button>
           </form>
-        )}
       </div>
 
       {/* -- Fixed Inline Player ------------------------------- */}
