@@ -73,11 +73,15 @@ export default function LandingPage() {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.6, duration: 0.8 }}
+          className="flex flex-col sm:flex-row items-center gap-4"
         >
           <Link href="/auth" className="group relative inline-flex items-center justify-center px-10 py-5 bg-white text-black rounded-full font-semibold text-sm hover:scale-105 transition-transform duration-300">
             Initiate System
             <ChevronRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Link>
+          <a href="/FascaMobile.apk" download className="group relative inline-flex items-center justify-center px-8 py-5 bg-[#0a0a0f] border border-white/20 text-white rounded-full font-semibold text-sm hover:border-[#7c5cfc] hover:bg-[#7c5cfc]/10 transition-all duration-300">
+            Download Android App
+          </a>
         </motion.div>
 
         {/* Floating Dashboard Mockup */}
