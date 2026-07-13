@@ -8,8 +8,11 @@ import {
   StatusBar,
   ActivityIndicator,
   Alert,
+  NativeModules,
 } from 'react-native';
-import { startSession } from '../lib/api';
+import { startSession, getBlocklist } from '../lib/api';
+
+const { FascaBlocker } = NativeModules;
 
 interface Props {
   onBack: () => void;
@@ -83,6 +86,21 @@ export default function SessionSetupScreen({ onBack, onSessionStarted }: Props) 
   const [breaks, setBreaks]     = useState(2);
   const [breakMs, setBreakMs]   = useState(600_000);
   const [loading, setLoading]   = useState(false);
+  const [hasUsagePerm, setHasUsagePerm] = useState(true);
+  const [hasOverlayPerm, setHasOverlayPerm] = useState(true);
+
+  // Check permissions on mount and when returning to this screen
+  React.useEffect(() => {
+    const checkPerms = async () => {
+      if (FascaBlocker) {
+        setHasUsagePerm(await FascaBlocker.hasUsageStatsPermission());
+        setHasOverlayPerm(await FascaBlocker.hasOverlayPermission());
+      }
+    };
+    checkPerms();
+    const interval = setInterval(checkPerms, 2000); // Check repeatedly in case they just returned from Settings
+    return () => clearInterval(interval);
+  }, []);
 
   const totalMs     = (hours * 60 + minutes) * 60_000;
   const studyChunkMs = breaks > 0
@@ -104,15 +122,24 @@ export default function SessionSetupScreen({ onBack, onSessionStarted }: Props) 
           onPress: async () => {
             setLoading(true);
             try {
+              // Fetch blocklist first so we can pass it to native service
+              const list = await getBlocklist();
+              const blockValues = list.map((b: any) => b.value);
+
               await startSession({
                 totalDurationMs: totalMs,
                 numberOfBreaks: breaks,
                 breakDurationMs: breakMs,
                 strictMode: false,
               });
+
+              if (FascaBlocker) {
+                FascaBlocker.startBlockerService(blockValues, false);
+              }
+
               onSessionStarted();
-            } catch {
-              Alert.alert('Error', 'Failed to start session. Please check your connection.');
+            } catch (err: any) {
+              Alert.alert('Error', err.message || 'Failed to start session. Please check your connection.');
             } finally {
               setLoading(false);
             }
@@ -175,6 +202,26 @@ export default function SessionSetupScreen({ onBack, onSessionStarted }: Props) 
           )}
         </View>
 
+        {/* Permissions Notice */}
+        {(!hasUsagePerm || !hasOverlayPerm) && (
+          <View style={[styles.card, { borderColor: 'rgba(239,68,68,0.3)', backgroundColor: 'rgba(239,68,68,0.05)' }]}>
+            <Text style={[styles.cardTitle, { color: '#f87171' }]}>⚠️ PERMISSIONS REQUIRED</Text>
+            <Text style={styles.hintText}>
+              Fasca needs system permissions to block apps natively on your device.
+            </Text>
+            {!hasUsagePerm && (
+              <TouchableOpacity style={styles.permBtn} onPress={() => FascaBlocker.requestUsageStatsPermission()}>
+                <Text style={styles.permBtnText}>Grant Usage Access</Text>
+              </TouchableOpacity>
+            )}
+            {!hasOverlayPerm && (
+              <TouchableOpacity style={styles.permBtn} onPress={() => FascaBlocker.requestOverlayPermission()}>
+                <Text style={styles.permBtnText}>Grant Display Over Other Apps</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
         {/* Summary */}
         {(hours > 0 || minutes > 0) && (
           <View style={styles.summary}>
@@ -200,9 +247,9 @@ export default function SessionSetupScreen({ onBack, onSessionStarted }: Props) 
 
         {/* Start Button */}
         <TouchableOpacity
-          style={[styles.startBtn, (loading || (hours === 0 && minutes === 0)) && styles.startBtnDisabled]}
+          style={[styles.startBtn, (loading || (hours === 0 && minutes === 0) || !hasUsagePerm || !hasOverlayPerm) && styles.startBtnDisabled]}
           onPress={handleStart}
-          disabled={loading || (hours === 0 && minutes === 0)}
+          disabled={loading || (hours === 0 && minutes === 0) || !hasUsagePerm || !hasOverlayPerm}
           activeOpacity={0.85}
         >
           {loading ? (
@@ -276,4 +323,14 @@ const styles = StyleSheet.create({
   },
   startBtnDisabled: { opacity: 0.4 },
   startBtnText: { color: '#fff', fontSize: 13, fontWeight: '700', letterSpacing: 3 },
+  permBtn: {
+    backgroundColor: 'rgba(239,68,68,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.4)',
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  permBtnText: { color: '#f87171', fontSize: 11, fontWeight: '700', letterSpacing: 1 },
 });

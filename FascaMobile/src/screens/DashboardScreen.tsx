@@ -14,6 +14,9 @@ import { FascaLogoMark } from './SplashScreen';
 import { getActiveSession, abortSession } from '../lib/api';
 import { getToken, clearToken } from '../lib/storage';
 import { connectFocusSocket } from '../lib/socket';
+import { NativeModules } from 'react-native';
+
+const { FascaBlocker } = NativeModules;
 
 type SessionStatus = 'FOCUSING' | 'ON_BREAK' | 'IDLE';
 
@@ -82,7 +85,10 @@ export default function DashboardScreen({ onLogout, onGoToBlocklist, onGoToSetup
       onFocusStarted: (data) => setSession(prev => prev ? { ...prev, status: 'FOCUSING', ...data } : data),
       onBreakStarted: (data) => setSession(prev => prev ? { ...prev, status: 'ON_BREAK', breakEndsAt: data.breakEndsAt } : null),
       onFocusResumed: () => setSession(prev => prev ? { ...prev, status: 'FOCUSING', breakEndsAt: undefined } : null),
-      onFocusEnded: () => setSession(null),
+      onFocusEnded: () => {
+        setSession(null);
+        if (FascaBlocker) FascaBlocker.stopBlockerService();
+      },
     });
     return cleanup;
   }, []);
@@ -108,6 +114,7 @@ export default function DashboardScreen({ onLogout, onGoToBlocklist, onGoToSetup
         onPress: async () => {
           setAborting(true);
           await abortSession();
+          if (FascaBlocker) FascaBlocker.stopBlockerService();
           setSession(null);
           setAborting(false);
         },

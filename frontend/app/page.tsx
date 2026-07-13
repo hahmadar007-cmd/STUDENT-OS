@@ -106,7 +106,16 @@ export default function LandingPage() {
                   level="Q"
                 />
               </div>
-              <p className="text-black/60 text-xs mt-3 font-semibold text-center">Scan to download</p>
+              <div className="mt-3 flex flex-col items-center gap-2">
+                <p className="text-black/60 text-xs font-semibold">Scan to download</p>
+                <a 
+                  href="/FascaMobile.apk" 
+                  download 
+                  className="text-[#7c5cfc] hover:text-[#ff2d55] text-xs font-bold transition-colors underline"
+                >
+                  Or click here to download
+                </a>
+              </div>
             </motion.div>
           )}
         </motion.div>

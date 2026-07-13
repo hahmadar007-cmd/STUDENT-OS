@@ -32,7 +32,9 @@ export async function apiLogin(email: string, password: string): Promise<string>
 
 export async function getBlocklist() {
   const res = await fetch(`${BACKEND}/focus/blocklist`, { headers: await authHeaders() });
-  return res.json();
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Failed to get blocklist');
+  return data;
 }
 
 export async function addToBlocklist(type: 'DOMAIN' | 'APP', value: string, label?: string) {
@@ -41,14 +43,17 @@ export async function addToBlocklist(type: 'DOMAIN' | 'APP', value: string, labe
     headers: await authHeaders(),
     body: JSON.stringify({ type, value, label }),
   });
-  return res.json();
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Failed to add to blocklist');
+  return data;
 }
 
 export async function removeFromBlocklist(id: string) {
-  await fetch(`${BACKEND}/focus/blocklist/${id}`, {
+  const res = await fetch(`${BACKEND}/focus/blocklist/${id}`, {
     method: 'DELETE',
     headers: await authHeaders(),
   });
+  if (!res.ok) throw new Error('Failed to remove from blocklist');
 }
 
 // ─── Sessions ────────────────────────────────────────────────────────────────
@@ -56,6 +61,7 @@ export async function removeFromBlocklist(id: string) {
 export async function getActiveSession() {
   const res = await fetch(`${BACKEND}/focus/session/active`, { headers: await authHeaders() });
   const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Failed to get active session');
   if (!data?.id) return null;
   return data;
 }
@@ -71,12 +77,15 @@ export async function startSession(config: {
     headers: await authHeaders(),
     body: JSON.stringify(config),
   });
-  return res.json();
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Failed to start session');
+  return data;
 }
 
 export async function abortSession() {
-  await fetch(`${BACKEND}/focus/session/abort`, {
+  const res = await fetch(`${BACKEND}/focus/session/abort`, {
     method: 'POST',
     headers: await authHeaders(),
   });
+  if (!res.ok) throw new Error('Failed to abort session');
 }

@@ -9,7 +9,35 @@ import LoginScreen from './src/screens/LoginScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 import BlocklistScreen from './src/screens/BlocklistScreen';
 import SessionSetupScreen from './src/screens/SessionSetupScreen';
+import NodesScreen from './src/screens/NodesScreen';
+import GroupsScreen from './src/screens/GroupsScreen';
 import { getToken } from './src/lib/storage';
+import { NavigationContainer, DarkTheme } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Text } from 'react-native';
+
+const Tab = createBottomTabNavigator();
+
+function MainTabs({ onLogout, onGoToBlocklist, onGoToSetup }: any) {
+  return (
+    <NavigationContainer theme={DarkTheme}>
+      <Tab.Navigator 
+        screenOptions={{ 
+          headerShown: false, 
+          tabBarStyle: { backgroundColor: '#060611', borderTopColor: 'rgba(124,58,237,0.15)' }, 
+          tabBarActiveTintColor: '#7c3aed',
+          tabBarInactiveTintColor: '#475569'
+        }}
+      >
+        <Tab.Screen name="Focus" options={{ tabBarIcon: () => <Text style={{fontSize: 20}}>⏱</Text> }}>
+          {() => <DashboardScreen onLogout={onLogout} onGoToBlocklist={onGoToBlocklist} onGoToSetup={onGoToSetup} />}
+        </Tab.Screen>
+        <Tab.Screen name="Nodes" component={NodesScreen} options={{ tabBarIcon: () => <Text style={{fontSize: 20}}>🧠</Text> }} />
+        <Tab.Screen name="Groups" component={GroupsScreen} options={{ tabBarIcon: () => <Text style={{fontSize: 20}}>💬</Text> }} />
+      </Tab.Navigator>
+    </NavigationContainer>
+  );
+}
 
 type Screen = 'splash' | 'login' | 'dashboard' | 'blocklist' | 'session-setup';
 
@@ -34,7 +62,7 @@ export default function App() {
 
     case 'dashboard':
       return (
-        <DashboardScreen
+        <MainTabs
           onLogout={handleLogout}
           onGoToBlocklist={() => setScreen('blocklist')}
           onGoToSetup={() => setScreen('session-setup')}
