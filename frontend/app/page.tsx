@@ -51,26 +51,19 @@ export default function LandingPage() {
       >
 
 
-        <motion.h1
+        <motion.div
           initial={{ y: 30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
-          className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter text-white leading-[1.1] mb-8"
+          className="mb-16 mt-8"
         >
-          Your Digital <br className="hidden md:block" />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7c5cfc] via-[#b582ff] to-[#ff2d55] italic font-serif pr-4">
-            Sanctuary.
-          </span>
-        </motion.h1>
-
-        <motion.p
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.4, duration: 0.8 }}
-          className="text-[#9e9e9e] text-lg md:text-xl font-light max-w-2xl leading-relaxed mb-12"
-        >
-          Transcend ordinary studying. An ultra-premium operating system engineered for elite academic performance and deep work.
-        </motion.p>
+          <FascaLogo 
+            showWordmark={true} 
+            size={140} 
+            layout="vertical" 
+            wordmarkClassName="font-serif font-bold tracking-[0.25em] text-white leading-none mt-8 text-5xl md:text-6xl lg:text-7xl" 
+          />
+        </motion.div>
 
         <motion.div
           initial={{ y: 20, opacity: 0 }}

@@ -14,12 +14,13 @@ interface FascaLogoProps {
  * FascaLogo Component
  * Renders the custom SVG bat-wing F letterform and Space Grotesk wordmark.
  */
-export const FascaLogo: React.FC<FascaLogoProps & { layout?: 'horizontal' | 'vertical' }> = ({
+export const FascaLogo: React.FC<FascaLogoProps & { layout?: 'horizontal' | 'vertical', wordmarkClassName?: string }> = ({
   size = 32,
   showWordmark = true,
   className = '',
   linkTo,
-  layout = 'horizontal'
+  layout = 'horizontal',
+  wordmarkClassName = ''
 }) => {
   const content = (
     <div className={`inline-flex ${layout === 'vertical' ? 'flex-col justify-center' : 'items-center gap-3'} select-none ${className}`}>
@@ -57,7 +58,7 @@ export const FascaLogo: React.FC<FascaLogoProps & { layout?: 'horizontal' | 'ver
 
       {showWordmark && (
         <span 
-          className={`font-serif font-bold tracking-[0.25em] text-white leading-none ${layout === 'vertical' ? 'mt-2 text-xl' : 'text-lg'}`}
+          className={wordmarkClassName || `font-serif font-bold tracking-[0.25em] text-white leading-none ${layout === 'vertical' ? 'mt-2 text-xl' : 'text-lg'}`}
           style={{ fontFamily: 'var(--font-serif), sans-serif' }}
         >
           FASCA

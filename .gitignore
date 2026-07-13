@@ -40,3 +40,5 @@ backend/.env.*.local
 /hf-deploy/
 deploy-hf.ps1
 
+
+.vercel
