@@ -149,7 +149,7 @@ export class AuthService {
     };
   }
 
-  async forgotPassword(email: string): Promise<{ message: string }> {
+  async forgotPassword(email: string): Promise<{ message: string; devLink?: string }> {
     const user = await this.prisma.user.findUnique({
       where: { email },
     });
