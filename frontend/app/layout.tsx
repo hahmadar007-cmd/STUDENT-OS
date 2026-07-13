@@ -39,6 +39,10 @@ const grenzeGotisch = UnifrakturMaguntia({
 export const metadata: Metadata = {
   title: "Fouzar | High-Performance Study Engine",
   description: "Fouzar is a high-performance student OS with Pomodoro, Diary, and AI tools.",
+  other: {
+    "darkreader-lock": "meta",
+    "color-scheme": "dark only"
+  }
 };
 
 export default function RootLayout({
