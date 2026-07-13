@@ -23,7 +23,7 @@ export const FascaLogo: React.FC<FascaLogoProps & { layout?: 'horizontal' | 'ver
   wordmarkClassName = ''
 }) => {
   const content = (
-    <div className={`inline-flex ${layout === 'vertical' ? 'flex-col justify-center' : 'items-center gap-3'} select-none ${className}`}>
+    <div className={`inline-flex ${layout === 'vertical' ? 'flex-col justify-center items-center' : 'items-center gap-3'} select-none ${className}`}>
       <svg
         width={size}
         height={size}

@@ -55,14 +55,18 @@ export default function LandingPage() {
           initial={{ y: 30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
-          className="mb-16 mt-8"
+          className="mb-16 mt-8 relative group"
         >
-          <FascaLogo 
-            showWordmark={true} 
-            size={140} 
-            layout="vertical" 
-            wordmarkClassName="font-serif font-bold tracking-[0.25em] text-white leading-none mt-8 text-5xl md:text-6xl lg:text-7xl" 
-          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#7c5cfc]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000 rounded-[3rem] blur-xl" />
+          <div className="p-16 md:p-24 rounded-[3rem] bg-[#0a0a0f]/80 border border-white/[0.08] shadow-[0_0_100px_-20px_rgba(124,92,252,0.2)] backdrop-blur-2xl relative overflow-hidden flex flex-col items-center justify-center transition-transform duration-700 hover:scale-[1.02]">
+            <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
+            <FascaLogo 
+              showWordmark={true} 
+              size={120} 
+              layout="vertical" 
+              wordmarkClassName="font-serif font-bold tracking-[0.25em] text-white leading-none mt-10 text-5xl md:text-6xl lg:text-7xl" 
+            />
+          </div>
         </motion.div>
 
         <motion.div
