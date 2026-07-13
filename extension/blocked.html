@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fasca Focus – Blocked</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      background: #060611;
+      font-family: 'Outfit', sans-serif;
+      color: #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Ambient glow */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(124,58,237,0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .lock-icon {
+      font-size: 80px;
+      margin-bottom: 32px;
+      animation: pulse 2s ease-in-out infinite;
+      filter: drop-shadow(0 0 30px rgba(124,58,237,0.8));
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.05); opacity: 0.85; }
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+
+    .logo-mark {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #7c3aed, #4f46e5);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 20px;
+      letter-spacing: -1px;
+    }
+
+    .logo-text {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, #a78bfa, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(124,58,237,0.3);
+      border-radius: 24px;
+      padding: 48px 56px;
+      text-align: center;
+      max-width: 560px;
+      width: 90%;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 0 60px rgba(124,58,237,0.15), inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 16px;
+      color: #f1f5f9;
+    }
+
+    .blocked-url {
+      font-size: 13px;
+      color: #7c3aed;
+      background: rgba(124,58,237,0.1);
+      border: 1px solid rgba(124,58,237,0.2);
+      border-radius: 8px;
+      padding: 8px 16px;
+      margin-bottom: 24px;
+      font-family: monospace;
+      word-break: break-all;
+    }
+
+    p {
+      color: #94a3b8;
+      font-size: 16px;
+      line-height: 1.7;
+      margin-bottom: 32px;
+    }
+
+    .timer-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 32px;
+    }
+
+    .timer-label {
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+
+    .timer {
+      font-size: 48px;
+      font-weight: 900;
+      letter-spacing: -2px;
+      background: linear-gradient(135deg, #a78bfa, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .divider {
+      width: 60px;
+      height: 1px;
+      background: rgba(124,58,237,0.4);
+      margin: 0 auto 24px;
+    }
+
+    .motivation {
+      font-size: 14px;
+      color: #475569;
+      font-style: italic;
+    }
+
+    .back-btn {
+      margin-top: 24px;
+      padding: 12px 28px;
+      background: rgba(124,58,237,0.15);
+      border: 1px solid rgba(124,58,237,0.4);
+      border-radius: 12px;
+      color: #a78bfa;
+      font-size: 14px;
+      font-family: 'Outfit', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.5px;
+    }
+    .back-btn:hover {
+      background: rgba(124,58,237,0.25);
+      border-color: rgba(124,58,237,0.6);
+      color: #c4b5fd;
+    }
+  </style>
+</head>
+<body>
+  <div class="logo">
+    <div class="logo-mark">F</div>
+    <div class="logo-text">Fasca</div>
+  </div>
+
+  <div class="lock-icon">🔒</div>
+
+  <div class="card">
+    <h1>Access Blocked</h1>
+    <div class="blocked-url" id="blockedUrl">Loading...</div>
+    <p>Your Fasca Focus session is active.<br/>This site is on your blocklist.</p>
+
+    <div class="timer-section">
+      <div class="timer-label">Session ends in</div>
+      <div class="timer" id="timer">--:--:--</div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="motivation" id="motivation">"Focus is the art of knowing what to ignore."</div>
+
+    <br/>
+    <button class="back-btn" onclick="history.back()">← Go Back</button>
+  </div>
+
+  <script>
+    const quotes = [
+      '"Focus is the art of knowing what to ignore."',
+      '"The successful warrior is the average man with laser-like focus."',
+      '"Where focus goes, energy flows."',
+      '"You don\'t get results by focusing on results. Focus on the actions."',
+      '"It is not enough to be busy. The question is: what are we busy about?"',
+    ];
+
+    // Show blocked URL
+    const params = new URLSearchParams(window.location.search);
+    const url = params.get('url') || '';
+    document.getElementById('blockedUrl').textContent = url || 'This website';
+
+    // Random quote
+    document.getElementById('motivation').textContent =
+      quotes[Math.floor(Math.random() * quotes.length)];
+
+    // Timer from storage
+    async function updateTimer() {
+      const data = await chrome.storage.local.get(['focusEndTime']);
+      if (!data.focusEndTime) {
+        document.getElementById('timer').textContent = '--:--:--';
+        return;
+      }
+      const remaining = Math.max(0, data.focusEndTime - Date.now());
+      const h = Math.floor(remaining / 3600000).toString().padStart(2, '0');
+      const m = Math.floor((remaining % 3600000) / 60000).toString().padStart(2, '0');
+      const s = Math.floor((remaining % 60000) / 1000).toString().padStart(2, '0');
+      document.getElementById('timer').textContent = `${h}:${m}:${s}`;
+    }
+
+    updateTimer();
+    setInterval(updateTimer, 1000);
+  </script>
+</body>
+</html>

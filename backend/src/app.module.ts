@@ -15,6 +15,7 @@ import { VideosModule } from './videos/videos.module';
 import { SubjectsModule } from './subjects/subjects.module';
 import { MaterialsModule } from './materials/materials.module';
 import { DiaryModule } from './diary/diary.module';
+import { FocusModule } from './focus/focus.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { DiaryModule } from './diary/diary.module';
     SubjectsModule,
     MaterialsModule,
     DiaryModule,
+    FocusModule,
   ],
   controllers: [AppController, SocialController],
   providers: [AppService],

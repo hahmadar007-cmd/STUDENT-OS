@@ -11,6 +11,18 @@ enum GroupRole {
   MEMBER
 }
 
+enum BlocklistType {
+  DOMAIN // e.g. youtube.com
+  APP    // e.g. com.google.android.youtube
+}
+
+enum FocusSessionStatus {
+  FOCUSING
+  ON_BREAK
+  COMPLETED
+  ABORTED
+}
+
 enum ProviderType {
   OPENAI
   ANTHROPIC
@@ -84,6 +96,10 @@ model User {
 
   // Personal Diary
   diaryEntries DiaryEntry[]
+
+  // Focus Ecosystem
+  blocklist      FascaBlocklist[]
+  focusSessions  FascaFocusSession[]
 }
 
 model Course {
@@ -346,6 +362,52 @@ model DiaryEntry {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// ─── Focus Ecosystem ──────────────────────────────────────────────────────────
+
+// Unified blocklist – a single entry can be a website domain OR an Android
+// package identifier, controlled by the `type` field.
+model FascaBlocklist {
+  id        String        @id @default(uuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      BlocklistType @default(DOMAIN)
+  value     String        // e.g. "youtube.com" or "com.google.android.youtube"
+  label     String?       // human-friendly name, e.g. "YouTube"
+  createdAt DateTime      @default(now())
+
+  @@unique([userId, type, value])
+  @@index([userId])
+}
+
+// Tracks an active (or historical) focus session with break scheduling.
+model FascaFocusSession {
+  id               String             @id @default(uuid())
+  userId           String
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status           FocusSessionStatus @default(FOCUSING)
+
+  // Session timing
+  startTime        DateTime           @default(now())
+  endTime          DateTime?          // set when completed or aborted
+
+  // Break configuration supplied by the user at session start
+  totalDurationMs  Int                // total study time in ms (e.g. 7200000 for 2 h)
+  numberOfBreaks   Int                @default(0)
+  breakDurationMs  Int                @default(600000) // default 10 min per break (ms)
+
+  // Runtime state – which break are we currently on?
+  currentBreak     Int                @default(0)
+  breakEndsAt      DateTime?          // set while status = ON_BREAK
+
+  // Strict mode – only the PC dashboard can abort early
+  strictMode       Boolean            @default(false)
+
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
 
   @@index([userId])
 }
