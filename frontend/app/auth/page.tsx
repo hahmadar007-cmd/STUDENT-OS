@@ -130,6 +130,7 @@ export default function AuthPage() {
 
   // Forgot password & reset password state
   const [isLinkSent, setIsLinkSent] = useState(false);
+  const [devLink, setDevLink] = useState<string | null>(null);
 
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -181,7 +182,11 @@ export default function AuthPage() {
         });
 
         if (res.ok) {
+          const data = await res.json();
           setIsLinkSent(true);
+          if (data.devLink) {
+            setDevLink(data.devLink);
+          }
         } else {
           const data = await res.json();
           setValidationError(data.message || 'Failed to initiate recovery. Verify email.');
@@ -517,6 +522,12 @@ export default function AuthPage() {
                         [STATUS: ENCRYPTED LINK TRANSMITTED]
                         <br/><br/>
                         A password reset link has been dispatched to {email}. Check your inbox to restore access.
+                        {devLink && (
+                          <div className="mt-4 p-2 bg-[#ff2d55]/10 border border-[#ff2d55]/30 text-[#ff2d55]">
+                            [DEV MODE: NO SMTP CONFIGURED]<br/>
+                            <a href={devLink} className="underline text-white lowercase break-all">{devLink}</a>
+                          </div>
+                        )}
                       </div>
                       <button
                         type="button"

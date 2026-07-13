@@ -169,7 +169,17 @@ export class AuthService {
       },
     });
 
-    await this.emailService.sendPasswordResetEmail(user.email, token);
+    try {
+      await this.emailService.sendPasswordResetEmail(user.email, token);
+    } catch (e) {
+      this.logger.warn('Failed to send email. Ensure SMTP is configured.');
+      // If SMTP is failing (e.g. not configured), return the link for the user to use directly
+      const frontendUrl = process.env.FRONTEND_URL || 'https://fasca-student-os.vercel.app';
+      return { 
+        message: 'If that email exists, a reset link has been sent.', 
+        devLink: `${frontendUrl}/auth/reset-password?token=${token}` 
+      };
+    }
 
     return { message: 'If that email exists, a reset link has been sent.' };
   }
