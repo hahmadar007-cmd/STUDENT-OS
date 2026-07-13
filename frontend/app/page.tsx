@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { ChevronRight, Shield, BrainCircuit, MonitorPlay } from 'lucide-react';
@@ -12,6 +12,7 @@ export default function LandingPage() {
     target: containerRef,
     offset: ["start start", "end end"]
   });
+  const [showQR, setShowQR] = useState(false);
 
   const heroY = useTransform(scrollYProgress, [0, 0.2], [0, 150]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
@@ -73,15 +74,38 @@ export default function LandingPage() {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.6, duration: 0.8 }}
-          className="flex flex-col sm:flex-row items-center gap-4"
+          className="flex flex-col items-center gap-6"
         >
-          <Link href="/auth" className="group relative inline-flex items-center justify-center px-10 py-5 bg-white text-black rounded-full font-semibold text-sm hover:scale-105 transition-transform duration-300">
-            Initiate System
-            <ChevronRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </Link>
-          <a href="/FascaMobile.apk" download className="group relative inline-flex items-center justify-center px-8 py-5 bg-[#0a0a0f] border border-white/20 text-white rounded-full font-semibold text-sm hover:border-[#7c5cfc] hover:bg-[#7c5cfc]/10 transition-all duration-300">
-            Download Android App
-          </a>
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <Link href="/auth" className="group relative inline-flex items-center justify-center px-10 py-5 bg-white text-black rounded-full font-semibold text-sm hover:scale-105 transition-transform duration-300">
+              Initiate System
+              <ChevronRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
+            <div className="flex items-center bg-[#0a0a0f] border border-white/20 rounded-full overflow-hidden hover:border-[#7c5cfc] transition-colors duration-300">
+              <a href="/FascaMobile.apk" download className="px-6 py-5 text-white font-semibold text-sm hover:bg-[#7c5cfc]/10 transition-colors">
+                Download Android App
+              </a>
+              <div className="w-px h-8 bg-white/20" />
+              <button onClick={() => setShowQR(!showQR)} className="px-6 py-5 text-[#a0a0a0] hover:text-white hover:bg-[#7c5cfc]/10 transition-colors">
+                Scan QR
+              </button>
+            </div>
+          </div>
+
+          {showQR && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              className="p-4 rounded-2xl bg-white shadow-[0_0_40px_rgba(124,92,252,0.3)] mt-2"
+            >
+              <img 
+                src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://fasca-student-os.vercel.app/FascaMobile.apk" 
+                alt="QR Code for Fasca App"
+                className="w-[180px] h-[180px] rounded-xl"
+              />
+              <p className="text-black/60 text-xs mt-3 font-semibold text-center">Scan to download</p>
+            </motion.div>
+          )}
         </motion.div>
 
         {/* Floating Dashboard Mockup */}
