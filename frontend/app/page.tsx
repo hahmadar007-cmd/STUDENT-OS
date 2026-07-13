@@ -2,6 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import Link from 'next/link';
+import QRCode from 'react-qr-code';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { ChevronRight, Shield, BrainCircuit, MonitorPlay } from 'lucide-react';
 import { FascaLogo } from '../components/logo/FascaLogo';
@@ -98,11 +99,13 @@ export default function LandingPage() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               className="p-4 rounded-2xl bg-white shadow-[0_0_40px_rgba(124,92,252,0.3)] mt-2"
             >
-              <img 
-                src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://fasca-student-os.vercel.app/FascaMobile.apk" 
-                alt="QR Code for Fasca App"
-                className="w-[180px] h-[180px] rounded-xl"
-              />
+              <div className="bg-white p-2 rounded-xl">
+                <QRCode 
+                  value="https://frontend-fasca-os.vercel.app/FascaMobile.apk" 
+                  size={160}
+                  level="Q"
+                />
+              </div>
               <p className="text-black/60 text-xs mt-3 font-semibold text-center">Scan to download</p>
             </motion.div>
           )}
