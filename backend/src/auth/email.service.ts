@@ -19,7 +19,7 @@ export class EmailService {
   }  
   
   async sendPasswordResetEmail(to: string, resetToken: string): Promise<void> {  
-    const frontendUrl = process.env.FRONTEND_URL || 'https://student-os-frontend.vercel.app';  
+    const frontendUrl = process.env.FRONTEND_URL || 'https://fasca-student-os.vercel.app';  
     const resetLink = `${frontendUrl}/auth/reset-password?token=${resetToken}`;  
   
     // Print to console log for easy local development testing
