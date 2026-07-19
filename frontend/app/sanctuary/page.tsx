@@ -1429,22 +1429,26 @@ export default function PersonalSanctuaryPage() {
         </main>
 
         {/* ── Right AI Chat Panel ── */}
-        <ResizablePanel direction="horizontal" initialSize={350} minSize={280} collapsed={isAiPanelMinimized}>
-          <div className="h-full border-l border-white/[0.05] flex flex-col">
+        <motion.aside
+          animate={{ width: isAiPanelMinimized ? 0 : 350 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+          className="shrink-0 h-full overflow-hidden bg-[#0d0d14]"
+        >
+          <div className="h-full border-l border-white/[0.05] flex flex-col w-[350px]">
             <div className="h-12 px-4 flex items-center justify-between border-b border-white/[0.05] shrink-0">
               <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-white/30">AI Study Partner</span>
               <button onClick={() => setIsAiPanelMinimized(!isAiPanelMinimized)} className="text-white/20 hover:text-white/60 cursor-pointer transition-colors">
-                {isAiPanelMinimized ? <PanelLeft className="w-4 h-4" /> : <PanelRight className="w-4 h-4" />}
+                <PanelRight className="w-4 h-4" />
               </button>
             </div>
             <div className="flex-1 overflow-hidden">
               <IntegratedAiChat
-                contextDocuments={openDocs}
+                contextLabel={openDocs.length > 0 ? `${openDocs.length} Docs Open` : 'Sanctuary'}
                 storageKey={aiStorageKey}
               />
             </div>
           </div>
-        </ResizablePanel>
+        </motion.aside>
       </div>
 
       {/* ── Shield Overlay ── */}
