@@ -10,7 +10,7 @@ interface PeerInFlow {
   id: string;
   name: string;
   initials: string;
-}
+} 
 
 export default function FocusTakeoverPage() {
   const router = useRouter();

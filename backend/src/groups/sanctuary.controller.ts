@@ -57,8 +57,12 @@ export class SanctuaryController {
         roomPath: `/sanctuary`,
       };
     } catch (e) {
+      console.error('Sanctuary Creation Error:', e);
       if (e instanceof UnauthorizedException) throw e;
-      throw new UnauthorizedException('Authentication failed');
+      if (e.name === 'TokenExpiredError' || e.name === 'JsonWebTokenError') {
+        throw new UnauthorizedException('Invalid or expired token');
+      }
+      throw new Error('Failed to load Sanctuary');
     }
   }
 }

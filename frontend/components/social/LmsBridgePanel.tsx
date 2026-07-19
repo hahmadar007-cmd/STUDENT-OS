@@ -20,7 +20,7 @@ import type {
 } from '../../lib/api';
 import { toast } from '../ui/Toast';
 
-interface LmsBridgePanelProps { isOpen: boolean; onClose: () => void; }
+interface LmsBridgePanelProps { isOpen: boolean; onClose: () => void; inline?: boolean; }
 interface DeadlineItem { id: string; course: string; title: string; timeLeftHours: number; timeLeftLabel: string; }
 type PanelTab = 'tasks' | 'assignments' | 'quizzes' | 'forums';
 
@@ -144,7 +144,7 @@ const EmptyState = ({ icon: Icon, title, sub }: { icon: any; title: string; sub:
 );
 
 // ── Main component ────────────────────────────────────────────────────────────
-export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose }) => {
+export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose, inline }) => {
   const [activeTab, setActiveTab] = useState<PanelTab>('tasks');
 
   // Connect modal state
@@ -294,15 +294,8 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose 
   ];
 
   // ── Render ───────────────────────────────────────────────────────
-  return (
-    <>
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="fixed top-0 right-0 bottom-0 w-[440px] max-w-full bg-fouzar-surface border-l border-fouzar-border-strong z-40 shadow-2xl flex flex-col"
-          >
+  const content = (
+    <div className={inline ? "w-full h-full bg-fouzar-surface border border-fouzar-border-strong rounded-[6px] flex flex-col overflow-hidden" : "fixed top-0 right-0 bottom-0 w-[440px] max-w-full bg-fouzar-surface border-l border-fouzar-border-strong z-40 shadow-2xl flex flex-col"}>
             {/* ── Header ── */}
             <div className="flex items-center justify-between border-b border-fouzar-border-strong/50 px-5 py-4 shrink-0">
               <div>
@@ -641,9 +634,26 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose 
               <span>{lmsSource === 'live' ? 'Connected Live to UMT Portal' : syncTimestamp}</span>
               <span className={lmsSource === 'live' ? 'text-[#00d4ff]' : 'text-fouzar-text-secondary'}>{lmsSource === 'live' ? '● Live' : '○ Demo'}</span>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+  );
+
+  return (
+    <>
+      {inline ? (
+        isOpen && content
+      ) : (
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+              className="fixed top-0 right-0 bottom-0 z-40"
+            >
+              {content}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
 
       {/* ── Connect modal ───────────────────────────────────────── */}
       <AnimatePresence>

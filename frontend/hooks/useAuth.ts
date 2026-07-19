@@ -9,6 +9,9 @@ interface UserProfile {
   email: string;
   name: string | null;
   universityId: string | null;
+  username: string | null;
+  department: string | null;
+  bio: string | null;
   isFocusing: boolean;
   focusStartedAt: string | null;
   lmsToken: string | null;

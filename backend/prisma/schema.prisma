@@ -44,9 +44,12 @@ model User {
   email          String          @unique
   password       String?
   name           String?
+  username       String?         @unique
   fouzarId       String?         @unique
   avatarUrl      String?
   universityId   String?
+  department     String?
+  bio            String?
   university     University?     @relation(fields: [universityId], references: [id])
   courses        Course[]
   createdGroups  Group[]         @relation("GroupCreator")

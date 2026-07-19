@@ -25,6 +25,7 @@ export type SafeUser = {
   updatedAt: Date;
   fouzarId: string | null;
   avatarUrl: string | null;
+  username: string | null;
 };
 
 const BCRYPT_ROUNDS = 12;
@@ -87,6 +88,7 @@ export class AuthService {
             updatedAt: true,
             fouzarId: true,
             avatarUrl: true,
+            username: true,
           },
         });
       });
@@ -145,6 +147,7 @@ export class AuthService {
         updatedAt: user.updatedAt,
         fouzarId: user.fouzarId,
         avatarUrl: user.avatarUrl,
+        username: user.username,
       },
     };
   }

@@ -43,6 +43,7 @@ export class SocialController {
             email: true,
             fouzarId: true,
             avatarUrl: true,
+            username: true,
             isFocusing: true,
             focusStartedAt: true,
           },
@@ -54,6 +55,7 @@ export class SocialController {
             email: true,
             fouzarId: true,
             avatarUrl: true,
+            username: true,
             isFocusing: true,
             focusStartedAt: true,
           },
@@ -70,6 +72,7 @@ export class SocialController {
         name: other.name ?? other.email.split('@')[0],
         email: other.email,
         fouzarId: other.fouzarId,
+        username: other.username,
         avatarUrl: other.avatarUrl,
         isFocusing: other.isFocusing,
         focusStartedAt: other.focusStartedAt,
@@ -94,6 +97,7 @@ export class SocialController {
             email: true,
             fouzarId: true,
             avatarUrl: true,
+            username: true,
           },
         },
       },
@@ -112,6 +116,7 @@ export class SocialController {
             email: true,
             fouzarId: true,
             avatarUrl: true,
+            username: true,
           },
         },
       },
@@ -125,6 +130,7 @@ export class SocialController {
           name: req.user.name ?? req.user.email.split('@')[0],
           email: req.user.email,
           fouzarId: req.user.fouzarId,
+          username: req.user.username,
           avatarUrl: req.user.avatarUrl,
         },
         createdAt: req.createdAt,
@@ -136,6 +142,7 @@ export class SocialController {
           name: req.friend.name ?? req.friend.email.split('@')[0],
           email: req.friend.email,
           fouzarId: req.friend.fouzarId,
+          username: req.friend.username,
           avatarUrl: req.friend.avatarUrl,
         },
         createdAt: req.createdAt,
@@ -159,12 +166,17 @@ export class SocialController {
       where: { id: userId },
     });
 
-    if (currentUser?.fouzarId === targetConnectionId) {
+    if (currentUser?.fouzarId === targetConnectionId || currentUser?.username === targetConnectionId.toLowerCase()) {
       throw new BadRequestException('You cannot add yourself as a friend');
     }
 
-    const targetUser = await this.prisma.user.findUnique({
-      where: { fouzarId: targetConnectionId },
+    const targetUser = await this.prisma.user.findFirst({
+      where: { 
+        OR: [
+          { fouzarId: targetConnectionId },
+          { username: targetConnectionId.toLowerCase() }
+        ]
+      },
     });
 
     if (!targetUser) {

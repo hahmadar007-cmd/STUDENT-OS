@@ -437,9 +437,20 @@ export const renameGroup = (groupId: string, name: string) => {
   return apiRequest(`/groups/${groupId}`, 'PATCH', { name });
 };
 
-export const updateProfile = (details: { name?: string; email?: string; preferredAiModel?: string; avatarUrl?: string }) => {
+export const updateProfile = (details: {
+  name?: string;
+  email?: string;
+  preferredAiModel?: string;
+  avatarUrl?: string;
+  username?: string;
+  department?: string;
+  bio?: string;
+}) => {
   return apiRequest('/users/me', 'PATCH', details);
 };
+
+export const checkUsername = (username: string) =>
+  apiRequest(`/users/check-username/${encodeURIComponent(username)}`, 'GET');
 
 export const getFriends = () => apiRequest('/social/friends', 'GET');
 

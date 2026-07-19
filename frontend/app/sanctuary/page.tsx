@@ -24,6 +24,15 @@ import {
   Minus,
   PanelLeft,
   PanelRight,
+  ChevronRight as ChevronRightIcon,
+  FolderOpen,
+  NotebookPen,
+  Tv2,
+  ScanSearch,
+  Hash,
+  ChevronDown,
+  Command,
+  X,
 } from 'lucide-react';
 import ThemeSwitcher from '../../components/ui/ThemeSwitcher';
 import Link from 'next/link';
@@ -45,6 +54,7 @@ import {
   addSubjectVideo,
   getSubjectVideos,
 } from '../../lib/api';
+import { DiaryPanel } from '../../components/diary/DiaryPanel';
 
 /**
  * Personal Sanctuary — private solo study space for a full semester.
@@ -181,6 +191,14 @@ export default function PersonalSanctuaryPage() {
   const [newSubjectCode, setNewSubjectCode] = useState('');
   const [addSubjectError, setAddSubjectError] = useState<string | null>(null);
 
+  const [activeSection, setActiveSection] = useState<'notes' | 'slides' | 'files' | 'web' | 'media' | 'youtube' | 'journal'>('notes');
+  const [cmdOpen, setCmdOpen] = useState(false);
+  const [cmdQuery, setCmdQuery] = useState('');
+  const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [semesterExpanded, setSemesterExpanded] = useState(true);
+  const [subjectsExpanded, setSubjectsExpanded] = useState(true);
+  const [workspaceExpanded, setWorkspaceExpanded] = useState(true);
+
   const openSlide = (id: string, type: string, title: string) => {
     // Logic placeholder
   };
@@ -262,6 +280,10 @@ export default function PersonalSanctuaryPage() {
       if (e.key === 'Escape') {
         setActiveDoc(null);
         setSelectedSidebarDocId(null);
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setCmdOpen(prev => !prev);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -402,16 +424,17 @@ export default function PersonalSanctuaryPage() {
                     Private — not shared with any group
                   </p>
                 </>
+              ) : tabId === 'journal' ? (
+                <div className="flex-1 min-h-[280px] lg:min-h-0 flex flex-col overflow-hidden rounded-[var(--fouzar-radius-lg)] border border-fouzar-border">
+                  <DiaryPanel />
+                </div>
               ) : openDocs.find(d => d.id === tabId) ? (
                 <div className="flex-1 min-h-[280px] lg:min-h-0 flex flex-col overflow-hidden relative">
                   <DocumentViewer
                     document={openDocs.find(d => d.id === tabId)!}
                     onClose={() => {
                       closeDoc(tabId);
-                      setActiveSplitTabs(prev => ({
-                        left: prev.left === tabId ? 'notes' : prev.left,
-                        right: prev.right === tabId ? null : prev.right
-                      }));
+                      setActiveSection('notes');
                     }}
                     isInline={true}
                   />
@@ -497,10 +520,7 @@ export default function PersonalSanctuaryPage() {
                                   setShowDemoSlides(true);
                                 } else {
                                   setActiveDoc(doc);
-                                  setActiveSplitTabs(prev => ({
-                                    ...prev,
-                                    [prev.right === tabId ? 'right' : 'left']: doc.id
-                                  }));
+                                  setActiveSection(doc.id as any);
                                 }
                               }}
                               className="p-4 rounded-[var(--fouzar-radius-md)] border border-fouzar-border hover:border-fouzar-accent/40 bg-fouzar-elevated/20 hover:bg-fouzar-elevated/35 text-left flex flex-col justify-between transition-all hover:scale-[1.02] cursor-pointer shadow-[var(--fouzar-shadow-sm)]"
@@ -934,477 +954,519 @@ export default function PersonalSanctuaryPage() {
     );
   }
 
+  // Command Palette
+  const cmdCommands = [
+    { label: 'Notebook', icon: '📓', action: () => setActiveSection('notes') },
+    { label: 'Files', icon: '📁', action: () => setActiveSection('files') },
+    { label: 'Slides', icon: '📑', action: () => setActiveSection('slides') },
+    { label: 'Web Hub', icon: '🌐', action: () => setActiveSection('web') },
+    { label: 'Media', icon: '🎬', action: () => setActiveSection('media') },
+    { label: 'Journal', icon: '📖', action: () => setActiveSection('journal') },
+    { label: 'Deep Flow', icon: '🔥', action: handleDeepFlow },
+    { label: 'Add Subject', icon: '➕', action: () => setShowAddSubject(true) },
+    { label: 'Upload PDF', icon: '📄', action: () => fileInputRef.current?.click() },
+    { label: 'Back to Dashboard', icon: '←', action: () => router.push('/dashboard') },
+  ];
+  const filteredCommands = cmdCommands.filter(c => c.label.toLowerCase().includes(cmdQuery.toLowerCase()));
+
+  const sectionLabel: Record<string, string> = {
+    notes: 'Notebook',
+    files: 'Files',
+    slides: 'Slides',
+    web: 'Web Hub',
+    media: 'Media',
+    youtube: 'YT Search',
+    journal: 'Journal',
+  };
+
   return (
-    <div 
+    <div
       onClick={() => setSelectedSidebarDocId(null)}
-      className="h-screen bg-fouzar-bg text-fouzar-text-primary flex flex-col overflow-hidden pb-20 md:pb-0"
+      className="h-screen bg-fouzar-bg text-fouzar-text-primary flex flex-col overflow-hidden"
     >
-      {/* Header */}
-      <header className="border-b border-fouzar-border px-4 md:px-8 py-4 flex items-center justify-between shrink-0 bg-fouzar-surface/50 backdrop-blur-xl">
-        <div className="flex items-center gap-4">
+      {/* ── Command Palette ── */}
+      <AnimatePresence>
+        {cmdOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-start justify-center pt-24"
+            onClick={() => setCmdOpen(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: -16, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -16, scale: 0.97 }}
+              transition={{ duration: 0.18 }}
+              className="w-full max-w-lg bg-[#111118] border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 px-4 py-3.5 border-b border-white/[0.06]">
+                <Search className="w-4 h-4 text-white/30" />
+                <input
+                  autoFocus
+                  value={cmdQuery}
+                  onChange={e => setCmdQuery(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Escape') setCmdOpen(false); }}
+                  placeholder="Search commands..."
+                  className="flex-1 bg-transparent text-sm text-white placeholder:text-white/25 focus:outline-none"
+                />
+                <kbd className="text-[9px] font-mono text-white/25 border border-white/10 px-1.5 py-0.5 rounded">ESC</kbd>
+              </div>
+              <div className="py-2 max-h-72 overflow-y-auto">
+                {filteredCommands.map((cmd, i) => (
+                  <button
+                    key={i}
+                    onClick={() => { cmd.action(); setCmdOpen(false); setCmdQuery(''); }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.04] transition-colors text-left cursor-pointer"
+                  >
+                    <span className="text-base">{cmd.icon}</span>
+                    <span className="text-sm text-white/80">{cmd.label}</span>
+                  </button>
+                ))}
+                {filteredCommands.length === 0 && (
+                  <p className="text-center text-white/25 text-xs py-6 font-mono">No commands found</p>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Top Bar ── */}
+      <header className="h-11 border-b border-white/[0.06] px-4 flex items-center justify-between shrink-0 bg-[#0d0d14]/80 backdrop-blur-xl">
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => router.back()}
-            className="flex items-center gap-1.5 font-mono text-[8px] uppercase text-fouzar-text-secondary hover:text-fouzar-text-primary cursor-pointer"
+            className="flex items-center gap-1.5 text-white/40 hover:text-white/80 transition-colors cursor-pointer"
           >
-            <ArrowLeft className="w-3 h-3" /> Back
+            <ArrowLeft className="w-3.5 h-3.5" />
           </button>
-          <FouzarLogo showWordmark size={22} linkTo="/dashboard" />
-          <span className="w-[1px] h-4 bg-fouzar-border" />
-          <div className="flex flex-col text-left">
-            <span className="font-serif text-[11px] font-bold text-fouzar-text-primary leading-none">
-              {sanctuaryName}
-            </span>
-            <span className="font-mono text-[6.5px] text-fouzar-text-secondary uppercase tracking-wider mt-0.5">
-              {fouzarUser?.fouzarId ?? 'FOUZAR-XXXX'} · Only You
-            </span>
+          <span className="text-white/10">|</span>
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-1.5 text-[11px] font-mono">
+            <span className="text-white/30">Sanctuary</span>
+            <span className="text-white/15">›</span>
+            <span className="text-white/50">{activeFolder?.name || 'General'}</span>
+            <span className="text-white/15">›</span>
+            <span className="text-[#7c5cfc] font-semibold">{sectionLabel[activeSection]}</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* Cmd K button */}
+          <button
+            type="button"
+            onClick={() => setCmdOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/[0.07] text-white/40 hover:text-white/70 text-[10px] font-mono transition-all cursor-pointer"
+          >
+            <Search className="w-3 h-3" />
+            <span>Search</span>
+            <kbd className="ml-1 text-[8px] border border-white/10 px-1 py-0.5 rounded text-white/25">⌘K</kbd>
+          </button>
           <ThemeSwitcher />
-          <span className="hidden md:inline font-mono text-[7px] text-fouzar-ice uppercase tracking-widest ml-2 border-l border-fouzar-border pl-2">
-            Private · Solo
-          </span>
+          <span className="w-px h-4 bg-white/[0.06]" />
+          {/* Semester selector */}
+          <select
+            value={semester}
+            onChange={e => handleSemesterChange(e.target.value)}
+            className="bg-transparent border border-white/[0.07] text-white/50 text-[10px] font-mono px-2 py-1 rounded-lg cursor-pointer hover:border-white/20 transition-colors focus:outline-none"
+          >
+            {['Fall 2025', 'Spring 2026', 'Summer 2026', 'Fall 2026'].map(s => (
+              <option key={s} value={s} className="bg-[#0d0d14]">{s}</option>
+            ))}
+          </select>
           <button
             type="button"
             onClick={handleDeepFlow}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-fouzar-accent text-fouzar-text-inverse font-mono text-[8px] uppercase font-bold rounded-[var(--fouzar-radius-md)] shadow-[var(--fouzar-glow-primary)]"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-[9px] uppercase font-bold transition-all cursor-pointer ${
+              isFlowActive
+                ? 'bg-[#ff2d55]/15 border border-[#ff2d55]/40 text-[#ff2d55]'
+                : 'bg-[#7c5cfc] text-white shadow-[0_2px_12px_rgba(124,92,252,0.4)] hover:bg-[#6d4ef0]'
+            }`}
           >
-            <Flame className="w-3.5 h-3.5" /> Deep Flow
+            <Flame className="w-3.5 h-3.5" />
+            {isFlowActive ? 'Exit Flow' : 'Deep Flow'}
           </button>
         </div>
       </header>
 
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-        <ResizablePanel 
-          direction="horizontal" 
-          initialSize={280} 
-          minSize={200} 
-          maxSize={400} 
-          collapsed={isSidebarMinimized || isShielded}
+      {/* ── Main 3-column layout ── */}
+      <div className="flex-1 flex overflow-hidden">
+
+        {/* ── Sanctuary Navigation ── */}
+        <motion.nav
+          animate={{ width: isSidebarMinimized ? 48 : 220 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+          className="shrink-0 h-full border-r border-white/[0.05] bg-[#0b0b12] flex flex-col overflow-hidden"
         >
-          {/* Left — Subject Spaces */}
-          <motion.aside
-            className={`border-b lg:border-b-0 lg:border-r border-fouzar-border p-3 space-y-4 overflow-y-auto scrollbar-none shrink-0 flex flex-col ${
-              isShielded ? 'lg:w-0 lg:opacity-0 lg:pointer-events-none lg:p-0 lg:border-r-0' : 'h-full'
-            }`}
-            animate={{
-              opacity: isShielded ? 0 : 1,
-              width: isShielded ? 0 : '100%',
-            }}
-            transition={{ duration: 0.68, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <div>
-              <div className="flex items-center justify-between w-full mb-1.5 shrink-0">
-                <div className="flex items-center gap-2">
-                  <Layers className="w-3 h-3 text-fouzar-accent" />
-                  <h2 className="font-mono text-[9px] uppercase tracking-widest text-fouzar-text-secondary">
-                    Spaces
-                  </h2>
-                </div>
-                <button onClick={() => setIsSidebarMinimized(true)} className="text-fouzar-text-tertiary hover:text-fouzar-text-primary">
-                  <Minus className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="space-y-1.5">
-                {folders.filter(f => !f.parentFolderId || f.parentFolderId === 'general' || f.id === 'general').map((folder) => (
-                  <div key={folder.id} className="relative group">
-                    <button
-                      type="button"
-                      onClick={() => setActiveFolderId(folder.id)}
-                      className={`w-full text-left p-2.5 border rounded-[var(--fouzar-radius-md)] transition-colors flex items-center justify-between ${
-                        activeFolderId === folder.id
-                          ? 'bg-fouzar-accent/20 border-fouzar-accent/50'
-                          : 'bg-fouzar-elevated/30 border-fouzar-border hover:border-fouzar-accent/40'
-                      }`}
-                    >
-                      <div className="min-w-0 pr-6">
-                        <p className={`text-[10px] font-medium truncate ${
-                          activeFolderId === folder.id ? 'text-fouzar-accent font-bold' : 'text-fouzar-text-primary'
-                        }`}>
-                          {folder.name}
-                        </p>
-                        {folder.id !== 'general' && (
-                          <p className="font-mono text-[6.5px] text-fouzar-text-tertiary uppercase mt-0.5">
-                            {folder.code}
-                          </p>
-                        )}
-                      </div>
-                    </button>
-                    {folder.id !== 'general' && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteFolder(folder.id);
-                        }}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 text-fouzar-text-tertiary hover:text-fouzar-signal transition-all cursor-pointer"
-                        title="Delete Space"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-
-                {/* Add Subject Inline Form */}
-                {showAddSubject ? (
-                  <form
-                    onSubmit={handleAddSubjectSubmit}
-                    className="p-3 mt-2 bg-fouzar-elevated/30 border border-fouzar-accent/40 rounded-[var(--fouzar-radius-md)] space-y-2.5"
-                  >
-                    <input
-                      type="text"
-                      required
-                      placeholder="Subject Name (e.g. Algorithms)"
-                      value={newSubjectName}
-                      onChange={(e) => setNewSubjectName(e.target.value)}
-                      className="w-full bg-fouzar-bg border border-fouzar-border px-2 py-1.5 text-[10px] font-mono rounded-[var(--fouzar-radius-sm)] focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
-                    />
-                    <input
-                      type="text"
-                      required
-                      placeholder="Code (e.g. CS101)"
-                      value={newSubjectCode}
-                      onChange={(e) => setNewSubjectCode(e.target.value)}
-                      className="w-full bg-fouzar-bg border border-fouzar-border px-2 py-1.5 text-[10px] font-mono rounded-[var(--fouzar-radius-sm)] focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary uppercase"
-                    />
-                    {addSubjectError && (
-                      <p className="text-[8px] font-mono text-fouzar-signal uppercase tracking-wider">
-                        {addSubjectError}
-                      </p>
-                    )}
-                    <div className="flex gap-1.5 justify-end mt-2">
-                      <button
-                        type="button"
-                        onClick={() => setShowAddSubject(false)}
-                        className="px-2.5 py-1 border border-fouzar-border rounded-[var(--fouzar-radius-sm)] font-mono text-[8px] uppercase text-fouzar-text-secondary hover:text-fouzar-text-primary cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="px-2.5 py-1 bg-fouzar-accent text-fouzar-text-inverse rounded-[var(--fouzar-radius-sm)] font-mono text-[8px] uppercase font-bold hover:opacity-90 cursor-pointer"
-                      >
-                        Add
-                      </button>
-                    </div>
-                  </form>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setShowAddSubject(true)}
-                    className="w-full mt-2 text-left p-2.5 border border-dashed border-fouzar-border rounded-[var(--fouzar-radius-md)] hover:border-fouzar-accent/40 hover:bg-fouzar-accent/5 transition-colors text-fouzar-text-tertiary hover:text-fouzar-accent flex items-center justify-center gap-1.5"
-                  >
-                    <Layers className="w-3 h-3" />
-                    <span className="font-mono text-[8px] uppercase tracking-wider font-bold">Add Subject</span>
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-fouzar-border/30 flex-1 flex flex-col overflow-hidden">
-              <span className="font-mono text-[7px] uppercase tracking-widest text-fouzar-text-secondary flex items-center gap-1 mb-3">
-                <FileText className="w-3 h-3" /> Space Explorer
-              </span>
-              <div className="flex-1 overflow-y-auto scrollbar-none min-h-[200px]">
-                <FileExplorer
-                  isCompact={true}
-                  rootFolderId={activeFolderId}
-                  onOpenFile={(doc) => {
-                    setActiveDoc(doc);
-                  }}
-                />
-              </div>
-            </div>
-          </motion.aside>
-
-          <ResizablePanel direction="horizontal" initialSize={350} minSize={300} collapsed={isAiPanelMinimized} fixedPanel={1}>
-            {/* Center — Notes + lecture viewer */}
-            <main className="flex-1 flex flex-col min-w-0 p-4 md:p-6 overflow-hidden h-full">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex gap-1 overflow-x-auto scrollbar-none">
-                <button
-                  onClick={() => setActiveSplitTabs(prev => ({ ...prev, left: 'notes' }))}
-                  className={`px-4 py-2 rounded-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all whitespace-nowrap ${
-                    activeSplitTabs.left === 'notes'
-                      ? 'bg-fouzar-accent text-fouzar-text-inverse shadow-[0_0_12px_var(--fouzar-accent-glow)]'
-                      : 'text-fouzar-text-tertiary hover:text-fouzar-text-primary hover:bg-fouzar-accent/5'
-                  }`}
-                >
-                  Notebook
-                </button>
-                
-                {openDocs.map((doc) => (
-                  <div key={doc.id} className="flex items-center">
-                    <button
-                      onClick={() => setActiveSplitTabs(prev => ({ ...prev, left: doc.id }))}
-                      className={`pl-4 pr-2 py-2 rounded-l-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all whitespace-nowrap max-w-[150px] truncate ${
-                        activeSplitTabs.left === doc.id
-                          ? 'bg-fouzar-accent text-fouzar-text-inverse shadow-[0_0_12px_var(--fouzar-accent-glow)]'
-                          : 'text-fouzar-text-tertiary hover:text-fouzar-text-primary bg-fouzar-accent/5 hover:bg-fouzar-accent/10 border border-transparent border-r-fouzar-border/30'
-                      }`}
-                    >
-                      {doc.fileName}
-                    </button>
-                    <button
-                      onClick={() => {
-                        closeDoc(doc.id);
-                        setActiveSplitTabs(prev => ({
-                          left: prev.left === doc.id ? 'notes' : prev.left,
-                          right: prev.right === doc.id ? null : prev.right
-                        }));
-                      }}
-                      className={`pr-3 pl-1 py-2 rounded-r-[var(--fouzar-radius-md)] text-[9px] font-mono transition-all ${
-                        activeSplitTabs.left === doc.id
-                          ? 'bg-fouzar-accent text-fouzar-text-inverse shadow-[0_0_12px_var(--fouzar-accent-glow)] hover:text-red-300'
-                          : 'text-fouzar-text-tertiary hover:text-fouzar-signal bg-fouzar-accent/5 hover:bg-fouzar-accent/10 border border-transparent'
-                      }`}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
-
-                <button
-                  onClick={() => setActiveSplitTabs(prev => ({ ...prev, left: 'slides' }))}
-                  className={`px-4 py-2 rounded-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all whitespace-nowrap ${
-                    activeSplitTabs.left === 'slides'
-                      ? 'bg-fouzar-accent text-fouzar-text-inverse shadow-[0_0_12px_var(--fouzar-accent-glow)]'
-                      : 'text-fouzar-text-tertiary hover:text-fouzar-text-primary hover:bg-fouzar-accent/5'
-                  }`}
-                >
-                  Slides
-                </button>
-
-                <button
-                  onClick={() => setActiveSplitTabs(prev => ({ ...prev, left: 'web' }))}
-                  className={`px-4 py-2 rounded-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all whitespace-nowrap ${
-                    activeSplitTabs.left === 'web'
-                      ? 'bg-fouzar-accent text-fouzar-text-inverse shadow-[0_0_12px_var(--fouzar-accent-glow)]'
-                      : 'text-fouzar-text-tertiary hover:text-fouzar-text-primary hover:bg-fouzar-accent/5'
-                  }`}
-                >
-                  Web Hub
-                </button>
-
-                <button
-                  onClick={() => setActiveSplitTabs(prev => ({ ...prev, left: 'media' }))}
-                  className={`px-4 py-2 rounded-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all whitespace-nowrap ${
-                    activeSplitTabs.left === 'media'
-                      ? 'bg-fouzar-accent text-fouzar-text-inverse shadow-[0_0_12px_var(--fouzar-accent-glow)]'
-                      : 'text-fouzar-text-tertiary hover:text-fouzar-text-primary hover:bg-fouzar-accent/5'
-                  }`}
-                >
-                  Media Hub
-                </button>
-
-                <button
-                  onClick={() => setActiveSplitTabs(prev => ({ ...prev, left: 'youtube' }))}
-                  className={`px-4 py-2 rounded-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all whitespace-nowrap ${
-                    activeSplitTabs.left === 'youtube'
-                      ? 'bg-red-500 text-fouzar-text-primary shadow-[0_0_12px_rgba(239,68,68,0.5)]'
-                      : 'text-fouzar-text-tertiary hover:text-fouzar-text-primary hover:bg-red-500/10'
-                  }`}
-                >
-                  YT Search
-                </button>
-
-                <div className="w-[1px] h-6 bg-fouzar-border/40 mx-2 self-center" />
-                <button
-                  onClick={() => setActiveSplitTabs(prev => ({ 
-                    ...prev, 
-                    right: prev.right ? null : (prev.left === 'notes' ? 'slides' : 'notes') 
-                  }))}
-                  className={`px-4 py-2 rounded-[var(--fouzar-radius-md)] text-[9px] font-mono uppercase tracking-wider font-bold transition-all flex items-center gap-2 ${
-                    activeSplitTabs.right
-                      ? 'bg-indigo-500 text-fouzar-text-primary shadow-[0_0_12px_rgba(99,102,241,0.5)]'
-                      : 'text-indigo-400 hover:text-fouzar-text-primary bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30'
-                  }`}
-                >
-                  <Columns className="w-3.5 h-3.5" />
-                  {activeSplitTabs.right ? 'Exit Split' : 'Split View'}
-                </button>
-                {activeSplitTabs.right && (
-                  <div className="flex items-center gap-1 ml-2 bg-fouzar-elevated/40 p-1 rounded-[var(--fouzar-radius-md)] border border-fouzar-border/50">
-                    <span className="text-[7px] font-mono uppercase text-fouzar-text-tertiary px-1">Right Panel:</span>
-                    <button
-                      onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: 'notes' }))}
-                      className={`px-2 py-1 rounded-[var(--fouzar-radius-sm)] text-[8px] font-mono uppercase transition-all ${
-                        activeSplitTabs.right === 'notes' ? 'bg-fouzar-accent text-fouzar-text-inverse' : 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-fouzar-accent/10'
-                      }`}
-                    >
-                      Notebook
-                    </button>
-                    <button
-                      onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: 'slides' }))}
-                      className={`px-2 py-1 rounded-[var(--fouzar-radius-sm)] text-[8px] font-mono uppercase transition-all ${
-                        activeSplitTabs.right === 'slides' ? 'bg-fouzar-accent text-fouzar-text-inverse' : 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-fouzar-accent/10'
-                      }`}
-                    >
-                      Slides
-                    </button>
-                    <button
-                      onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: 'youtube' }))}
-                      className={`px-2 py-1 rounded-[var(--fouzar-radius-sm)] text-[8px] font-mono uppercase transition-all ${
-                        activeSplitTabs.right === 'youtube' ? 'bg-red-500 text-fouzar-text-primary' : 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-red-500/10'
-                      }`}
-                    >
-                      YouTube
-                    </button>
-                    <button
-                      onClick={() => setActiveSplitTabs(prev => ({ ...prev, right: 'web' }))}
-                      className={`px-2 py-1 rounded-[var(--fouzar-radius-sm)] text-[8px] font-mono uppercase transition-all ${
-                        activeSplitTabs.right === 'web' ? 'bg-fouzar-accent text-fouzar-text-inverse' : 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-fouzar-accent/10'
-                      }`}
-                    >
-                      Web
-                    </button>
-                  </div>
-                )}
-              </div>
-              <span className="font-mono text-[7px] text-fouzar-text-secondary uppercase">
-                {activeSplitTabs.right ? 'Split View Active' : activeSplitTabs.left === 'notes' ? (isSaving ? 'Saving...' : 'Saved locally') : activeSplitTabs.left === 'slides' ? 'Click a file to open' : activeSplitTabs.left === 'media' ? 'YouTube Theater' : 'Quick launch links'}
-              </span>
-            </div>
-
-            {activeSplitTabs.right ? (
-              <div className="flex-1 min-h-[280px] lg:min-h-0 flex flex-col overflow-hidden relative">
-                <ResizablePanel direction="horizontal" initialSize={500} minSize={300}>
-                  <div className="h-full w-full flex flex-col p-1 overflow-hidden">{renderTabContent(activeSplitTabs.left)}</div>
-                  <div className="h-full w-full flex flex-col p-1 overflow-hidden">{renderTabContent(activeSplitTabs.right)}</div>
-                </ResizablePanel>
-              </div>
-            ) : (
-              renderTabContent(activeSplitTabs.left)
+          {/* Toggle */}
+          <div className="flex items-center justify-between px-3 py-2.5 border-b border-white/[0.05]">
+            {!isSidebarMinimized && (
+              <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-white/25">Workspace</span>
             )}
-          </main>
+            <button
+              onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
+              className="ml-auto text-white/25 hover:text-white/60 transition-colors cursor-pointer"
+            >
+              {isSidebarMinimized ? <PanelLeft className="w-4 h-4" /> : <PanelRight className="w-4 h-4" />}
+            </button>
+          </div>
 
-          {/* Right — Integrated AI */}
-          <aside
-            className="border-t lg:border-t-0 lg:border-l border-fouzar-border p-3 flex flex-col shrink-0 min-h-[360px] lg:min-h-0 h-full overflow-hidden"
-          >
-            <div className="flex items-center justify-between w-full mb-1.5 shrink-0">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-fouzar-accent" />
-                <h2 className="font-mono text-[9px] uppercase tracking-widest text-fouzar-text-secondary">
-                  AI Study Partner
-                </h2>
+          <div className="flex-1 overflow-y-auto scrollbar-none py-2 space-y-1">
+
+            {/* SEMESTER section */}
+            {!isSidebarMinimized && (
+              <div className="px-3 mb-1">
+                <button
+                  onClick={() => setSemesterExpanded(!semesterExpanded)}
+                  className="w-full flex items-center justify-between text-[9px] font-mono uppercase tracking-[0.18em] text-white/25 hover:text-white/50 transition-colors cursor-pointer py-1"
+                >
+                  <span>Semester</span>
+                  {semesterExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRightIcon className="w-3 h-3" />}
+                </button>
+                {semesterExpanded && (
+                  <div className="mt-1 mb-2 px-1">
+                    <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.05]">
+                      <Hash className="w-3 h-3 text-[#7c5cfc]/60 shrink-0" />
+                      <span className="text-[11px] text-white/60 font-mono truncate">{semester}</span>
+                    </div>
+                  </div>
+                )}
               </div>
-              <button onClick={() => setIsAiPanelMinimized(true)} className="text-fouzar-text-tertiary hover:text-fouzar-text-primary">
-                <Minus className="w-4 h-4" />
+            )}
+
+            {/* SUBJECTS section */}
+            <div className="px-3">
+              {!isSidebarMinimized && (
+                <div className="flex items-center justify-between mb-1">
+                  <button
+                    onClick={() => setSubjectsExpanded(!subjectsExpanded)}
+                    className="flex items-center gap-1 text-[9px] font-mono uppercase tracking-[0.18em] text-white/25 hover:text-white/50 transition-colors cursor-pointer py-1"
+                  >
+                    {subjectsExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRightIcon className="w-3 h-3" />}
+                    <span>Subjects</span>
+                  </button>
+                  <button
+                    onClick={() => setShowAddSubject(true)}
+                    className="text-white/25 hover:text-[#7c5cfc] transition-colors cursor-pointer text-xs"
+                    title="Add Subject"
+                  >
+                    +
+                  </button>
+                </div>
+              )}
+              {(isSidebarMinimized || subjectsExpanded) && (
+                <div className="space-y-0.5">
+                  {folders.filter(f => !f.parentFolderId || f.parentFolderId === 'general' || f.id === 'general').map(folder => (
+                    <div key={folder.id} className="relative group">
+                      <button
+                        type="button"
+                        onClick={() => setActiveFolderId(folder.id)}
+                        title={folder.name}
+                        className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-lg transition-all cursor-pointer ${
+                          activeFolderId === folder.id
+                            ? 'bg-[#7c5cfc]/15 text-[#7c5cfc]'
+                            : 'text-white/40 hover:bg-white/[0.03] hover:text-white/70'
+                        }`}
+                      >
+                        <FolderOpen className={`w-3.5 h-3.5 shrink-0 ${ activeFolderId === folder.id ? 'text-[#7c5cfc]' : '' }`} />
+                        {!isSidebarMinimized && (
+                          <div className="flex-1 min-w-0 text-left">
+                            <p className="text-[11px] font-medium truncate leading-none">{folder.name}</p>
+                            {folder.id !== 'general' && (
+                              <p className="text-[9px] font-mono text-white/25 mt-0.5 uppercase">{folder.code}</p>
+                            )}
+                          </div>
+                        )}
+                      </button>
+                      {!isSidebarMinimized && folder.id !== 'general' && (
+                        <button
+                          type="button"
+                          onClick={e => { e.stopPropagation(); deleteFolder(folder.id); }}
+                          className="absolute right-1.5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-white/20 hover:text-[#ff2d55] transition-all cursor-pointer p-0.5"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {/* Add subject form */}
+                  {showAddSubject && !isSidebarMinimized && (
+                    <form onSubmit={handleAddSubjectSubmit} className="mt-2 p-2.5 bg-white/[0.03] border border-[#7c5cfc]/20 rounded-lg space-y-2">
+                      <input type="text" required placeholder="Subject Name" value={newSubjectName} onChange={e => setNewSubjectName(e.target.value)} className="w-full bg-transparent border border-white/10 px-2 py-1 text-[10px] font-mono rounded-md focus:outline-none focus:border-[#7c5cfc] text-white" />
+                      <input type="text" required placeholder="Code (e.g. CS101)" value={newSubjectCode} onChange={e => setNewSubjectCode(e.target.value)} className="w-full bg-transparent border border-white/10 px-2 py-1 text-[10px] font-mono rounded-md focus:outline-none focus:border-[#7c5cfc] text-white uppercase" />
+                      {addSubjectError && <p className="text-[9px] text-[#ff2d55]">{addSubjectError}</p>}
+                      <div className="flex gap-1.5">
+                        <button type="button" onClick={() => setShowAddSubject(false)} className="flex-1 py-1 text-[9px] font-mono border border-white/10 rounded-md text-white/40 hover:text-white cursor-pointer">Cancel</button>
+                        <button type="submit" className="flex-1 py-1 text-[9px] font-mono bg-[#7c5cfc] text-white rounded-md font-bold hover:bg-[#6d4ef0] cursor-pointer">Add</button>
+                      </div>
+                    </form>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Divider */}
+            <div className="mx-3 h-px bg-white/[0.04] my-2" />
+
+            {/* WORKSPACE TOOLS */}
+            <div className="px-3">
+              {!isSidebarMinimized && (
+                <button
+                  onClick={() => setWorkspaceExpanded(!workspaceExpanded)}
+                  className="w-full flex items-center gap-1 text-[9px] font-mono uppercase tracking-[0.18em] text-white/25 hover:text-white/50 transition-colors cursor-pointer py-1 mb-1"
+                >
+                  {workspaceExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRightIcon className="w-3 h-3" />}
+                  <span>Workspace</span>
+                </button>
+              )}
+              {(isSidebarMinimized || workspaceExpanded) && (
+                <div className="space-y-0.5">
+                  {([
+                    { id: 'notes', label: 'Notebook', Icon: BookOpen },
+                    { id: 'files', label: 'Files', Icon: FileText },
+                    { id: 'slides', label: 'Slides', Icon: Layers },
+                    { id: 'web', label: 'Web Hub', Icon: Globe },
+                    { id: 'media', label: 'Media', Icon: Tv2 },
+                    { id: 'youtube', label: 'YT Search', Icon: ScanSearch },
+                    { id: 'journal', label: 'Journal', Icon: BookOpen },
+                  ] as { id: typeof activeSection; label: string; Icon: any }[]).map(({ id, label, Icon }) => (
+                    <button
+                      key={id}
+                      onClick={() => setActiveSection(id)}
+                      title={label}
+                      className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-lg transition-all cursor-pointer group ${
+                        activeSection === id
+                          ? 'bg-[#7c5cfc]/15 text-[#7c5cfc] shadow-[0_0_10px_rgba(124,92,252,0.08)]'
+                          : 'text-white/40 hover:bg-white/[0.03] hover:text-white/70'
+                      }`}
+                    >
+                      <Icon className="w-3.5 h-3.5 shrink-0" />
+                      {!isSidebarMinimized && <span className="text-[11px] font-medium truncate">{label}</span>}
+                      {!isSidebarMinimized && activeSection === id && (
+                        <div className="ml-auto w-1 h-1 rounded-full bg-[#7c5cfc]" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Quick Actions footer */}
+          {!isSidebarMinimized && (
+            <div className="border-t border-white/[0.05] px-3 py-3 space-y-1.5">
+              <p className="text-[8px] font-mono uppercase tracking-[0.2em] text-white/20 mb-2">Quick Actions</p>
+              <button onClick={() => setActiveSection('notes')} className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-white/35 hover:text-white/70 hover:bg-white/[0.03] transition-all cursor-pointer text-[10px] font-mono">
+                <span className="text-[#7c5cfc]">+</span> New Note
+              </button>
+              <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-white/35 hover:text-white/70 hover:bg-white/[0.03] transition-all cursor-pointer text-[10px] font-mono">
+                <span className="text-[#7c5cfc]">+</span> Upload PDF
+              </button>
+              <button onClick={() => { setActiveSection('journal'); }} className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-white/35 hover:text-white/70 hover:bg-white/[0.03] transition-all cursor-pointer text-[10px] font-mono">
+                <span className="text-[#7c5cfc]">+</span> Open Journal
+              </button>
+              <div className="pt-2 border-t border-white/[0.04] mt-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] font-mono text-white/20">✓ Synced</span>
+                  <span className="text-[9px] font-mono text-white/20">{isSaving ? 'Saving...' : 'Local'}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </motion.nav>
+
+        {/* ── Center Content Panel ── */}
+        <main className="flex-1 flex flex-col overflow-hidden">
+          {/* Section Header */}
+          <div className="h-12 px-6 flex items-center justify-between border-b border-white/[0.05] shrink-0">
+            <div className="flex items-center gap-3">
+              <h1 className="text-sm font-semibold text-white/90">{sectionLabel[activeSection]}</h1>
+              <span className="text-[10px] font-mono text-white/25">
+                {activeFolder?.name && activeFolder.id !== 'general' ? activeFolder.name : 'General Space'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              {activeSection === 'slides' && (
+                <button
+                  type="button"
+                  disabled={uploading}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7c5cfc] text-white font-mono text-[9px] uppercase font-bold rounded-lg hover:bg-[#6d4ef0] transition-all cursor-pointer"
+                >
+                  {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+                  Upload PDF
+                </button>
+              )}
+              {activeSection === 'media' && (
+                <button onClick={() => setIsAddingVideo(!isAddingVideo)} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7c5cfc] text-white font-mono text-[9px] uppercase font-bold rounded-lg hover:bg-[#6d4ef0] transition-all cursor-pointer">
+                  <Upload className="w-3 h-3" /> Add Video
+                </button>
+              )}
+              {/* Inspector toggle */}
+              <button
+                onClick={() => setInspectorOpen(!inspectorOpen)}
+                className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg font-mono text-[9px] transition-all cursor-pointer border ${
+                  inspectorOpen ? 'bg-[#7c5cfc]/15 border-[#7c5cfc]/30 text-[#7c5cfc]' : 'border-white/[0.07] text-white/30 hover:text-white/60'
+                }`}
+                title="Toggle Inspector"
+              >
+                <PanelRight className="w-3.5 h-3.5" />
               </button>
             </div>
-            <div className="flex-1 min-h-[300px]">
+          </div>
+
+          {/* Content area */}
+          <div className="flex-1 overflow-hidden flex">
+            {/* Main view — preserved content from renderTabContent, rendered by section */}
+            <div className="flex-1 p-5 overflow-y-auto scrollbar-none flex flex-col">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeSection}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.16 }}
+                  className="flex-1 flex flex-col h-full"
+                >
+                  {activeSection === 'files' ? (
+                    <div className="flex-1 flex flex-col">
+                      <FileExplorer
+                        isCompact={false}
+                        rootFolderId={activeFolderId}
+                        onOpenFile={doc => setActiveDoc(doc)}
+                      />
+                    </div>
+                  ) : (
+                    renderTabContent(activeSection)
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {/* Inspector Panel */}
+            <AnimatePresence>
+              {inspectorOpen && (
+                <motion.aside
+                  initial={{ width: 0, opacity: 0 }}
+                  animate={{ width: 240, opacity: 1 }}
+                  exit={{ width: 0, opacity: 0 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                  className="shrink-0 border-l border-white/[0.05] bg-[#0b0b12] overflow-hidden"
+                >
+                  <div className="p-4 space-y-5 w-60">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-white/30">Inspector</span>
+                      <button onClick={() => setInspectorOpen(false)} className="text-white/20 hover:text-white/60 cursor-pointer"><X className="w-3.5 h-3.5" /></button>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-[8px] font-mono uppercase text-white/20 mb-1.5">Properties</p>
+                        <div className="space-y-1.5">
+                          <div className="flex justify-between">
+                            <span className="text-[10px] text-white/35">Subject</span>
+                            <span className="text-[10px] text-white/60 font-mono">{activeFolder?.code || 'GEN'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-[10px] text-white/35">Semester</span>
+                            <span className="text-[10px] text-white/60 font-mono">{semester}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-[10px] text-white/35">Section</span>
+                            <span className="text-[10px] text-[#7c5cfc] font-mono">{sectionLabel[activeSection]}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-[10px] text-white/35">Status</span>
+                            <span className="text-[10px] text-emerald-400 font-mono">{isSaving ? 'Saving...' : '✓ Saved'}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {activeSection === 'notes' && (
+                        <div>
+                          <p className="text-[8px] font-mono uppercase text-white/20 mb-1.5">Stats</p>
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between">
+                              <span className="text-[10px] text-white/35">Words</span>
+                              <span className="text-[10px] text-white/60 font-mono">{notes.trim() ? notes.trim().split(/\s+/).length : 0}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-[10px] text-white/35">Characters</span>
+                              <span className="text-[10px] text-white/60 font-mono">{notes.length}</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {activeSection === 'slides' && (
+                        <div>
+                          <p className="text-[8px] font-mono uppercase text-white/20 mb-1.5">Files</p>
+                          <div className="flex justify-between">
+                            <span className="text-[10px] text-white/35">Slides</span>
+                            <span className="text-[10px] text-white/60 font-mono">{filteredRepository.filter(d => d.fileName.endsWith('.pdf') || d.fileName.endsWith('.pptx')).length}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      <div>
+                        <p className="text-[8px] font-mono uppercase text-white/20 mb-1.5">AI Actions</p>
+                        <button
+                          onClick={() => setAiTriggerQuery({ text: `Summarize my ${sectionLabel[activeSection]} notes for ${activeFolder?.name || 'this subject'}`, id: Date.now().toString() })}
+                          className="w-full text-left text-[10px] text-[#7c5cfc] hover:text-white transition-colors cursor-pointer py-1 font-mono"
+                        >
+                          ✦ Summarize with AI
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </motion.aside>
+              )}
+            </AnimatePresence>
+          </div>
+        </main>
+
+        {/* ── Right AI Chat Panel ── */}
+        <ResizablePanel direction="horizontal" initialSize={350} minSize={280} collapsed={isAiPanelMinimized}>
+          <div className="h-full border-l border-white/[0.05] flex flex-col">
+            <div className="h-12 px-4 flex items-center justify-between border-b border-white/[0.05] shrink-0">
+              <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-white/30">AI Study Partner</span>
+              <button onClick={() => setIsAiPanelMinimized(!isAiPanelMinimized)} className="text-white/20 hover:text-white/60 cursor-pointer transition-colors">
+                {isAiPanelMinimized ? <PanelLeft className="w-4 h-4" /> : <PanelRight className="w-4 h-4" />}
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden">
               <IntegratedAiChat
-                contextLabel={`${semester} · Personal`}
-                slideId={null}
+                contextDocuments={openDocs}
                 storageKey={aiStorageKey}
-                placeholder="Ask AI to explain concepts, plan your week, or summarize notes..."
-                compact={true}
               />
             </div>
-          </aside>
-          </ResizablePanel>
+          </div>
         </ResizablePanel>
       </div>
 
-      {isSidebarMinimized && (
-        <button
-          onClick={() => setIsSidebarMinimized(false)}
-          className="fixed left-0 top-1/2 -translate-y-1/2 z-50 p-2 bg-fouzar-elevated/80 border border-l-0 border-fouzar-border rounded-r-md hover:bg-fouzar-accent/20"
-        >
-          <PanelLeft className="w-5 h-5 text-fouzar-text-primary" />
-        </button>
-      )}
-      {isAiPanelMinimized && (
-        <button
-          onClick={() => setIsAiPanelMinimized(false)}
-          className="fixed right-0 top-1/2 -translate-y-1/2 z-50 p-2 bg-fouzar-elevated/80 border border-r-0 border-fouzar-border rounded-l-md hover:bg-fouzar-accent/20"
-        >
-          <PanelRight className="w-5 h-5 text-fouzar-text-primary" />
-        </button>
-      )}
-
-      {/* Mobile quick nav */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 h-14 bg-fouzar-bg/95 backdrop-blur-xl border-t border-fouzar-border flex items-center justify-around z-30">
-        <Link href="/dashboard" className="flex flex-col items-center text-fouzar-text-secondary">
-          <Layers className="w-5 h-5" />
-          <span className="font-mono text-[6px] uppercase">Hub</span>
-        </Link>
-        <span className="flex flex-col items-center text-fouzar-accent">
-          <BookOpen className="w-5 h-5" />
-          <span className="font-mono text-[6px] uppercase">Sanctuary</span>
-        </span>
-        <button
-          type="button"
-          onClick={handleDeepFlow}
-          className="flex flex-col items-center text-fouzar-signal"
-        >
-          <Flame className="w-5 h-5" />
-          <span className="font-mono text-[6px] uppercase">Flow</span>
-        </button>
-      </nav>
-
-      {/* Pillar 2 — Deep Flow shield overlay */}
+      {/* ── Shield Overlay ── */}
       <AnimatePresence>
         {isFlowActive && (
           <motion.div
             initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
-            className={`fixed top-4 right-4 md:right-6 z-50 flex items-center gap-3 px-4 py-2.5 rounded-[var(--fouzar-radius-md)] shadow-[var(--fouzar-shadow-lg)] ${
-              mode === 'greenhouse' ? 'fouzar-glass' : 'bg-fouzar-overlay backdrop-blur-xl border border-fouzar-border'
-            }`}
+            className="fixed top-14 right-4 z-50 flex items-center gap-3 px-4 py-2.5 bg-[#0d0d14]/90 backdrop-blur-xl border border-white/[0.07] rounded-xl shadow-2xl"
           >
-            <Shield className="w-4 h-4 text-fouzar-signal" />
-            <span className="font-mono text-[8px] uppercase tracking-widest text-fouzar-text-secondary">
-              Shield Active
-            </span>
-
-            {bypass.isActive ? (
-              <div className="flex items-center gap-2 border-l border-fouzar-border pl-3">
-                <Clock className="w-3 h-3 text-fouzar-amber" />
-                <span className="font-mono text-[8px] text-fouzar-amber font-bold">
-                  {formatBypass(bypassSecondsLeft)}
-                </span>
-                <button
-                  type="button"
-                  onClick={handleReLock}
-                  className="font-mono text-[7px] text-fouzar-text-secondary hover:text-fouzar-text-primary uppercase underline"
-                >
-                  Re-lock
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1 border-l border-fouzar-border pl-3">
-                <button
-                  type="button"
-                  onClick={() => handleEmergencyBypass(5)}
-                  className="font-mono text-[7px] text-fouzar-signal border border-fouzar-signal/30 px-2 py-0.5 rounded-[var(--fouzar-radius-sm)] hover:bg-fouzar-signal/10 uppercase"
-                >
-                  5m Valve
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleEmergencyBypass(10)}
-                  className="font-mono text-[7px] text-fouzar-amber border border-fouzar-amber/30 px-2 py-0.5 rounded-[var(--fouzar-radius-sm)] hover:bg-fouzar-amber/10 uppercase"
-                >
-                  10m
-                </button>
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={handleDisarmFlow}
-              className="font-mono text-[7px] text-fouzar-text-secondary hover:text-fouzar-text-primary border border-fouzar-border px-2 py-0.5 rounded-[var(--fouzar-radius-sm)] uppercase ml-1"
-            >
-              Exit Flow
-            </button>
+            <Shield className="w-4 h-4 text-[#ff2d55]" />
+            <span className="font-mono text-[8px] uppercase tracking-widest text-white/40">Shield Active</span>
+            <div className="flex items-center gap-1 border-l border-white/[0.07] pl-3">
+              <button onClick={() => handleEmergencyBypass(5)} className="font-mono text-[7px] text-[#f5a623] border border-[#f5a623]/30 px-2 py-0.5 rounded-lg hover:bg-[#f5a623]/10 uppercase cursor-pointer">5m</button>
+              <button onClick={handleDisarmFlow} className="font-mono text-[7px] text-white/40 border border-white/10 px-2 py-0.5 rounded-lg hover:text-white uppercase cursor-pointer">Exit</button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <input ref={fileInputRef} type="file" accept=".pdf,.pptx" className="hidden" onChange={handleSlideUpload} />
     </div>
   );
 }

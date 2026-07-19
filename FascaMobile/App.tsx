@@ -3,7 +3,7 @@
  * Root navigator: Splash → Login → Dashboard / Blocklist / SessionSetup
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SplashScreen from './src/screens/SplashScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
@@ -14,7 +14,7 @@ import GroupsScreen from './src/screens/GroupsScreen';
 import { getToken } from './src/lib/storage';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text } from 'react-native';
+import { Text, Alert } from 'react-native';
 
 const Tab = createBottomTabNavigator();
 
@@ -43,6 +43,14 @@ type Screen = 'splash' | 'login' | 'dashboard' | 'blocklist' | 'session-setup';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('splash');
+
+  useEffect(() => {
+    Alert.alert(
+      "Notice",
+      "This app's purpose is to help you focus on studying. It is not the actual OS.",
+      [{ text: "I understand" }]
+    );
+  }, []);
 
   // After splash: check if user is logged in
   const handleSplashFinish = async () => {

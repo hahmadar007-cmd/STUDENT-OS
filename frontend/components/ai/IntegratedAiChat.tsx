@@ -202,8 +202,15 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
     }
   }, [sessions, activeSessionId, storageKey]);
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        top: scrollContainerRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
+    }
   }, [messages, isLoading]);
 
 
@@ -660,7 +667,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
       )}
 
 
-      <div className="flex-1 overflow-y-auto space-y-2.5 scrollbar-none mb-3 min-h-0">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto space-y-2.5 scrollbar-none mb-3 min-h-0">
         {messages.length === 0 && (
           <div className="text-center py-6 text-fouzar-text-tertiary">
             <Sparkles className="w-5 h-5 mx-auto mb-2 opacity-40" />

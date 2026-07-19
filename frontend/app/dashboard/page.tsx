@@ -41,7 +41,6 @@ import { AdminMembersPanel } from '../../components/ui/AdminMembersPanel';
 import { LmsBridgePanel } from '../../components/social/LmsBridgePanel';
 import { FocusShieldPanel } from '../../components/focus/FocusShieldPanel';
 import { AiControlCenter } from '../../components/ai/AiControlCenter';
-import { DiaryPanel } from '../../components/diary/DiaryPanel';
 import { AcademicInfoPanel } from '../../components/academic/AcademicInfoPanel';
 import { useAuth } from '../../hooks/useAuth';
 import { useSocket } from '../../hooks/useSocket';
@@ -600,28 +599,35 @@ export default function DashboardPage() {
       window.removeEventListener('open-pdf-viewer', handleOpenPdfViewer);
       window.removeEventListener('start-focus-timer', handleStartFocusTimer);
       window.removeEventListener('keydown', handleGlobalKeyDown);
+      window.removeEventListener('open-ai-onboarding', handleOpenAiOnboarding as any);
+    };
+  }, []);
+
+  const handleOpenAiOnboarding = () => {
+    setShowOnboarding(true);
+  };
+
+  useEffect(() => {
+    window.addEventListener('open-ai-onboarding', handleOpenAiOnboarding as any);
+    return () => {
+      window.removeEventListener('open-ai-onboarding', handleOpenAiOnboarding as any);
     };
   }, []);
 
   const handleNavClick = (id: string) => {
     if (id === 'bridge') {
-      setIsLmsOpen(true);
-      setActiveNav('bridge');
+      document.getElementById('lms-section')?.scrollIntoView({ behavior: 'smooth' });
     } else if (id === 'shield') {
       setIsShieldOpen(true);
-      setActiveNav('shield');
     } else if (id === 'friends') {
       setActiveNav('friends');
     } else {
       setActiveNav(id as any);
       if (id === 'circles') {
-        document.getElementById('timer-section')?.scrollIntoView({ behavior: 'smooth' });
-        setActivePanelTab('timer');
+        document.getElementById('mindmap-section')?.scrollIntoView({ behavior: 'smooth' });
       } else if (id === 'nodes') {
         document.getElementById('mindmap-section')?.scrollIntoView({ behavior: 'smooth' });
-        setActivePanelTab('nodes');
       } else if (id === 'ai') {
-        setActivePanelTab('ai');
         document.getElementById('ai-engines-section')?.scrollIntoView({ behavior: 'smooth' });
       }
     }
@@ -780,7 +786,7 @@ export default function DashboardPage() {
           <div className="w-full h-[1px] bg-[#2a2a3a]/40" />
 
           {/* Navigation Items */}
-          <div className="flex flex-col gap-1 w-full">
+          <div className="flex flex-col gap-0.5 w-full px-2">
             {sidebarItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeNav === item.id;
@@ -788,15 +794,17 @@ export default function DashboardPage() {
                 <button
                   key={item.id}
                   onClick={() => handleNavClick(item.id)}
-                  className={`w-full relative flex items-center justify-start py-3 px-4 transition-colors cursor-pointer group hover:bg-fouzar-surface/40 ${
-                    isActive ? 'text-fouzar-accent' : 'text-fouzar-text-secondary hover:text-fouzar-text-primary'
+                  className={`w-full relative flex items-center justify-start py-2.5 px-3 rounded-xl transition-all duration-200 cursor-pointer group ${
+                    isActive
+                      ? 'text-white bg-[#7c5cfc]/15 shadow-[0_0_14px_rgba(124,92,252,0.12)]'
+                      : 'text-fouzar-text-secondary hover:text-fouzar-text-primary hover:bg-white/[0.04]'
                   }`}
                 >
                   {isActive && (
-                    <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-fouzar-accent" />
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[#7c5cfc] rounded-full shadow-[0_0_8px_rgba(124,92,252,0.8)]" />
                   )}
-                  <Icon className="w-4 h-4 shrink-0" />
-                  
+                  <Icon className={`w-4 h-4 shrink-0 ml-1 transition-transform duration-200 ${isActive ? 'text-[#7c5cfc]' : 'group-hover:scale-110'}`} />
+
                   {isSidebarHovered && (
                     <motion.div
                       initial={{ opacity: 0, x: -5 }}
@@ -804,7 +812,11 @@ export default function DashboardPage() {
                       className="ml-3 flex items-center justify-between flex-1 font-mono text-[9px] uppercase tracking-wider"
                     >
                       <span>{item.label}</span>
-                      <span className="text-[7.5px] opacity-40 font-mono">[{item.keyHint}]</span>
+                      <span className={`text-[7.5px] font-mono px-1.5 py-0.5 rounded border ${
+                        isActive
+                          ? 'text-[#7c5cfc] border-[#7c5cfc]/30 bg-[#7c5cfc]/10'
+                          : 'opacity-30 border-white/10'
+                      }`}>[{item.keyHint}]</span>
                     </motion.div>
                   )}
                 </button>
@@ -814,38 +826,57 @@ export default function DashboardPage() {
         </div>
 
         {/* Footer controls & Profile avatar */}
-        <div className="flex flex-col gap-4 items-center w-full">
-          {/* User profile small square avatar */}
-          <div className="px-4 w-full flex items-center justify-start gap-3">
-            <div className="w-8 h-8 rounded-none border border-fouzar-border bg-fouzar-surface flex items-center justify-center font-mono text-[10px] font-bold text-fouzar-text-primary shrink-0 overflow-hidden">
-              {user?.avatarUrl ? (
-                <img
-                  src={user.avatarUrl}
-                  alt={user.name || 'Avatar'}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                user ? user.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2) : 'AM'
-              )}
+        <div className="flex flex-col gap-1 items-center w-full px-2">
+
+          {/* User Card */}
+          <div
+            className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/[0.04] transition-all cursor-pointer group"
+            onClick={() => router.push('/profile')}
+          >
+            {/* Circular avatar with online dot */}
+            <div className="relative shrink-0">
+              <div className="w-8 h-8 rounded-full border border-[#7c5cfc]/30 bg-[#7c5cfc]/10 flex items-center justify-center font-bold text-[#7c5cfc] text-[11px] overflow-hidden shadow-[0_0_12px_rgba(124,92,252,0.15)]">
+                {user?.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user.name || 'Avatar'} className="w-full h-full object-cover" />
+                ) : (
+                  (user?.name || '?')[0].toUpperCase()
+                )}
+              </div>
+              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#0d0d12] shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
             </div>
+
             {isSidebarHovered && (
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex flex-col text-left min-w-0"
+                initial={{ opacity: 0, x: -4 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="flex flex-col text-left min-w-0 flex-1"
               >
-                <span className="text-[10px] font-semibold truncate">{user ? user.name : 'Alex Mercer'}</span>
-                <span className="text-[7.5px] text-fouzar-text-secondary font-mono truncate">{user ? user.email : 'MIT Workspace'}</span>
+                <span className="text-[11px] font-semibold text-white truncate leading-tight">
+                  {user?.name || user?.email?.split('@')[0] || 'User'}
+                </span>
+                <span className="text-[9px] text-[#7c5cfc] font-mono truncate">
+                  {user?.username ? `@${user.username}` : user?.email || ''}
+                </span>
+              </motion.div>
+            )}
+
+            {isSidebarHovered && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="shrink-0">
+                <ChevronRight className="w-3 h-3 text-white/20 group-hover:text-[#7c5cfc] transition-colors" />
               </motion.div>
             )}
           </div>
 
+          {/* Divider */}
+          <div className="w-full h-px bg-white/[0.05] my-1" />
+
+          {/* Profile & Settings button */}
           <button
             type="button"
             onClick={() => router.push('/profile')}
-            className="w-full py-3 px-4 relative flex items-center justify-start text-fouzar-text-secondary hover:text-fouzar-accent transition-colors cursor-pointer group hover:bg-fouzar-surface/40"
+            className="w-full py-2.5 px-3 rounded-xl relative flex items-center justify-start text-fouzar-text-secondary hover:text-[#7c5cfc] hover:bg-[#7c5cfc]/[0.07] transition-all cursor-pointer group"
           >
-            <User className="w-4 h-4 shrink-0" />
+            <User className="w-4 h-4 shrink-0 ml-1" />
             {isSidebarHovered && (
               <motion.span
                 initial={{ opacity: 0 }}
@@ -857,12 +888,13 @@ export default function DashboardPage() {
             )}
           </button>
 
+          {/* Logout button */}
           <button
             type="button"
             onClick={logout}
-            className="w-full py-3 px-4 relative flex items-center justify-start text-fouzar-text-secondary hover:text-fouzar-signal transition-colors cursor-pointer group hover:bg-fouzar-surface/40"
+            className="w-full py-2.5 px-3 rounded-xl relative flex items-center justify-start text-fouzar-text-secondary hover:text-[#ff2d55] hover:bg-[#ff2d55]/[0.07] transition-all cursor-pointer group"
           >
-            <LogOut className="w-4 h-4 shrink-0" />
+            <LogOut className="w-4 h-4 shrink-0 ml-1" />
             {isSidebarHovered && (
               <motion.span
                 initial={{ opacity: 0 }}
@@ -895,18 +927,20 @@ export default function DashboardPage() {
 
             {/* Personal Sanctuary */}
             <div className="space-y-3">
-              <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-fouzar-text-secondary block">
-                Personal Space
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-fouzar-text-secondary">
+                  Personal Space
+                </span>
+                <span className="px-1.5 py-0.5 text-[8px] font-mono text-[#7c5cfc] border border-[#7c5cfc]/20 bg-[#7c5cfc]/[0.06] rounded-full uppercase tracking-wider">Solo</span>
+              </div>
               <FascaCard
-                className={`p-4 flex flex-col justify-between min-h-[120px] cursor-pointer transition-all duration-150 relative ${
+                className={`p-4 flex flex-col justify-between min-h-[120px] cursor-pointer transition-all duration-200 relative group ${
                   getCardColorClass('sanctuary', selectedCardId === 'sanctuary')
                 }`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  setSelectedCardId('sanctuary');
+                  router.push('/sanctuary');
                 }}
-                onDoubleClick={() => router.push('/sanctuary')}
               >
                 <div>
                   <span className={`text-[8.5px] font-mono uppercase tracking-wider block ${getTextColor('sanctuary')}`}>
@@ -969,9 +1003,9 @@ export default function DashboardPage() {
                       e.stopPropagation();
                       router.push('/sanctuary');
                     }}
-                    className={`text-[8.5px] font-mono uppercase tracking-widest ${getTextColor('sanctuary')} hover:text-fouzar-text-primary flex items-center gap-1 transition-colors cursor-pointer`}
+                    className={`text-[8.5px] font-mono uppercase tracking-widest ${getTextColor('sanctuary')} hover:text-fouzar-text-primary flex items-center gap-1.5 transition-all cursor-pointer px-2.5 py-1.5 rounded-lg hover:bg-white/[0.06] group-hover:opacity-100`}
                   >
-                    Enter Sanctuary <ArrowRight className="w-3 h-3" />
+                    Open Sanctuary <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
                   </button>
                 </div>
               </FascaCard>
@@ -980,25 +1014,32 @@ export default function DashboardPage() {
             {/* Active Garden Nodes list */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-fouzar-text-secondary block">
-                  Shared Study Groups
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-fouzar-text-secondary">
+                    Shared Study Groups
+                  </span>
+                  {gardenNodes.filter(n => !n.isEmptyCourse).length > 0 && (
+                    <span className="px-1.5 py-0.5 text-[8px] font-mono text-white/40 border border-white/10 rounded-full">
+                      {gardenNodes.filter(n => !n.isEmptyCourse).length}
+                    </span>
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={() => setShowCreateCourseModal(true)}
-                  className="text-[8px] font-mono uppercase tracking-wider text-fouzar-accent hover:underline cursor-pointer bg-none border-none p-0"
+                  className="flex items-center gap-1 text-[9px] font-mono text-[#7c5cfc] border border-[#7c5cfc]/25 hover:border-[#7c5cfc]/60 bg-[#7c5cfc]/[0.06] hover:bg-[#7c5cfc]/[0.12] px-2.5 py-1 rounded-lg cursor-pointer transition-all uppercase tracking-wider"
                 >
-                  + Create Main Circle
+                  <Plus className="w-2.5 h-2.5" /> New Circle
                 </button>
               </div>
 
               {loadingNodes ? (
                 <div className="max-h-64 overflow-y-auto space-y-3 pr-1 scrollbar-none">
                   {[1, 2].map((i) => (
-                    <div key={i} className="h-32 bg-fouzar-card border border-fouzar-border-strong animate-pulse rounded-[6px] p-4 flex flex-col justify-between">
-                      <div className="h-3 bg-fouzar-elevated w-1/4 rounded-[2px]" />
-                      <div className="h-4 bg-fouzar-elevated w-3/4 rounded-[2px]" />
-                      <div className="h-4 bg-fouzar-elevated w-16 self-end rounded-[2px]" />
+                    <div key={i} className="h-32 bg-fouzar-card/50 border border-fouzar-border-strong animate-pulse rounded-[6px] p-4 flex flex-col justify-between">
+                      <div className="h-3 bg-white/10 w-1/3 rounded-[2px]" />
+                      <div className="h-4 bg-white/10 w-3/4 rounded-[2px]" />
+                      <div className="h-4 bg-white/10 w-20 self-end rounded-[2px]" />
                     </div>
                   ))}
                 </div>
@@ -1233,7 +1274,7 @@ export default function DashboardPage() {
         </div>
 
         {/* ========================================================================= */}
-        {/* 3. RIGHT PANEL: Workspace central Central Core controls                   */}
+        {/* 3. RIGHT PANEL: Workspace central Core controls                            */}
         {/* ========================================================================= */}
         <main className={`w-full h-full flex flex-col ${
           activeNav === 'friends'
@@ -1344,74 +1385,22 @@ export default function DashboardPage() {
                 </motion.div>
               )}
             </AnimatePresence>
+            <div className="flex flex-col gap-12 pb-24 w-full relative">
+              
+              <div id="mindmap-section" className="w-full h-[600px] shrink-0 border border-fouzar-border-strong rounded-[6px] overflow-hidden relative shadow-lg bg-fouzar-surface/40">
+                <StudyNodesGraph nodesData={gardenNodes} />
+              </div>
 
-        {/* 2. Subject Mind Map Section (Elevated) */}
-        <div id="mindmap-section" className="space-y-4 w-full">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-fouzar-text-secondary">
-              Subject Mind Map
-            </span>
-            <Tooltip text="A visual map of your subjects. Click on a topic to see your uploaded lecture slides, notes, and connected AI flashcards all in one web." />
-          </div>
-          <div className="w-full text-center">
-            <StudyNodesGraph nodesData={gardenNodes} />
-          </div>
-        </div>
+              <div id="lms-section" className="w-full h-[600px] shrink-0 relative">
+                <LmsBridgePanel isOpen={true} onClose={() => {}} inline />
+              </div>
 
-        {/* 4. My Study Schedule Section */}
-        <div id="timeline-section" className="space-y-4 w-full border-t border-fouzar-border-strong/20 pt-6 pb-6">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-fouzar-text-secondary">
-              My Study Schedule
-            </span>
-            <Tooltip text="Your academic timeline. Drag it left or right to see upcoming assignment deadlines, exam dates, or custom goals you've set for the semester." />
-          </div>
-          <div className="w-full text-center">
-            <FascaTimeline />
-          </div>
-        </div>
+              <div id="ai-engines-section" className="w-full h-[600px] shrink-0">
+                <FascaAiCore />
+              </div>
 
-        {/* 5. Academic Info Section */}
-        <div className="space-y-4 w-full border-t border-fouzar-border-strong/20 pt-6 pb-2">
-          <AcademicInfoPanel />
-        </div>
-
-        {/* 6. AI Engines Section */}
-        <div id="ai-engines-section" className="space-y-4 w-full border-t border-fouzar-border-strong/20 pt-6 pb-6 scroll-mt-6">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-fouzar-text-secondary">
-              AI Engines
-            </span>
-            <Tooltip text="Connect your own AI API keys (OpenAI, Anthropic, Gemini, or local Ollama). Keys are encrypted with AES-256 before storage. Only one engine can be active at a time." />
-          </div>
-          {user && <AiControlCenter />}
-        </div>
-
-        {/* 7. Personal Diary Section */}
-        <div id="diary-section" className="space-y-4 w-full border-t border-fouzar-border-strong/20 pt-6 pb-6 scroll-mt-6">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-fouzar-text-secondary">
-              Personal Journal
-            </span>
-            <Tooltip text="A highly secure, distraction-free environment for writers. Locked behind a passcode." />
-          </div>
-          <div className="w-full h-[600px] rounded-xl shadow-lg border border-fouzar-border/30 overflow-hidden">
-            <DiaryPanel />
-          </div>
-        </div>
-
-        {/* Footer with open-source link */}
-        <div className="mt-10 mb-12 pt-4 border-t border-fouzar-border/40 flex items-center justify-between text-[8px] font-mono text-fouzar-text-secondary uppercase tracking-wider shrink-0 animate-none">
-          <span>Fasca Academic OS</span>
-          <div className="flex items-center gap-3">
-            <ThemeSwitcher />
-            <a href="https://github.com/fasca-study/app" target="_blank" rel="noopener noreferrer" className="hover:text-fouzar-accent transition-colors">
-              OPEN SOURCE REPOSITORY
-            </a>
-          </div>
-        </div>
-
-        </>
+            </div>
+          </>
         )}
 
       </main>

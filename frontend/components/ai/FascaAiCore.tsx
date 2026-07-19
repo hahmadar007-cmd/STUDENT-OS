@@ -4,6 +4,7 @@ import React from 'react';
 import { FascaCard } from '../ui/FascaCard';
 import { IntegratedAiChat } from './IntegratedAiChat';
 import { useFouzar } from '../../lib/FouzarContext';
+import { useAiProviders } from '../../hooks/useAiProviders';
 
 interface ModelCard {
   id: string;
@@ -22,6 +23,7 @@ const MODEL_API_IDS: Record<string, string> = {
 
 export const FascaAiCore: React.FC = () => {
   const { aiModel, setAiModel } = useFouzar();
+  const { providers } = useAiProviders();
 
   const models: ModelCard[] = [
     {
@@ -75,7 +77,7 @@ export const FascaAiCore: React.FC = () => {
   ];
 
   return (
-    <div className="w-full bg-fouzar-surface/40 border border-fouzar-border-strong rounded-[6px] p-6 space-y-6 flex flex-col justify-between min-h-[480px]">
+    <div className="w-full h-full bg-fouzar-surface/40 border border-fouzar-border-strong rounded-[6px] p-6 space-y-6 flex flex-col overflow-y-auto scrollbar-none">
       
       {/* 1. Model Selector Cards Grid */}
       <div className="space-y-3 shrink-0">
@@ -85,6 +87,17 @@ export const FascaAiCore: React.FC = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {models.map((model) => {
             const isActive = aiModel === MODEL_API_IDS[model.id];
+            
+            // Map the model.id to ProviderType
+            const providerTypeMap: Record<string, string> = {
+              gemini: 'GEMINI',
+              claude: 'ANTHROPIC',
+              gpt4: 'OPENAI',
+              custom: 'CUSTOM',
+            };
+            const provider = providers.find(p => p.providerType === providerTypeMap[model.id]);
+            const hasKey = provider ? (provider.providerType === 'CUSTOM' ? !!provider.baseUrl : !!provider.apiKeyRaw) : false;
+
             return (
               <FascaCard
                 key={model.id}
@@ -119,15 +132,23 @@ export const FascaAiCore: React.FC = () => {
 
                 {/* Footer: SET AS ACTIVE Button */}
                 <button
-                  onClick={() => setAiModel(MODEL_API_IDS[model.id])}
-                  disabled={isActive}
+                  onClick={() => {
+                    if (hasKey) {
+                      setAiModel(MODEL_API_IDS[model.id]);
+                    } else {
+                      window.dispatchEvent(new CustomEvent('open-ai-onboarding'));
+                    }
+                  }}
+                  disabled={hasKey && isActive}
                   className={`w-full py-1 text-[7.5px] font-mono uppercase tracking-widest mt-2.5 transition-colors cursor-pointer border ${
-                    isActive
-                      ? 'border-[#7c5cfc]/20 bg-[#7c5cfc]/10 text-[#7c5cfc] cursor-default'
-                      : 'border-fouzar-border-strong hover:border-[#7c5cfc]/60 text-fouzar-text-secondary hover:text-fouzar-text-primary'
+                    !hasKey
+                      ? 'border-[#ff2d55]/20 bg-[#ff2d55]/5 hover:bg-[#ff2d55]/10 text-[#ff2d55]'
+                      : isActive
+                        ? 'border-[#7c5cfc]/20 bg-[#7c5cfc]/10 text-[#7c5cfc] cursor-default'
+                        : 'border-fouzar-border-strong hover:border-[#7c5cfc]/60 text-fouzar-text-secondary hover:text-fouzar-text-primary'
                   }`}
                 >
-                  {isActive ? 'ACTIVE PARTNER' : 'SET AS ACTIVE'}
+                  {!hasKey ? 'CONNECT API KEY' : isActive ? 'ACTIVE PARTNER' : 'SET AS ACTIVE'}
                 </button>
               </FascaCard>
             );
