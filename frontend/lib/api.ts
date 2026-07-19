@@ -49,7 +49,7 @@ export const clearAuthToken = () => {
 };
 
 // Generic api helper accepts optional extraHeaders to inject AI provider keys per-request
-async function apiRequest(
+export async function apiRequest(
   endpoint: string,
   method: string = 'GET',
   body?: any,

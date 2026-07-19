@@ -42,6 +42,7 @@ import { LmsBridgePanel } from '../../components/social/LmsBridgePanel';
 import { FocusShieldPanel } from '../../components/focus/FocusShieldPanel';
 import { AiControlCenter } from '../../components/ai/AiControlCenter';
 import { AcademicInfoPanel } from '../../components/academic/AcademicInfoPanel';
+import { UsernameOnboardingModal } from '../../components/onboarding/UsernameOnboardingModal';
 import { useAuth } from '../../hooks/useAuth';
 import { useSocket } from '../../hooks/useSocket';
 import { useOnFocusStateChanged, updateFocusState as socketUpdateFocusState } from '../../lib/socket';
@@ -122,6 +123,8 @@ export default function DashboardPage() {
     setAccentColor,
   } = useFouzar();
   const [isSidebarHovered, setIsSidebarHovered] = useState(false);
+  const [showAiOnboarding, setShowAiOnboarding] = useState(false);
+  const [showUsernameOnboarding, setShowUsernameOnboarding] = useState(false);
   const [activeNav, setActiveNav] = useState<'circles' | 'nodes' | 'ai' | 'bridge' | 'shield' | 'friends'>('circles');
   const [activePanelTab, setActivePanelTab] = useState<'timer' | 'nodes' | 'timeline' | 'ai'>('timer');
   const [sessionMinutes, setSessionMinutes] = useState(25);
@@ -454,6 +457,19 @@ export default function DashboardPage() {
     setContextMenuPos({ x: e.clientX, y: e.clientY });
   };
 
+  const checkAiOnboarding = async (userId: string) => {
+    const alreadyOnboarded = localStorage.getItem('fasca_onboarded') === '1';
+    const hasEngines = !!localStorage.getItem('fasca_ai_providers_v1');
+    if (!alreadyOnboarded && !hasEngines) {
+      setShowAiOnboarding(true);
+    }
+  };
+
+  const handleAiOnboardingComplete = () => {
+    localStorage.setItem('fasca_onboarded', '1');
+    setShowAiOnboarding(false);
+  };
+
   useEffect(() => {
     const loadRealFriends = async () => {
       try {
@@ -479,13 +495,17 @@ export default function DashboardPage() {
       loadGroups();
       loadRealFriends();
 
-      // Show onboarding modal for new signups who haven't configured an AI engine yet
+      // Show onboarding modal for new signups
       const justSignedUp = localStorage.getItem('fasca_just_signed_up') === '1';
-      const alreadyOnboarded = localStorage.getItem('fasca_onboarded') === '1';
-      const hasEngines = !!localStorage.getItem('fasca_ai_providers_v1');
-      if ((justSignedUp || !alreadyOnboarded) && !hasEngines) {
+      if (justSignedUp) {
         localStorage.removeItem('fasca_just_signed_up');
-        setShowOnboarding(true);
+      }
+      
+      // Delay AI onboarding if Username onboarding is needed
+      if (!user?.username && !user?.fouzarId) {
+        setShowUsernameOnboarding(true);
+      } else {
+        checkAiOnboarding(user.id);
       }
     }
   }, [user]);
@@ -610,7 +630,7 @@ export default function DashboardPage() {
   }, []);
 
   const handleOpenAiOnboarding = () => {
-    setShowOnboarding(true);
+    setShowAiOnboarding(true);
   };
 
   useEffect(() => {
@@ -766,12 +786,6 @@ export default function DashboardPage() {
         {/* Subtle Grain Overlay */}
         <div className="absolute inset-0 opacity-[0.015] mix-blend-overlay pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }}></div>
       </div>
-
-      <AnimatePresence>
-        {showOnboarding && (
-          <AiOnboardingModal onClose={() => setShowOnboarding(false)} />
-        )}
-      </AnimatePresence>
       
       {/* ========================================================================= */}
       {/* 1. LEFT SIDEBAR: Icon-only, expands on hover (MD and up)                  */}
@@ -1715,6 +1729,21 @@ export default function DashboardPage() {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {showAiOnboarding && (
+          <AiOnboardingModal onComplete={handleAiOnboardingComplete} />
+        )}
+        {showUsernameOnboarding && (
+          <UsernameOnboardingModal 
+            user={user} 
+            onComplete={() => {
+              setShowUsernameOnboarding(false);
+              if (user) checkAiOnboarding(user.id);
+              window.location.reload();
+            }} 
+          />
         )}
       </AnimatePresence>
 
