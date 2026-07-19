@@ -403,8 +403,14 @@ export default function DashboardPage() {
     try {
       const { getMyGroups, getMyCourses } = await import('../../lib/api');
       const [groupsData, coursesData] = await Promise.all([
-        getMyGroups(),
-        getMyCourses()
+        getMyGroups().catch((err: any) => {
+          console.error("Failed to fetch groups:", err);
+          return [];
+        }),
+        getMyCourses().catch((err: any) => {
+          console.error("Failed to fetch courses:", err);
+          return [];
+        })
       ]);
       
       const formattedNodes: any[] = (groupsData || []).map((g: any) => ({
