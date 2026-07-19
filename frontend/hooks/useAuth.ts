@@ -64,9 +64,9 @@ export const useAuth = () => {
       }
     } catch (err) {
       console.error('Failed to resolve authenticated session:', err);
-      setUser(null);
+      // setUser(null);
       // Clear corrupt token
-      clearAuthToken();
+      // clearAuthToken();
     } finally {
       setLoading(false);
     }

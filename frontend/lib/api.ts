@@ -78,10 +78,11 @@ export async function apiRequest(
   });
 
   if (response.status === 401) {
-    clearAuthToken();
-    if (typeof window !== 'undefined' && window.location.pathname !== '/auth') {
-      window.location.href = '/auth';
-    }
+    console.error('API 401 Error on endpoint:', endpoint);
+    // clearAuthToken();
+    // if (typeof window !== 'undefined' && window.location.pathname !== '/auth') {
+    //   window.location.href = '/auth';
+    // }
     throw new Error('Unauthorized');
   }
 
