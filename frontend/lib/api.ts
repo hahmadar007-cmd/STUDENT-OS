@@ -16,7 +16,7 @@ export const getBackendUrl = (): string => {
     if (isLocal) return 'http://localhost:3001';
   }
   if (!envVal || envVal.includes('localhost') || envVal.includes('127.0.0.1')) {
-    return 'https://ammeeee-student-os.hf.space';
+    return 'https://ammeeee-student-os-backend.hf.space';
   }
   return envVal;
 };
