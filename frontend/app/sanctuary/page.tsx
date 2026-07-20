@@ -343,7 +343,9 @@ export default function PersonalSanctuaryPage() {
             {activeSection && (
               <>
                 <span className="text-white/15">›</span>
-                <span className="text-[#7c5cfc] font-semibold">{SECTIONS.find(s => s.id === activeSection)?.label}</span>
+                <span className="text-[#7c5cfc] font-semibold truncate max-w-[150px]">
+                  {SECTIONS.find(s => s.id === activeSection)?.label || openDocs.find(d => d.id === activeSection)?.fileName || ''}
+                </span>
               </>
             )}
           </div>
@@ -510,8 +512,27 @@ export default function PersonalSanctuaryPage() {
             <div className="flex items-center gap-2">
               {activeSection ? (
                 <>
-                  {(() => { const s = SECTIONS.find(x => x.id === activeSection)!; return <s.icon className="w-3.5 h-3.5" style={{ color: s.color }} />; })()}
-                  <span className="text-[11px] font-semibold text-white/70">{SECTIONS.find(s => s.id === activeSection)?.label}</span>
+                  {(() => {
+                    const s = SECTIONS.find(x => x.id === activeSection);
+                    if (s) {
+                      return (
+                        <>
+                          <s.icon className="w-3.5 h-3.5" style={{ color: s.color }} />
+                          <span className="text-[11px] font-semibold text-white/70">{s.label}</span>
+                        </>
+                      );
+                    }
+                    const doc = openDocs.find(d => d.id === activeSection);
+                    if (doc) {
+                      return (
+                        <>
+                          <FileText className="w-3.5 h-3.5 text-[#7c5cfc]" />
+                          <span className="text-[11px] font-semibold text-white/70 truncate max-w-[200px]">{doc.fileName}</span>
+                        </>
+                      );
+                    }
+                    return null;
+                  })()}
                   <span className="text-white/15 text-xs">·</span>
                   <span className="text-[10px] font-mono text-white/30">{activeFolder?.name || 'General'}</span>
                 </>
