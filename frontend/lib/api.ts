@@ -272,6 +272,10 @@ export const connectLms = (lmsType: string, url: string, token: string) => {
   return apiRequest('/lms/connect', 'POST', { lmsType, url, token });
 };
 
+export const loginLmsWithCredentials = (lmsType: string, url: string, username?: string, password?: string) => {
+  return apiRequest('/lms/login', 'POST', { lmsType, url, username, password });
+};
+
 export interface LmsDeadlineItem {
   id: string;
   course: string;

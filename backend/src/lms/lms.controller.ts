@@ -60,6 +60,31 @@ export class LmsController {
     });
   }
 
+  @Post('login')
+  async loginLms(
+    @Headers('authorization') authHeader: string,
+    @Body() body: { lmsType: string; url: string; username?: string; password?: string }
+  ) {
+    if (body.lmsType !== 'moodle') {
+      return { success: false, message: 'Login only supported for Moodle' };
+    }
+    if (!body.username || !body.password) {
+      return { success: false, message: 'Username and password required' };
+    }
+
+    try {
+      const token = await this.lmsService.loginMoodle(body.url, body.username, body.password);
+      // Once we have the token, we can just pipe it into the existing connect flow
+      return this.patchLmsToken(authHeader, {
+        token,
+        baseUrl: body.url,
+        lmsProvider: body.lmsType,
+      });
+    } catch (e: any) {
+      return { success: false, message: e.message || 'Failed to login' };
+    }
+  }
+
   @Get('status')
   async getLmsStatus(@Headers('authorization') authHeader?: string) {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {

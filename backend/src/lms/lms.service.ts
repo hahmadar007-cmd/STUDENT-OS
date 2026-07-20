@@ -84,6 +84,30 @@ export class LmsService {
     return url.replace(/\/+$/, '');
   }
 
+  async loginMoodle(baseUrl: string, username: string, password: string): Promise<string> {
+    const root = this.normalizeBaseUrl(baseUrl);
+    // login/token.php?username=YOUR_ID&password=YOUR_PASSWORD&service=moodle_mobile_app
+    const url = `${root}/login/token.php?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&service=moodle_mobile_app`;
+    
+    try {
+      const res = await fetch(url);
+      if (!res.ok) {
+        throw new Error(`HTTP error ${res.status}`);
+      }
+      const data = await res.json();
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      if (data.token) {
+        return data.token;
+      }
+      throw new Error('No token received from Moodle');
+    } catch (e: any) {
+      this.logger.error('Error logging into Moodle', e);
+      throw new Error(e.message || 'Failed to login to Moodle');
+    }
+  }
+
   async testMoodleConnection(baseUrl: string, token: string): Promise<LmsFetchResult> {
     const deadlines = await this.getMoodleDeadlines(baseUrl, token);
     if (deadlines.length > 0) return { deadlines };

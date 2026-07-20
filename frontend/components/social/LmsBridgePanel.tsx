@@ -13,7 +13,7 @@ import { FascaCard } from '../ui/FascaCard';
 import { FascaInput } from '../ui/FascaInput';
 import {
   getDeadlines, patchLmsToken, getCourseContents, getGrades,
-  getAssignments, getQuizzes, getForumActivity, getCourses,
+  getAssignments, getQuizzes, getForumActivity, getCourses, loginLmsWithCredentials
 } from '../../lib/api';
 import type {
   CourseContents, GradeItem, AssignmentStatusItem, QuizItem, ForumItem, CourseInfo,
@@ -150,7 +150,10 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose,
   // Connect modal state
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [activeLmsTab, setActiveLmsTab] = useState<'moodle' | 'canvas' | 'blackboard' | 'token'>('moodle');
+  const [authMethod, setAuthMethod] = useState<'credentials' | 'token'>('credentials');
   const [baseUrl, setBaseUrl] = useState('https://lms.umt.edu.pk');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [tokenValue, setTokenValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -216,16 +219,32 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose,
 
   // ── Connect handler ──────────────────────────────────────────────
   const handleLinkGateway = async () => {
-    if (!tokenValue) { setErrorMsg('Please enter your access token.'); return; }
     setIsLoading(true); setErrorMsg('');
     try {
       const provider = activeLmsTab === 'canvas' ? 'canvas' : 'moodle';
-      const result = await patchLmsToken(tokenValue, baseUrl, provider);
+      let result;
+
+      if (activeLmsTab === 'moodle' && authMethod === 'credentials') {
+        if (!username || !password) {
+          setErrorMsg('Please enter your username and password.');
+          setIsLoading(false);
+          return;
+        }
+        result = await loginLmsWithCredentials('moodle', baseUrl, username, password);
+      } else {
+        if (!tokenValue) {
+          setErrorMsg('Please enter your access token.');
+          setIsLoading(false);
+          return;
+        }
+        result = await patchLmsToken(tokenValue, baseUrl, provider);
+      }
+
       if (!result.success) { setErrorMsg(result.message || 'Connection failed.'); return; }
       setShowSuccessCheck(true);
       toast(result.message || 'University portal connected', 'cyan');
       setTimeout(() => {
-        setShowSuccessCheck(false); setShowConnectModal(false); setTokenValue('');
+        setShowSuccessCheck(false); setShowConnectModal(false); setTokenValue(''); setUsername(''); setPassword('');
         fetchAll();
       }, 1800);
     } catch (err: any) { setErrorMsg(err.message || 'Connection failed.'); }
@@ -695,18 +714,64 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose,
               ) : (
                 <>
                   <div className="space-y-4 my-4">
-                    {(activeLmsTab === 'moodle' || activeLmsTab === 'canvas') ? (
+                    {activeLmsTab === 'moodle' ? (
                       <div className="space-y-3">
-                        <div className="flex flex-col gap-1.5">
-                          <span className="text-[8px] font-mono uppercase text-fouzar-text-secondary">{activeLmsTab === 'canvas' ? 'Canvas URL' : 'University Portal URL'}</span>
-                          <FascaInput type="url" value={baseUrl} onChange={e => setBaseUrl(e.target.value)} placeholder={activeLmsTab === 'canvas' ? 'https://canvas.university.edu' : 'https://lms.university.edu'} className="rounded-none border border-fouzar-border-strong focus:border-[#7c5cfc]" />
+                        <div className="flex bg-[#1e1e2d] rounded-md p-1 mb-2">
+                          <button
+                            onClick={() => setAuthMethod('credentials')}
+                            className={`flex-1 py-1.5 text-[8.5px] font-mono uppercase tracking-widest rounded transition-colors ${authMethod === 'credentials' ? 'bg-[#7c5cfc] text-white' : 'text-fouzar-text-secondary hover:text-fouzar-text-primary'}`}
+                          >
+                            Login with Credentials
+                          </button>
+                          <button
+                            onClick={() => setAuthMethod('token')}
+                            className={`flex-1 py-1.5 text-[8.5px] font-mono uppercase tracking-widest rounded transition-colors ${authMethod === 'token' ? 'bg-[#7c5cfc] text-white' : 'text-fouzar-text-secondary hover:text-fouzar-text-primary'}`}
+                          >
+                            Paste Token (Advanced)
+                          </button>
                         </div>
                         <div className="flex flex-col gap-1.5">
-                          <span className="text-[8px] font-mono uppercase text-fouzar-text-secondary">{activeLmsTab === 'canvas' ? 'Access Token' : 'Web Service Token'}</span>
+                          <span className="text-[8px] font-mono uppercase text-fouzar-text-secondary">University Portal URL</span>
+                          <FascaInput type="url" value={baseUrl} onChange={e => setBaseUrl(e.target.value)} placeholder="https://lms.university.edu" className="rounded-none border border-fouzar-border-strong focus:border-[#7c5cfc]" />
+                        </div>
+                        {authMethod === 'credentials' ? (
+                          <>
+                            <div className="flex flex-col gap-1.5">
+                              <span className="text-[8px] font-mono uppercase text-fouzar-text-secondary">Username (e.g. F202111...)</span>
+                              <FascaInput type="text" value={username} onChange={e => setUsername(e.target.value)} placeholder="Your university ID" className="rounded-none border border-fouzar-border-strong focus:border-[#7c5cfc]" />
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                              <span className="text-[8px] font-mono uppercase text-fouzar-text-secondary">Password</span>
+                              <FascaInput type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Your portal password" className="rounded-none border border-fouzar-border-strong focus:border-[#7c5cfc]" />
+                            </div>
+                            <p className="text-[7px] font-mono text-fouzar-text-secondary/70 leading-relaxed">
+                              We don't save your password. We securely fetch an access token from your university directly.
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex flex-col gap-1.5">
+                              <span className="text-[8px] font-mono uppercase text-fouzar-text-secondary">Web Service Token</span>
+                              <FascaInput type="password" value={tokenValue} onChange={e => setTokenValue(e.target.value)} placeholder="Paste your token here" className="rounded-none border border-fouzar-border-strong focus:border-[#7c5cfc]" />
+                            </div>
+                            <p className="text-[7px] font-mono text-fouzar-text-secondary/70 leading-relaxed">
+                              Ask your IT department for a Moodle web service token with full course access.
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    ) : activeLmsTab === 'canvas' ? (
+                      <div className="space-y-3">
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-[8px] font-mono uppercase text-fouzar-text-secondary">Canvas URL</span>
+                          <FascaInput type="url" value={baseUrl} onChange={e => setBaseUrl(e.target.value)} placeholder="https://canvas.university.edu" className="rounded-none border border-fouzar-border-strong focus:border-[#7c5cfc]" />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-[8px] font-mono uppercase text-fouzar-text-secondary">Access Token</span>
                           <FascaInput type="password" value={tokenValue} onChange={e => setTokenValue(e.target.value)} placeholder="Paste your token here" className="rounded-none border border-fouzar-border-strong focus:border-[#7c5cfc]" />
                         </div>
                         <p className="text-[7px] font-mono text-fouzar-text-secondary/70 leading-relaxed">
-                          {activeLmsTab === 'canvas' ? 'Go to Account → Settings → Approved Integrations to create a token.' : 'Ask your IT department for a Moodle web service token with full course access.'}
+                          Go to Account → Settings → Approved Integrations to create a token.
                         </p>
                       </div>
                     ) : activeLmsTab === 'token' ? (
