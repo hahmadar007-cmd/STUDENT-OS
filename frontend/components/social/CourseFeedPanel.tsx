@@ -22,42 +22,46 @@ interface Resource {
   lastModified: number;
 }
 
-export function CourseFeedPanel() {
+export function CourseFeedPanel({ onOpenConnect }: { onOpenConnect?: () => void }) {
   const [courses, setCourses] = useState<Course[]>([]);
   const [resourcesByCourse, setResourcesByCourse] = useState<Record<string, Resource[]>>({});
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const cData = await fetchUserCourses();
-        if (cData && Array.isArray(cData)) {
-          setCourses(cData);
-          
-          // Fetch resources for each course
-          const resMap: Record<string, Resource[]> = {};
-          await Promise.all(
-            cData.map(async (c: Course) => {
-              try {
-                const rData = await fetchCourseResources(c.id);
-                if (rData && Array.isArray(rData)) {
-                  resMap[c.id] = rData;
-                }
-              } catch (e) {
-                console.error('Failed to load resources for course', c.id, e);
+  const load = async () => {
+    setLoading(true);
+    try {
+      const cData = await fetchUserCourses();
+      if (cData && Array.isArray(cData)) {
+        setCourses(cData);
+        
+        // Fetch resources for each course
+        const resMap: Record<string, Resource[]> = {};
+        await Promise.all(
+          cData.map(async (c: Course) => {
+            try {
+              const rData = await fetchCourseResources(c.id);
+              if (rData && Array.isArray(rData)) {
+                resMap[c.id] = rData;
               }
-            })
-          );
-          setResourcesByCourse(resMap);
-        }
-      } catch (err) {
-        console.error('Failed to load courses:', err);
-      } finally {
-        setLoading(false);
+            } catch (e) {
+              console.error('Failed to load resources for course', c.id, e);
+            }
+          })
+        );
+        setResourcesByCourse(resMap);
       }
+    } catch (err) {
+      console.error('Failed to load courses:', err);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     load();
+    window.addEventListener('refresh-courses', load);
+    return () => window.removeEventListener('refresh-courses', load);
   }, []);
 
   const handleOpenSanctuary = (courseName: string) => {
@@ -90,7 +94,15 @@ export function CourseFeedPanel() {
           <div className="flex flex-col items-center justify-center h-full text-center">
             <Folder className="w-8 h-8 text-fouzar-border-strong mb-3" />
             <p className="text-[10px] font-mono text-fouzar-text-secondary uppercase">No courses found</p>
-            <p className="text-[8px] font-mono text-fouzar-text-tertiary mt-1">Connect your university to sync courses.</p>
+            <p className="text-[8px] font-mono text-fouzar-text-tertiary mt-1 mb-4">Connect your university to sync courses.</p>
+            {onOpenConnect && (
+              <button
+                onClick={onOpenConnect}
+                className="px-4 py-2 bg-[#7c5cfc] hover:bg-[#9b82ff] text-white text-[10px] font-bold rounded-[6px] transition-colors"
+              >
+                Connect Portal
+              </button>
+            )}
           </div>
         ) : (
           courses.map(course => {

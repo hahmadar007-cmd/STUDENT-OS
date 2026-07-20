@@ -246,6 +246,7 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose,
       setTimeout(() => {
         setShowSuccessCheck(false); setShowConnectModal(false); setTokenValue(''); setUsername(''); setPassword('');
         fetchAll();
+        window.dispatchEvent(new Event('refresh-courses'));
       }, 1800);
     } catch (err: any) { setErrorMsg(err.message || 'Connection failed.'); }
     finally { setIsLoading(false); }
