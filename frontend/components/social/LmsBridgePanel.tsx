@@ -262,7 +262,6 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose,
         setCourseContents([]);
         setAssignments([]);
         setQuizzes([]);
-        setForumActivity([]);
         setCourseList([]);
         setSyncTimestamp('Not connected yet');
         setLmsSource('demo');
