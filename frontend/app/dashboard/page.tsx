@@ -38,7 +38,7 @@ import { FascaTimeline } from '../../components/social/FascaTimeline';
 import { FascaAiCore } from '../../components/ai/FascaAiCore';
 import { AiOnboardingModal } from '../../components/ai/AiOnboardingModal';
 import { AdminMembersPanel } from '../../components/ui/AdminMembersPanel';
-import { LmsBridgePanel } from '../../components/social/LmsBridgePanel';
+import { CourseFeedPanel } from '../../components/social/CourseFeedPanel';
 import { FocusShieldPanel } from '../../components/focus/FocusShieldPanel';
 import { AiControlCenter } from '../../components/ai/AiControlCenter';
 import { AcademicInfoPanel } from '../../components/academic/AcademicInfoPanel';
@@ -642,7 +642,7 @@ export default function DashboardPage() {
 
   const handleNavClick = (id: string) => {
     if (id === 'bridge') {
-      document.getElementById('lms-section')?.scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('courses-section')?.scrollIntoView({ behavior: 'smooth' });
     } else if (id === 'shield') {
       setIsShieldOpen(true);
     } else if (id === 'friends') {
@@ -1411,8 +1411,8 @@ export default function DashboardPage() {
                 <StudyNodesGraph nodesData={gardenNodes} />
               </div>
 
-              <div id="lms-section" className="w-full h-[600px] shrink-0 relative">
-                <LmsBridgePanel isOpen={true} onClose={() => {}} inline />
+              <div id="courses-section" className="w-full h-[600px] shrink-0 relative">
+                <CourseFeedPanel />
               </div>
 
               <div id="ai-engines-section" className="w-full h-[600px] shrink-0">
@@ -1456,7 +1456,6 @@ export default function DashboardPage() {
       </nav>
 
       {/* Side Panels */}
-      <LmsBridgePanel isOpen={isLmsOpen} onClose={handleCloseLms} />
       <FocusShieldPanel isOpen={isShieldOpen} onClose={handleCloseShield} />
 
       {/* Pillar 2 — Deep Flow shield overlay */}

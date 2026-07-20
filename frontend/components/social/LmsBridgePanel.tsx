@@ -266,11 +266,10 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose,
         setSyncTimestamp('Not connected yet');
         setLmsSource('demo');
         setShowConnectModal(true); // Open the modal again so they can log in if they want
-      } else {
-        toast('Failed to disconnect', 'rose');
+        toast('Failed to disconnect', 'crimson');
       }
     } catch (err) {
-      toast('Failed to disconnect', 'rose');
+      toast('Failed to disconnect', 'crimson');
     } finally {
       setIsLoading(false);
     }

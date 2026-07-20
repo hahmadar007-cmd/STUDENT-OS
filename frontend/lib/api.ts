@@ -611,3 +611,12 @@ export const createDiaryEntry = async (diaryToken: string, title: string, conten
 export const deleteDiaryEntry = async (diaryToken: string, id: string) => {
   return apiRequest(`/diary/${id}`, 'DELETE', undefined, { 'x-diary-token': `Bearer ${diaryToken}` });
 };
+
+// Resources Architecture APIs
+export const fetchUserCourses = async () => {
+  return apiRequest('/resources/courses');
+};
+
+export const fetchCourseResources = async (courseId: string) => {
+  return apiRequest(`/resources/courses/${courseId}`);
+};

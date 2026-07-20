@@ -4,6 +4,7 @@ import { AuthModule } from './auth/auth.module';
 import { GroupsModule } from './groups/groups.module';
 import { AiModule } from './ai/ai.module';
 import { LmsModule } from './lms/lms.module';
+import { ResourcesModule } from './resources/resources.module';
 import { AiProvidersModule } from './ai-providers/ai-providers.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -24,6 +25,7 @@ import { FocusModule } from './focus/focus.module';
     GroupsModule,
     AiModule,
     LmsModule,
+    ResourcesModule,
     PortalModule,
     UsersModule,
     VideosModule,
