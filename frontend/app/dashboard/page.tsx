@@ -501,8 +501,8 @@ export default function DashboardPage() {
         localStorage.removeItem('fasca_just_signed_up');
       }
       
-      // Delay AI onboarding if Username onboarding is needed
-      if (!user?.username && !user?.fouzarId) {
+      // Show username onboarding for new users who haven't picked a @username yet
+      if (!user?.username) {
         setShowUsernameOnboarding(true);
       } else {
         checkAiOnboarding(user.id);
@@ -1733,7 +1733,7 @@ export default function DashboardPage() {
       </AnimatePresence>
       <AnimatePresence>
         {showAiOnboarding && (
-          <AiOnboardingModal onComplete={handleAiOnboardingComplete} />
+          <AiOnboardingModal onClose={handleAiOnboardingComplete} />
         )}
         {showUsernameOnboarding && (
           <UsernameOnboardingModal 

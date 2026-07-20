@@ -7,7 +7,7 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { FascaLogo } from '../../components/logo/FascaLogo';
 import { FascaButton } from '../../components/ui/FascaButton';
-import { getBackendUrl } from '../../lib/api';
+import { getBackendUrl, setAuthToken } from '../../lib/api';
 
 /**
  * Animated Network Nodes Canvas Component
@@ -216,7 +216,9 @@ export default function AuthPage() {
       if (res.ok) {
         setIsSuccess(true);
         if (data.accessToken) {
-          localStorage.setItem('token', data.accessToken);
+          // Use setAuthToken so it sets BOTH localStorage AND cookie.
+          // This fixes the sanctuary logout bug (useAuth reads cookie first).
+          setAuthToken(data.accessToken);
         }
         localStorage.setItem('user', JSON.stringify(data.user || data));
         if (activeTab === 'register') {

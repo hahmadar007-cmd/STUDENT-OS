@@ -84,8 +84,8 @@ export const UsernameOnboardingModal = ({
     }
   };
 
-  // Only render if we actually lack a username/fouzarId
-  if (user?.username || user?.fouzarId) return null;
+  // Only render if the user has no username yet
+  if (user?.username) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
