@@ -1,10 +1,22 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Sparkles, Check, AlertCircle, ArrowRight } from 'lucide-react';
 import { apiRequest } from '../../lib/api';
-import debounce from 'lodash/debounce';
+
+// Simple inline debounce to avoid lodash dependency
+function useDebounce<T extends (...args: any[]) => void>(func: T, wait: number) {
+  const timeout = useRef<NodeJS.Timeout | null>(null);
+  return useCallback((...args: Parameters<T>) => {
+    const later = () => {
+      if (timeout.current) clearTimeout(timeout.current);
+      func(...args);
+    };
+    if (timeout.current) clearTimeout(timeout.current);
+    timeout.current = setTimeout(later, wait);
+  }, [func, wait]);
+}
 
 export const UsernameOnboardingModal = ({
   user,
@@ -43,13 +55,9 @@ export const UsernameOnboardingModal = ({
     }
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedCheck = useCallback(
-    debounce((u: string) => {
-      checkAvailability(u);
-    }, 500),
-    []
-  );
+  const debouncedCheck = useDebounce((u: string) => {
+    checkAvailability(u);
+  }, 500);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
