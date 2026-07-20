@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { LmsService, CourseContents, AssignmentStatus } from '../lms/lms.service';
+import { LmsService, CourseContents, AssignmentStatus, CourseFile } from '../lms/lms.service';
+import { decrypt } from '../utils/crypto';
 
 export interface Resource {
   id: string;
@@ -33,16 +34,17 @@ export class ResourcesService {
   async getUserCourses(userId: string): Promise<Course[]> {
     const courses: Course[] = [];
     
-    // Fetch Moodle token
-    const userLms = await this.prisma.userLms.findUnique({
-      where: { userId },
+    // Fetch User LMS details
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
     });
 
-    if (userLms && userLms.moodleToken && userLms.moodleUrl) {
+    if (user && user.lmsToken && user.lmsBaseUrl && user.lmsProvider === 'moodle') {
       try {
+        const decryptedToken = decrypt(user.lmsToken);
         const moodleData = await this.lmsService.getMoodleCourses(
-          userLms.moodleToken,
-          userLms.moodleUrl,
+          decryptedToken,
+          user.lmsBaseUrl,
         );
 
         moodleData.forEach((mc) => {
@@ -64,22 +66,23 @@ export class ResourcesService {
   async getCourseResources(userId: string, courseId: string): Promise<Resource[]> {
     const resources: Resource[] = [];
 
-    const userLms = await this.prisma.userLms.findUnique({
-      where: { userId },
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
     });
 
-    if (userLms && userLms.moodleToken && userLms.moodleUrl) {
+    if (user && user.lmsToken && user.lmsBaseUrl && user.lmsProvider === 'moodle') {
       try {
+        const decryptedToken = decrypt(user.lmsToken);
         // 1. Fetch files
         const moodleData = await this.lmsService.getMoodleCourses(
-          userLms.moodleToken,
-          userLms.moodleUrl,
+          decryptedToken,
+          user.lmsBaseUrl,
         );
 
         const course = moodleData.find((c) => c.courseId.toString() === courseId);
         
         if (course) {
-          course.files.forEach((file) => {
+          course.files.forEach((file: CourseFile) => {
             let type: Resource['type'] = 'document';
             const nameLower = file.name.toLowerCase();
             if (nameLower.includes('slide') || nameLower.includes('lecture') || nameLower.includes('ppt')) type = 'slide';
@@ -88,7 +91,7 @@ export class ResourcesService {
             else if (nameLower.includes('assignment')) type = 'assignment';
 
             // Add token to download URL to bypass login
-            const downloadUrl = file.fileUrl + '&token=' + userLms.moodleToken;
+            const downloadUrl = file.fileUrl + '&token=' + decryptedToken;
 
             resources.push({
               id: 'moodle-file-' + file.id,
@@ -105,8 +108,8 @@ export class ResourcesService {
 
         // 2. Fetch assignments
         const assignments = await this.lmsService.getMoodleAssignments(
-          userLms.moodleToken,
-          userLms.moodleUrl,
+          decryptedToken,
+          user.lmsBaseUrl,
         );
         
         const courseAssignments = assignments.filter((a) => a.courseId.toString() === courseId);
