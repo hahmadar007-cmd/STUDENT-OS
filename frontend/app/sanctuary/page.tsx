@@ -5,47 +5,43 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
-  Columns,
   BookOpen,
   Flame,
-  Users,
   FileText,
   Upload,
   Loader2,
   Trash2,
-  Calendar,
   Sparkles,
   Layers,
   Shield,
-  Clock,
   Globe,
   ExternalLink,
   Search,
-  Minus,
   PanelLeft,
   PanelRight,
   ChevronRight as ChevronRightIcon,
   FolderOpen,
-  NotebookPen,
   Tv2,
   ScanSearch,
   Hash,
   ChevronDown,
-  Command,
   X,
+  NotebookPen,
+  Film,
+  PlaySquare,
+  Notebook,
+  BookMarked,
+  Plus,
+  Bot,
 } from 'lucide-react';
 import ThemeSwitcher from '../../components/ui/ThemeSwitcher';
-import Link from 'next/link';
-import { FouzarLogo } from '../../components/logo/FouzarLogo';
 import { IntegratedAiChat } from '../../components/ai/IntegratedAiChat';
 import { DocumentViewer } from '../../components/documents/DocumentViewer';
 import { FileExplorer } from '../../components/documents/FileExplorer';
 import { useFouzar, LmsRepositoryItem } from '../../lib/FouzarContext';
 import { MediaHubStandalone } from '../../components/sanctuary/MediaHubStandalone';
-import { FolderSelector } from '../../components/ui/FolderSelector';
 import { useAuth } from '../../hooks/useAuth';
 import { buildRepositoryEntryFromFile } from '../../lib/repositoryUpload';
-import { ResizablePanel } from '../../components/ui/ResizablePanel';
 import {
   getPersonalSanctuary,
   getMyGroups,
@@ -56,11 +52,18 @@ import {
 } from '../../lib/api';
 import { DiaryPanel } from '../../components/diary/DiaryPanel';
 
-/**
- * Personal Sanctuary — private solo study space for a full semester.
- * Separate from shared group rooms. Includes notes, archive, deadlines,
- * and API-integrated AI (same engine as group study rooms).
- */
+type SectionId = 'notes' | 'slides' | 'files' | 'web' | 'media' | 'youtube' | 'journal';
+
+const SECTIONS: { id: SectionId; label: string; icon: React.FC<any>; desc: string; color: string }[] = [
+  { id: 'notes',   label: 'Notebook',  icon: NotebookPen, desc: 'Private notes & lecture write-ups', color: '#7c5cfc' },
+  { id: 'files',   label: 'Files',     icon: FileText,    desc: 'All uploaded docs & PDFs',          color: '#00b4d8' },
+  { id: 'slides',  label: 'Slides',    icon: Layers,      desc: 'Presentation slides (PDF / PPTX)',  color: '#f5a623' },
+  { id: 'web',     label: 'Web Hub',   icon: Globe,       desc: 'Search & browse the web',           color: '#4cd964' },
+  { id: 'media',   label: 'Media',     icon: Film,        desc: 'Saved YouTube videos & links',      color: '#ff2d55' },
+  { id: 'youtube', label: 'YT Search', icon: PlaySquare,  desc: 'Search & watch YouTube live',       color: '#ff3b30' },
+  { id: 'journal', label: 'Journal',   icon: BookMarked,  desc: 'Encrypted personal diary',          color: '#af52de' },
+];
+
 export default function PersonalSanctuaryPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
@@ -80,7 +83,6 @@ export default function PersonalSanctuaryPage() {
     bypass,
     activateBypass,
     clearBypass,
-    mode,
     activeDoc,
     setActiveDoc,
     openDocs,
@@ -94,129 +96,149 @@ export default function PersonalSanctuaryPage() {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
   const dummySlides = [
-    {
-      id: '1',
-      title: 'Course Overview & Setup',
-      topic: 'Introduction to Machine Learning',
-      bullets: [
-        'Course logistics, grading policies, and prerequisites.',
-        'Core paradigm: fitting functions to data rather than manual rules.',
-        'Setup environment: Python 3.10+, NumPy, and PyTorch.',
-      ],
-    },
-    {
-      id: '2',
-      title: 'Supervised vs Unsupervised Learning',
-      topic: 'Core Machine Learning Paradigms',
-      bullets: [
-        'Supervised learning: datasets contain inputs (x) and correct outputs (y).',
-        'Unsupervised learning: datasets contain inputs only; looking for hidden clusters.',
-        'Reinforcement learning: agent acts in environment to maximize reward.',
-      ],
-    },
-    {
-      id: '3',
-      title: 'Deep Neural Networks Foundations',
-      topic: 'Neural Network Architectures',
-      bullets: [
-        'Structure: Input layer, multiple Hidden layers, and an Output layer.',
-        'Neurons: Compute weighted sum of inputs and apply non-linear activations.',
-        'Common activation functions: ReLU, Sigmoid, and Tanh.',
-      ],
-    },
-    {
-      id: '4',
-      title: 'Gradient Descent & Backpropagation',
-      topic: 'Mathematical Training & Optimization',
-      bullets: [
-        'Loss function: measures average error between predicted and target values.',
-        'Gradient descent: update weights in the direction of steepest loss descent.',
-        'Backpropagation: use Chain Rule of Calculus to compute local derivatives.',
-      ],
-    },
-    {
-      id: '5',
-      title: 'Loss Functions & Cross Entropy',
-      topic: 'Optimization Target Formulations',
-      bullets: [
-        'Mean Squared Error (MSE): used for regression tasks.',
-        'Binary Cross Entropy: used for two-class categorization.',
-        'Categorical Cross Entropy: used for multi-class classification.',
-      ],
-    },
+    { id: '1', title: 'Course Overview & Setup',             topic: 'Introduction to Machine Learning', bullets: ['Course logistics and prerequisites.', 'Core paradigm: fitting functions to data.', 'Setup environment: Python 3.10+, NumPy, PyTorch.'] },
+    { id: '2', title: 'Supervised vs Unsupervised',          topic: 'Core ML Paradigms',                bullets: ['Supervised: inputs (x) with correct outputs (y).', 'Unsupervised: inputs only; find hidden structure.', 'Reinforcement: agent maximises cumulative reward.'] },
+    { id: '3', title: 'Deep Neural Networks Foundations',    topic: 'Neural Architectures',             bullets: ['Layers, activations, and depth.', 'Forward pass computes predictions.', 'Backward pass propagates gradients.'] },
   ];
-
-  const handleSlideChange = (dir: 'next' | 'prev') => {
-    if (dir === 'next' && currentSlideIndex < dummySlides.length - 1) {
-      setCurrentSlideIndex(prev => prev + 1);
-    } else if (dir === 'prev' && currentSlideIndex > 0) {
-      setCurrentSlideIndex(prev => prev - 1);
-    }
+  const activeSlide = dummySlides[currentSlideIndex];
+  const handleSlideChange = (dir: 'prev' | 'next') => {
+    setCurrentSlideIndex(i => dir === 'prev' ? Math.max(0, i - 1) : Math.min(dummySlides.length - 1, i + 1));
   };
 
-  const activeSlide = dummySlides[currentSlideIndex];
-  const [sanctuaryName, setSanctuaryName] = useState('My Sanctuary');
-  const [groups, setGroups] = useState<{ id: string; name: string }[]>([]);
-  const [deadlines, setDeadlines] = useState<
-    { id: string; course: string; title: string; timeLeftLabel: string }[]
-  >([]);
+  // ── State ──────────────────────────────────────────────────────────────────
+  const [sanctuaryName, setSanctuaryName] = useState('Personal Sanctuary');
+  const [groups, setGroups] = useState<any[]>([]);
+  const [deadlines, setDeadlines] = useState<{ id: string; course: string; title: string; timeLeftLabel: string }[]>([]);
   const [lmsSource, setLmsSource] = useState<'live' | 'demo' | 'error'>('demo');
   const [lmsError, setLmsError] = useState<string | null>(null);
-  const [centerTab, setCenterTab] = useState<string>('notes');
-  const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
-  const [isAiPanelMinimized, setIsAiPanelMinimized] = useState(false);
-  const [activeSplitTabs, setActiveSplitTabs] = useState<{ left: string; right: string | null }>({ left: 'notes', right: null });
-  const [uploading, setUploading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  
-  // Media Theater
-  const [videos, setVideos] = useState<{ id: string; url: string; title: string }[]>([]);
-  const [newVideoUrl, setNewVideoUrl] = useState('');
-  const [newVideoTitle, setNewVideoTitle] = useState('');
-  const [isAddingVideo, setIsAddingVideo] = useState(false);
-  const [activePlayer, setActivePlayer] = useState<{ videoId: string; title: string } | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedSidebarDocId, setSelectedSidebarDocId] = useState<string | null>(null);
-  const [showDemoSlides, setShowDemoSlides] = useState(false);
 
+  // layout
+  const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
+  const [isAiOpen, setIsAiOpen] = useState(false);
+
+  // active section — null means "home" (section picker grid)
+  const [activeSection, setActiveSection] = useState<SectionId | null>(null);
+
+  // sidebar tree state
+  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({ general: true });
+
+  // command palette
+  const [cmdOpen, setCmdOpen] = useState(false);
+  const [cmdQuery, setCmdQuery] = useState('');
+
+  // flow
   const [bypassSecondsLeft, setBypassSecondsLeft] = useState(0);
 
+  // file upload
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // slides state
+  const [showDemoSlides, setShowDemoSlides] = useState(false);
+
+  // web search
   const [searchResults, setSearchResults] = useState<{ title: string; link: string; snippet: string }[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [fedUrls, setFedUrls] = useState<Record<string, boolean>>({});
 
+  // subject add
   const [showAddSubject, setShowAddSubject] = useState(false);
   const [newSubjectName, setNewSubjectName] = useState('');
   const [newSubjectCode, setNewSubjectCode] = useState('');
   const [addSubjectError, setAddSubjectError] = useState<string | null>(null);
 
-  const [activeSection, setActiveSection] = useState<'notes' | 'slides' | 'files' | 'web' | 'media' | 'youtube' | 'journal'>('notes');
-  const [cmdOpen, setCmdOpen] = useState(false);
-  const [cmdQuery, setCmdQuery] = useState('');
-  const [inspectorOpen, setInspectorOpen] = useState(false);
-  const [semesterExpanded, setSemesterExpanded] = useState(true);
-  const [subjectsExpanded, setSubjectsExpanded] = useState(true);
-  const [workspaceExpanded, setWorkspaceExpanded] = useState(true);
+  // media / youtube
+  const [videos, setVideos] = useState<{ id: string; url: string; title: string }[]>([]);
+  const [newVideoUrl, setNewVideoUrl] = useState('');
+  const [newVideoTitle, setNewVideoTitle] = useState('');
+  const [isAddingVideo, setIsAddingVideo] = useState(false);
+  const [activePlayer, setActivePlayer] = useState<{ videoId: string; title: string } | null>(null);
 
-  const openSlide = (id: string, type: string, title: string) => {
-    // Logic placeholder
-  };
+  // ── Derived ────────────────────────────────────────────────────────────────
+  const activeFolder = folders.find(f => f.id === activeFolderId);
+  const filteredRepository = repository.filter(doc => {
+    if (activeFolderId === 'all') return true;
+    return doc.courseCode.toLowerCase() === activeFolder?.code.toLowerCase();
+  });
 
-  const handleWebSearchSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
-    setIsSearching(true);
+  // storage keys
+  const notesKey  = fouzarUser?.id ? `fouzar-sanctuary-notes-${fouzarUser.id}-${activeFolderId}` : `fouzar-sanctuary-notes-guest-${activeFolderId}`;
+  const semesterKey = fouzarUser?.id ? `fouzar-semester-${fouzarUser.id}` : 'fouzar-semester-guest';
+  const aiStorageKey = fouzarUser?.id ? `fouzar-sanctuary-ai-${fouzarUser.id}` : `fouzar-sanctuary-ai-guest`;
+
+  const isShielded = isFlowActive && !bypass.isActive;
+
+  // ── Effects ────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!bypass.isActive || !bypass.expiresAt) return;
+    const update = () => setBypassSecondsLeft(Math.max(0, Math.floor((new Date(bypass.expiresAt!).getTime() - Date.now()) / 1000)));
+    update();
+    const iv = setInterval(update, 1000);
+    return () => clearInterval(iv);
+  }, [bypass.isActive, bypass.expiresAt]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setActiveDoc(null); setCmdOpen(false); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); setCmdOpen(p => !p); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user) { router.push('/auth'); return; }
+    const init = async () => {
+      try { const s = await getPersonalSanctuary(); if (s?.name) setSanctuaryName(s.name); } catch {}
+      try { const g = await getMyGroups(); setGroups(g ?? []); } catch { setGroups([]); }
+      try { const lms = await getDeadlines(); setDeadlines(lms.deadlines ?? []); setLmsSource(lms.source); setLmsError(lms.error ?? null); } catch { setDeadlines([]); }
+    };
+    init();
+  }, [user, loading, router]);
+
+  useEffect(() => {
+    if (!user || !activeFolderId) return;
+    getSubjectVideos(activeFolderId).then(d => setVideos(d || [])).catch(() => setVideos([]));
+  }, [activeFolderId, user]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const saved = localStorage.getItem(semesterKey);
+    if (saved) setSemester(saved);
+  }, [semesterKey]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const saved = localStorage.getItem(notesKey);
+    if (saved !== null) setNotes(saved);
+  }, [notesKey]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const timer = setTimeout(() => { localStorage.setItem(notesKey, notes); }, 500);
+    return () => clearTimeout(timer);
+  }, [notes, notesKey]);
+
+  // ── Handlers ───────────────────────────────────────────────────────────────
+  const handleSemesterChange = (v: string) => { setSemester(v); localStorage.setItem(semesterKey, v); };
+  const handleDeepFlow = async () => { armDeepFlow(); try { await updateFocusState(true); } catch {} };
+  const handleDisarmFlow = async () => { disarmDeepFlow(); try { await updateFocusState(false); } catch {} };
+  const handleEmergencyBypass = (m: 5 | 10 = 5) => activateBypass(m);
+  const handleReLock = () => clearBypass();
+
+  const handleSlideUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
     try {
-      const { webSearch } = await import('../../lib/api');
-      const results = await webSearch(searchQuery);
-      setSearchResults(results || []);
-    } catch (err) {
-      console.error('Failed to query search:', err);
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
+      const folderCode = activeFolder ? activeFolder.code : 'GEN';
+      const entry = await buildRepositoryEntryFromFile(file, folderCode);
+      addRepositoryItem({ ...entry, folderId: activeFolderId || 'general' });
+    } catch {}
+    finally { setUploading(false); if (fileInputRef.current) fileInputRef.current.value = ''; }
   };
 
   const handleAddSubjectSubmit = (e: React.FormEvent) => {
@@ -224,810 +246,81 @@ export default function PersonalSanctuaryPage() {
     setAddSubjectError(null);
     const name = newSubjectName.trim();
     const code = newSubjectCode.trim().toUpperCase();
-
-    if (!name || !code) {
-      setAddSubjectError('Name and code required.');
-      return;
-    }
-    if (folders.some(f => f.code === code)) {
-      setAddSubjectError('Code already exists.');
-      return;
-    }
+    if (!name || !code) { setAddSubjectError('Name and code required.'); return; }
+    if (folders.some(f => f.code === code)) { setAddSubjectError('Code already exists.'); return; }
     addFolder(name, code, null);
-    setNewSubjectName('');
-    setNewSubjectCode('');
-    setShowAddSubject(false);
+    setNewSubjectName(''); setNewSubjectCode(''); setShowAddSubject(false);
+    setExpandedFolders(p => ({ ...p, [code]: true }));
   };
 
-  const handleSlideUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    try {
-      const activeFolder = folders.find((f) => f.id === activeFolderId);
-      const folderCode = activeFolder ? activeFolder.code : 'GEN';
-      const entry = await buildRepositoryEntryFromFile(file, folderCode);
-      addRepositoryItem({
-        ...entry,
-        folderId: activeFolderId || 'general',
-      });
-    } catch (err) {
-      console.error('Failed to upload slide file:', err);
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
+  const handleWebSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    setIsSearching(true);
+    try { const { webSearch } = await import('../../lib/api'); setSearchResults(await webSearch(searchQuery) || []); }
+    catch { setSearchResults([]); }
+    finally { setIsSearching(false); }
   };
 
+  const formatBypass = (s: number) => `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
 
-  useEffect(() => {
-    if (!bypass.isActive || !bypass.expiresAt) return;
-    
-    const update = () => {
-      const left = Math.max(0, Math.floor((new Date(bypass.expiresAt!).getTime() - Date.now()) / 1000));
-      setBypassSecondsLeft(left);
-    };
-    
-    update();
-    const interval = setInterval(update, 1000);
-    return () => clearInterval(interval);
-  }, [bypass.isActive, bypass.expiresAt]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setActiveDoc(null);
-        setSelectedSidebarDocId(null);
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        setCmdOpen(prev => !prev);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  const formatBypass = (secs: number) => {
-    const m = Math.floor(secs / 60);
-    const s = secs % 60;
-    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  };
-
-  const handleEmergencyBypass = (minutes: 5 | 10 = 5) => {
-    activateBypass(minutes);
-  };
-
-  const handleReLock = () => {
-    clearBypass();
-  };
-
-  const handleDisarmFlow = async () => {
-    disarmDeepFlow();
-    try {
-      await updateFocusState(false);
-    } catch {
-      /* optional */
-    }
-  };
-
-  const isShielded = isFlowActive && !bypass.isActive;
-
-  const notesKey = fouzarUser?.id
-    ? `fouzar-sanctuary-notes-${fouzarUser.id}-${activeFolderId}`
-    : `fouzar-sanctuary-notes-guest-${activeFolderId}`;
-  const semesterKey = fouzarUser?.id
-    ? `fouzar-semester-${fouzarUser.id}`
-    : 'fouzar-semester-guest';
-  const aiStorageKey = fouzarUser?.id
-    ? `fouzar-sanctuary-ai-${fouzarUser.id}`
-    : `fouzar-sanctuary-ai-guest`;
-
-  const activeFolder = folders.find((f) => f.id === activeFolderId);
-  const filteredRepository = repository.filter((doc) => {
-    if (activeFolderId === 'all') return true;
-    return doc.courseCode.toLowerCase() === activeFolder?.code.toLowerCase();
-  });
-
-  useEffect(() => {
-    if (loading) return;
-    if (!user) {
-      router.push('/auth');
-      return;
-    }
-
-    const init = async () => {
-      try {
-        const sanctuary = await getPersonalSanctuary();
-        if (sanctuary?.name) setSanctuaryName(sanctuary.name);
-      } catch {
-        /* dev fallback */
-      }
-      try {
-        const g = await getMyGroups();
-        setGroups(g ?? []);
-      } catch {
-        setGroups([]);
-      }
-      try {
-        const lms = await getDeadlines();
-        setDeadlines(lms.deadlines ?? []);
-        setLmsSource(lms.source);
-        setLmsError(lms.error ?? null);
-      } catch {
-        setDeadlines([]);
-      }
-    };
-    init();
-  }, [user, loading, router]);
-
-  useEffect(() => {
-    if (!user || !activeFolderId) return;
-    getSubjectVideos(activeFolderId).then(data => {
-      setVideos(data || []);
-    }).catch(() => setVideos([]));
-  }, [activeFolderId, user]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const savedSemester = localStorage.getItem(semesterKey);
-    if (savedSemester) setSemester(savedSemester);
-  }, [semesterKey]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const savedNotes = localStorage.getItem(notesKey);
-    setNotes(savedNotes || '');
-  }, [notesKey]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const currentSaved = localStorage.getItem(notesKey) || '';
-    if (notes === currentSaved) return;
-
-    setIsSaving(true);
-    const t = setTimeout(() => {
-      localStorage.setItem(notesKey, notes);
-      setIsSaving(false);
-    }, 800);
-    return () => clearTimeout(t);
-  }, [notes, notesKey]);
-
-  const handleSemesterChange = (value: string) => {
-    setSemester(value);
-    localStorage.setItem(semesterKey, value);
-  };
-
-  const handleDeepFlow = async () => {
-    armDeepFlow();
-    try {
-      await updateFocusState(true);
-    } catch {
-      /* optional */
-    }
-  };
-
-  const renderTabContent = (tabId: string) => {
-    return (
-      <React.Fragment>
-        {tabId === 'notes' ? (
-                <>
-                  <textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder={`Your private ${semester} workspace — lecture notes, exam prep, project ideas...`}
-                    className="flex-1 min-h-[280px] lg:min-h-0 bg-fouzar-elevated/30 border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-5 font-sans text-sm leading-relaxed resize-none focus:outline-none focus:shadow-[var(--fouzar-focus-ring)]"
-                  />
-                  <p className="mt-2 font-mono text-xs text-fouzar-text-tertiary uppercase">
-                    Private — not shared with any group
-                  </p>
-                </>
-              ) : tabId === 'journal' ? (
-                <div className="flex-1 min-h-[280px] lg:min-h-0 flex flex-col overflow-hidden rounded-[var(--fouzar-radius-lg)] border border-fouzar-border">
-                  <DiaryPanel />
-                </div>
-              ) : openDocs.find(d => d.id === tabId) ? (
-                <div className="flex-1 min-h-[280px] lg:min-h-0 flex flex-col overflow-hidden relative">
-                  <DocumentViewer
-                    document={openDocs.find(d => d.id === tabId)!}
-                    onClose={() => {
-                      closeDoc(tabId);
-                      setActiveSection('notes');
-                    }}
-                    isInline={true}
-                  />
-                </div>
-              ) : tabId === 'slides' && !showDemoSlides ? (
-                <div className="flex-1 min-h-[280px] lg:min-h-0 bg-fouzar-surface/40 backdrop-blur-xl border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-6 flex flex-col overflow-hidden">
-                  <div className="flex-1 flex flex-col min-h-0 overflow-y-auto scrollbar-none space-y-6">
-                    {/* Header */}
-                    <div className="flex justify-between items-center border-b border-fouzar-border/30 pb-4">
-                      <div>
-                        <h3 className="font-serif text-base font-semibold uppercase tracking-wider text-fouzar-text-primary">Slides Library</h3>
-                        <p className="text-xs text-fouzar-text-secondary uppercase mt-0.5 font-mono">
-                          {activeFolder?.name || 'General Space'} · Slides & Presentations
-                        </p>
-                      </div>
-                      
-                      {/* Upload slide trigger */}
-                      <button
-                        type="button"
-                        disabled={uploading}
-                        onClick={() => fileInputRef.current?.click()}
-                        className="px-3 py-1.5 bg-fouzar-accent text-fouzar-text-inverse font-sans text-xs uppercase font-bold rounded-[var(--fouzar-radius-md)] shadow-[var(--fouzar-glow-primary)] flex items-center gap-1.5 hover:opacity-90 transition-opacity cursor-pointer"
-                      >
-                        {uploading ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          <>
-                            <Upload className="w-3.5 h-3.5" />
-                            <span>Upload Slide (.pdf, .pptx)</span>
-                          </>
-                        )}
-                      </button>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept=".pdf,.pptx"
-                        className="hidden"
-                        onChange={handleSlideUpload}
-                      />
-                    </div>
-
-                    {/* Slides grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {/* Interactive Demo Slides Card */}
-                      <div
-                        onClick={() => setShowDemoSlides(true)}
-                        className="p-4 rounded-[var(--fouzar-radius-md)] border border-fouzar-accent/30 hover:border-fouzar-accent/60 bg-fouzar-accent/5 hover:bg-fouzar-accent/10 text-left flex flex-col justify-between transition-all hover:scale-[1.02] cursor-pointer shadow-[var(--fouzar-shadow-sm)]"
-                      >
-                        <div>
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-serif text-xs font-bold uppercase text-fouzar-accent">
-                              Demo Slides
-                            </span>
-                            <Sparkles className="w-4 h-4 text-fouzar-accent animate-pulse" />
-                          </div>
-                          <h4 className="font-sans text-sm font-semibold text-fouzar-text-primary leading-snug mb-1">
-                            ML Foundations
-                          </h4>
-                          <p className="text-xs text-fouzar-text-secondary leading-relaxed">
-                            Learn loss functions, cross-entropy, backpropagation, and machine learning paradigms.
-                          </p>
-                        </div>
-                        <span className="font-mono text-[11px] text-fouzar-accent uppercase tracking-widest border border-fouzar-accent/20 px-2 py-0.5 rounded-[var(--fouzar-radius-sm)] inline-block w-fit mt-4">
-                          Open Presentation ↗
-                        </span>
-                      </div>
-
-                      {/* Filter repository files to show only slide-like files (pdf, pptx) in activeFolderId */}
-                      {filteredRepository
-                        .filter(
-                          (doc) =>
-                            doc.fileName.toLowerCase().endsWith('.pdf') ||
-                            doc.fileName.toLowerCase().endsWith('.pptx') ||
-                            doc.fileName.toLowerCase().endsWith('.ppt')
-                        )
-                        .map((doc) => {
-                          const isPpt = doc.fileName.toLowerCase().endsWith('.pptx') || doc.fileName.toLowerCase().endsWith('.ppt');
-                          return (
-                            <div
-                              key={doc.id}
-                              onClick={() => {
-                                if (isPpt) {
-                                  setShowDemoSlides(true);
-                                } else {
-                                  setActiveDoc(doc);
-                                  setActiveSection(doc.id as any);
-                                }
-                              }}
-                              className="p-4 rounded-[var(--fouzar-radius-md)] border border-fouzar-border hover:border-fouzar-accent/40 bg-fouzar-elevated/20 hover:bg-fouzar-elevated/35 text-left flex flex-col justify-between transition-all hover:scale-[1.02] cursor-pointer shadow-[var(--fouzar-shadow-sm)]"
-                            >
-                              <div>
-                                <div className="flex items-center justify-between mb-2">
-                                  <span className={`font-mono text-[11px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${
-                                    isPpt 
-                                      ? 'bg-fouzar-accent/10 border-fouzar-accent/20 text-fouzar-accent' 
-                                      : 'bg-fouzar-accent/10 border-fouzar-accent/20 text-fouzar-accent'
-                                  }`}>
-                                    {isPpt ? 'PPTX Presentation' : 'PDF Document'}
-                                  </span>
-                                  <FileText className={`w-4 h-4 text-fouzar-accent`} />
-                                </div>
-                                <h4 className="font-sans text-sm font-semibold text-fouzar-text-primary leading-snug truncate" title={doc.fileName}>
-                                  {doc.fileName}
-                                </h4>
-                                <p className="text-xs font-mono text-fouzar-text-secondary uppercase mt-1">
-                                  Size: {doc.sizeLabel}
-                                </p>
-                              </div>
-                              <span className="font-mono text-[11px] text-fouzar-text-primary uppercase tracking-widest border border-fouzar-border/30 px-2 py-0.5 rounded-[var(--fouzar-radius-sm)] inline-block w-fit mt-4">
-                                View Slides ↗
-                              </span>
-                            </div>
-                          );
-                        })}
-                    </div>
-
-                    {filteredRepository.filter(
-                      (doc) =>
-                        doc.fileName.toLowerCase().endsWith('.pdf') ||
-                        doc.fileName.toLowerCase().endsWith('.pptx') ||
-                        doc.fileName.toLowerCase().endsWith('.ppt')
-                    ).length === 0 && (
-                      <div className="py-12 text-center border border-dashed border-fouzar-border rounded-[var(--fouzar-radius-lg)] bg-fouzar-elevated/10 flex flex-col items-center justify-center">
-                        <FileText className="w-8 h-8 text-fouzar-text-tertiary mb-2" />
-                        <p className="font-sans text-xs text-fouzar-text-secondary uppercase">
-                          No presentations uploaded yet
-                        </p>
-                        <p className="text-[11px] font-sans text-fouzar-text-tertiary uppercase mt-1">
-                          Upload slide decks for this space above or drag them to the explorer.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : tabId === 'slides' && showDemoSlides ? (
-                <div className="flex-1 min-h-[280px] lg:min-h-0 bg-fouzar-surface/40 backdrop-blur-xl border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-6 flex flex-col overflow-hidden">
-                  <div className="flex flex-col flex-1 justify-between h-full">
-                    <div className="flex justify-between items-center border-b border-fouzar-border/30 pb-3">
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setShowDemoSlides(false)}
-                          className="flex items-center gap-1 font-sans text-xs uppercase text-fouzar-text-secondary hover:text-fouzar-text-primary border border-fouzar-border/30 px-2 py-1 rounded-[var(--fouzar-radius-sm)] cursor-pointer bg-fouzar-elevated/30"
-                        >
-                          <ArrowLeft className="w-3.5 h-3.5" /> Back to Library
-                        </button>
-                        <span className="w-[1px] h-4 bg-fouzar-border" />
-                        <span className="text-fouzar-accent uppercase tracking-widest text-xs font-mono">{activeSlide.topic}</span>
-                      </div>
-                      <span className="text-fouzar-text-secondary uppercase text-xs font-mono">PAGE {currentSlideIndex + 1} OF {dummySlides.length}</span>
-                    </div>
-
-                    <div className="my-auto py-8">
-                      <AnimatePresence mode="wait">
-                        <motion.div
-                          key={activeSlide.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          transition={{ duration: 0.25 }}
-                          className="space-y-6 max-w-xl mx-auto"
-                        >
-                          <h2 className="font-sans text-xl font-semibold text-fouzar-text-primary tracking-wide leading-snug text-glow-accent">
-                            {activeSlide.title}
-                          </h2>
-                          <ul className="space-y-4">
-                            {activeSlide.bullets.map((bullet, idx) => (
-                              <li key={idx} className="text-fouzar-text-secondary text-sm flex items-start gap-3 leading-relaxed">
-                                <span className="w-1 h-1 bg-fouzar-accent shrink-0 mt-2 rounded-full" />
-                                <span>{bullet}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </motion.div>
-                      </AnimatePresence>
-                    </div>
-
-                    <div className="flex items-center justify-between border-t border-fouzar-border/30 pt-4 mt-auto">
-                      <button
-                        disabled={currentSlideIndex === 0}
-                        onClick={() => handleSlideChange('prev')}
-                        className="flex items-center gap-1 text-xs font-mono uppercase tracking-wider text-fouzar-text-secondary hover:text-fouzar-text-primary disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
-                      >
-                        <ArrowLeft className="w-3.5 h-3.5" /> Previous
-                      </button>
-
-                      <div className="flex gap-1.5">
-                        {dummySlides.map((_, idx) => (
-                          <span 
-                            key={idx}
-                            className={`block h-1 rounded-full transition-all duration-300 ${
-                              idx === currentSlideIndex ? 'w-4 bg-fouzar-accent' : 'w-1.5 bg-fouzar-border'
-                            }`}
-                          />
-                        ))}
-                      </div>
-
-                      <button
-                        disabled={currentSlideIndex === dummySlides.length - 1}
-                        onClick={() => handleSlideChange('next')}
-                        className="flex items-center gap-1 text-[9px] font-mono uppercase tracking-wider text-fouzar-text-secondary hover:text-fouzar-text-primary disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
-                      >
-                        Next <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ) : tabId === 'web' ? (
-                <div className="flex-1 min-h-[280px] lg:min-h-0 bg-fouzar-surface/40 backdrop-blur-xl border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-6 flex flex-col overflow-hidden">
-                  <div className="flex flex-col h-full overflow-y-auto scrollbar-none space-y-6">
-                    <div className="text-center max-w-xl mx-auto space-y-2 mt-4">
-                      <Sparkles className="w-8 h-8 text-fouzar-accent mx-auto mb-2 animate-pulse" />
-                      <h3 className="font-serif text-sm font-bold uppercase tracking-wider">
-                        Web & Free AI Hub
-                      </h3>
-                      <p className="text-[10px] text-fouzar-text-secondary leading-relaxed">
-                        Access free AI models and study tools directly using your personal accounts. 
-                        No API keys, credits, or subscriptions required.
-                      </p>
-                    </div>
-
-                    {/* Quick AI & Study Launches */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl mx-auto w-full px-4">
-                      {[
-                        {
-                          name: 'DeepSeek Chat',
-                          desc: 'Free conversational AI by DeepSeek. High quality reasoning models.',
-                          url: 'https://chat.deepseek.com',
-                          color: 'border-fouzar-accent/20 hover:border-fouzar-accent/40 bg-fouzar-accent/5',
-                          textColor: 'text-fouzar-accent',
-                        },
-                        {
-                          name: 'ChatGPT',
-                          desc: 'Free access to GPT-4o mini and standard chat by OpenAI.',
-                          url: 'https://chatgpt.com',
-                          color: 'border-fouzar-accent/20 hover:border-fouzar-accent/40 bg-fouzar-accent/5',
-                          textColor: 'text-fouzar-accent',
-                        },
-                        {
-                          name: 'Claude AI',
-                          desc: 'Free access to Claude 3.5 Sonnet conversational model by Anthropic.',
-                          url: 'https://claude.ai',
-                          color: 'border-fouzar-accent/20 hover:border-fouzar-accent/40 bg-fouzar-accent/5',
-                          textColor: 'text-fouzar-accent',
-                        },
-                      ].map((preset) => (
-                        <a
-                          key={preset.name}
-                          href={preset.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={`p-4 rounded-[var(--fouzar-radius-md)] border text-left flex flex-col justify-between transition-all hover:scale-[1.02] cursor-pointer shadow-[var(--fouzar-shadow-sm)] ${preset.color}`}
-                        >
-                          <div>
-                            <div className="flex items-center justify-between mb-1.5">
-                              <span className={`font-serif text-[11px] font-bold uppercase ${preset.textColor}`}>
-                                {preset.name}
-                              </span>
-                              <ExternalLink className="w-3.5 h-3.5 text-fouzar-text-secondary" />
-                            </div>
-                            <p className="text-[9px] text-fouzar-text-secondary leading-relaxed mb-3">
-                              {preset.desc}
-                            </p>
-                          </div>
-                          <span className="font-mono text-[7px] text-fouzar-text-primary uppercase tracking-widest border border-fouzar-border/30 px-2 py-0.5 rounded-[var(--fouzar-radius-sm)] inline-block w-fit">
-                            Launch Free AI ↗
-                          </span>
-                        </a>
-                      ))}
-                    </div>
-
-                    {/* Integrated Web Search Engine */}
-                    <div className="max-w-2xl mx-auto w-full space-y-4 pt-4 border-t border-fouzar-border/20 px-4">
-                      <span className="font-mono text-[8px] uppercase tracking-[0.2em] text-fouzar-text-secondary block text-center">
-                        Integrated Web Search Engine
-                      </span>
-                      <form
-                        onSubmit={handleWebSearchSubmit}
-                        className="flex gap-2"
-                      >
-                        <div className="relative flex-1">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-fouzar-text-tertiary" />
-                          <input
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search the web (e.g. neural networks, photosynthesis)..."
-                            className="w-full pl-9 pr-4 py-2.5 bg-fouzar-elevated/40 border border-fouzar-border rounded-[var(--fouzar-radius-md)] text-[10px] font-mono focus:outline-none focus:shadow-[var(--fouzar-focus-ring)]"
-                          />
-                        </div>
-                        <button
-                          type="submit"
-                          disabled={isSearching}
-                          className="px-4 py-2.5 bg-fouzar-accent text-fouzar-text-inverse font-mono text-[9px] uppercase tracking-wider font-bold rounded-[var(--fouzar-radius-md)] hover:opacity-90 transition-opacity disabled:opacity-40"
-                        >
-                          {isSearching ? 'Searching...' : 'Search'}
-                        </button>
-                      </form>
-
-                      {isSearching && (
-                        <p className="font-mono text-[8px] text-fouzar-accent animate-pulse text-center">
-                          Querying index & scraping search results...
-                        </p>
-                      )}
-
-                      {searchResults.length > 0 && (
-                        <div className="space-y-2.5 max-h-60 overflow-y-auto scrollbar-none pr-1 mt-2">
-                          {searchResults.map((res, index) => {
-                            const isFed = !!fedUrls[res.link];
-                            return (
-                              <div
-                                key={index}
-                                className="p-3 bg-fouzar-elevated/30 border border-fouzar-border rounded-[var(--fouzar-radius-md)] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 transition-all hover:bg-fouzar-elevated/40"
-                              >
-                                <div className="min-w-0 flex-1 text-left">
-                                  <a
-                                    href={res.link}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="font-serif text-[10px] font-bold text-fouzar-accent hover:underline flex items-center gap-1.5"
-                                  >
-                                    {res.title} <ExternalLink className="w-3 h-3 text-fouzar-text-secondary" />
-                                  </a>
-                                  <p className="text-[9px] text-fouzar-text-secondary leading-relaxed mt-1">
-                                    {res.snippet}
-                                  </p>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setActiveDocText(`[Web Search context]\nSource Title: ${res.title}\nSource Link: ${res.link}\nContent:\n${res.snippet}`);
-                                    setAiTriggerQuery({
-                                      text: `Please analyze this search result context:\n\nTitle: ${res.title}\nLink: ${res.link}\nSnippet: ${res.snippet}`,
-                                      id: Date.now().toString()
-                                    });
-                                    setFedUrls((prev) => ({ ...prev, [res.link]: true }));
-                                    setTimeout(() => {
-                                      setFedUrls((prev) => ({ ...prev, [res.link]: false }));
-                                    }, 2000);
-                                  }}
-                                  className={`px-3 py-1.5 font-mono text-[8px] uppercase tracking-wider rounded-[var(--fouzar-radius-sm)] border transition-all ${
-                                    isFed
-                                      ? 'bg-fouzar-accent/10 border-fouzar-accent/30 text-fouzar-accent font-bold'
-                                      : 'bg-fouzar-elevated hover:bg-fouzar-accent/15 border-fouzar-border hover:border-fouzar-accent/30 text-fouzar-text-primary'
-                                  }`}
-                                >
-                                  {isFed ? '✓ Fed to AI' : 'Feed to AI ✦'}
-                                </button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-
-                      <div className="p-3 bg-fouzar-elevated/20 border border-fouzar-border rounded-[var(--fouzar-radius-md)]">
-                        <p className="font-mono text-[7px] text-fouzar-text-secondary leading-relaxed uppercase text-center">
-                          🔒 Privacy &amp; Security Note: Search results are parsed in real-time. 
-                          You can click any title to read the article or click "Feed to AI" to send the text snippet as study context directly into your AI study partner chat.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : tabId === 'media' ? (
-                <div className="flex-1 min-h-[280px] lg:min-h-0 bg-fouzar-surface/40 backdrop-blur-xl border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-6 flex flex-col overflow-hidden">
-                  {/* Full-size theater player — shows when a video is selected from YT Search or library */}
-                  {activePlayer ? (
-                    <div className="flex flex-col h-full gap-3">
-                      <div className="flex items-center justify-between shrink-0">
-                        <h3 className="font-sans font-semibold text-sm text-fouzar-text-primary truncate max-w-[80%]">{activePlayer.title}</h3>
-                        <button
-                          onClick={() => setActivePlayer(null)}
-                          className="text-xs font-mono text-fouzar-text-tertiary hover:text-fouzar-text-primary transition-colors px-2 py-1 border border-fouzar-border rounded cursor-pointer"
-                        >← Back to Library</button>
-                      </div>
-                      <div className="flex-1 rounded-xl overflow-hidden border border-fouzar-border/40">
-                        <iframe
-                          src={`https://www.youtube.com/embed/${activePlayer.videoId}?autoplay=1&rel=0&modestbranding=1`}
-                          className="w-full h-full"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                          allowFullScreen
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                  <div className="flex flex-col h-full overflow-y-auto scrollbar-none space-y-6">
-                    <div className="flex justify-between items-center border-b border-fouzar-border/30 pb-4">
-                      <div>
-                        <h3 className="font-serif text-sm font-bold uppercase tracking-wider text-fouzar-text-primary">Media Theater</h3>
-                        <p className="text-[9px] text-fouzar-text-secondary uppercase mt-0.5 font-mono">
-                          {activeFolder?.name || 'General Space'} · YouTube & Video Resources
-                        </p>
-                      </div>
-                      
-                      {/* Add Video Trigger */}
-                      <button
-                        type="button"
-                        onClick={() => setIsAddingVideo(!isAddingVideo)}
-                        className="px-3 py-1.5 bg-fouzar-accent text-fouzar-text-inverse font-mono text-[8px] uppercase font-bold rounded-[var(--fouzar-radius-md)] shadow-[var(--fouzar-glow-primary)] flex items-center gap-1.5 hover:opacity-90 transition-opacity cursor-pointer"
-                      >
-                        <Upload className="w-3.5 h-3.5" />
-                        <span>{isAddingVideo ? 'Cancel' : 'Add Video Link'}</span>
-                      </button>
-                    </div>
-
-                    {isAddingVideo && (
-                      <div className="p-4 bg-fouzar-elevated/30 border border-fouzar-accent/40 rounded-[var(--fouzar-radius-md)]">
-                        <form
-                          onSubmit={async (e) => {
-                            e.preventDefault();
-                            if (!newVideoUrl || !activeFolderId) return;
-                            try {
-                              // basic youtube parser
-                              let embedUrl = newVideoUrl;
-                              if (newVideoUrl.includes('youtube.com/watch?v=')) {
-                                const v = new URL(newVideoUrl).searchParams.get('v');
-                                if (v) embedUrl = `https://www.youtube.com/embed/${v}`;
-                              } else if (newVideoUrl.includes('youtu.be/')) {
-                                const v = newVideoUrl.split('youtu.be/')[1].split('?')[0];
-                                if (v) embedUrl = `https://www.youtube.com/embed/${v}`;
-                              }
-                              
-                              const vid = await addSubjectVideo(embedUrl, newVideoTitle || 'Untitled Video', activeFolderId);
-                              setVideos(prev => [vid, ...prev]);
-                              setNewVideoUrl('');
-                              setNewVideoTitle('');
-                              setIsAddingVideo(false);
-                            } catch (err) {
-                              console.error('Failed to add video', err);
-                            }
-                          }}
-                          className="space-y-3"
-                        >
-                          <input
-                            type="text"
-                            required
-                            placeholder="Video Title (e.g. Backpropagation Explained)"
-                            value={newVideoTitle}
-                            onChange={(e) => setNewVideoTitle(e.target.value)}
-                            className="w-full bg-fouzar-bg border border-fouzar-border px-3 py-2 text-[10px] font-mono rounded-[var(--fouzar-radius-sm)] focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
-                          />
-                          <input
-                            type="url"
-                            required
-                            placeholder="YouTube URL (e.g. https://youtube.com/watch?v=...)"
-                            value={newVideoUrl}
-                            onChange={(e) => setNewVideoUrl(e.target.value)}
-                            className="w-full bg-fouzar-bg border border-fouzar-border px-3 py-2 text-[10px] font-mono rounded-[var(--fouzar-radius-sm)] focus:outline-none focus:border-fouzar-accent text-fouzar-text-primary"
-                          />
-                          <div className="flex justify-end">
-                            <button
-                              type="submit"
-                              className="px-4 py-2 bg-fouzar-accent text-fouzar-text-inverse rounded-[var(--fouzar-radius-sm)] font-mono text-[9px] uppercase font-bold hover:opacity-90 cursor-pointer"
-                            >
-                              Save to Library
-                            </button>
-                          </div>
-                        </form>
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      {videos.map(video => (
-                        <div key={video.id} className="flex flex-col gap-2 p-3 bg-fouzar-elevated/20 border border-fouzar-border rounded-[var(--fouzar-radius-md)] hover:border-fouzar-accent/40 transition-colors">
-                          <div className="aspect-video w-full rounded overflow-hidden border border-fouzar-border/30">
-                            <iframe 
-                              src={video.url}
-                              className="w-full h-full"
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                              allowFullScreen
-                            />
-                          </div>
-                          <div className="flex justify-between items-center px-1">
-                            <span className="font-sans font-bold text-xs truncate max-w-[80%] text-fouzar-text-primary">{video.title}</span>
-                            <span className="text-[7px] font-mono uppercase text-fouzar-text-tertiary">YouTube</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    {videos.length === 0 && !isAddingVideo && (
-                      <div className="py-12 text-center border border-dashed border-fouzar-border rounded-[var(--fouzar-radius-lg)] bg-fouzar-elevated/10 flex flex-col items-center justify-center">
-                        <Loader2 className="w-8 h-8 text-fouzar-text-tertiary mb-2" />
-                        <p className="font-mono text-[9px] text-fouzar-text-secondary uppercase">
-                          No Videos Available
-                        </p>
-                        <p className="text-[7.5px] font-mono text-fouzar-text-tertiary uppercase mt-1">
-                          Click "Add Video Link" to save a YouTube tutorial to this space.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  )}
-                </div>
-              ) : tabId === 'youtube' ? (
-                <div className="flex-1 min-h-[280px] lg:min-h-0 bg-fouzar-surface/40 backdrop-blur-xl border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-6 flex flex-col overflow-hidden">
-                  <MediaHubStandalone
-                    folderId={activeFolderId}
-                    onVideoSelect={(url, videoId, title) => {
-                      // Save to library silently — player opens inline in this tab
-                      if (activeFolderId) {
-                        getSubjectVideos(activeFolderId).then(setVideos);
-                      }
-                    }}
-                  />
-                </div>
-              ) : null}
-      </React.Fragment>
-    );
-  };
-
+  // ── Loading ────────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="min-h-screen bg-fouzar-bg flex items-center justify-center">
-        <span className="font-sans text-sm text-fouzar-text-secondary animate-pulse uppercase">
-          Loading sanctuary...
-        </span>
+        <span className="font-mono text-xs text-fouzar-text-secondary animate-pulse uppercase tracking-widest">Loading sanctuary...</span>
       </div>
     );
   }
 
-  // Command Palette
+  // ── Command Palette data ───────────────────────────────────────────────────
   const cmdCommands = [
-    { label: 'Notebook', icon: '📓', action: () => setActiveSection('notes') },
-    { label: 'Files', icon: '📁', action: () => setActiveSection('files') },
-    { label: 'Slides', icon: '📑', action: () => setActiveSection('slides') },
-    { label: 'Web Hub', icon: '🌐', action: () => setActiveSection('web') },
-    { label: 'Media', icon: '🎬', action: () => setActiveSection('media') },
-    { label: 'Journal', icon: '📖', action: () => setActiveSection('journal') },
+    ...SECTIONS.map(s => ({ label: s.label, icon: s.id === 'notes' ? '📓' : s.id === 'files' ? '📁' : s.id === 'slides' ? '📑' : s.id === 'web' ? '🌐' : s.id === 'media' ? '🎬' : s.id === 'youtube' ? '📺' : '📖', action: () => setActiveSection(s.id) })),
     { label: 'Deep Flow', icon: '🔥', action: handleDeepFlow },
     { label: 'Add Subject', icon: '➕', action: () => setShowAddSubject(true) },
     { label: 'Upload PDF', icon: '📄', action: () => fileInputRef.current?.click() },
+    { label: 'AI Assistant', icon: '🤖', action: () => setIsAiOpen(p => !p) },
     { label: 'Back to Dashboard', icon: '←', action: () => router.push('/dashboard') },
   ];
-  const filteredCommands = cmdCommands.filter(c => c.label.toLowerCase().includes(cmdQuery.toLowerCase()));
+  const filteredCmds = cmdCommands.filter(c => c.label.toLowerCase().includes(cmdQuery.toLowerCase()));
 
-  const sectionLabel: Record<string, string> = {
-    notes: 'Notebook',
-    files: 'Files',
-    slides: 'Slides',
-    web: 'Web Hub',
-    media: 'Media',
-    youtube: 'YT Search',
-    journal: 'Journal',
-  };
+  // ── Sidebar tree toggle ────────────────────────────────────────────────────
+  const toggleFolder = (id: string) => setExpandedFolders(p => ({ ...p, [id]: !p[id] }));
 
+  // ── Main render ────────────────────────────────────────────────────────────
   return (
-    <div
-      onClick={() => setSelectedSidebarDocId(null)}
-      className="h-screen bg-fouzar-bg text-fouzar-text-primary flex flex-col overflow-hidden"
-    >
+    <div className="h-screen bg-fouzar-bg text-fouzar-text-primary flex flex-col overflow-hidden">
+
       {/* ── Command Palette ── */}
       <AnimatePresence>
         {cmdOpen && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-start justify-center pt-24"
             onClick={() => setCmdOpen(false)}
           >
             <motion.div
-              initial={{ opacity: 0, y: -16, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -16, scale: 0.97 }}
+              initial={{ opacity: 0, y: -16, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -16, scale: 0.97 }}
               transition={{ duration: 0.18 }}
               className="w-full max-w-lg bg-[#111118] border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center gap-3 px-4 py-3.5 border-b border-white/[0.06]">
                 <Search className="w-4 h-4 text-white/30" />
-                <input
-                  autoFocus
-                  value={cmdQuery}
-                  onChange={e => setCmdQuery(e.target.value)}
+                <input autoFocus value={cmdQuery} onChange={e => setCmdQuery(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Escape') setCmdOpen(false); }}
-                  placeholder="Search commands..."
-                  className="flex-1 bg-transparent text-sm text-white placeholder:text-white/25 focus:outline-none"
-                />
+                  placeholder="Jump to section, action..." className="flex-1 bg-transparent text-sm text-white placeholder:text-white/25 focus:outline-none" />
                 <kbd className="text-[9px] font-mono text-white/25 border border-white/10 px-1.5 py-0.5 rounded">ESC</kbd>
               </div>
               <div className="py-2 max-h-72 overflow-y-auto">
-                {filteredCommands.map((cmd, i) => (
-                  <button
-                    key={i}
-                    onClick={() => { cmd.action(); setCmdOpen(false); setCmdQuery(''); }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.04] transition-colors text-left cursor-pointer"
-                  >
+                {filteredCmds.map((cmd, i) => (
+                  <button key={i} onClick={() => { cmd.action(); setCmdOpen(false); setCmdQuery(''); }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.04] transition-colors text-left cursor-pointer">
                     <span className="text-base">{cmd.icon}</span>
                     <span className="text-sm text-white/80">{cmd.label}</span>
                   </button>
                 ))}
-                {filteredCommands.length === 0 && (
-                  <p className="text-center text-white/25 text-xs py-6 font-mono">No commands found</p>
-                )}
+                {filteredCmds.length === 0 && <p className="text-center text-white/25 text-xs py-6 font-mono">No commands found</p>}
               </div>
             </motion.div>
           </motion.div>
@@ -1037,427 +330,567 @@ export default function PersonalSanctuaryPage() {
       {/* ── Top Bar ── */}
       <header className="h-11 border-b border-white/[0.06] px-4 flex items-center justify-between shrink-0 bg-[#0d0d14]/80 backdrop-blur-xl">
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="flex items-center gap-1.5 text-white/40 hover:text-white/80 transition-colors cursor-pointer"
-          >
+          <button type="button" onClick={() => { if (activeSection) { setActiveSection(null); } else { router.back(); } }}
+            className="flex items-center gap-1.5 text-white/40 hover:text-white/80 transition-colors cursor-pointer">
             <ArrowLeft className="w-3.5 h-3.5" />
           </button>
           <span className="text-white/10">|</span>
           {/* Breadcrumb */}
           <div className="flex items-center gap-1.5 text-[11px] font-mono">
-            <span className="text-white/30">Sanctuary</span>
+            <button onClick={() => setActiveSection(null)} className="text-white/30 hover:text-white/60 cursor-pointer transition-colors">Sanctuary</button>
             <span className="text-white/15">›</span>
-            <span className="text-white/50">{activeFolder?.name || 'General'}</span>
-            <span className="text-white/15">›</span>
-            <span className="text-[#7c5cfc] font-semibold">{sectionLabel[activeSection]}</span>
+            <button onClick={() => setActiveSection(null)} className="text-white/50 hover:text-white/80 cursor-pointer transition-colors">{activeFolder?.name || 'General'}</button>
+            {activeSection && (
+              <>
+                <span className="text-white/15">›</span>
+                <span className="text-[#7c5cfc] font-semibold">{SECTIONS.find(s => s.id === activeSection)?.label}</span>
+              </>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {/* Cmd K button */}
-          <button
-            type="button"
-            onClick={() => setCmdOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/[0.07] text-white/40 hover:text-white/70 text-[10px] font-mono transition-all cursor-pointer"
-          >
+          <button type="button" onClick={() => setCmdOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/[0.07] text-white/40 hover:text-white/70 text-[10px] font-mono transition-all cursor-pointer">
             <Search className="w-3 h-3" />
-            <span>Search</span>
+            <span className="hidden sm:inline">Search</span>
             <kbd className="ml-1 text-[8px] border border-white/10 px-1 py-0.5 rounded text-white/25">⌘K</kbd>
           </button>
           <ThemeSwitcher />
           <span className="w-px h-4 bg-white/[0.06]" />
-          {/* Semester selector */}
-          <select
-            value={semester}
-            onChange={e => handleSemesterChange(e.target.value)}
-            className="bg-transparent border border-white/[0.07] text-white/50 text-[10px] font-mono px-2 py-1 rounded-lg cursor-pointer hover:border-white/20 transition-colors focus:outline-none"
-          >
+          <select value={semester} onChange={e => handleSemesterChange(e.target.value)}
+            className="bg-transparent border border-white/[0.07] text-white/50 text-[10px] font-mono px-2 py-1 rounded-lg cursor-pointer hover:border-white/20 transition-colors focus:outline-none">
             {['Fall 2025', 'Spring 2026', 'Summer 2026', 'Fall 2026'].map(s => (
               <option key={s} value={s} className="bg-[#0d0d14]">{s}</option>
             ))}
           </select>
-          <button
-            type="button"
-            onClick={handleDeepFlow}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-[9px] uppercase font-bold transition-all cursor-pointer ${
-              isFlowActive
-                ? 'bg-[#ff2d55]/15 border border-[#ff2d55]/40 text-[#ff2d55]'
-                : 'bg-[#7c5cfc] text-white shadow-[0_2px_12px_rgba(124,92,252,0.4)] hover:bg-[#6d4ef0]'
-            }`}
-          >
+          {/* AI toggle */}
+          <button onClick={() => setIsAiOpen(p => !p)}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg font-mono text-[9px] uppercase font-bold transition-all cursor-pointer border ${isAiOpen ? 'bg-[#7c5cfc]/15 border-[#7c5cfc]/40 text-[#7c5cfc]' : 'border-white/[0.07] text-white/30 hover:text-white/60'}`}>
+            <Bot className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">AI</span>
+          </button>
+          <button type="button" onClick={handleDeepFlow}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-[9px] uppercase font-bold transition-all cursor-pointer ${isFlowActive ? 'bg-[#ff2d55]/15 border border-[#ff2d55]/40 text-[#ff2d55]' : 'bg-[#7c5cfc] text-white shadow-[0_2px_12px_rgba(124,92,252,0.4)] hover:bg-[#6d4ef0]'}`}>
             <Flame className="w-3.5 h-3.5" />
-            {isFlowActive ? 'Exit Flow' : 'Deep Flow'}
+            <span className="hidden sm:inline">{isFlowActive ? 'Exit Flow' : 'Deep Flow'}</span>
           </button>
         </div>
       </header>
 
-      {/* ── Main 3-column layout ── */}
+      {/* ── Body ── */}
       <div className="flex-1 flex overflow-hidden">
 
-        {/* ── Sanctuary Navigation ── */}
+        {/* ── Left Sidebar (Subject Tree) ── */}
         <motion.nav
           animate={{ width: isSidebarMinimized ? 48 : 220 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
           className="shrink-0 h-full border-r border-white/[0.05] bg-[#0b0b12] flex flex-col overflow-hidden"
         >
-          {/* Toggle */}
+          {/* Header */}
           <div className="flex items-center justify-between px-3 py-2.5 border-b border-white/[0.05]">
-            {!isSidebarMinimized && (
-              <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-white/25">Workspace</span>
-            )}
-            <button
-              onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
-              className="ml-auto text-white/25 hover:text-white/60 transition-colors cursor-pointer"
-            >
+            {!isSidebarMinimized && <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-white/25">Subjects</span>}
+            <button onClick={() => setIsSidebarMinimized(!isSidebarMinimized)} className="ml-auto text-white/25 hover:text-white/60 transition-colors cursor-pointer">
               {isSidebarMinimized ? <PanelLeft className="w-4 h-4" /> : <PanelRight className="w-4 h-4" />}
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto scrollbar-none py-2 space-y-1">
+          {/* Semester chip */}
+          {!isSidebarMinimized && (
+            <div className="px-3 py-2 border-b border-white/[0.04]">
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/[0.03] border border-white/[0.05]">
+                <Hash className="w-2.5 h-2.5 text-[#7c5cfc]/50 shrink-0" />
+                <span className="text-[10px] text-white/40 font-mono truncate">{semester}</span>
+              </div>
+            </div>
+          )}
 
-            {/* SEMESTER section */}
-            {!isSidebarMinimized && (
-              <div className="px-3 mb-1">
-                <button
-                  onClick={() => setSemesterExpanded(!semesterExpanded)}
-                  className="w-full flex items-center justify-between text-[9px] font-mono uppercase tracking-[0.18em] text-white/25 hover:text-white/50 transition-colors cursor-pointer py-1"
-                >
-                  <span>Semester</span>
-                  {semesterExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRightIcon className="w-3 h-3" />}
-                </button>
-                {semesterExpanded && (
-                  <div className="mt-1 mb-2 px-1">
-                    <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.05]">
-                      <Hash className="w-3 h-3 text-[#7c5cfc]/60 shrink-0" />
-                      <span className="text-[11px] text-white/60 font-mono truncate">{semester}</span>
-                    </div>
+          {/* Subject tree */}
+          <div className="flex-1 overflow-y-auto scrollbar-none py-2">
+            {folders.map(folder => {
+              const isActive = activeFolderId === folder.id;
+              const isExpanded = expandedFolders[folder.id];
+              return (
+                <div key={folder.id}>
+                  {/* Subject row */}
+                  <div
+                    className={`flex items-center gap-0 mx-2 rounded-lg transition-all cursor-pointer group ${isActive ? 'bg-[#7c5cfc]/12' : 'hover:bg-white/[0.025]'}`}
+                  >
+                    {/* Expand arrow (only when expanded, not minimized) */}
+                    {!isSidebarMinimized && (
+                      <button
+                        onClick={() => toggleFolder(folder.id)}
+                        className="p-1 text-white/20 hover:text-white/50 transition-colors cursor-pointer shrink-0"
+                      >
+                        <ChevronRightIcon className={`w-3 h-3 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''}`} />
+                      </button>
+                    )}
+                    {/* Folder name */}
+                    <button
+                      onClick={() => { setActiveFolderId(folder.id); setActiveSection(null); if (isSidebarMinimized) toggleFolder(folder.id); }}
+                      title={folder.name}
+                      className={`flex-1 flex items-center gap-2 py-2 ${isSidebarMinimized ? 'px-2 justify-center' : 'pr-2'} min-w-0`}
+                    >
+                      <FolderOpen className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-[#7c5cfc]' : 'text-white/35'}`} />
+                      {!isSidebarMinimized && (
+                        <div className="flex-1 min-w-0 text-left">
+                          <p className={`text-[11px] font-medium truncate leading-none ${isActive ? 'text-[#7c5cfc]' : 'text-white/55'}`}>{folder.name}</p>
+                          {folder.id !== 'general' && <p className="text-[8px] font-mono text-white/20 mt-0.5 uppercase">{folder.code}</p>}
+                        </div>
+                      )}
+                    </button>
+                    {/* Delete */}
+                    {!isSidebarMinimized && folder.id !== 'general' && (
+                      <button onClick={e => { e.stopPropagation(); deleteFolder(folder.id); }}
+                        className="opacity-0 group-hover:opacity-100 p-1.5 text-white/20 hover:text-[#ff2d55] transition-all cursor-pointer shrink-0">
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    )}
                   </div>
+
+                  {/* Section children — only shown when folder is active & expanded & sidebar visible */}
+                  {!isSidebarMinimized && isActive && isExpanded && (
+                    <div className="ml-4 mr-2 mb-1 border-l border-white/[0.06] pl-2 space-y-0.5">
+                      {SECTIONS.map(({ id, label, icon: Icon, color }) => (
+                        <button
+                          key={id}
+                          onClick={() => setActiveSection(id)}
+                          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md transition-all cursor-pointer text-left ${activeSection === id ? 'bg-[#7c5cfc]/12 text-white/80' : 'text-white/35 hover:text-white/65 hover:bg-white/[0.02]'}`}
+                        >
+                          <Icon className="w-3 h-3 shrink-0" style={{ color: activeSection === id ? color : undefined }} />
+                          <span className="text-[10px] font-medium">{label}</span>
+                          {activeSection === id && <div className="ml-auto w-1 h-1 rounded-full" style={{ background: color }} />}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Add subject */}
+            {!isSidebarMinimized && (
+              <div className="px-3 mt-2">
+                {showAddSubject ? (
+                  <form onSubmit={handleAddSubjectSubmit} className="p-2.5 bg-white/[0.03] border border-[#7c5cfc]/20 rounded-lg space-y-2">
+                    <input type="text" required placeholder="Subject Name" value={newSubjectName} onChange={e => setNewSubjectName(e.target.value)}
+                      className="w-full bg-transparent border border-white/10 px-2 py-1 text-[10px] font-mono rounded-md focus:outline-none focus:border-[#7c5cfc] text-white" />
+                    <input type="text" required placeholder="Code (e.g. CS101)" value={newSubjectCode} onChange={e => setNewSubjectCode(e.target.value)}
+                      className="w-full bg-transparent border border-white/10 px-2 py-1 text-[10px] font-mono rounded-md focus:outline-none focus:border-[#7c5cfc] text-white uppercase" />
+                    {addSubjectError && <p className="text-[9px] text-[#ff2d55]">{addSubjectError}</p>}
+                    <div className="flex gap-1.5">
+                      <button type="button" onClick={() => setShowAddSubject(false)} className="flex-1 py-1 text-[9px] font-mono border border-white/10 rounded-md text-white/40 hover:text-white cursor-pointer">Cancel</button>
+                      <button type="submit" className="flex-1 py-1 text-[9px] font-mono bg-[#7c5cfc] text-white rounded-md font-bold hover:bg-[#6d4ef0] cursor-pointer">Add</button>
+                    </div>
+                  </form>
+                ) : (
+                  <button onClick={() => setShowAddSubject(true)}
+                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-white/25 hover:text-white/55 hover:bg-white/[0.02] transition-all cursor-pointer text-[10px] font-mono">
+                    <Plus className="w-3 h-3" />
+                    <span>Add Subject</span>
+                  </button>
                 )}
               </div>
             )}
-
-            {/* SUBJECTS section */}
-            <div className="px-3">
-              {!isSidebarMinimized && (
-                <div className="flex items-center justify-between mb-1">
-                  <button
-                    onClick={() => setSubjectsExpanded(!subjectsExpanded)}
-                    className="flex items-center gap-1 text-[9px] font-mono uppercase tracking-[0.18em] text-white/25 hover:text-white/50 transition-colors cursor-pointer py-1"
-                  >
-                    {subjectsExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRightIcon className="w-3 h-3" />}
-                    <span>Subjects</span>
-                  </button>
-                  <button
-                    onClick={() => setShowAddSubject(true)}
-                    className="text-white/25 hover:text-[#7c5cfc] transition-colors cursor-pointer text-xs"
-                    title="Add Subject"
-                  >
-                    +
-                  </button>
-                </div>
-              )}
-              {(isSidebarMinimized || subjectsExpanded) && (
-                <div className="space-y-0.5">
-                  {folders.filter(f => !f.parentFolderId || f.parentFolderId === 'general' || f.id === 'general').map(folder => (
-                    <div key={folder.id} className="relative group">
-                      <button
-                        type="button"
-                        onClick={() => setActiveFolderId(folder.id)}
-                        title={folder.name}
-                        className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-lg transition-all cursor-pointer ${
-                          activeFolderId === folder.id
-                            ? 'bg-[#7c5cfc]/15 text-[#7c5cfc]'
-                            : 'text-white/40 hover:bg-white/[0.03] hover:text-white/70'
-                        }`}
-                      >
-                        <FolderOpen className={`w-3.5 h-3.5 shrink-0 ${ activeFolderId === folder.id ? 'text-[#7c5cfc]' : '' }`} />
-                        {!isSidebarMinimized && (
-                          <div className="flex-1 min-w-0 text-left">
-                            <p className="text-[11px] font-medium truncate leading-none">{folder.name}</p>
-                            {folder.id !== 'general' && (
-                              <p className="text-[9px] font-mono text-white/25 mt-0.5 uppercase">{folder.code}</p>
-                            )}
-                          </div>
-                        )}
-                      </button>
-                      {!isSidebarMinimized && folder.id !== 'general' && (
-                        <button
-                          type="button"
-                          onClick={e => { e.stopPropagation(); deleteFolder(folder.id); }}
-                          className="absolute right-1.5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-white/20 hover:text-[#ff2d55] transition-all cursor-pointer p-0.5"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  {/* Add subject form */}
-                  {showAddSubject && !isSidebarMinimized && (
-                    <form onSubmit={handleAddSubjectSubmit} className="mt-2 p-2.5 bg-white/[0.03] border border-[#7c5cfc]/20 rounded-lg space-y-2">
-                      <input type="text" required placeholder="Subject Name" value={newSubjectName} onChange={e => setNewSubjectName(e.target.value)} className="w-full bg-transparent border border-white/10 px-2 py-1 text-[10px] font-mono rounded-md focus:outline-none focus:border-[#7c5cfc] text-white" />
-                      <input type="text" required placeholder="Code (e.g. CS101)" value={newSubjectCode} onChange={e => setNewSubjectCode(e.target.value)} className="w-full bg-transparent border border-white/10 px-2 py-1 text-[10px] font-mono rounded-md focus:outline-none focus:border-[#7c5cfc] text-white uppercase" />
-                      {addSubjectError && <p className="text-[9px] text-[#ff2d55]">{addSubjectError}</p>}
-                      <div className="flex gap-1.5">
-                        <button type="button" onClick={() => setShowAddSubject(false)} className="flex-1 py-1 text-[9px] font-mono border border-white/10 rounded-md text-white/40 hover:text-white cursor-pointer">Cancel</button>
-                        <button type="submit" className="flex-1 py-1 text-[9px] font-mono bg-[#7c5cfc] text-white rounded-md font-bold hover:bg-[#6d4ef0] cursor-pointer">Add</button>
-                      </div>
-                    </form>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Divider */}
-            <div className="mx-3 h-px bg-white/[0.04] my-2" />
-
-            {/* WORKSPACE TOOLS */}
-            <div className="px-3">
-              {!isSidebarMinimized && (
-                <button
-                  onClick={() => setWorkspaceExpanded(!workspaceExpanded)}
-                  className="w-full flex items-center gap-1 text-[9px] font-mono uppercase tracking-[0.18em] text-white/25 hover:text-white/50 transition-colors cursor-pointer py-1 mb-1"
-                >
-                  {workspaceExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRightIcon className="w-3 h-3" />}
-                  <span>Workspace</span>
-                </button>
-              )}
-              {(isSidebarMinimized || workspaceExpanded) && (
-                <div className="space-y-0.5">
-                  {([
-                    { id: 'notes', label: 'Notebook', Icon: BookOpen },
-                    { id: 'files', label: 'Files', Icon: FileText },
-                    { id: 'slides', label: 'Slides', Icon: Layers },
-                    { id: 'web', label: 'Web Hub', Icon: Globe },
-                    { id: 'media', label: 'Media', Icon: Tv2 },
-                    { id: 'youtube', label: 'YT Search', Icon: ScanSearch },
-                    { id: 'journal', label: 'Journal', Icon: BookOpen },
-                  ] as { id: typeof activeSection; label: string; Icon: any }[]).map(({ id, label, Icon }) => (
-                    <button
-                      key={id}
-                      onClick={() => setActiveSection(id)}
-                      title={label}
-                      className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-lg transition-all cursor-pointer group ${
-                        activeSection === id
-                          ? 'bg-[#7c5cfc]/15 text-[#7c5cfc] shadow-[0_0_10px_rgba(124,92,252,0.08)]'
-                          : 'text-white/40 hover:bg-white/[0.03] hover:text-white/70'
-                      }`}
-                    >
-                      <Icon className="w-3.5 h-3.5 shrink-0" />
-                      {!isSidebarMinimized && <span className="text-[11px] font-medium truncate">{label}</span>}
-                      {!isSidebarMinimized && activeSection === id && (
-                        <div className="ml-auto w-1 h-1 rounded-full bg-[#7c5cfc]" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
 
-          {/* Quick Actions footer */}
+          {/* Save status */}
           {!isSidebarMinimized && (
-            <div className="border-t border-white/[0.05] px-3 py-3 space-y-1.5">
-              <p className="text-[8px] font-mono uppercase tracking-[0.2em] text-white/20 mb-2">Quick Actions</p>
-              <button onClick={() => setActiveSection('notes')} className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-white/35 hover:text-white/70 hover:bg-white/[0.03] transition-all cursor-pointer text-[10px] font-mono">
-                <span className="text-[#7c5cfc]">+</span> New Note
-              </button>
-              <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-white/35 hover:text-white/70 hover:bg-white/[0.03] transition-all cursor-pointer text-[10px] font-mono">
-                <span className="text-[#7c5cfc]">+</span> Upload PDF
-              </button>
-              <button onClick={() => { setActiveSection('journal'); }} className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-white/35 hover:text-white/70 hover:bg-white/[0.03] transition-all cursor-pointer text-[10px] font-mono">
-                <span className="text-[#7c5cfc]">+</span> Open Journal
-              </button>
-              <div className="pt-2 border-t border-white/[0.04] mt-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-mono text-white/20">✓ Synced</span>
-                  <span className="text-[9px] font-mono text-white/20">{isSaving ? 'Saving...' : 'Local'}</span>
-                </div>
-              </div>
+            <div className="border-t border-white/[0.04] px-4 py-2.5 flex items-center justify-between">
+              <span className="text-[8px] font-mono text-white/20 uppercase tracking-wider">✓ Synced</span>
+              <span className="text-[8px] font-mono text-white/20">{isSaving ? 'Saving...' : 'Local'}</span>
             </div>
           )}
         </motion.nav>
 
-        {/* ── Center Content Panel ── */}
+        {/* ── Center Content ── */}
         <main className="flex-1 flex flex-col overflow-hidden">
-          {/* Section Header */}
-          <div className="h-12 px-6 flex items-center justify-between border-b border-white/[0.05] shrink-0">
-            <div className="flex items-center gap-3">
-              <h1 className="text-sm font-semibold text-white/90">{sectionLabel[activeSection]}</h1>
-              <span className="text-[10px] font-mono text-white/25">
-                {activeFolder?.name && activeFolder.id !== 'general' ? activeFolder.name : 'General Space'}
-              </span>
-            </div>
+
+          {/* Section sub-header */}
+          <div className="h-10 px-5 flex items-center justify-between border-b border-white/[0.04] shrink-0 bg-[#0c0c13]/60">
             <div className="flex items-center gap-2">
+              {activeSection ? (
+                <>
+                  {(() => { const s = SECTIONS.find(x => x.id === activeSection)!; return <s.icon className="w-3.5 h-3.5" style={{ color: s.color }} />; })()}
+                  <span className="text-[11px] font-semibold text-white/70">{SECTIONS.find(s => s.id === activeSection)?.label}</span>
+                  <span className="text-white/15 text-xs">·</span>
+                  <span className="text-[10px] font-mono text-white/30">{activeFolder?.name || 'General'}</span>
+                </>
+              ) : (
+                <>
+                  <FolderOpen className="w-3.5 h-3.5 text-[#7c5cfc]" />
+                  <span className="text-[11px] font-semibold text-white/70">{activeFolder?.name || 'General'}</span>
+                  <span className="text-[10px] font-mono text-white/25 ml-1">{activeFolder?.code || '—'}</span>
+                </>
+              )}
+            </div>
+            {/* Quick actions for current section */}
+            <div className="flex items-center gap-1.5">
               {activeSection === 'slides' && (
-                <button
-                  type="button"
-                  disabled={uploading}
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7c5cfc] text-white font-mono text-[9px] uppercase font-bold rounded-lg hover:bg-[#6d4ef0] transition-all cursor-pointer"
-                >
+                <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
+                  className="flex items-center gap-1.5 px-2.5 py-1 bg-white/[0.05] hover:bg-white/[0.09] border border-white/[0.07] text-white/50 hover:text-white/80 text-[9px] font-mono uppercase rounded-lg cursor-pointer transition-all">
                   {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
-                  Upload PDF
+                  Upload
                 </button>
               )}
               {activeSection === 'media' && (
-                <button onClick={() => setIsAddingVideo(!isAddingVideo)} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7c5cfc] text-white font-mono text-[9px] uppercase font-bold rounded-lg hover:bg-[#6d4ef0] transition-all cursor-pointer">
-                  <Upload className="w-3 h-3" /> Add Video
+                <button onClick={() => setIsAddingVideo(p => !p)}
+                  className="flex items-center gap-1.5 px-2.5 py-1 bg-white/[0.05] hover:bg-white/[0.09] border border-white/[0.07] text-white/50 hover:text-white/80 text-[9px] font-mono uppercase rounded-lg cursor-pointer transition-all">
+                  <Plus className="w-3 h-3" /> Add Video
                 </button>
               )}
-              {/* Inspector toggle */}
-              <button
-                onClick={() => setInspectorOpen(!inspectorOpen)}
-                className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg font-mono text-[9px] transition-all cursor-pointer border ${
-                  inspectorOpen ? 'bg-[#7c5cfc]/15 border-[#7c5cfc]/30 text-[#7c5cfc]' : 'border-white/[0.07] text-white/30 hover:text-white/60'
-                }`}
-                title="Toggle Inspector"
-              >
-                <PanelRight className="w-3.5 h-3.5" />
-              </button>
+              {activeSection && (
+                <button onClick={() => setActiveSection(null)}
+                  className="text-[9px] font-mono text-white/20 hover:text-white/50 px-2 py-1 rounded-lg hover:bg-white/[0.03] cursor-pointer transition-colors">
+                  ← Sections
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Content area */}
-          <div className="flex-1 overflow-hidden flex">
-            {/* Main view — preserved content from renderTabContent, rendered by section */}
-            <div className="flex-1 p-5 overflow-y-auto scrollbar-none flex flex-col">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeSection}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.16 }}
-                  className="flex-1 flex flex-col h-full"
-                >
-                  {activeSection === 'files' ? (
-                    <div className="flex-1 flex flex-col">
-                      <FileExplorer
-                        isCompact={false}
-                        rootFolderId={activeFolderId}
-                        onOpenFile={doc => setActiveDoc(doc)}
-                      />
-                    </div>
-                  ) : (
-                    renderTabContent(activeSection)
-                  )}
-                </motion.div>
-              </AnimatePresence>
-            </div>
-
-            {/* Inspector Panel */}
-            <AnimatePresence>
-              {inspectorOpen && (
-                <motion.aside
-                  initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: 240, opacity: 1 }}
-                  exit={{ width: 0, opacity: 0 }}
-                  transition={{ duration: 0.2, ease: 'easeOut' }}
-                  className="shrink-0 border-l border-white/[0.05] bg-[#0b0b12] overflow-hidden"
-                >
-                  <div className="p-4 space-y-5 w-60">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-white/30">Inspector</span>
-                      <button onClick={() => setInspectorOpen(false)} className="text-white/20 hover:text-white/60 cursor-pointer"><X className="w-3.5 h-3.5" /></button>
+          {/* Content */}
+          <div className="flex-1 overflow-hidden">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeSection ?? 'home'}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.15 }}
+                className="h-full"
+              >
+                {/* ── HOME — section picker ── */}
+                {!activeSection && (
+                  <div className="h-full overflow-y-auto p-6">
+                    {/* Subject info */}
+                    <div className="mb-8">
+                      <p className="text-[10px] font-mono text-white/25 uppercase tracking-[0.2em] mb-1">Current Subject</p>
+                      <h2 className="text-lg font-bold text-white/80">{activeFolder?.name || 'General Playground'}</h2>
+                      {activeFolder?.code && <span className="inline-block mt-1 px-2 py-0.5 bg-[#7c5cfc]/10 border border-[#7c5cfc]/20 rounded font-mono text-[9px] text-[#7c5cfc] uppercase">{activeFolder.code}</span>}
+                      <p className="text-[10px] text-white/30 mt-2 font-mono">{semester} · {filteredRepository.length} file{filteredRepository.length !== 1 ? 's' : ''} uploaded</p>
                     </div>
 
-                    <div className="space-y-3">
-                      <div>
-                        <p className="text-[8px] font-mono uppercase text-white/20 mb-1.5">Properties</p>
-                        <div className="space-y-1.5">
-                          <div className="flex justify-between">
-                            <span className="text-[10px] text-white/35">Subject</span>
-                            <span className="text-[10px] text-white/60 font-mono">{activeFolder?.code || 'GEN'}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-[10px] text-white/35">Semester</span>
-                            <span className="text-[10px] text-white/60 font-mono">{semester}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-[10px] text-white/35">Section</span>
-                            <span className="text-[10px] text-[#7c5cfc] font-mono">{sectionLabel[activeSection]}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-[10px] text-white/35">Status</span>
-                            <span className="text-[10px] text-emerald-400 font-mono">{isSaving ? 'Saving...' : '✓ Saved'}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {activeSection === 'notes' && (
-                        <div>
-                          <p className="text-[8px] font-mono uppercase text-white/20 mb-1.5">Stats</p>
-                          <div className="space-y-1.5">
-                            <div className="flex justify-between">
-                              <span className="text-[10px] text-white/35">Words</span>
-                              <span className="text-[10px] text-white/60 font-mono">{notes.trim() ? notes.trim().split(/\s+/).length : 0}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-[10px] text-white/35">Characters</span>
-                              <span className="text-[10px] text-white/60 font-mono">{notes.length}</span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {activeSection === 'slides' && (
-                        <div>
-                          <p className="text-[8px] font-mono uppercase text-white/20 mb-1.5">Files</p>
-                          <div className="flex justify-between">
-                            <span className="text-[10px] text-white/35">Slides</span>
-                            <span className="text-[10px] text-white/60 font-mono">{filteredRepository.filter(d => d.fileName.endsWith('.pdf') || d.fileName.endsWith('.pptx')).length}</span>
-                          </div>
-                        </div>
-                      )}
-
-                      <div>
-                        <p className="text-[8px] font-mono uppercase text-white/20 mb-1.5">AI Actions</p>
-                        <button
-                          onClick={() => setAiTriggerQuery({ text: `Summarize my ${sectionLabel[activeSection]} notes for ${activeFolder?.name || 'this subject'}`, id: Date.now().toString() })}
-                          className="w-full text-left text-[10px] text-[#7c5cfc] hover:text-white transition-colors cursor-pointer py-1 font-mono"
+                    {/* Section grid */}
+                    <p className="text-[9px] font-mono uppercase tracking-[0.2em] text-white/20 mb-4">— Choose a section</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {SECTIONS.map(({ id, label, icon: Icon, desc, color }) => (
+                        <motion.button
+                          key={id}
+                          whileHover={{ scale: 1.02, y: -1 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => { setActiveSection(id); setExpandedFolders(p => ({ ...p, [activeFolderId || 'general']: true })); }}
+                          className="flex flex-col items-start gap-3 p-4 rounded-xl bg-white/[0.025] hover:bg-white/[0.05] border border-white/[0.06] hover:border-white/[0.12] transition-all cursor-pointer group text-left"
                         >
-                          ✦ Summarize with AI
-                        </button>
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${color}18`, border: `1px solid ${color}30` }}>
+                            <Icon className="w-4 h-4" style={{ color }} />
+                          </div>
+                          <div>
+                            <p className="text-[12px] font-semibold text-white/75 group-hover:text-white/90 transition-colors">{label}</p>
+                            <p className="text-[10px] text-white/30 mt-0.5 leading-snug">{desc}</p>
+                          </div>
+                        </motion.button>
+                      ))}
+                    </div>
+
+                    {/* Recent files strip */}
+                    {filteredRepository.length > 0 && (
+                      <div className="mt-10">
+                        <p className="text-[9px] font-mono uppercase tracking-[0.2em] text-white/20 mb-3">— Recent Files</p>
+                        <div className="space-y-1.5">
+                          {filteredRepository.slice(0, 5).map(doc => (
+                            <button key={doc.id} onClick={() => { setActiveDoc(doc); setActiveSection(doc.id as any); }}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.05] hover:border-white/[0.1] transition-all cursor-pointer text-left group">
+                              <FileText className="w-3.5 h-3.5 text-[#7c5cfc]/60 shrink-0" />
+                              <span className="text-[11px] text-white/55 group-hover:text-white/75 truncate flex-1 transition-colors">{doc.fileName}</span>
+                              <span className="text-[9px] font-mono text-white/20 uppercase">{doc.sizeLabel}</span>
+                            </button>
+                          ))}
+                        </div>
                       </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ── NOTES ── */}
+                {activeSection === 'notes' && (
+                  <div className="h-full p-5 flex flex-col">
+                    <textarea
+                      value={notes}
+                      onChange={e => setNotes(e.target.value)}
+                      placeholder={`✏️  Start typing your ${activeFolder?.name || 'general'} notes here...\n\nThis is your private workspace — not shared with anyone.`}
+                      className="flex-1 bg-white/[0.02] border border-white/[0.06] rounded-xl p-5 text-sm text-white/80 leading-relaxed resize-none focus:outline-none focus:border-[#7c5cfc]/40 font-mono placeholder:text-white/20 transition-colors"
+                    />
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-[9px] font-mono text-white/20 uppercase">🔒 Private · Auto-saved locally</span>
+                      <span className="text-[9px] font-mono text-white/20">{notes.trim() ? notes.trim().split(/\s+/).length : 0} words</span>
                     </div>
                   </div>
-                </motion.aside>
-              )}
+                )}
+
+                {/* ── JOURNAL ── */}
+                {activeSection === 'journal' && (
+                  <div className="h-full flex flex-col overflow-hidden rounded-none border-0">
+                    <DiaryPanel />
+                  </div>
+                )}
+
+                {/* ── FILES ── */}
+                {activeSection === 'files' && (
+                  <div className="h-full flex flex-col">
+                    <FileExplorer isCompact={false} rootFolderId={activeFolderId} onOpenFile={doc => setActiveDoc(doc)} />
+                  </div>
+                )}
+
+                {/* ── SLIDES ── */}
+                {activeSection === 'slides' && !showDemoSlides && (
+                  <div className="h-full overflow-y-auto p-5 space-y-5">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {/* Demo card */}
+                      <motion.div whileHover={{ scale: 1.02 }} onClick={() => setShowDemoSlides(true)}
+                        className="p-4 rounded-xl border border-[#7c5cfc]/30 hover:border-[#7c5cfc]/60 bg-[#7c5cfc]/5 hover:bg-[#7c5cfc]/10 cursor-pointer transition-all flex flex-col gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-[#7c5cfc]/15 border border-[#7c5cfc]/25 flex items-center justify-center">
+                          <Sparkles className="w-4 h-4 text-[#7c5cfc] animate-pulse" />
+                        </div>
+                        <div>
+                          <p className="text-[11px] font-bold text-[#7c5cfc]">Demo Slides</p>
+                          <p className="text-[10px] text-white/35 mt-0.5">ML Foundations</p>
+                        </div>
+                        <span className="text-[9px] font-mono text-[#7c5cfc]/60 uppercase">Open →</span>
+                      </motion.div>
+
+                      {/* Uploaded slides — clicking opens DocumentViewer, not AI */}
+                      {filteredRepository
+                        .filter(doc => doc.fileName.toLowerCase().endsWith('.pdf') || doc.fileName.toLowerCase().endsWith('.pptx') || doc.fileName.toLowerCase().endsWith('.ppt'))
+                        .map(doc => {
+                          const isPpt = doc.fileName.toLowerCase().endsWith('.pptx') || doc.fileName.toLowerCase().endsWith('.ppt');
+                          return (
+                            <motion.div
+                              key={doc.id}
+                              whileHover={{ scale: 1.02 }}
+                              onClick={() => {
+                                // Open in DocumentViewer — NOT AI
+                                setActiveDoc(doc);
+                                setActiveSection(doc.id as any);
+                              }}
+                              className="p-4 rounded-xl border border-white/[0.07] hover:border-[#f5a623]/40 bg-white/[0.02] hover:bg-white/[0.05] cursor-pointer transition-all flex flex-col gap-3"
+                            >
+                              <div className="w-8 h-8 rounded-lg bg-[#f5a623]/10 border border-[#f5a623]/20 flex items-center justify-center">
+                                <Layers className="w-4 h-4 text-[#f5a623]" />
+                              </div>
+                              <div>
+                                <p className="text-[11px] font-semibold text-white/70 truncate">{doc.fileName}</p>
+                                <p className="text-[9px] font-mono text-white/25 mt-0.5 uppercase">{isPpt ? 'PPTX' : 'PDF'} · {doc.sizeLabel}</p>
+                              </div>
+                              <span className="text-[9px] font-mono text-[#f5a623]/60 uppercase">Open →</span>
+                            </motion.div>
+                          );
+                        })}
+                    </div>
+
+                    {/* Upload drop zone */}
+                    <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
+                      className="w-full py-8 border border-dashed border-white/[0.08] rounded-xl hover:border-[#7c5cfc]/40 hover:bg-[#7c5cfc]/3 transition-all cursor-pointer flex flex-col items-center gap-2 text-white/25 hover:text-white/50">
+                      {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+                      <span className="text-[10px] font-mono uppercase">{uploading ? 'Uploading...' : 'Upload PDF or PPTX'}</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* ── SLIDES — Demo presentation viewer ── */}
+                {activeSection === 'slides' && showDemoSlides && (
+                  <div className="h-full p-5 flex flex-col">
+                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/[0.06]">
+                      <button onClick={() => setShowDemoSlides(false)} className="flex items-center gap-1.5 text-[10px] font-mono text-white/35 hover:text-white/70 cursor-pointer transition-colors">
+                        <ArrowLeft className="w-3.5 h-3.5" /> Back to Slides
+                      </button>
+                      <span className="text-[10px] font-mono text-white/25">{currentSlideIndex + 1} / {dummySlides.length}</span>
+                    </div>
+                    <div className="flex-1 flex flex-col items-center justify-center">
+                      <AnimatePresence mode="wait">
+                        <motion.div key={activeSlide.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="max-w-xl w-full space-y-6 text-center">
+                          <p className="text-[10px] font-mono text-[#7c5cfc] uppercase tracking-widest">{activeSlide.topic}</p>
+                          <h2 className="text-xl font-bold text-white/85">{activeSlide.title}</h2>
+                          <ul className="space-y-3 text-left">
+                            {activeSlide.bullets.map((b, i) => (
+                              <li key={i} className="flex items-start gap-3 text-sm text-white/55">
+                                <span className="w-1.5 h-1.5 bg-[#7c5cfc] rounded-full shrink-0 mt-1.5" />
+                                {b}
+                              </li>
+                            ))}
+                          </ul>
+                        </motion.div>
+                      </AnimatePresence>
+                    </div>
+                    <div className="flex items-center justify-between pt-4 border-t border-white/[0.05]">
+                      <button disabled={currentSlideIndex === 0} onClick={() => handleSlideChange('prev')} className="flex items-center gap-1 text-[10px] font-mono text-white/35 hover:text-white/70 disabled:opacity-20 cursor-pointer disabled:cursor-not-allowed transition-colors">
+                        <ArrowLeft className="w-3.5 h-3.5" /> Prev
+                      </button>
+                      <div className="flex gap-1.5">
+                        {dummySlides.map((_, i) => (
+                          <span key={i} className={`block h-1 rounded-full transition-all ${i === currentSlideIndex ? 'w-4 bg-[#7c5cfc]' : 'w-1.5 bg-white/15'}`} />
+                        ))}
+                      </div>
+                      <button disabled={currentSlideIndex === dummySlides.length - 1} onClick={() => handleSlideChange('next')} className="flex items-center gap-1 text-[10px] font-mono text-white/35 hover:text-white/70 disabled:opacity-20 cursor-pointer disabled:cursor-not-allowed transition-colors">
+                        Next <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── WEB HUB ── */}
+                {activeSection === 'web' && (
+                  <div className="h-full overflow-y-auto p-5 space-y-5">
+                    <form onSubmit={handleWebSearch} className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30" />
+                        <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                          placeholder="Search the web for anything..."
+                          className="w-full pl-9 pr-4 py-2.5 bg-white/[0.03] border border-white/[0.07] rounded-xl text-sm text-white/70 placeholder:text-white/25 focus:outline-none focus:border-[#4cd964]/40 transition-colors" />
+                      </div>
+                      <button type="submit" disabled={isSearching}
+                        className="px-5 py-2.5 bg-[#4cd964] text-black font-mono text-[9px] uppercase tracking-wider font-bold rounded-xl hover:opacity-90 cursor-pointer disabled:opacity-40 transition-opacity">
+                        {isSearching ? 'Searching...' : 'Go'}
+                      </button>
+                    </form>
+                    {isSearching && <p className="text-[10px] font-mono text-[#4cd964] animate-pulse">Searching the web...</p>}
+                    <div className="space-y-2">
+                      {searchResults.map((res, i) => (
+                        <div key={i} className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.1] transition-all">
+                          <a href={res.link} target="_blank" rel="noopener noreferrer" className="text-[12px] font-semibold text-[#4cd964] hover:underline flex items-center gap-1.5">
+                            {res.title} <ExternalLink className="w-3 h-3 text-white/30" />
+                          </a>
+                          <p className="text-[10px] text-white/40 mt-1 leading-relaxed">{res.snippet}</p>
+                          <button onClick={() => { setActiveDocText(`[Web]\nTitle: ${res.title}\n${res.snippet}`); setAiTriggerQuery({ text: `Analyze: ${res.title}\n${res.snippet}`, id: Date.now().toString() }); setFedUrls(p => ({ ...p, [res.link]: true })); setIsAiOpen(true); setTimeout(() => setFedUrls(p => ({ ...p, [res.link]: false })), 2000); }}
+                            className={`mt-2 text-[9px] font-mono px-2 py-1 rounded-lg border transition-all ${fedUrls[res.link] ? 'border-[#4cd964]/30 text-[#4cd964] bg-[#4cd964]/5' : 'border-white/[0.07] text-white/30 hover:text-white/60 cursor-pointer'}`}>
+                            {fedUrls[res.link] ? '✓ Sent to AI' : '+ Send to AI'}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── MEDIA ── */}
+                {activeSection === 'media' && (
+                  <div className="h-full overflow-y-auto p-5 space-y-4">
+                    {/* Add video form */}
+                    {isAddingVideo && (
+                      <form onSubmit={async e => {
+                        e.preventDefault();
+                        if (!newVideoUrl || !activeFolderId) return;
+                        try {
+                          let url = newVideoUrl;
+                          if (newVideoUrl.includes('youtube.com/watch?v=')) { const v = new URL(newVideoUrl).searchParams.get('v'); if (v) url = `https://www.youtube.com/embed/${v}`; }
+                          else if (newVideoUrl.includes('youtu.be/')) { const v = newVideoUrl.split('youtu.be/')[1].split('?')[0]; if (v) url = `https://www.youtube.com/embed/${v}`; }
+                          const vid = await addSubjectVideo(url, newVideoTitle || 'Untitled Video', activeFolderId);
+                          setVideos(p => [vid, ...p]); setNewVideoUrl(''); setNewVideoTitle(''); setIsAddingVideo(false);
+                        } catch {}
+                      }} className="p-4 bg-white/[0.02] border border-[#ff2d55]/20 rounded-xl space-y-3">
+                        <input required placeholder="Video Title" value={newVideoTitle} onChange={e => setNewVideoTitle(e.target.value)} className="w-full bg-transparent border border-white/[0.08] px-3 py-2 text-sm text-white/70 rounded-lg focus:outline-none focus:border-[#ff2d55]/40" />
+                        <input required type="url" placeholder="YouTube URL" value={newVideoUrl} onChange={e => setNewVideoUrl(e.target.value)} className="w-full bg-transparent border border-white/[0.08] px-3 py-2 text-sm text-white/70 rounded-lg focus:outline-none focus:border-[#ff2d55]/40" />
+                        <div className="flex gap-2">
+                          <button type="button" onClick={() => setIsAddingVideo(false)} className="flex-1 py-1.5 text-[10px] font-mono border border-white/[0.08] rounded-lg text-white/35 cursor-pointer">Cancel</button>
+                          <button type="submit" className="flex-1 py-1.5 text-[10px] font-mono bg-[#ff2d55] text-white rounded-lg font-bold cursor-pointer">Save</button>
+                        </div>
+                      </form>
+                    )}
+
+                    {activePlayer ? (
+                      <div className="flex flex-col h-full gap-3 min-h-[400px]">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-semibold text-white/70 truncate">{activePlayer.title}</p>
+                          <button onClick={() => setActivePlayer(null)} className="text-[10px] font-mono text-white/30 hover:text-white/60 cursor-pointer">← Back</button>
+                        </div>
+                        <div className="flex-1 rounded-xl overflow-hidden border border-white/[0.06]">
+                          <iframe src={`https://www.youtube.com/embed/${activePlayer.videoId}?autoplay=1&rel=0&modestbranding=1`} className="w-full h-full min-h-[360px]" allowFullScreen />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {videos.map(v => (
+                          <div key={v.id} className="rounded-xl border border-white/[0.06] overflow-hidden bg-white/[0.02]">
+                            <div className="aspect-video">
+                              <iframe src={v.url} className="w-full h-full" allowFullScreen />
+                            </div>
+                            <div className="px-3 py-2 flex items-center justify-between">
+                              <span className="text-[11px] font-semibold text-white/60 truncate">{v.title}</span>
+                              <span className="text-[8px] font-mono text-white/20 uppercase ml-2 shrink-0">YT</span>
+                            </div>
+                          </div>
+                        ))}
+                        {videos.length === 0 && !isAddingVideo && (
+                          <div className="col-span-2 py-16 flex flex-col items-center gap-3 border border-dashed border-white/[0.07] rounded-xl">
+                            <Film className="w-8 h-8 text-white/20" />
+                            <p className="text-[11px] font-mono text-white/30 uppercase">No saved videos yet</p>
+                            <button onClick={() => setIsAddingVideo(true)} className="px-4 py-1.5 bg-[#ff2d55]/10 border border-[#ff2d55]/20 text-[#ff2d55] text-[10px] font-mono rounded-lg cursor-pointer hover:bg-[#ff2d55]/20 transition-colors">+ Add Video Link</button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ── YOUTUBE SEARCH ── */}
+                {activeSection === 'youtube' && (
+                  <div className="h-full overflow-hidden">
+                    <MediaHubStandalone
+                      folderId={activeFolderId}
+                      onVideoSelect={(url, videoId, title) => {
+                        if (activeFolderId) getSubjectVideos(activeFolderId).then(setVideos);
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* ── Open document viewer (when a doc is "active") ── */}
+                {activeSection && openDocs.find(d => d.id === activeSection) && (
+                  <div className="h-full flex flex-col overflow-hidden">
+                    <DocumentViewer
+                      document={openDocs.find(d => d.id === activeSection)!}
+                      onClose={() => { closeDoc(activeSection); setActiveSection('slides'); }}
+                      isInline={true}
+                    />
+                  </div>
+                )}
+
+              </motion.div>
             </AnimatePresence>
           </div>
         </main>
 
-        {/* ── Right AI Chat Panel ── */}
-        <motion.aside
-          animate={{ width: isAiPanelMinimized ? 0 : 350 }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="shrink-0 h-full overflow-hidden bg-[#0d0d14]"
-        >
-          <div className="h-full border-l border-white/[0.05] flex flex-col w-[350px]">
-            <div className="h-12 px-4 flex items-center justify-between border-b border-white/[0.05] shrink-0">
-              <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-white/30">AI Study Partner</span>
-              <button onClick={() => setIsAiPanelMinimized(!isAiPanelMinimized)} className="text-white/20 hover:text-white/60 cursor-pointer transition-colors">
-                <PanelRight className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <IntegratedAiChat
-                contextLabel={openDocs.length > 0 ? `${openDocs.length} Docs Open` : 'Sanctuary'}
-                storageKey={aiStorageKey}
-              />
-            </div>
-          </div>
-        </motion.aside>
+        {/* ── Right AI Panel (hidden by default, toggled) ── */}
+        <AnimatePresence>
+          {isAiOpen && (
+            <motion.aside
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 320, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="shrink-0 h-full overflow-hidden bg-[#0d0d14] border-l border-white/[0.05]"
+            >
+              <div className="h-full flex flex-col w-[320px]">
+                <div className="h-10 px-4 flex items-center justify-between border-b border-white/[0.05] shrink-0">
+                  <div className="flex items-center gap-2">
+                    <Bot className="w-3.5 h-3.5 text-[#7c5cfc]" />
+                    <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-white/30">AI Study Partner</span>
+                  </div>
+                  <button onClick={() => setIsAiOpen(false)} className="text-white/20 hover:text-white/60 cursor-pointer transition-colors">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div className="flex-1 overflow-hidden">
+                  <IntegratedAiChat contextLabel={openDocs.length > 0 ? `${openDocs.length} Docs Open` : activeFolder?.name || 'Sanctuary'} storageKey={aiStorageKey} />
+                </div>
+              </div>
+            </motion.aside>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* ── Shield Overlay ── */}
+      {/* ── Deep Flow Shield Indicator ── */}
       <AnimatePresence>
         {isFlowActive && (
           <motion.div
-            initial={{ opacity: 0, y: -12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
+            initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}
             className="fixed top-14 right-4 z-50 flex items-center gap-3 px-4 py-2.5 bg-[#0d0d14]/90 backdrop-blur-xl border border-white/[0.07] rounded-xl shadow-2xl"
           >
             <Shield className="w-4 h-4 text-[#ff2d55]" />
