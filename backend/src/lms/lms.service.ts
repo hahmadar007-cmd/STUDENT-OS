@@ -141,7 +141,20 @@ export class LmsService {
   async getMoodleCourses(baseUrl: string, token: string): Promise<any[]> {
     try {
       const root = this.normalizeBaseUrl(baseUrl);
-      const url = `${root}/webservice/rest/server.php?wstoken=${token}&wsfunction=core_enrol_get_users_courses&moodlewsrestformat=json`;
+      
+      // 1. Get the userid first
+      const infoUrl = `${root}/webservice/rest/server.php?wstoken=${token}&wsfunction=core_webservice_get_site_info&moodlewsrestformat=json`;
+      const infoRes = await fetch(infoUrl);
+      if (!infoRes.ok) return [];
+      const infoData = await infoRes.json();
+      
+      if (!infoData.userid) {
+        this.logger.warn(`Moodle site info missing userid: ${infoData.message || JSON.stringify(infoData)}`);
+        return [];
+      }
+
+      // 2. Fetch courses for that userid
+      const url = `${root}/webservice/rest/server.php?wstoken=${token}&wsfunction=core_enrol_get_users_courses&userid=${infoData.userid}&moodlewsrestformat=json`;
       const res = await fetch(url);
       if (!res.ok) return [];
       const data = await res.json();

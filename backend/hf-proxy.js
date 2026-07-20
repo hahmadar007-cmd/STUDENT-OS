@@ -11,14 +11,27 @@ const NEST_PORT = 3001;
 let nestReady = false;
 
 // Start NestJS as a background child process
+let nestLogs = [];
+const logStream = (data) => {
+  const str = data.toString();
+  console.log(str);
+  nestLogs.push(str);
+  if (nestLogs.length > 200) nestLogs.shift();
+};
+
 const nest = spawn('node', ['dist/src/main.js'], {
   env: { ...process.env, PORT: String(NEST_PORT) },
-  stdio: ['ignore', 'inherit', 'inherit'],
+  stdio: ['ignore', 'pipe', 'pipe'],
 });
 
+nest.stdout.on('data', logStream);
+nest.stderr.on('data', logStream);
+
 nest.on('close', (code) => {
-  console.error(`[proxy] NestJS exited with code ${code}`);
-  process.exit(code);
+  const msg = `[proxy] NestJS exited with code ${code}`;
+  console.error(msg);
+  nestLogs.push(msg);
+  // Don't exit, stay alive to serve /debug
 });
 
 // Poll until NestJS is listening
@@ -41,6 +54,12 @@ function waitForNest(callback) {
 
 // Reverse proxy server on HF_PORT
 const proxy = http.createServer((req, res) => {
+  if (req.url === '/debug') {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end(nestLogs.join(''));
+    return;
+  }
+
   if (!nestReady) {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ status: 'starting', message: 'Backend is booting up, please wait...' }));
