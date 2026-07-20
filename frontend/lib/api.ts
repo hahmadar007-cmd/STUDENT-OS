@@ -276,6 +276,10 @@ export const loginLmsWithCredentials = (lmsType: string, url: string, username?:
   return apiRequest('/lms/login', 'POST', { lmsType, url, username, password });
 };
 
+export const disconnectLms = () => {
+  return apiRequest('/lms/disconnect', 'DELETE');
+};
+
 export interface LmsDeadlineItem {
   id: string;
   course: string;

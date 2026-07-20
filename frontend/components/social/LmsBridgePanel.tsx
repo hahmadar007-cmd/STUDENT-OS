@@ -6,14 +6,14 @@ import {
   X, RefreshCw, Link2, AlertCircle,
   ChevronDown, ChevronRight, FileText, Zap, BookOpen,
   CheckCircle2, Clock, AlertTriangle, MessageSquare,
-  ClipboardList, HelpCircle, Calendar, Timer, BookMarked, User2,
+  ClipboardList, HelpCircle, Calendar, Timer, BookMarked, User2, LogOut
 } from 'lucide-react';
 import { FascaButton } from '../ui/FascaButton';
 import { FascaCard } from '../ui/FascaCard';
 import { FascaInput } from '../ui/FascaInput';
 import {
   getDeadlines, patchLmsToken, getCourseContents, getGrades,
-  getAssignments, getQuizzes, getForumActivity, getCourses, loginLmsWithCredentials
+  getAssignments, getQuizzes, getForumActivity, getCourses, loginLmsWithCredentials, disconnectLms
 } from '../../lib/api';
 import type {
   CourseContents, GradeItem, AssignmentStatusItem, QuizItem, ForumItem, CourseInfo,
@@ -251,6 +251,32 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose,
     finally { setIsLoading(false); }
   };
 
+  const handleDisconnect = async () => {
+    setIsLoading(true);
+    try {
+      const result = await disconnectLms();
+      if (result.success) {
+        toast('University portal disconnected', 'cyan');
+        setConnectedProvider(null);
+        setDeadlines([]);
+        setCourseContents([]);
+        setAssignments([]);
+        setQuizzes([]);
+        setForumActivity([]);
+        setCourseList([]);
+        setSyncTimestamp('Not connected yet');
+        setLmsSource('demo');
+        setShowConnectModal(true); // Open the modal again so they can log in if they want
+      } else {
+        toast('Failed to disconnect', 'rose');
+      }
+    } catch (err) {
+      toast('Failed to disconnect', 'rose');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // ── Derived: get course metadata ─────────────────────────────────
   const getCourseInfo = (shortname: string): CourseInfo => {
     const found = courseList.find(c => c.shortname.toUpperCase() === shortname.toUpperCase());
@@ -336,12 +362,19 @@ export const LmsBridgePanel: React.FC<LmsBridgePanelProps> = ({ isOpen, onClose,
             </div>
 
             {/* ── Connect CTA ── */}
-            <div className="px-5 pt-3 pb-1 shrink-0">
+            <div className="px-5 pt-3 pb-1 shrink-0 flex gap-2">
               <FascaButton onClick={() => setShowConnectModal(true)} variant="ghost-violet"
-                className="w-full rounded-none font-bold py-2.5 text-[8.5px] flex items-center justify-center gap-1.5 border border-[#7c5cfc]/30 hover:border-[#7c5cfc]">
+                className="flex-1 rounded-none font-bold py-2.5 text-[8.5px] flex items-center justify-center gap-1.5 border border-[#7c5cfc]/30 hover:border-[#7c5cfc]">
                 <Link2 className="w-3 h-3" />
                 {lmsSource === 'live' ? 'Switch University Portal' : 'Connect My University'}
               </FascaButton>
+              {lmsSource === 'live' && (
+                <FascaButton onClick={handleDisconnect} variant="ghost-violet"
+                  className="rounded-none font-bold py-2.5 px-3 text-[8.5px] flex items-center justify-center gap-1.5 border border-[#ff2d55]/30 text-[#ff2d55] hover:border-[#ff2d55] hover:bg-[#ff2d55]/10">
+                  <LogOut className="w-3 h-3" />
+                  Logout
+                </FascaButton>
+              )}
             </div>
 
             {/* ── Tab bar ── */}
