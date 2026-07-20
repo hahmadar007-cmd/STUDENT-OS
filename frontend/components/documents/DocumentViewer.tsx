@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Download, FileText, ExternalLink, Maximize2, Minimize2, Eye, EyeOff, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Download, FileText, ExternalLink, Maximize2, Minimize2, Eye, EyeOff, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import {
   getDocument,
   createObjectUrl,
@@ -633,15 +633,18 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
         {/* Content Viewer */}
         <div className="flex-1 min-h-0 bg-fouzar-elevated/30 border border-fouzar-border rounded-[var(--fouzar-radius-md)] overflow-hidden flex flex-col">
           {loading && (
-            <div className="flex-1 flex flex-col items-center justify-center gap-2 p-6 text-center">
-              <span className="font-mono text-[9px] text-fouzar-accent animate-pulse uppercase font-bold tracking-wider">
-                {isConverting ? 'Converting document to PDF...' : 'Loading document...'}
-              </span>
-              {isConverting && (
-                <span className="font-mono text-[7.5px] text-fouzar-text-secondary uppercase">
-                  ⚡ Pre-rendering slides for visual preview. Please wait...
-                </span>
-              )}
+            <div className="flex-1 flex flex-col items-center justify-center gap-4 p-6 text-center">
+              <Loader2 className={`w-8 h-8 text-fouzar-accent ${isConverting ? 'animate-[spin_2s_linear_infinite]' : 'animate-spin'}`} />
+              <div className="space-y-1">
+                <p className="font-mono text-[10px] text-fouzar-accent uppercase font-bold tracking-wider">
+                  {isConverting ? 'Processing Document' : 'Loading Document...'}
+                </p>
+                {isConverting && (
+                  <p className="font-mono text-[8px] text-fouzar-text-secondary uppercase animate-pulse">
+                    ⚡ Converting slides to visual format
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
@@ -797,15 +800,18 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
         {/* Content Panel */}
         <div className="flex-1 min-h-0 fouzar-card overflow-hidden flex flex-col bg-fouzar-surface/40 border border-fouzar-border">
           {loading && (
-            <div className="flex-1 flex flex-col items-center justify-center gap-2 text-center p-6">
-              <span className="font-mono text-[10px] text-fouzar-accent animate-pulse uppercase font-bold tracking-wider">
-                {isConverting ? 'Converting document to PDF...' : 'Loading document...'}
-              </span>
-              {isConverting && (
-                <span className="font-mono text-[8px] text-fouzar-text-secondary uppercase">
-                  ⚡ Pre-rendering slides for visual preview. Please wait...
-                </span>
-              )}
+            <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center p-6">
+              <Loader2 className={`w-10 h-10 text-fouzar-accent ${isConverting ? 'animate-[spin_2s_linear_infinite]' : 'animate-spin'}`} />
+              <div className="space-y-1.5">
+                <p className="font-mono text-[12px] text-fouzar-accent uppercase font-bold tracking-wider">
+                  {isConverting ? 'Processing Document' : 'Loading Document...'}
+                </p>
+                {isConverting && (
+                  <p className="font-mono text-[9px] text-fouzar-text-secondary uppercase animate-pulse">
+                    ⚡ Converting slides to visual format
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
