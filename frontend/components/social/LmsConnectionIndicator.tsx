@@ -37,7 +37,7 @@ export function LmsConnectionIndicator() {
     <div className="flex items-center gap-2 px-3 py-1.5 bg-[#00d4ff]/10 border border-[#00d4ff]/20 rounded-full select-none cursor-default shadow-sm transition-all hover:bg-[#00d4ff]/20">
       <div className="w-2 h-2 rounded-full bg-[#00d4ff] animate-pulse shadow-[0_0_8px_#00d4ff]" />
       <span className="text-[10px] font-mono text-[#00d4ff] uppercase tracking-wider font-bold">
-        {shortName} Connected
+        {shortName} Synced
       </span>
       <div className="w-px h-3 bg-[#00d4ff]/30 mx-1" />
       <span className="text-[9px] font-mono text-[#00d4ff]/70 uppercase">

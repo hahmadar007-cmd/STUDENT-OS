@@ -268,7 +268,7 @@ export function LmsBridgePanel({ isOpen, onClose }: LmsBridgePanelProps) {
                   <FascaButton
                     onClick={handleLinkGateway}
                     disabled={loading || (!baseUrl)}
-                    variant="primary"
+                    variant="solid-violet"
                     className="w-full mt-4 py-3"
                   >
                     {loading ? <RefreshCw className="w-4 h-4 animate-spin mx-auto" /> : 'Establish Connection'}
