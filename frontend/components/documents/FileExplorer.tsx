@@ -818,7 +818,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
             <div className="flex flex-col items-center justify-center h-full p-4 overflow-y-auto w-full">
               {!searchQuery ? (
                 <div className="w-full max-w-sm mx-auto">
-                  <UploadDropzone
+                  <UploadButton
                     endpoint="materialUploader"
                     onClientUploadComplete={async (res) => {
                       if (res && res.length > 0) {
@@ -850,12 +850,6 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
                       }
                     }}
                     onUploadError={(error: Error) => alert(`Upload error: ${error.message}`)}
-                    appearance={{
-                      container: 'border-2 border-dashed border-white/10 hover:border-[#7c5cfc]/50 bg-white/[0.02] hover:bg-[#7c5cfc]/5 transition-all rounded-xl p-8 cursor-pointer mt-4 w-full h-48',
-                      label: 'text-white/40 hover:text-white/80 transition-colors',
-                      allowedContent: 'text-white/30',
-                      button: 'bg-[#7c5cfc] hover:bg-[#9b82ff] text-white font-bold rounded-lg px-4 py-2 mt-4 cursor-pointer transition-colors',
-                    }}
                   />
                   <p className="text-[10px] font-mono text-white/25 mt-4 uppercase text-center">Or create a subfolder using the + button above</p>
                 </div>
