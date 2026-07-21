@@ -44,7 +44,7 @@ import { LmsConnectionIndicator } from '../../components/social/LmsConnectionInd
 import { FocusShieldPanel } from '../../components/focus/FocusShieldPanel';
 import { AiControlCenter } from '../../components/ai/AiControlCenter';
 import { AcademicInfoPanel } from '../../components/academic/AcademicInfoPanel';
-import { UsernameOnboardingModal } from '../../components/onboarding/UsernameOnboardingModal';
+import { UsernameOnboardingModal } from '@/components/onboarding/UsernameOnboardingModal';
 import { useAuth } from '../../hooks/useAuth';
 import { useSocket } from '../../hooks/useSocket';
 import { useOnFocusStateChanged, updateFocusState as socketUpdateFocusState } from '../../lib/socket';

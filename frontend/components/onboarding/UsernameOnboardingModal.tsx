@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Sparkles, Check, AlertCircle, ArrowRight } from 'lucide-react';
-import { apiRequest } from '../../lib/api';
+import { apiRequest } from '@/lib/api';
 
 // Simple inline debounce to avoid lodash dependency
 function useDebounce<T extends (...args: any[]) => void>(func: T, wait: number) {
