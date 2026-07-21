@@ -281,8 +281,10 @@ export class LmsService {
               list.push({
                 id: `moodle-as-${a.id}`,
                 course: c.shortname || 'Course',
+                courseId: c.id,
                 title: a.name,
                 dueDate: a.duedate ? new Date(a.duedate * 1000).toISOString() : null,
+                dueDateMs: a.duedate ? a.duedate * 1000 : null,
               });
             });
           }

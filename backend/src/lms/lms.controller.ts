@@ -98,9 +98,85 @@ export class LmsController {
     });
     return {
       connected: !!(user?.lmsToken && user?.lmsBaseUrl),
-      provider: user?.lmsProvider ?? null,
-      baseUrl: user?.lmsBaseUrl ?? null,
+      provider: user?.lmsProvider || 'moodle',
     };
+  }
+
+  @Get('profile')
+  async getLmsProfile(@Headers('authorization') authHeader?: string) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Missing token');
+    }
+    const token = authHeader.split(' ')[1];
+    const decoded = this.jwtService.verify(token);
+    const user = await this.prisma.user.findUnique({
+      where: { id: decoded.sub },
+      select: { lmsToken: true, lmsBaseUrl: true, lmsProvider: true },
+    });
+
+    if (!user?.lmsToken || !user?.lmsBaseUrl) {
+      return { connected: false };
+    }
+
+    try {
+      const decryptedToken = decrypt(user.lmsToken);
+      let fullName = 'Unknown User';
+      let studentId = '';
+      let universityName = new URL(user.lmsBaseUrl).hostname;
+
+      if (user.lmsProvider === 'moodle') {
+        const root = this.lmsService.normalizeBaseUrl(user.lmsBaseUrl);
+        const infoUrl = `${root}/webservice/rest/server.php?wstoken=${decryptedToken}&wsfunction=core_webservice_get_site_info&moodlewsrestformat=json`;
+        const res = await fetch(infoUrl);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.fullname) fullName = data.fullname;
+          if (data.username) studentId = data.username;
+          if (data.sitename) universityName = data.sitename;
+        }
+      } else if (user.lmsProvider === 'canvas') {
+        const root = this.lmsService.normalizeBaseUrl(user.lmsBaseUrl);
+        const res = await fetch(`${root}/api/v1/users/self`, {
+          headers: { Authorization: `Bearer ${decryptedToken}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.name) fullName = data.name;
+          if (data.login_id) studentId = data.login_id;
+        }
+      }
+
+      return {
+        connected: true,
+        universityName,
+        platform: user.lmsProvider === 'canvas' ? 'Canvas' : 'Moodle',
+        fullName,
+        studentId,
+        status: 'Online',
+        lastSync: new Date().toISOString(),
+      };
+    } catch (e) {
+      return { connected: false, error: 'Failed to fetch profile' };
+    }
+  }
+
+  @Post('disconnect')
+  async disconnectLms(@Headers('authorization') authHeader?: string) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Missing token');
+    }
+    const token = authHeader.split(' ')[1];
+
+    const decoded = this.jwtService.verify(token);
+    await this.prisma.user.update({
+      where: { id: decoded.sub },
+      data: {
+        lmsToken: null,
+        lmsBaseUrl: null,
+        lmsProvider: null,
+      }
+    });
+    return { success: true };
   }
 
   @Get('deadlines')

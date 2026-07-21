@@ -42,16 +42,16 @@ export class ResourcesService {
     if (user && user.lmsToken && user.lmsBaseUrl && user.lmsProvider === 'moodle') {
       try {
         const decryptedToken = decrypt(user.lmsToken);
-        const moodleData = await this.lmsService.getMoodleCourses(
-          decryptedToken,
+        const moodleData = await this.lmsService.getMoodleCoursesDetailed(
           user.lmsBaseUrl,
+          decryptedToken,
         );
 
         moodleData.forEach((mc) => {
           courses.push({
-            id: mc.courseId.toString(),
-            name: mc.courseName,
-            shortName: mc.courseShortName,
+            id: mc.id.toString(),
+            name: mc.fullname,
+            shortName: mc.shortname,
             source: 'moodle',
           });
         });
@@ -73,31 +73,41 @@ export class ResourcesService {
     if (user && user.lmsToken && user.lmsBaseUrl && user.lmsProvider === 'moodle') {
       try {
         const decryptedToken = decrypt(user.lmsToken);
-        // 1. Fetch files
-        const moodleData = await this.lmsService.getMoodleCourses(
-          decryptedToken,
+        // 1. Fetch course info
+        const moodleData = await this.lmsService.getMoodleCoursesDetailed(
           user.lmsBaseUrl,
+          decryptedToken,
         );
 
-        const course = moodleData.find((c) => c.courseId.toString() === courseId);
+        const course = moodleData.find((c) => c.id.toString() === courseId);
         
         if (course) {
-          course.files.forEach((file: CourseFile) => {
+          // Fetch contents
+          const files = await this.lmsService.getMoodleCourseContents(
+            user.lmsBaseUrl,
+            decryptedToken,
+            parseInt(courseId)
+          );
+
+          files.forEach((file: CourseFile) => {
             let type: Resource['type'] = 'document';
             const nameLower = file.name.toLowerCase();
-            if (nameLower.includes('slide') || nameLower.includes('lecture') || nameLower.includes('ppt')) type = 'slide';
+            const ext = nameLower.split('.').pop() || '';
+            
+            if (['ppt', 'pptx', 'key'].includes(ext) || nameLower.includes('slide') || nameLower.includes('lecture')) type = 'slide';
             else if (nameLower.includes('lab')) type = 'lab';
             else if (nameLower.includes('past paper')) type = 'past-paper';
             else if (nameLower.includes('assignment')) type = 'assignment';
+            else if (['pdf', 'doc', 'docx'].includes(ext)) type = 'document';
 
             // Add token to download URL to bypass login
-            const downloadUrl = file.fileUrl + '&token=' + decryptedToken;
+            const downloadUrl = file.fileUrl;
 
             resources.push({
               id: 'moodle-file-' + file.id,
               name: file.name,
-              course: course.courseName,
-              courseId: course.courseId.toString(),
+              course: course.fullname,
+              courseId: course.id.toString(),
               type,
               source: 'moodle',
               downloadUrl,
@@ -108,17 +118,17 @@ export class ResourcesService {
 
         // 2. Fetch assignments
         const assignments = await this.lmsService.getMoodleAssignments(
-          decryptedToken,
           user.lmsBaseUrl,
+          decryptedToken,
         );
         
-        const courseAssignments = assignments.filter((a) => a.courseId.toString() === courseId);
+        const courseAssignments = assignments.filter((a) => a.courseId?.toString() === courseId);
         courseAssignments.forEach((a) => {
           resources.push({
             id: 'moodle-assignment-' + a.id,
             name: a.title,
             course: a.course,
-            courseId: a.courseId.toString(),
+            courseId: a.courseId?.toString() || courseId,
             type: 'assignment',
             source: 'moodle',
             lastModified: a.dueDateMs || Date.now(),

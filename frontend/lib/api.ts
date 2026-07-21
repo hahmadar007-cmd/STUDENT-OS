@@ -302,6 +302,7 @@ export const patchLmsToken = (token: string, baseUrl: string, lmsProvider: 'mood
 };
 
 export const getLmsStatus = () => apiRequest('/lms/status', 'GET');
+export const getLmsProfile = () => apiRequest('/lms/profile', 'GET');
 
 export const getPortalStatus = () => apiRequest('/portal/status', 'GET');
 

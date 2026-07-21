@@ -40,6 +40,7 @@ import { AiOnboardingModal } from '../../components/ai/AiOnboardingModal';
 import { AdminMembersPanel } from '../../components/ui/AdminMembersPanel';
 import { CourseFeedPanel } from '../../components/social/CourseFeedPanel';
 import { LmsBridgePanel } from '../../components/social/LmsBridgePanel';
+import { LmsConnectionIndicator } from '../../components/social/LmsConnectionIndicator';
 import { FocusShieldPanel } from '../../components/focus/FocusShieldPanel';
 import { AiControlCenter } from '../../components/ai/AiControlCenter';
 import { AcademicInfoPanel } from '../../components/academic/AcademicInfoPanel';
@@ -1332,6 +1333,7 @@ export default function DashboardPage() {
             <div className="w-full flex items-center justify-between mb-2">
               <div />
               <div className="flex items-center gap-3">
+                <LmsConnectionIndicator />
                 <DmNotificationBell onClick={() => setActiveNav('friends')} />
                 <NotificationBell />
                 <ConnectionsCenter align="right" />

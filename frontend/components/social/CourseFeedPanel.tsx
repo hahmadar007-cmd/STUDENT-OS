@@ -29,7 +29,20 @@ export function CourseFeedPanel({ onOpenConnect }: { onOpenConnect?: () => void 
   const router = useRouter();
 
   const load = async () => {
-    setLoading(true);
+    // 1. Try to load from cache immediately
+    const cached = localStorage.getItem('fasca-lms-cache');
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        setCourses(parsed.courses || []);
+        setResourcesByCourse(parsed.resourcesByCourse || {});
+        setLoading(false); // Disable loading spinner if we have cached data
+      } catch (e) {
+        console.error('Failed to parse LMS cache', e);
+      }
+    }
+
+    // 2. Background sync
     try {
       const cData = await fetchUserCourses();
       if (cData && Array.isArray(cData)) {
@@ -50,6 +63,13 @@ export function CourseFeedPanel({ onOpenConnect }: { onOpenConnect?: () => void 
           })
         );
         setResourcesByCourse(resMap);
+
+        // Update cache
+        localStorage.setItem('fasca-lms-cache', JSON.stringify({
+          courses: cData,
+          resourcesByCourse: resMap,
+          lastSync: Date.now()
+        }));
       }
     } catch (err) {
       console.error('Failed to load courses:', err);
@@ -71,6 +91,16 @@ export function CourseFeedPanel({ onOpenConnect }: { onOpenConnect?: () => void 
     window.dispatchEvent(new CustomEvent('open-sanctuary', { detail: { courseName } }));
   };
 
+  const getResourceIcon = (type: string, name: string) => {
+    const lower = name.toLowerCase();
+    if (lower.endsWith('.zip') || lower.endsWith('.rar')) return '📦';
+    if (type === 'slide') return '📘';
+    if (type === 'assignment') return '📝';
+    if (type === 'lab') return '🧪';
+    if (type === 'past-paper') return '📄';
+    return '📄';
+  };
+
   return (
     <div className="w-full h-full flex flex-col bg-fouzar-surface/40 border border-fouzar-border-strong rounded-[6px] shadow-lg overflow-hidden">
       <div className="flex items-center justify-between p-4 border-b border-fouzar-border-strong bg-black/20">
@@ -87,8 +117,9 @@ export function CourseFeedPanel({ onOpenConnect }: { onOpenConnect?: () => void 
 
       <div className="flex-1 overflow-y-auto scrollbar-none p-4 space-y-4">
         {loading ? (
-          <div className="flex items-center justify-center h-full">
-            <span className="text-[10px] font-mono text-fouzar-text-secondary animate-pulse">Checking resources...</span>
+          <div className="flex flex-col items-center justify-center h-full gap-3">
+            <div className="w-5 h-5 border-2 border-[#7c5cfc] border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-[10px] font-mono text-fouzar-text-secondary animate-pulse uppercase">Syncing Courses & Files...</span>
           </div>
         ) : courses.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
@@ -107,56 +138,64 @@ export function CourseFeedPanel({ onOpenConnect }: { onOpenConnect?: () => void 
         ) : (
           courses.map(course => {
             const resources = resourcesByCourse[course.id] || [];
-            const recentResources = resources.slice(0, 3); // Show top 3 recent
             
             return (
               <motion.div
                 key={course.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-[#12121a] border border-fouzar-border-strong/50 rounded-[6px] p-4 flex flex-col gap-3 group hover:border-[#7c5cfc]/30 transition-colors"
+                className="bg-[#12121a] border border-fouzar-border-strong/50 rounded-xl flex flex-col overflow-hidden"
               >
-                <div className="flex items-center justify-between">
-                  <h3 className="text-[12px] font-bold text-fouzar-text-primary">{course.name}</h3>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[8px] font-mono text-[#00d4ff] bg-[#00d4ff]/10 px-2 py-0.5 rounded-full">
-                      {resources.length} RESOURCES
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5 mt-2">
-                  {recentResources.map(res => (
-                    <div key={res.id} className="flex items-center gap-2 text-[10px] text-fouzar-text-secondary">
-                      <div className="w-1 h-1 rounded-full bg-[#7c5cfc]" />
-                      <span className="truncate">{res.name}</span>
-                      <span className="text-[8px] font-mono text-fouzar-text-tertiary uppercase ml-auto">{res.type}</span>
-                    </div>
-                  ))}
-                  {resources.length > 3 && (
-                    <div className="text-[9px] text-fouzar-text-tertiary italic pl-3 pt-1">
-                      + {resources.length - 3} more resources available
-                    </div>
-                  )}
-                  {resources.length === 0 && (
-                    <div className="text-[9px] text-fouzar-text-tertiary italic pl-3 pt-1">
-                      No resources available yet.
-                    </div>
+                {/* Course Header */}
+                <div className="bg-[#1a1a24] p-4 border-b border-fouzar-border-strong/50 flex flex-col">
+                  <h3 className="text-[14px] font-bold text-white">{course.name}</h3>
+                  {course.shortName && course.shortName !== course.name && (
+                    <p className="text-[10px] font-mono text-[#00d4ff] mt-1 uppercase">{course.shortName}</p>
                   )}
                 </div>
 
-                <div className="flex items-center justify-between mt-3 pt-3 border-t border-fouzar-border-strong/30">
-                  <button className="flex items-center gap-1.5 text-[9px] font-mono text-fouzar-text-secondary hover:text-fouzar-text-primary transition-colors">
-                    <CheckCircle2 className="w-3 h-3 text-[#00d4ff]" />
-                    <span>AVAILABLE OFFLINE</span>
-                  </button>
-                  
-                  <button
-                    onClick={() => handleOpenSanctuary(course.name)}
-                    className="flex items-center gap-1 text-[10px] font-bold text-[#7c5cfc] hover:text-[#9b82ff] transition-colors"
-                  >
-                    Open in Sanctuary <ChevronRight className="w-3 h-3" />
-                  </button>
+                {/* Resource List */}
+                <div className="flex flex-col p-2">
+                  {resources.length === 0 ? (
+                    <div className="p-4 text-center text-[10px] text-white/40 italic">No resources available yet.</div>
+                  ) : (
+                    resources.map((res, idx) => (
+                      <React.Fragment key={res.id}>
+                        <div className="flex items-center justify-between py-3 px-3 hover:bg-white/5 rounded-lg transition-colors group">
+                          <div className="flex items-center gap-3 overflow-hidden">
+                            <span className="text-lg">{getResourceIcon(res.type, res.name)}</span>
+                            <span className="text-[12px] text-white/90 truncate font-medium group-hover:text-white transition-colors">{res.name}</span>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {res.downloadUrl ? (
+                              <>
+                                <a 
+                                  href={res.downloadUrl} 
+                                  target="_blank" 
+                                  rel="noreferrer"
+                                  className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold rounded flex items-center gap-1.5 transition-colors"
+                                >
+                                  Open
+                                </a>
+                                <a 
+                                  href={res.downloadUrl} 
+                                  download
+                                  className="px-3 py-1.5 bg-[#7c5cfc] hover:bg-[#9b82ff] text-white text-[10px] font-bold rounded flex items-center gap-1.5 transition-colors"
+                                >
+                                  Download
+                                </a>
+                              </>
+                            ) : (
+                              <span className="text-[10px] text-white/40 italic">Unavailable</span>
+                            )}
+                          </div>
+                        </div>
+                        {idx < resources.length - 1 && (
+                          <div className="h-[1px] w-full bg-white/5 my-0.5"></div>
+                        )}
+                      </React.Fragment>
+                    ))
+                  )}
                 </div>
               </motion.div>
             );
