@@ -740,10 +740,17 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
               }}
               onUploadError={(error: Error) => alert(`Upload error: ${error.message}`)}
               appearance={{
-                button: 'p-1.5 bg-[#7c5cfc]/10 border border-[#7c5cfc]/30 text-[#7c5cfc] hover:bg-[#7c5cfc]/25 rounded-lg cursor-pointer transition-colors flex items-center justify-center gap-1 px-3 text-[9px] font-mono font-bold',
-                allowedContent: 'hidden',
+                container: 'overflow-hidden flex items-center justify-center shrink-0',
+                button: 'bg-[#7c5cfc]/15 border border-[#7c5cfc]/40 text-[#7c5cfc] hover:bg-[#7c5cfc]/30 rounded-lg cursor-pointer transition-all flex items-center justify-center gap-1.5 px-3 py-1 text-[11px] font-mono font-bold shadow-sm',
+                allowedContent: 'hidden text-[0px] h-0 w-0 opacity-0 pointer-events-none',
               }}
-              content={{ button({ ready, isUploading }) { return isUploading ? '...' : ready ? 'Upload' : '...'; } }}
+              content={{
+                button({ ready, isUploading }) {
+                  if (isUploading) return 'Uploading...';
+                  if (ready) return 'Upload File';
+                  return 'Loading...';
+                },
+              }}
             />
 
             {/* Maximize */}

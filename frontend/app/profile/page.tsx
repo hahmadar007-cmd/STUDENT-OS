@@ -222,15 +222,31 @@ export default function ProfilePage() {
   const loadLms = async () => {
     try {
       const s = await getLmsStatus();
-      if (s?.connected) { setLmsUrl(s.baseUrl || ''); setLmsProvider(s.provider || 'moodle'); setLmsToken('••••••••••••••••'); setLmsConnected(true); }
-    } catch { /* silent */ }
+      if (s?.connected || s?.baseUrl || s?.url) {
+        setLmsUrl(s.baseUrl || s.url || 'https://lms.umt.edu.pk');
+        setLmsProvider(s.provider || 'moodle');
+        setLmsToken('••••••••••••••••');
+        setLmsConnected(true);
+      } else {
+        setLmsConnected(false);
+      }
+    } catch { setLmsConnected(false); }
   };
 
   const loadPortal = async () => {
     try {
       const s = await getPortalStatus();
-      if (s?.connected) { setPortalConnected(true); setPortalUrl(s.portalUrl || ''); setPortalType(s.portalType || 'moodle'); setStudentId(s.studentId || ''); }
-    } catch { /* silent */ }
+      if (s?.connected && s?.portalUrl && !s.portalUrl.includes('lms.umt.edu.pk')) {
+        setPortalConnected(true);
+        setPortalUrl(s.portalUrl || '');
+        setPortalType(s.portalType || 'moodle');
+        setStudentId(s.studentId || '');
+      } else {
+        setPortalConnected(false);
+        setPortalUrl('');
+        setStudentId('');
+      }
+    } catch { setPortalConnected(false); }
   };
 
   // ── Username debounce ──────────────────────────────────────────────────────
@@ -895,9 +911,17 @@ export default function ProfilePage() {
                     <AnimatePresence>
                       {lmsMsg && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className={`p-3 rounded-xl text-[11px] font-medium ${lmsMsg.ok ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' : 'bg-[#ff2d55]/10 border border-[#ff2d55]/20 text-[#ff2d55]'}`}>{lmsMsg.text}</motion.div>}
                     </AnimatePresence>
-                    <div className="flex justify-end">
+                    <div className="flex justify-end gap-2">
+                      {lmsConnected && (
+                        <button type="button" onClick={async () => {
+                          try { await disconnectLms(); } catch {}
+                          setLmsConnected(false); setLmsToken(''); setLmsMsg({ text: 'LMS Disconnected', ok: true });
+                        }} className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white/60 text-[12px] font-semibold rounded-xl transition-all border border-white/10 cursor-pointer">
+                          Disconnect
+                        </button>
+                      )}
                       <button type="submit" disabled={lmsSaving} className="flex items-center gap-2 px-5 py-2.5 bg-[#7c5cfc] hover:bg-[#6d4ef0] text-white text-[12px] font-semibold rounded-xl transition-all disabled:opacity-50 cursor-pointer shadow-[0_4px_20px_rgba(124,92,252,0.3)]">
-                        {lmsSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plug className="w-3.5 h-3.5" />} Connect
+                        {lmsSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plug className="w-3.5 h-3.5" />} {lmsConnected ? 'Update' : 'Connect'}
                       </button>
                     </div>
                   </form>
@@ -932,9 +956,17 @@ export default function ProfilePage() {
                     <AnimatePresence>
                       {portalMsg && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className={`p-3 rounded-xl text-[11px] font-medium ${portalMsg.ok ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' : 'bg-[#ff2d55]/10 border border-[#ff2d55]/20 text-[#ff2d55]'}`}>{portalMsg.text}</motion.div>}
                     </AnimatePresence>
-                    <div className="flex justify-end">
+                    <div className="flex justify-end gap-2">
+                      {portalConnected && (
+                        <button type="button" onClick={async () => {
+                          try { await disconnectPortal(); } catch {}
+                          setPortalConnected(false); setPortalUrl(''); setStudentId(''); setPortalMsg({ text: 'Portal Disconnected', ok: true });
+                        }} className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white/60 text-[12px] font-semibold rounded-xl transition-all border border-white/10 cursor-pointer">
+                          Disconnect
+                        </button>
+                      )}
                       <button type="submit" disabled={portalSaving} className="flex items-center gap-2 px-5 py-2.5 bg-[#7c5cfc] hover:bg-[#6d4ef0] text-white text-[12px] font-semibold rounded-xl transition-all disabled:opacity-50 cursor-pointer shadow-[0_4px_20px_rgba(124,92,252,0.3)]">
-                        {portalSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Globe className="w-3.5 h-3.5" />} Connect
+                        {portalSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Globe className="w-3.5 h-3.5" />} {portalConnected ? 'Update' : 'Connect'}
                       </button>
                     </div>
                   </form>

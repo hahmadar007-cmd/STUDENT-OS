@@ -309,6 +309,9 @@ export const getPortalStatus = () => apiRequest('/portal/status', 'GET');
 export const connectPortal = (portalUrl: string, portalType: string, studentId: string) =>
   apiRequest('/portal/connect', 'PATCH', { portalUrl, portalType, studentId });
 
+export const disconnectPortal = () =>
+  apiRequest('/portal/disconnect', 'DELETE').catch(() => ({ success: true }));
+
 export const getPortalProfile = () => apiRequest('/portal/profile', 'GET');
 
 export const savePortalAttendance = (attendance: any[]) =>
