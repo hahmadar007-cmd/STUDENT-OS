@@ -71,8 +71,8 @@ export const StudyNodesGraph: React.FC<StudyNodesGraphProps> = ({ nodesData }) =
   // Build Hierarchical Topology
   // 1. Filter raw groups
   const filteredGroups = allNodes.filter(n => 
-    n.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    n.course.toLowerCase().includes(searchQuery.toLowerCase())
+    (n.name || '').toLowerCase().includes((searchQuery || '').toLowerCase()) ||
+    (n.course || '').toLowerCase().includes((searchQuery || '').toLowerCase())
   );
 
   // 2. Extract Unique Courses (from all nodesData including empty ones)

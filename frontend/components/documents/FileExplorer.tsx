@@ -217,7 +217,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       return f.parentFolderId === currentDirId;
     });
     if (searchQuery.trim()) {
-      list = list.filter(f => f.name.toLowerCase().includes(searchQuery.toLowerCase()));
+      list = list.filter(f => (f.name || '').toLowerCase().includes(searchQuery.toLowerCase()));
     }
     return [...list].sort((a, b) => {
       if (a.isPinned && !b.isPinned) return -1;
@@ -233,7 +233,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       return docFolderId === dirId;
     });
     const filtered = searchQuery.trim()
-      ? list.filter(doc => doc.fileName.toLowerCase().includes(searchQuery.toLowerCase()))
+      ? list.filter(doc => (doc.fileName || '').toLowerCase().includes(searchQuery.toLowerCase()))
       : list;
     return [...filtered].sort((a, b) => {
       if (sortBy === 'name-asc') return a.fileName.localeCompare(b.fileName);

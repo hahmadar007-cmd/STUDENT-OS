@@ -382,8 +382,8 @@ export default function ProfilePage() {
   const avatarSrc = avatarPreview || user?.avatarUrl;
 
   const filteredFriends = friends.filter((f) => {
-    const q = searchQuery.toLowerCase();
-    return !q || f.name?.toLowerCase().includes(q) || f.username?.toLowerCase().includes(q) || f.fouzarId?.includes(q);
+    const q = (searchQuery || '').toLowerCase();
+    return !q || (f.name || '').toLowerCase().includes(q) || (f.username || '').toLowerCase().includes(q) || (f.fouzarId || '').includes(q);
   });
   const onlineFriends = filteredFriends.filter((f) => f.isFocusing || true); // treat all as online for now
   const totalRequests = incomingReqs.length + outgoingReqs.length;

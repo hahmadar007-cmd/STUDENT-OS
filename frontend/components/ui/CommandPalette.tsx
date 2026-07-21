@@ -95,7 +95,7 @@ export const CommandPalette: React.FC = () => {
 
   // 1. Filter commands
   const filteredCommands = commands.filter((cmd) =>
-    cmd.title.toLowerCase().includes(search.toLowerCase())
+    (cmd.title || '').toLowerCase().includes((search || '').toLowerCase())
   );
 
   // Reset selected index on filter

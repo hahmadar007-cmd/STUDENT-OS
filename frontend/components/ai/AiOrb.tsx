@@ -33,7 +33,7 @@ export const AiOrb: React.FC = () => {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'i') {
+      if ((e.ctrlKey || e.metaKey) && (e.key || '').toLowerCase() === 'i') {
         e.preventDefault();
         setIsOrbOpen(!isOrbOpen);
       }

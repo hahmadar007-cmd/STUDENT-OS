@@ -313,7 +313,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
         }
       ]);
 
-      if (file.name.toLowerCase().endsWith('.pdf')) {
+      if ((file.name || '').toLowerCase().endsWith('.pdf')) {
         // Parse PDF in browser
         const { fullText, chunks } = await extractTextFromPdf(file);
         extractedText = fullText;
@@ -321,7 +321,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
 
         // Index in backend vector database
         await indexDocument(courseCode, docId, textChunks);
-      } else if (file.name.toLowerCase().endsWith('.pptx')) {
+      } else if ((file.name || '').toLowerCase().endsWith('.pptx')) {
         // PPTX unzipping on backend
         const res = await indexDocumentFile(courseCode, docId, file, file.name);
         if (res && res.chunks) {
@@ -414,7 +414,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
       if (!file) return;
 
       const supportedExtensions = ['.pdf', '.pptx', '.txt', '.md', '.js', '.ts', '.tsx', '.py', '.css', '.html', '.cpp', '.java'];
-      const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+      const fileExtension = (file.name || '').substring((file.name || '').lastIndexOf('.')).toLowerCase();
 
       if (!supportedExtensions.includes(fileExtension)) {
         setError(`Unsupported file type. Supported types: ${supportedExtensions.join(', ')}`);
@@ -463,7 +463,7 @@ export const IntegratedAiChat: React.FC<IntegratedAiChatProps> = ({
     if (!file) return;
 
     const supportedExtensions = ['.pdf', '.pptx', '.txt', '.md', '.js', '.ts', '.tsx', '.py', '.css', '.html', '.cpp', '.java'];
-    const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+    const fileExtension = (file.name || '').substring((file.name || '').lastIndexOf('.')).toLowerCase();
 
     if (!supportedExtensions.includes(fileExtension)) {
       setError(`Unsupported file type. Supported types: ${supportedExtensions.join(', ')}`);

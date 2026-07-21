@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useFouzar, FouzarFriendProfile, deriveInitials } from '../../../lib/FouzarContext';
+import { filterRepositoryByFolder, safeLowerCase } from '../../../lib/filterUtils';
 import { FolderSelector } from '../../ui/FolderSelector';
 import { getDeadlines } from '../../../lib/api';
 import { DocumentViewer } from '../../documents/DocumentViewer';
@@ -225,10 +226,7 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
   const isGreenhouse = mode === 'greenhouse';
 
   const activeFolder = folders?.find((f) => f.id === activeFolderId);
-  const filteredRepository = repository.filter((doc) => {
-    if (activeFolderId === 'all') return true;
-    return doc.courseCode.toLowerCase() === activeFolder?.code.toLowerCase();
-  });
+  const filteredRepository = filterRepositoryByFolder(repository, activeFolderId, activeFolder);
 
   const loadFriendsList = async () => {
     try {
@@ -705,13 +703,13 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
                     <div key={msg.id} className="flex flex-col">
                       <span 
                         onClick={(e) => {
-                          const friend = dbFriends.find(f => f.name.toLowerCase() === msg.senderName.toLowerCase() || f.name.split(' ')[0].toLowerCase() === msg.senderName.toLowerCase());
+                          const friend = dbFriends.find(f => safeLowerCase(f.name) === safeLowerCase(msg.senderName) || safeLowerCase(f.name.split(' ')[0]) === safeLowerCase(msg.senderName));
                           if (friend) {
                             handleOpenFriendMenu(e, friend);
                           }
                         }}
                         onContextMenu={(e) => {
-                          const friend = dbFriends.find(f => f.name.toLowerCase() === msg.senderName.toLowerCase() || f.name.split(' ')[0].toLowerCase() === msg.senderName.toLowerCase());
+                          const friend = dbFriends.find(f => safeLowerCase(f.name) === safeLowerCase(msg.senderName) || safeLowerCase(f.name.split(' ')[0]) === safeLowerCase(msg.senderName));
                           if (friend) {
                             handleFriendContextMenu(e, friend);
                           }

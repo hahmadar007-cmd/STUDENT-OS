@@ -168,7 +168,7 @@ export default function StudyRoomPage() {
     toast(`${data.name || 'A peer'} ${data.isFocusing ? 'entered Deep Flow' : 'exited Deep Flow'}`, data.isFocusing ? 'crimson' : 'violet');
     setConnectedMembers((prev) =>
       prev.map((m) => {
-        if (m.id === data.userId || m.name.toLowerCase().includes(data.name?.split(' ')[0].toLowerCase())) {
+        if (m.id === data.userId || (m.name || '').toLowerCase().includes((data.name || '').split(' ')[0].toLowerCase())) {
           return { ...m, status: data.isFocusing ? 'flow' : 'online' };
         }
         return m;

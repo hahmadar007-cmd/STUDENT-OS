@@ -269,7 +269,7 @@ export const FocusShieldPanel: React.FC<FocusShieldPanelProps> = ({ isOpen, onCl
 
   const addSite = async (e: React.FormEvent) => {
     e.preventDefault();
-    const value = siteInput.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+    const value = (siteInput || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
     if (!value) return;
     try {
       const res  = await fetch(`${BACKEND}/focus/blocklist`, { method: 'POST', headers: authHeader(), body: JSON.stringify({ type: 'DOMAIN', value, label: value }) });

@@ -206,7 +206,7 @@ export function generateFouzarId(): string {
 
 /** Derives a URL-safe handle from a display name. */
 export function deriveHandle(name: string): string {
-  return name
+  return (name || '')
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '_')
@@ -530,11 +530,11 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const findFriendByIdentifier = useCallback(
     (identifier: string) => {
-      const query = identifier.trim().toLowerCase();
+      const query = (identifier || '').trim().toLowerCase();
       return friends.find(
         (f) =>
-          f.fouzarId.toLowerCase() === query ||
-          f.handle.toLowerCase() === query ||
+          (f.fouzarId || '').toLowerCase() === query ||
+          (f.handle || '').toLowerCase() === query ||
           f.id === identifier,
       );
     },

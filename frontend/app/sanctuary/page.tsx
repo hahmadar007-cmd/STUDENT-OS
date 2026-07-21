@@ -41,6 +41,7 @@ import { FileExplorer } from '../../components/documents/FileExplorer';
 import { useFouzar, LmsRepositoryItem } from '../../lib/FouzarContext';
 import { MediaHubStandalone } from '../../components/sanctuary/MediaHubStandalone';
 import { useAuth } from '../../hooks/useAuth';
+import { filterRepositoryByFolder, safeIncludes } from '../../lib/filterUtils';
 import { buildRepositoryEntryFromFile } from '../../lib/repositoryUpload';
 import {
   getPersonalSanctuary,
@@ -157,10 +158,7 @@ export default function PersonalSanctuaryPage() {
 
   // ── Derived ────────────────────────────────────────────────────────────────
   const activeFolder = folders.find(f => f.id === activeFolderId);
-  const filteredRepository = repository.filter(doc => {
-    if (activeFolderId === 'all') return true;
-    return doc.courseCode.toLowerCase() === activeFolder?.code.toLowerCase();
-  });
+  const filteredRepository = filterRepositoryByFolder(repository, activeFolderId, activeFolder);
 
   // storage keys
   const notesKey  = fouzarUser?.id ? `fouzar-sanctuary-notes-${fouzarUser.id}-${activeFolderId}` : `fouzar-sanctuary-notes-guest-${activeFolderId}`;
@@ -281,7 +279,7 @@ export default function PersonalSanctuaryPage() {
     { label: 'AI Assistant', icon: '🤖', action: () => setIsAiOpen(p => !p) },
     { label: 'Back to Dashboard', icon: '←', action: () => router.push('/dashboard') },
   ];
-  const filteredCmds = cmdCommands.filter(c => c.label.toLowerCase().includes(cmdQuery.toLowerCase()));
+  const filteredCmds = cmdCommands.filter(c => safeIncludes(c.label, cmdQuery));
 
   // ── Sidebar tree toggle ────────────────────────────────────────────────────
   const toggleFolder = (id: string) => setExpandedFolders(p => ({ ...p, [id]: !p[id] }));

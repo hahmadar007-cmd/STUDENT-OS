@@ -515,7 +515,7 @@ export default function DashboardPage() {
   useOnFocusStateChanged((data) => {
     setPeers((prev) =>
       prev.map((peer) => {
-        if (peer.id === data.userId || peer.name.toLowerCase() === data.name.split(' ')[0].toLowerCase()) {
+        if (peer.id === data.userId || (peer.name || '').toLowerCase() === (data.name || '').split(' ')[0].toLowerCase()) {
           return {
             ...peer,
             status: data.isFocusing ? 'flow' : 'online',

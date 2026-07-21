@@ -47,7 +47,7 @@ const ALLOWED_TYPES = [
 const MAX_FILE_MB = 50;
 
 function fileIcon(fileName: string, mimeType?: string) {
-  const ext = fileName.split('.').pop()?.toLowerCase() ?? '';
+  const ext = (fileName || '').split('.').pop()?.toLowerCase() ?? '';
   if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) return Image;
   if (['mp4', 'mov', 'webm', 'avi'].includes(ext)) return FileVideo;
   if (['pdf'].includes(ext)) return FileText;

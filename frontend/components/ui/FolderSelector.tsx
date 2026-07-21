@@ -83,7 +83,7 @@ export const FolderSelector: React.FC = () => {
       return;
     }
 
-    if (folders.some((f) => f.name.toLowerCase() === name.toLowerCase() && f.parentFolderId === null)) {
+    if (folders.some((f) => (f.name || '').toLowerCase() === (name || '').toLowerCase() && f.parentFolderId === null)) {
       setError('Subject name already exists.');
       return;
     }

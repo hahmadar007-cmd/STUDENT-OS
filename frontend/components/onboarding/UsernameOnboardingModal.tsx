@@ -60,7 +60,7 @@ export const UsernameOnboardingModal = ({
   }, 500);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+    const val = (e.target.value || '').toLowerCase().replace(/[^a-z0-9_]/g, '');
     setUsername(val);
     setStatus('idle');
     setErrorMsg('');

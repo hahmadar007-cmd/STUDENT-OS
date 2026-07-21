@@ -355,7 +355,7 @@ export function FriendsChatDeck({ peers }: FriendsChatDeckProps) {
     return 'Offline';
   };
 
-  const filteredPeers = localPeers.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
+  const filteredPeers = localPeers.filter((p) => (p.name || '').toLowerCase().includes(search.toLowerCase()));
   const messageGroups = groupMessagesByDate(messages);
 
   const renderMessageContent = (msg: DirectMessage) => {

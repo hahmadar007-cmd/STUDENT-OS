@@ -344,7 +344,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
           // Index text file in Vector DB
           indexDocument(document.courseCode || 'general', document.id || document.storageId || 'text-doc', [{ text, pageNum: 1 }])
             .catch(e => console.error('Failed to index text file:', e));
-        } else if (stored.mimeType === 'application/pdf' || document.fileName.toLowerCase().endsWith('.pdf')) {
+        } else if (stored.mimeType === 'application/pdf' || (document.fileName || '').toLowerCase().endsWith('.pdf')) {
           prvUrl = dlUrl;
           setPreviewUrl(prvUrl);
           setActiveDocText(metaText);
@@ -365,7 +365,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
           prvUrl = dlUrl;
           setPreviewUrl(prvUrl);
           setActiveDocText(`${metaText}\nType: Image`);
-        } else if (document.fileName.toLowerCase().endsWith('.pptx')) {
+        } else if ((document.fileName || '').toLowerCase().endsWith('.pptx')) {
           setActiveDocText(metaText);
 
           // Check if we already have the converted PDF preview cached locally
@@ -444,7 +444,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
               setIsConverting(false);
             }
           }
-        } else if (document.fileName.toLowerCase().endsWith('.docx') || document.fileName.toLowerCase().endsWith('.doc')) {
+        } else if ((document.fileName || '').toLowerCase().endsWith('.docx') || (document.fileName || '').toLowerCase().endsWith('.doc')) {
           setActiveDocText(metaText);
 
           // Check if we already have the converted PDF preview cached locally
@@ -541,7 +541,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ document, onClos
 
   if (!document) return null;
 
-  const fnLower = document.fileName.toLowerCase();
+  const fnLower = (document.fileName || '').toLowerCase();
   const isPdf =
     document.mimeType === 'application/pdf' || 
     fnLower.endsWith('.pdf') ||
