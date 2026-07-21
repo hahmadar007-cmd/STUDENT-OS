@@ -393,10 +393,10 @@ export function CourseFeedPanel({ onOpenConnect }: { onOpenConnect?: () => void 
           <div className="flex flex-col items-center justify-center h-full text-center px-4">
             <Folder className="w-10 h-10 text-white/10 mb-4" />
             <p className="text-[12px] font-bold text-white/50">No courses synced yet</p>
-            <p className="text-[10px] text-white/30 mt-1 mb-5">Connect your university portal to sync all your slides, assignments, and labs.</p>
+            <p className="text-[10px] text-white/30 mt-1 mb-5">Connect your LMS to sync all your slides, assignments, and labs.</p>
             {onOpenConnect && (
               <button onClick={onOpenConnect} className="px-5 py-2.5 bg-[#7c5cfc] hover:bg-[#9b82ff] text-white text-[11px] font-bold rounded-lg transition-colors">
-                Connect Portal
+                Connect LMS
               </button>
             )}
           </div>

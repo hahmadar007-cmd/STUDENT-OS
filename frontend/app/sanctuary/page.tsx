@@ -57,7 +57,6 @@ type SectionId = 'notes' | 'slides' | 'files' | 'web' | 'media' | 'youtube' | 'j
 const SECTIONS: { id: SectionId; label: string; icon: React.FC<any>; desc: string; color: string }[] = [
   { id: 'notes',   label: 'Notebook',  icon: NotebookPen, desc: 'Private notes & lecture write-ups', color: '#7c5cfc' },
   { id: 'files',   label: 'Files',     icon: FileText,    desc: 'All uploaded docs & PDFs',          color: '#00b4d8' },
-  { id: 'slides',  label: 'Slides',    icon: Layers,      desc: 'Presentation slides (PDF / PPTX)',  color: '#f5a623' },
   { id: 'web',     label: 'Web Hub',   icon: Globe,       desc: 'Search & browse the web',           color: '#4cd964' },
   { id: 'media',   label: 'Media',     icon: Film,        desc: 'Saved YouTube videos & links',      color: '#ff2d55' },
   { id: 'youtube', label: 'YT Search', icon: PlaySquare,  desc: 'Search & watch YouTube live',       color: '#ff3b30' },
@@ -275,7 +274,7 @@ export default function PersonalSanctuaryPage() {
 
   // ── Command Palette data ───────────────────────────────────────────────────
   const cmdCommands = [
-    ...SECTIONS.map(s => ({ label: s.label, icon: s.id === 'notes' ? '📓' : s.id === 'files' ? '📁' : s.id === 'slides' ? '📑' : s.id === 'web' ? '🌐' : s.id === 'media' ? '🎬' : s.id === 'youtube' ? '📺' : '📖', action: () => setActiveSection(s.id) })),
+    ...SECTIONS.map(s => ({ label: s.label, icon: s.id === 'notes' ? '📓' : s.id === 'files' ? '📁' : s.id === 'web' ? '🌐' : s.id === 'media' ? '🎬' : s.id === 'youtube' ? '📺' : '📖', action: () => setActiveSection(s.id) })),
     { label: 'Deep Flow', icon: '🔥', action: handleDeepFlow },
     { label: 'Add Subject', icon: '➕', action: () => setShowAddSubject(true) },
     { label: 'Upload PDF', icon: '📄', action: () => fileInputRef.current?.click() },
@@ -661,101 +660,6 @@ export default function PersonalSanctuaryPage() {
                   </div>
                 )}
 
-                {/* ── SLIDES ── */}
-                {activeSection === 'slides' && !showDemoSlides && (
-                  <div className="h-full overflow-y-auto p-5 space-y-5">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                      {/* Demo card */}
-                      <motion.div whileHover={{ scale: 1.02 }} onClick={() => setShowDemoSlides(true)}
-                        className="p-4 rounded-xl border border-[#7c5cfc]/30 hover:border-[#7c5cfc]/60 bg-[#7c5cfc]/5 hover:bg-[#7c5cfc]/10 cursor-pointer transition-all flex flex-col gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-[#7c5cfc]/15 border border-[#7c5cfc]/25 flex items-center justify-center">
-                          <Sparkles className="w-4 h-4 text-[#7c5cfc] animate-pulse" />
-                        </div>
-                        <div>
-                          <p className="text-[11px] font-bold text-[#7c5cfc]">Demo Slides</p>
-                          <p className="text-[10px] text-white/35 mt-0.5">ML Foundations</p>
-                        </div>
-                        <span className="text-[9px] font-mono text-[#7c5cfc]/60 uppercase">Open →</span>
-                      </motion.div>
-
-                      {/* Uploaded slides — clicking opens DocumentViewer, not AI */}
-                      {filteredRepository
-                        .filter(doc => doc.fileName.toLowerCase().endsWith('.pdf') || doc.fileName.toLowerCase().endsWith('.pptx') || doc.fileName.toLowerCase().endsWith('.ppt'))
-                        .map(doc => {
-                          const isPpt = doc.fileName.toLowerCase().endsWith('.pptx') || doc.fileName.toLowerCase().endsWith('.ppt');
-                          return (
-                            <motion.div
-                              key={doc.id}
-                              whileHover={{ scale: 1.02 }}
-                              onClick={() => {
-                                // Open in DocumentViewer — NOT AI
-                                setActiveDoc(doc);
-                                setActiveSection(doc.id as any);
-                              }}
-                              className="p-4 rounded-xl border border-white/[0.07] hover:border-[#f5a623]/40 bg-white/[0.02] hover:bg-white/[0.05] cursor-pointer transition-all flex flex-col gap-3"
-                            >
-                              <div className="w-8 h-8 rounded-lg bg-[#f5a623]/10 border border-[#f5a623]/20 flex items-center justify-center">
-                                <Layers className="w-4 h-4 text-[#f5a623]" />
-                              </div>
-                              <div>
-                                <p className="text-[11px] font-semibold text-white/70 truncate">{doc.fileName}</p>
-                                <p className="text-[9px] font-mono text-white/25 mt-0.5 uppercase">{isPpt ? 'PPTX' : 'PDF'} · {doc.sizeLabel}</p>
-                              </div>
-                              <span className="text-[9px] font-mono text-[#f5a623]/60 uppercase">Open →</span>
-                            </motion.div>
-                          );
-                        })}
-                    </div>
-
-                    {/* Upload drop zone */}
-                    <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
-                      className="w-full py-8 border border-dashed border-white/[0.08] rounded-xl hover:border-[#7c5cfc]/40 hover:bg-[#7c5cfc]/3 transition-all cursor-pointer flex flex-col items-center gap-2 text-white/25 hover:text-white/50">
-                      {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
-                      <span className="text-[10px] font-mono uppercase">{uploading ? 'Uploading...' : 'Upload PDF or PPTX'}</span>
-                    </button>
-                  </div>
-                )}
-
-                {/* ── SLIDES — Demo presentation viewer ── */}
-                {activeSection === 'slides' && showDemoSlides && (
-                  <div className="h-full p-5 flex flex-col">
-                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/[0.06]">
-                      <button onClick={() => setShowDemoSlides(false)} className="flex items-center gap-1.5 text-[10px] font-mono text-white/35 hover:text-white/70 cursor-pointer transition-colors">
-                        <ArrowLeft className="w-3.5 h-3.5" /> Back to Slides
-                      </button>
-                      <span className="text-[10px] font-mono text-white/25">{currentSlideIndex + 1} / {dummySlides.length}</span>
-                    </div>
-                    <div className="flex-1 flex flex-col items-center justify-center">
-                      <AnimatePresence mode="wait">
-                        <motion.div key={activeSlide.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="max-w-xl w-full space-y-6 text-center">
-                          <p className="text-[10px] font-mono text-[#7c5cfc] uppercase tracking-widest">{activeSlide.topic}</p>
-                          <h2 className="text-xl font-bold text-white/85">{activeSlide.title}</h2>
-                          <ul className="space-y-3 text-left">
-                            {activeSlide.bullets.map((b, i) => (
-                              <li key={i} className="flex items-start gap-3 text-sm text-white/55">
-                                <span className="w-1.5 h-1.5 bg-[#7c5cfc] rounded-full shrink-0 mt-1.5" />
-                                {b}
-                              </li>
-                            ))}
-                          </ul>
-                        </motion.div>
-                      </AnimatePresence>
-                    </div>
-                    <div className="flex items-center justify-between pt-4 border-t border-white/[0.05]">
-                      <button disabled={currentSlideIndex === 0} onClick={() => handleSlideChange('prev')} className="flex items-center gap-1 text-[10px] font-mono text-white/35 hover:text-white/70 disabled:opacity-20 cursor-pointer disabled:cursor-not-allowed transition-colors">
-                        <ArrowLeft className="w-3.5 h-3.5" /> Prev
-                      </button>
-                      <div className="flex gap-1.5">
-                        {dummySlides.map((_, i) => (
-                          <span key={i} className={`block h-1 rounded-full transition-all ${i === currentSlideIndex ? 'w-4 bg-[#7c5cfc]' : 'w-1.5 bg-white/15'}`} />
-                        ))}
-                      </div>
-                      <button disabled={currentSlideIndex === dummySlides.length - 1} onClick={() => handleSlideChange('next')} className="flex items-center gap-1 text-[10px] font-mono text-white/35 hover:text-white/70 disabled:opacity-20 cursor-pointer disabled:cursor-not-allowed transition-colors">
-                        Next <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
-                      </button>
-                    </div>
-                  </div>
-                )}
 
                 {/* ── WEB HUB ── */}
                 {activeSection === 'web' && (

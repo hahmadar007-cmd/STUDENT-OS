@@ -156,7 +156,7 @@ export function LmsBridgePanel({ isOpen, onClose }: LmsBridgePanelProps) {
                     <CheckCircle2 className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-[14px] font-bold text-white leading-tight">University Portal Connected</h3>
+                    <h3 className="text-[14px] font-bold text-white leading-tight">LMS Connected</h3>
                     <p className="text-[10px] font-mono text-[#00d4ff] uppercase mt-0.5">🟢 Online and syncing</p>
                   </div>
                 </div>
