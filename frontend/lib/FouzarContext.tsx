@@ -564,6 +564,9 @@ export const FouzarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       };
       setRepository((prev) => {
         const next = [entry, ...prev];
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(STORAGE_KEYS.repository, JSON.stringify(next));
+        }
         return next;
       });
     },

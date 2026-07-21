@@ -10,7 +10,7 @@ import {
   Clock, Download, BookMarked, Home,
 } from 'lucide-react';
 import { useFouzar, LmsRepositoryItem, FouzarFolder } from '../../lib/FouzarContext';
-import { UploadButton } from '../../utils/uploadthing';
+import { UploadButton, UploadDropzone } from '../../utils/uploadthing';
 import { getAuthToken, getBackendUrl } from '../../lib/api';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -711,9 +711,23 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
               onClientUploadComplete={async (res) => {
                 if (res && res.length > 0) {
                   const file = res[0];
-                  const token = getAuthToken();
+                  
+                  // Optimistically add to UI
+                  const tempId = `doc-${Date.now()}`;
+                  addRepositoryItem({
+                    id: tempId,
+                    fileName: file.name,
+                    fileUrl: file.url,
+                    sizeLabel: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+                    mimeType: file.type,
+                    folderId: currentDirId === 'general' ? null : currentDirId,
+                    category: 'other',
+                  });
+
+                  // Then try to sync to backend
                   try {
-                    const apiRes = await fetch(`${getBackendUrl()}/materials`, {
+                    const token = getAuthToken();
+                    await fetch(`${getBackendUrl()}/materials`, {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                       body: JSON.stringify({
@@ -724,18 +738,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
                         category: 'other',
                       }),
                     });
-                    const material = await apiRes.json();
-                    addRepositoryItem({
-                      id: material.id, fileName: material.fileName,
-                      courseCode: material.courseCode || 'GEN',
-                      category: material.category,
-                      uploadedAt: material.createdAt,
-                      sizeLabel: material.sizeLabel || '0 MB',
-                      mimeType: material.mimeType,
-                      folderId: material.subjectId || 'general',
-                      fileUrl: material.fileUrl,
-                    });
-                  } catch (e) { console.error('Upload failed', e); }
+                  } catch (e) { console.warn('Failed to sync upload to backend:', e); }
                 }
               }}
               onUploadError={(error: Error) => alert(`Upload error: ${error.message}`)}
@@ -812,11 +815,58 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
         {/* ── Directory Contents ──────────────────────────────────────────────── */}
         <div className="flex-1 overflow-y-auto scrollbar-none p-4" onClick={() => setSelectedItemId(null)}>
           {displayedFolders.length === 0 && displayedFiles.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full gap-3 opacity-50">
-              <Folder className="w-10 h-10 text-white/20" />
-              <p className="text-[11px] font-mono text-white/40 uppercase">{searchQuery ? 'No results' : 'Empty folder'}</p>
-              {!searchQuery && <p className="text-[9px] font-mono text-white/25">Create a subfolder or upload files here</p>}
+            <div className="flex flex-col items-center justify-center h-full p-4 overflow-y-auto w-full">
+              {!searchQuery ? (
+                <div className="w-full max-w-sm mx-auto">
+                  <UploadDropzone
+                    endpoint="materialUploader"
+                    onClientUploadComplete={async (res) => {
+                      if (res && res.length > 0) {
+                        const file = res[0];
+                        const tempId = `doc-${Date.now()}`;
+                        addRepositoryItem({
+                          id: tempId,
+                          fileName: file.name,
+                          fileUrl: file.url,
+                          sizeLabel: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+                          mimeType: file.type,
+                          folderId: currentDirId === 'general' ? null : currentDirId,
+                          category: 'other',
+                        });
+                        try {
+                          const token = getAuthToken();
+                          await fetch(`${getBackendUrl()}/materials`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                            body: JSON.stringify({
+                              fileName: file.name, fileUrl: file.url,
+                              sizeLabel: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+                              mimeType: file.type,
+                              subjectId: currentDirId === 'general' ? null : currentDirId,
+                              category: 'other',
+                            }),
+                          });
+                        } catch (e) { console.warn('Failed to sync upload to backend:', e); }
+                      }
+                    }}
+                    onUploadError={(error: Error) => alert(`Upload error: ${error.message}`)}
+                    appearance={{
+                      container: 'border-2 border-dashed border-white/10 hover:border-[#7c5cfc]/50 bg-white/[0.02] hover:bg-[#7c5cfc]/5 transition-all rounded-xl p-8 cursor-pointer mt-4 w-full h-48',
+                      label: 'text-white/40 hover:text-white/80 transition-colors',
+                      allowedContent: 'text-white/30',
+                      button: 'bg-[#7c5cfc] hover:bg-[#9b82ff] text-white font-bold rounded-lg px-4 py-2 mt-4 cursor-pointer transition-colors',
+                    }}
+                  />
+                  <p className="text-[10px] font-mono text-white/25 mt-4 uppercase text-center">Or create a subfolder using the + button above</p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center opacity-50">
+                  <Folder className="w-10 h-10 text-white/20 mb-3" />
+                  <p className="text-[11px] font-mono text-white/40 uppercase">No results</p>
+                </div>
+              )}
             </div>
+
           ) : (
             <div className="flex flex-col gap-6">
               {/* Folders */}
