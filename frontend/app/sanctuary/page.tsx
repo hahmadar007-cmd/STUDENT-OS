@@ -51,7 +51,7 @@ import {
   getSubjectVideos,
 } from '../../lib/api';
 import { DiaryPanel } from '../../components/diary/DiaryPanel';
-
+import { ErrorBoundary } from '../../components/ErrorBoundary';
 type SectionId = 'notes' | 'slides' | 'files' | 'web' | 'media' | 'youtube' | 'journal';
 
 const SECTIONS: { id: SectionId; label: string; icon: React.FC<any>; desc: string; color: string }[] = [
@@ -288,7 +288,8 @@ export default function PersonalSanctuaryPage() {
 
   // ── Main render ────────────────────────────────────────────────────────────
   return (
-    <div className="h-screen bg-fouzar-bg text-fouzar-text-primary flex flex-col overflow-hidden">
+    <ErrorBoundary>
+      <div className="h-screen bg-fouzar-bg text-fouzar-text-primary flex flex-col overflow-hidden">
 
       {/* ── Command Palette ── */}
       <AnimatePresence>
