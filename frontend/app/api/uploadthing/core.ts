@@ -1,4 +1,4 @@
-import { createUploadthing, type FileRouter } from "uploadthing/next";
+import { createUploadthing, type FileRouter } from "uploadthing/server";
 import { UploadThingError } from "uploadthing/server";
 import { cookies } from "next/headers";
 
