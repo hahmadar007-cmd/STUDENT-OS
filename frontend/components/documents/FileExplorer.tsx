@@ -10,7 +10,7 @@ import {
   Clock, Download, BookMarked, Home,
 } from 'lucide-react';
 import { useFouzar, LmsRepositoryItem, FouzarFolder } from '../../lib/FouzarContext';
-import { UploadButton, UploadDropzone } from '../../utils/uploadthing';
+import { UploadButton } from '../../utils/uploadthing';
 import { getAuthToken, getBackendUrl } from '../../lib/api';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
