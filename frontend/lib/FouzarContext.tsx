@@ -84,6 +84,8 @@ export interface FouzarFolder {
   name: string;
   code: string;
   parentFolderId: string | null;
+  isPinned?: boolean;
+  isFavorite?: boolean;
 }
 
 export interface FouzarBypassState {
