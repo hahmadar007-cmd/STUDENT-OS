@@ -831,5 +831,6 @@ export default function PersonalSanctuaryPage() {
 
       <input ref={fileInputRef} type="file" accept=".pdf,.pptx" className="hidden" onChange={handleSlideUpload} />
     </div>
+    </ErrorBoundary>
   );
 }
