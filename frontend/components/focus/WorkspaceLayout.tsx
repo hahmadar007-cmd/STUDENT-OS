@@ -111,6 +111,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
   setIsLeader,
   setSyncMode,
   slides,
+  connectedMembers = [],
   chatMessages,
   chatInput,
   setChatInput,
