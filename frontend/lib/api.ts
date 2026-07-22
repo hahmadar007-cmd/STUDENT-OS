@@ -13,7 +13,7 @@ export const getBackendUrl = (): string => {
   const envVal = process.env.NEXT_PUBLIC_API_URL;
   if (typeof window !== 'undefined') {
     const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    if (isLocal) return 'http://localhost:3001';
+    if (isLocal) return 'http://127.0.0.1:3001';
   }
   if (!envVal || envVal.includes('localhost') || envVal.includes('127.0.0.1')) {
     return 'https://ammeeee-student-os-backend.hf.space';
