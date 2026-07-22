@@ -10,6 +10,7 @@ import { NavRail } from './workspace/NavRail';
 import { SocialColumn } from './workspace/SocialColumn';
 import { ResizablePanel } from '../ui/ResizablePanel';
 import { SanctuaryCanvas } from './workspace/SanctuaryCanvas';
+import { GroupWorkspace } from '../groups/GroupWorkspace';
 
 /* =============================================================================
    FOUZAR WORKSPACE LAYOUT — Phase 3
@@ -62,6 +63,8 @@ interface SlideData {
 
 export interface WorkspaceLayoutProps {
   roomId: string;
+  groupName?: string;
+  isGroupRoom?: boolean;
   currentSlide: number;
   syncMode: boolean;
   isLeader: boolean;
@@ -100,6 +103,8 @@ const API_BASE = getBackendUrl();
  */
 export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
   roomId,
+  groupName,
+  isGroupRoom = false,
   currentSlide,
   syncMode,
   isLeader,
@@ -211,23 +216,39 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
             <span>Show Hub</span>
           </button>
         )}
-        <SanctuaryCanvas
-          roomId={roomId}
-          currentSlide={currentSlide}
-          syncMode={syncMode}
-          isLeader={isLeader}
-          setIsLeader={setIsLeader}
-          setSyncMode={setSyncMode}
-          slides={slides}
-          chatMessages={chatMessages}
-          chatInput={chatInput}
-          setChatInput={setChatInput}
-          handleSendChat={handleSendChat}
-          chatEndRef={chatEndRef}
-          handleNavigateSlide={handleNavigateSlide}
-          activeDoc={activeDoc}
-          setActiveDoc={setActiveDoc}
-        />
+        {isGroupRoom ? (
+          <GroupWorkspace
+            roomId={roomId}
+            groupName={groupName}
+            connectedMembers={connectedMembers}
+            currentSlide={currentSlide}
+            syncMode={syncMode}
+            isLeader={isLeader}
+            setIsLeader={setIsLeader}
+            setSyncMode={setSyncMode}
+            onLeave={onLeave}
+            activeDoc={activeDoc}
+            setActiveDoc={setActiveDoc}
+          />
+        ) : (
+          <SanctuaryCanvas
+            roomId={roomId}
+            currentSlide={currentSlide}
+            syncMode={syncMode}
+            isLeader={isLeader}
+            setIsLeader={setIsLeader}
+            setSyncMode={setSyncMode}
+            slides={slides}
+            chatMessages={chatMessages}
+            chatInput={chatInput}
+            setChatInput={setChatInput}
+            handleSendChat={handleSendChat}
+            chatEndRef={chatEndRef}
+            handleNavigateSlide={handleNavigateSlide}
+            activeDoc={activeDoc}
+            setActiveDoc={setActiveDoc}
+          />
+        )}
       </div>
 
       {/* Column 3 — Social + LMS hub (Moved to the Right) */}

@@ -16,6 +16,7 @@ import {
   Send,
   MessageSquare,
   Minus,
+  Pin,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useFouzar, FouzarFriendProfile, deriveInitials } from '../../../lib/FouzarContext';
@@ -132,6 +133,13 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
   const [activeTab, setActiveTab] = useState<'circles' | 'chat' | 'ai' | 'lms' | 'repository' | 'drive'>('circles');
   const [localActiveDoc, setLocalActiveDoc] = useState<LmsRepositoryItem | null>(null);
   const [dbFriends, setDbFriends] = useState<any[]>([]);
+
+  const [pinnedMessages, setPinnedMessages] = useState<string[]>([
+    '📌 Exam on Friday - review Routing chapter',
+    '📌 Use Lecture 6 slides for today\'s discussion',
+  ]);
+  const [pinnedInput, setPinnedInput] = useState('');
+  const [showAddPin, setShowAddPin] = useState(false);
 
   const [groupMembers, setGroupMembers] = useState<any[]>([]);
   const [groupCreatorId, setGroupCreatorId] = useState<string | null>(null);
@@ -693,6 +701,24 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
                   Contextual Peer Chat
                 </span>
               </div>
+
+              {roomId && !roomId.startsWith('personal-') && pinnedMessages.length > 0 && (
+                <div className="mb-3 shrink-0 p-2.5 bg-fouzar-elevated/20 border border-fouzar-border/40 rounded-[var(--fouzar-radius-md)] space-y-1">
+                  <div className="flex items-center justify-between font-mono text-[7.5px] uppercase tracking-wider text-fouzar-accent font-bold">
+                    <span className="flex items-center gap-1">
+                      <Pin className="w-2.5 h-2.5" /> Pinned Notes
+                    </span>
+                    <span className="opacity-70">({pinnedMessages.length})</span>
+                  </div>
+                  <div className="space-y-1 max-h-24 overflow-y-auto scrollbar-none">
+                    {pinnedMessages.map((pin, i) => (
+                      <p key={i} className="text-[9px] font-mono text-fouzar-text-secondary leading-snug truncate">
+                        {pin}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-none mb-3">
                 {chatMessages.length === 0 ? (
                   <p className="font-mono text-[8px] text-fouzar-text-tertiary uppercase text-center py-8">

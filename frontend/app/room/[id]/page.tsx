@@ -94,8 +94,25 @@ export default function StudyRoomPage() {
   const [showAiModal, setShowAiModal] = useState(false);
   const [aiModalSize, setAiModalSize] = useState<'minimized' | 'default' | 'maximized'>('default');
 
-  // 1. Connected Members state
+  // 1. Connected Members & Group metadata state
   const [connectedMembers, setConnectedMembers] = useState<ConnectedMember[]>([]);
+  const [groupName, setGroupName] = useState<string>('Study Circle');
+
+  useEffect(() => {
+    const loadGroupMeta = async () => {
+      if (!roomId || roomId.startsWith('personal-')) return;
+      try {
+        const { getGroupMembers } = await import('../../../lib/api');
+        const list = await getGroupMembers(roomId);
+        if (list && list.length > 0 && list[0].group) {
+          setGroupName(list[0].group.name || 'Study Circle');
+        }
+      } catch (e) {
+        console.warn('Failed to load group meta:', e);
+      }
+    };
+    loadGroupMeta();
+  }, [roomId]);
 
   // 2. Chat messages state
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -308,6 +325,8 @@ export default function StudyRoomPage() {
     <>
       <WorkspaceLayout
         roomId={roomId}
+        groupName={groupName}
+        isGroupRoom={true}
         currentSlide={currentSlide}
         syncMode={syncMode}
         isLeader={isLeader}
