@@ -292,6 +292,17 @@ export class GroupsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  @SubscribeMessage('workspace-state-sync')
+  async handleWorkspaceStateSync(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { groupId: string; sharedState: any },
+  ) {
+    // Broadcast the updated shared state to everyone else in the group
+    client.to(data.groupId).emit('onWorkspaceStateSync', {
+      sharedState: data.sharedState,
+    });
+  }
+
   /**
    * FEATURE B — Live Presentation Engine
    * Broadcaster announces that they have started a live preview session.

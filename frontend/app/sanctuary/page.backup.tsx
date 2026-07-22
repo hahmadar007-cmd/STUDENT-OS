@@ -41,10 +41,6 @@ import { FileExplorer } from '../../components/documents/FileExplorer';
 import { useFouzar, LmsRepositoryItem } from '../../lib/FouzarContext';
 import { MediaHubStandalone } from '../../components/sanctuary/MediaHubStandalone';
 import { useAuth } from '../../hooks/useAuth';
-import { WorkspaceProvider, useWorkspace } from '../../lib/workspace/WorkspaceContext';
-import { LiveContext } from '../../components/workspace/LiveContext';
-import { WorkspacePanel } from '../../components/workspace/WorkspacePanel';
-import { StageCanvas } from '../../components/workspace/StageCanvas';
 import { filterRepositoryByFolder, safeIncludes } from '../../lib/filterUtils';
 import { buildRepositoryEntryFromFile } from '../../lib/repositoryUpload';
 import {
@@ -69,17 +65,8 @@ const SECTIONS: { id: SectionId; label: string; icon: React.FC<any>; desc: strin
 ];
 
 export default function PersonalSanctuaryPage() {
-  return (
-    <WorkspaceProvider initialRoomId="sanctuary-local">
-      <SanctuaryContent />
-    </WorkspaceProvider>
-  );
-}
-
-export function SanctuaryContent() {
   const router = useRouter();
   const { user, loading } = useAuth();
-  const { state: workspaceState, setStage, openTool, closeTool } = useWorkspace();
   const {
     repository,
     addRepositoryItem,
@@ -377,14 +364,8 @@ export function SanctuaryContent() {
             ))}
           </select>
           {/* AI toggle */}
-          <button onClick={() => {
-            if (workspaceState.personal.activeTool === 'ai') {
-              closeTool();
-            } else {
-              openTool('ai');
-            }
-          }}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg font-mono text-[9px] uppercase font-bold transition-all cursor-pointer border ${workspaceState.personal.activeTool === 'ai' ? 'bg-[#7c5cfc]/15 border-[#7c5cfc]/40 text-[#7c5cfc]' : 'border-white/[0.07] text-white/30 hover:text-white/60'}`}>
+          <button onClick={() => setIsAiOpen(p => !p)}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg font-mono text-[9px] uppercase font-bold transition-all cursor-pointer border ${isAiOpen ? 'bg-[#7c5cfc]/15 border-[#7c5cfc]/40 text-[#7c5cfc]' : 'border-white/[0.07] text-white/30 hover:text-white/60'}`}>
             <Bot className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">AI</span>
           </button>
@@ -472,18 +453,7 @@ export function SanctuaryContent() {
                       {SECTIONS.map(({ id, label, icon: Icon, color }) => (
                         <button
                           key={id}
-                          onClick={() => {
-                            if (id === 'notes') {
-                              if (workspaceState.personal.activeTool === 'notes') closeTool();
-                              else openTool('notes');
-                            } else if (id === 'web') {
-                              if (workspaceState.personal.activeTool === 'browser') closeTool();
-                              else openTool('browser');
-                            } else {
-                              setActiveSection(id);
-                              closeTool(); // Hide tools if switching to a center view
-                            }
-                          }}
+                          onClick={() => setActiveSection(id)}
                           className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md transition-all cursor-pointer text-left ${activeSection === id ? 'bg-[#7c5cfc]/12 text-white/80' : 'text-white/35 hover:text-white/65 hover:bg-white/[0.02]'}`}
                         >
                           <Icon className="w-3 h-3 shrink-0" style={{ color: activeSection === id ? color : undefined }} />
@@ -597,10 +567,7 @@ export function SanctuaryContent() {
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-hidden flex flex-col relative">
-            {workspaceState.shared.activeStage.type !== 'empty' ? (
-              <StageCanvas />
-            ) : (
+          <div className="flex-1 overflow-hidden">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeSection ?? 'home'}
@@ -624,50 +591,23 @@ export function SanctuaryContent() {
                     {/* Section grid */}
                     <p className="text-[9px] font-mono uppercase tracking-[0.2em] text-white/20 mb-4">— Choose a section</p>
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                      {SECTIONS.map(({ id, label, icon: Icon, desc, color }) => {
-                        // Mock presence for the Shared Sanctuary feel
-                        const mockPresence = 
-                          id === 'notes' ? { name: 'Ahmed', color: '#ff2d55', img: 'https://i.pravatar.cc/150?u=a042581f4e29026024d' } :
-                          id === 'slides' ? { name: 'Sarah', color: '#4cd964', img: 'https://i.pravatar.cc/150?u=a042581f4e29026704d' } :
-                          null;
-
-                        return (
-                          <motion.button
-                            key={id}
-                            whileHover={{ scale: 1.02, y: -1 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => {
-                              if (id === 'notes') {
-                                if (workspaceState.personal.activeTool === 'notes') closeTool();
-                                else openTool('notes');
-                              } else if (id === 'web') {
-                                if (workspaceState.personal.activeTool === 'browser') closeTool();
-                                else openTool('browser');
-                              } else {
-                                setActiveSection(id); setExpandedFolders(p => ({ ...p, [activeFolderId || 'general']: true }));
-                                closeTool(); 
-                              }
-                            }}
-                            className="relative flex flex-col items-start gap-3 p-4 rounded-xl bg-white/[0.025] hover:bg-white/[0.05] border border-white/[0.06] hover:border-white/[0.12] transition-all cursor-pointer group text-left"
-                          >
-                            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${color}18`, border: `1px solid ${color}30` }}>
-                              <Icon className="w-4 h-4" style={{ color }} />
-                            </div>
-                            <div className="flex-1">
-                              <p className="text-[12px] font-semibold text-white/75 group-hover:text-white/90 transition-colors">{label}</p>
-                              <p className="text-[10px] text-white/30 mt-0.5 leading-snug">{desc}</p>
-                            </div>
-                            
-                            {/* Presence Indicator */}
-                            {mockPresence && (
-                              <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2 py-1 rounded-full bg-black/40 border border-white/[0.05] backdrop-blur-md">
-                                <img src={mockPresence.img} className="w-3.5 h-3.5 rounded-full object-cover" alt={mockPresence.name} />
-                                <span className="text-[8px] font-mono text-white/50">{mockPresence.name}</span>
-                              </div>
-                            )}
-                          </motion.button>
-                        );
-                      })}
+                      {SECTIONS.map(({ id, label, icon: Icon, desc, color }) => (
+                        <motion.button
+                          key={id}
+                          whileHover={{ scale: 1.02, y: -1 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => { setActiveSection(id); setExpandedFolders(p => ({ ...p, [activeFolderId || 'general']: true })); }}
+                          className="flex flex-col items-start gap-3 p-4 rounded-xl bg-white/[0.025] hover:bg-white/[0.05] border border-white/[0.06] hover:border-white/[0.12] transition-all cursor-pointer group text-left"
+                        >
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${color}18`, border: `1px solid ${color}30` }}>
+                            <Icon className="w-4 h-4" style={{ color }} />
+                          </div>
+                          <div>
+                            <p className="text-[12px] font-semibold text-white/75 group-hover:text-white/90 transition-colors">{label}</p>
+                            <p className="text-[10px] text-white/30 mt-0.5 leading-snug">{desc}</p>
+                          </div>
+                        </motion.button>
+                      ))}
                     </div>
 
                     {/* Recent files strip */}
@@ -689,6 +629,21 @@ export function SanctuaryContent() {
                   </div>
                 )}
 
+                {/* ── NOTES ── */}
+                {activeSection === 'notes' && (
+                  <div className="h-full p-5 flex flex-col">
+                    <textarea
+                      value={notes}
+                      onChange={e => setNotes(e.target.value)}
+                      placeholder={`✏️  Start typing your ${activeFolder?.name || 'general'} notes here...\n\nThis is your private workspace — not shared with anyone.`}
+                      className="flex-1 bg-white/[0.02] border border-white/[0.06] rounded-xl p-5 text-sm text-white/80 leading-relaxed resize-none focus:outline-none focus:border-[#7c5cfc]/40 font-mono placeholder:text-white/20 transition-colors"
+                    />
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-[9px] font-mono text-white/20 uppercase">🔒 Private · Auto-saved locally</span>
+                      <span className="text-[9px] font-mono text-white/20">{notes.trim() ? notes.trim().split(/\s+/).length : 0} words</span>
+                    </div>
+                  </div>
+                )}
 
                 {/* ── JOURNAL ── */}
                 {activeSection === 'journal' && (
@@ -704,6 +659,39 @@ export function SanctuaryContent() {
                   </div>
                 )}
 
+
+                {/* ── WEB HUB ── */}
+                {activeSection === 'web' && (
+                  <div className="h-full overflow-y-auto p-5 space-y-5">
+                    <form onSubmit={handleWebSearch} className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30" />
+                        <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                          placeholder="Search the web for anything..."
+                          className="w-full pl-9 pr-4 py-2.5 bg-white/[0.03] border border-white/[0.07] rounded-xl text-sm text-white/70 placeholder:text-white/25 focus:outline-none focus:border-[#4cd964]/40 transition-colors" />
+                      </div>
+                      <button type="submit" disabled={isSearching}
+                        className="px-5 py-2.5 bg-[#4cd964] text-black font-mono text-[9px] uppercase tracking-wider font-bold rounded-xl hover:opacity-90 cursor-pointer disabled:opacity-40 transition-opacity">
+                        {isSearching ? 'Searching...' : 'Go'}
+                      </button>
+                    </form>
+                    {isSearching && <p className="text-[10px] font-mono text-[#4cd964] animate-pulse">Searching the web...</p>}
+                    <div className="space-y-2">
+                      {searchResults.map((res, i) => (
+                        <div key={i} className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.1] transition-all">
+                          <a href={res.link} target="_blank" rel="noopener noreferrer" className="text-[12px] font-semibold text-[#4cd964] hover:underline flex items-center gap-1.5">
+                            {res.title} <ExternalLink className="w-3 h-3 text-white/30" />
+                          </a>
+                          <p className="text-[10px] text-white/40 mt-1 leading-relaxed">{res.snippet}</p>
+                          <button onClick={() => { setActiveDocText(`[Web]\nTitle: ${res.title}\n${res.snippet}`); setAiTriggerQuery({ text: `Analyze: ${res.title}\n${res.snippet}`, id: Date.now().toString() }); setFedUrls(p => ({ ...p, [res.link]: true })); setIsAiOpen(true); setTimeout(() => setFedUrls(p => ({ ...p, [res.link]: false })), 2000); }}
+                            className={`mt-2 text-[9px] font-mono px-2 py-1 rounded-lg border transition-all ${fedUrls[res.link] ? 'border-[#4cd964]/30 text-[#4cd964] bg-[#4cd964]/5' : 'border-white/[0.07] text-white/30 hover:text-white/60 cursor-pointer'}`}>
+                            {fedUrls[res.link] ? '✓ Sent to AI' : '+ Send to AI'}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* ── MEDIA ── */}
                 {activeSection === 'media' && (
@@ -790,17 +778,36 @@ export function SanctuaryContent() {
 
               </motion.div>
             </AnimatePresence>
-            )}
-          </div>
-          
-          {/* Docked Workspace Panel (Bottom) */}
-          <div className="shrink-0 z-40">
-            <WorkspacePanel />
           </div>
         </main>
 
-        {/* ── Right Collaboration Panel ── */}
-        <LiveContext />
+        {/* ── Right AI Panel (hidden by default, toggled) ── */}
+        <AnimatePresence>
+          {isAiOpen && (
+            <motion.aside
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 320, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="shrink-0 h-full overflow-hidden bg-[#0d0d14] border-l border-white/[0.05]"
+            >
+              <div className="h-full flex flex-col w-[320px]">
+                <div className="h-10 px-4 flex items-center justify-between border-b border-white/[0.05] shrink-0">
+                  <div className="flex items-center gap-2">
+                    <Bot className="w-3.5 h-3.5 text-[#7c5cfc]" />
+                    <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-white/30">AI Study Partner</span>
+                  </div>
+                  <button onClick={() => setIsAiOpen(false)} className="text-white/20 hover:text-white/60 cursor-pointer transition-colors">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div className="flex-1 overflow-hidden">
+                  <IntegratedAiChat contextLabel={openDocs.length > 0 ? `${openDocs.length} Docs Open` : activeFolder?.name || 'Sanctuary'} storageKey={aiStorageKey} />
+                </div>
+              </div>
+            </motion.aside>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* ── Deep Flow Shield Indicator ── */}
