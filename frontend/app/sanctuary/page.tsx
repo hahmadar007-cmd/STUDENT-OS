@@ -42,6 +42,8 @@ import { useFouzar, LmsRepositoryItem } from '../../lib/FouzarContext';
 import { MediaHubStandalone } from '../../components/sanctuary/MediaHubStandalone';
 import { useAuth } from '../../hooks/useAuth';
 import { WorkspaceProvider, useWorkspace } from '../../lib/workspace/WorkspaceContext';
+import { NotesTool } from '../../components/workspace/tools/NotesTool';
+import { BrowserTool } from '../../components/workspace/tools/BrowserTool';
 import { LiveContext } from '../../components/workspace/LiveContext';
 import { WorkspacePanel } from '../../components/workspace/WorkspacePanel';
 import { StageCanvas } from '../../components/workspace/StageCanvas';
@@ -473,12 +475,9 @@ export function SanctuaryContent() {
                         <button
                           key={id}
                           onClick={() => {
-                            if (id === 'notes') {
-                              if (workspaceState.personal.activeTool === 'notes') closeTool();
-                              else openTool('notes');
-                            } else if (id === 'web') {
-                              if (workspaceState.personal.activeTool === 'browser') closeTool();
-                              else openTool('browser');
+                            if (id === 'notes' || id === 'web') {
+                              setActiveSection(id);
+                              closeTool();
                             } else {
                               setActiveSection(id);
                               closeTool(); // Hide tools if switching to a center view
@@ -637,12 +636,9 @@ export function SanctuaryContent() {
                             whileHover={{ scale: 1.02, y: -1 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => {
-                              if (id === 'notes') {
-                                if (workspaceState.personal.activeTool === 'notes') closeTool();
-                                else openTool('notes');
-                              } else if (id === 'web') {
-                                if (workspaceState.personal.activeTool === 'browser') closeTool();
-                                else openTool('browser');
+                              if (id === 'notes' || id === 'web') {
+                                setActiveSection(id);
+                                closeTool();
                               } else {
                                 setActiveSection(id); setExpandedFolders(p => ({ ...p, [activeFolderId || 'general']: true }));
                                 closeTool(); 
@@ -689,6 +685,20 @@ export function SanctuaryContent() {
                   </div>
                 )}
 
+
+                {/* ── NOTES ── */}
+                {activeSection === 'notes' && (
+                  <div className="h-full flex flex-col overflow-hidden rounded-none border-0">
+                    <NotesTool isActive={true} />
+                  </div>
+                )}
+
+                {/* ── WEB ── */}
+                {activeSection === 'web' && (
+                  <div className="h-full flex flex-col overflow-hidden rounded-none border-0">
+                    <BrowserTool isActive={true} />
+                  </div>
+                )}
 
                 {/* ── JOURNAL ── */}
                 {activeSection === 'journal' && (
