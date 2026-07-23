@@ -603,7 +603,7 @@ export function SanctuaryContent() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.15 }}
-                className="h-full"
+                className="flex-1 min-h-0 w-full flex flex-col h-full"
               >
                 {/* ── HOME — section picker ── */}
                 {!activeSection && (
@@ -773,7 +773,7 @@ export function SanctuaryContent() {
 
                 {/* ── YOUTUBE SEARCH ── */}
                 {activeSection === 'youtube' && (
-                  <div className="h-full flex flex-col overflow-hidden">
+                  <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
                     <MediaHubStandalone
                       folderId={activeFolderId}
                       onVideoSelect={(url, videoId, title) => {
