@@ -188,58 +188,57 @@ export function MediaHubStandalone({
         )}
       </div>
 
-      {/* ── Fixed Inline Player ─────────────────────────────── */}
-      {activeVideo && (
-        <div ref={playerRef} className="shrink-0 mb-4 rounded-2xl overflow-hidden border border-red-500/20 shadow-[0_0_30px_rgba(239,68,68,0.1)]">
-          {/* Player header */}
-          <div className="flex items-center justify-between px-4 py-2.5 bg-slate-900/80 border-b border-slate-800/50">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse shrink-0" />
-              <span className="text-xs font-semibold text-fouzar-text-primary truncate">{activeVideo.title}</span>
-            </div>
-            <div className="flex items-center gap-1 shrink-0 ml-2">
-              <button
-                onClick={() => setIsVideoMinimized(!isVideoMinimized)}
-                className="p-1.5 rounded-lg hover:bg-slate-700/50 text-slate-400 hover:text-fouzar-text-primary transition-colors cursor-pointer"
-                title={isVideoMinimized ? "Expand Video" : "Minimize Video"}
-              >
-                {isVideoMinimized ? <Maximize2 className="w-3.5 h-3.5" /> : <Minimize2 className="w-3.5 h-3.5" />}
-              </button>
-              <button
-                onClick={() => setActiveVideo(null)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 ml-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 transition-colors cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" />
-                <span className="text-[10px] font-mono uppercase tracking-wider font-bold">Leave Video</span>
-              </button>
-            </div>
-          </div>
-          {/* iframe */}
-          {!isVideoMinimized && (
-            <>
-              <div className="aspect-video w-full bg-black">
-                <iframe
-                  src={`https://www.youtube.com/embed/${activeVideo.videoId}?autoplay=1&rel=0&modestbranding=1`}
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                  allowFullScreen
-                />
-              </div>
-              {/* Channel info */}
-              <div className="px-4 py-2.5 bg-slate-900/60 flex items-center gap-2">
-                <User className="w-3 h-3 text-fouzar-text-secondary" />
-                <span className="text-xs text-slate-400 font-sans">{activeVideo.author}</span>
-                <span className="ml-auto text-[10px] font-mono text-fouzar-text-secondary flex items-center gap-1">
-                  <Clock className="w-2.5 h-2.5" />{activeVideo.duration}
-                </span>
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
       {/* ── Scrollable content area ─────────────────────────── */}
-      <div className="flex-1 min-h-0 overflow-y-auto pr-2 pb-4 space-y-4">
+      <div className="flex-1 min-h-0 overflow-y-auto pr-2 pb-4 space-y-4 pt-2">
+        {/* ── Inline Player ─────────────────────────────── */}
+        {activeVideo && (
+          <div ref={playerRef} className="shrink-0 mb-6 rounded-2xl overflow-hidden border border-red-500/20 shadow-[0_0_30px_rgba(239,68,68,0.1)]">
+            {/* Player header */}
+            <div className="flex items-center justify-between px-4 py-2.5 bg-slate-900/80 border-b border-slate-800/50">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse shrink-0" />
+                <span className="text-xs font-semibold text-fouzar-text-primary truncate">{activeVideo.title}</span>
+              </div>
+              <div className="flex items-center gap-1 shrink-0 ml-2">
+                <button
+                  onClick={() => setIsVideoMinimized(!isVideoMinimized)}
+                  className="p-1.5 rounded-lg hover:bg-slate-700/50 text-slate-400 hover:text-fouzar-text-primary transition-colors cursor-pointer"
+                  title={isVideoMinimized ? "Expand Video" : "Minimize Video"}
+                >
+                  {isVideoMinimized ? <Maximize2 className="w-3.5 h-3.5" /> : <Minimize2 className="w-3.5 h-3.5" />}
+                </button>
+                <button
+                  onClick={() => setActiveVideo(null)}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 ml-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 transition-colors cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span className="text-[10px] font-mono uppercase tracking-wider font-bold">Leave Video</span>
+                </button>
+              </div>
+            </div>
+            {/* iframe */}
+            {!isVideoMinimized && (
+              <>
+                <div className="w-full bg-black flex items-center justify-center" style={{ aspectRatio: '16/9', maxHeight: '65vh' }}>
+                  <iframe
+                    src={`https://www.youtube.com/embed/${activeVideo.videoId}?autoplay=1&rel=0&modestbranding=1`}
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                    allowFullScreen
+                  />
+                </div>
+                {/* Channel info */}
+                <div className="px-4 py-2.5 bg-slate-900/60 flex items-center gap-2">
+                  <User className="w-3 h-3 text-fouzar-text-secondary" />
+                  <span className="text-xs text-slate-400 font-sans">{activeVideo.author}</span>
+                  <span className="ml-auto text-[10px] font-mono text-fouzar-text-secondary flex items-center gap-1">
+                    <Clock className="w-2.5 h-2.5" />{activeVideo.duration}
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
+        )}
         {/* Error */}
         {error && (
           <div className="px-4 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-sans">
