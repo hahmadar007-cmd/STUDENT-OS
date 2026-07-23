@@ -831,13 +831,20 @@ export function SanctuaryContent() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
-            className="fixed top-12 right-0 bottom-0 w-[400px] z-50 border-l border-white/[0.05] shadow-2xl bg-[#0b0b12]"
+            className="fixed top-12 right-0 bottom-0 w-[400px] z-50 border-l border-white/[0.05] shadow-2xl bg-[#0b0b12] flex flex-col"
           >
-            <IntegratedAiChat
-              onClose={() => setIsAiOpen(false)}
-              initialQuery={aiTriggerQuery}
-              storageKey={aiStorageKey}
-            />
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.05] shrink-0">
+              <div className="flex items-center gap-2">
+                <Bot className="w-4 h-4 text-[#7c5cfc]" />
+                <span className="text-xs font-semibold text-white/80 uppercase tracking-wider">AI Assistant</span>
+              </div>
+              <button onClick={() => setIsAiOpen(false)} className="text-white/40 hover:text-white/80 p-1 rounded-lg hover:bg-white/[0.05] transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden flex flex-col">
+              <IntegratedAiChat storageKey="sanctuary_ai_chat" compact={true} />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
