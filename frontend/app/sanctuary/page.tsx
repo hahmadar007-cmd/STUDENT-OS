@@ -773,7 +773,7 @@ export function SanctuaryContent() {
 
                 {/* ── YOUTUBE SEARCH ── */}
                 {activeSection === 'youtube' && (
-                  <div className="h-full overflow-hidden">
+                  <div className="h-full flex flex-col overflow-hidden">
                     <MediaHubStandalone
                       folderId={activeFolderId}
                       onVideoSelect={(url, videoId, title) => {
