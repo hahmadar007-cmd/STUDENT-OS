@@ -21,6 +21,8 @@ import {
   Search,
   Columns,
   Video,
+  Minimize2,
+  Maximize2,
 } from 'lucide-react';
 import { useFouzar } from '../../lib/FouzarContext';
 import { useLivePresentation } from '../../hooks/useLivePresentation';
@@ -169,6 +171,22 @@ export const GroupWorkspace: React.FC<GroupWorkspaceProps> = ({
   );
 
   const activeBroadcast = livePresentation.activeBroadcast;
+
+  const [isViewingPresentation, setIsViewingPresentation] = useState(false);
+  const [isPresentationMaximized, setIsPresentationMaximized] = useState(false);
+
+  // Auto-join if you are the presenter, or reset if broadcast ends
+  useEffect(() => {
+    if (activeBroadcast) {
+      if (activeBroadcast.presenterId === user?.id) {
+        setIsViewingPresentation(true);
+        setIsPresentationMaximized(false);
+      }
+    } else {
+      setIsViewingPresentation(false);
+      setIsPresentationMaximized(false);
+    }
+  }, [activeBroadcast, user?.id]);
 
   const renderTabContent = (tab: string | null) => {
     if (!tab) return null;
@@ -401,18 +419,9 @@ export const GroupWorkspace: React.FC<GroupWorkspaceProps> = ({
   };
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col overflow-hidden bg-fouzar-bg relative">
-      {/* Presenter Toast Overlay */}
-      <PresenterToast
-        activeBroadcast={livePresentation.activeBroadcast}
-        isFollowingPresenter={livePresentation.isFollowingPresenter}
-        onFollow={livePresentation.followPresenter}
-        onIgnore={livePresentation.ignorePresenter}
-        onLeave={livePresentation.leavePresenterFeed}
-      />
-
+    <div className="flex-1 min-h-0 flex flex-col overflow-hidden bg-[#050505] relative">
       {/* ── 1. Group Header Bar ────────────────────────────────────────── */}
-      <div className="fouzar-chrome relative z-10 flex items-center justify-between px-5 py-2.5 border-b border-fouzar-border shrink-0 bg-fouzar-surface/80 backdrop-blur-xl">
+      <div className="relative z-10 flex items-center justify-between px-5 py-2.5 border-b border-white/[0.05] shrink-0 bg-[#0b0b12]/80 backdrop-blur-xl">
         <div className="flex items-center gap-3 min-w-0">
           <div className="flex items-center gap-2 min-w-0">
             <h2 className="font-serif text-sm md:text-base font-bold tracking-wide uppercase text-fouzar-text-primary truncate">
@@ -482,102 +491,76 @@ export const GroupWorkspace: React.FC<GroupWorkspaceProps> = ({
         </div>
       </div>
 
-      {/* ── 2. Session Hero Card ────────────────────────────────────────── */}
-      <div className="p-3 shrink-0">
-        <div className="p-3.5 rounded-[var(--fouzar-radius-lg)] border border-fouzar-accent/30 bg-gradient-to-r from-fouzar-accent/10 via-fouzar-elevated/40 to-fouzar-surface/40 backdrop-blur-xl relative overflow-hidden shadow-[var(--fouzar-shadow-md)]">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-            {/* Session info */}
-            <div className="space-y-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-[8px] uppercase tracking-[0.2em] text-fouzar-accent font-bold flex items-center gap-1">
-                  <Radio className="w-3 h-3 animate-pulse text-fouzar-accent" />
-                  CURRENT SESSION
-                </span>
-              </div>
-
-              {activeBroadcast ? (
-                <div>
-                  <h3 className="font-serif text-sm font-bold text-fouzar-text-primary flex items-center gap-2">
-                    <span>{activeBroadcast.presenterName} is Presenting:</span>
-                    <span className="text-fouzar-accent underline">{activeBroadcast.fileName}</span>
-                  </h3>
-                  <p className="text-[10px] text-fouzar-text-secondary font-mono">
-                    Page {currentSlide} · 11 Members Synced
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  <h3 className="font-serif text-sm font-bold text-fouzar-text-primary">
-                    No active presentation running
-                  </h3>
-                  <p className="text-[9.5px] text-fouzar-text-secondary font-mono">
-                    Select a document in the Group Explorer below and click "Present ⊙" to lead the session.
-                  </p>
-                </div>
-              )}
-
-              {/* Study Goal Row */}
-              <div className="flex items-center gap-2 pt-0.5">
-                <Target className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                {isEditingGoal ? (
-                  <input
-                    value={goalInput}
-                    onChange={(e) => setGoalInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        setSessionGoal(goalInput);
-                        setIsEditingGoal(false);
-                      }
-                    }}
-                    onBlur={() => {
-                      setSessionGoal(goalInput);
-                      setIsEditingGoal(false);
-                    }}
-                    className="bg-fouzar-elevated/80 border border-fouzar-border px-2 py-0.5 text-[9.5px] font-mono rounded text-fouzar-text-primary focus:outline-none"
-                    autoFocus
-                  />
-                ) : (
-                  <p
-                    onClick={() => setIsEditingGoal(true)}
-                    className="text-[9.5px] font-mono text-fouzar-text-secondary hover:text-fouzar-text-primary cursor-pointer truncate"
-                    title="Click to edit session goal"
-                  >
-                    <span className="text-amber-400 font-bold uppercase text-[8px] mr-1">Goal:</span>
-                    {sessionGoal}
-                  </p>
-                )}
-              </div>
+      {/* ── 2. Presentation Area ────────────────────────────────────────── */}
+      {isViewingPresentation ? (
+        <div className={`shrink-0 flex flex-col p-4 border-b border-white/[0.05] bg-[#0b0b12] relative overflow-hidden transition-all duration-300 ease-in-out ${isPresentationMaximized ? 'flex-1' : 'h-[300px]'}`}>
+          <div className="absolute inset-0 z-0">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(124,92,252,0.08),transparent_70%)] pointer-events-none" />
+          </div>
+          
+          <div className="relative z-10 flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3 bg-white/[0.03] border border-white/[0.06] rounded-xl px-3 py-1.5 backdrop-blur-md">
+              <span className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-[9px] uppercase tracking-wider rounded-full font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                LIVE
+              </span>
+              <div className="w-[1px] h-3 bg-white/[0.1]" />
+              <span className="font-serif text-sm font-bold text-white/90">
+                {activeBroadcast?.presenterId === user?.id ? 'You are presenting' : `${activeBroadcast?.presenterName} is presenting`}
+              </span>
+              <span className="text-fouzar-accent font-mono text-[10px] underline">
+                {activeBroadcast?.fileName || 'Document'}
+              </span>
             </div>
-
-            {/* CTA & Up Next */}
-            <div className="flex flex-col items-end gap-1.5 shrink-0">
-              {activeBroadcast ? (
-                <button
-                  type="button"
-                  onClick={livePresentation.followPresenter}
-                  className="px-3.5 py-1.5 bg-fouzar-accent text-fouzar-text-inverse font-mono text-[8.5px] uppercase tracking-wider font-bold rounded-[var(--fouzar-radius-md)] hover:opacity-90 transition-all flex items-center gap-1.5 shadow-[var(--fouzar-glow-primary)] cursor-pointer"
-                >
-                  <Play className="w-3 h-3 fill-current" />
-                  Join Session →
-                </button>
-              ) : (
-                <span className="font-mono text-[7.5px] uppercase tracking-widest text-fouzar-text-tertiary border border-fouzar-border/40 px-2.5 py-1 rounded-[var(--fouzar-radius-md)]">
-                  Ready for Presenter
-                </span>
-              )}
-
-              {/* Up Next Strip */}
-              <div className="font-mono text-[7.5px] text-fouzar-text-tertiary uppercase flex items-center gap-1">
-                <span>Up Next:</span>
-                <span className="text-fouzar-text-secondary font-semibold">Lab Manual 3</span>
-              </div>
+            
+            <div className="flex items-center gap-2">
+              <button onClick={() => setIsPresentationMaximized(!isPresentationMaximized)} className="p-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.08] text-white/50 hover:text-white/90 transition-all cursor-pointer">
+                {isPresentationMaximized ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+              </button>
+              <button onClick={() => setIsViewingPresentation(false)} className="px-3 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 font-mono text-[10px] uppercase font-bold transition-all cursor-pointer">
+                Minimize
+              </button>
             </div>
           </div>
+
+          <div className="flex-1 bg-[#0b0b12] border border-white/[0.06] rounded-2xl overflow-hidden shadow-2xl relative">
+             <div className="absolute inset-0 flex flex-col items-center justify-center">
+               {/* When viewing someone else's presentation, DocumentViewer would sync here */}
+               <Radio className="w-8 h-8 text-[#7c5cfc]/30 animate-pulse mb-3" />
+               <p className="text-white/40 font-mono text-xs uppercase tracking-widest text-center px-4">
+                 {activeBroadcast?.presenterId === user?.id ? (
+                    <>You are leading the session.<br/>Open a document in the explorer below and click "Present" to broadcast it.</>
+                 ) : (
+                    <>You have joined {activeBroadcast?.presenterName}'s session.<br/>The synced document will appear here.</>
+                 )}
+               </p>
+             </div>
+          </div>
         </div>
-      </div>
+      ) : activeBroadcast ? (
+        <div className="shrink-0 p-3 bg-[#0b0b12] border-b border-white/[0.05]">
+          <div className="flex items-center justify-between p-3 rounded-xl border border-[#7c5cfc]/30 bg-gradient-to-r from-[#7c5cfc]/10 via-[#7c5cfc]/5 to-transparent backdrop-blur-md">
+            <div className="flex items-center gap-3">
+              <Radio className="w-4 h-4 text-[#7c5cfc] animate-pulse" />
+              <div>
+                <span className="font-serif text-sm font-bold text-white/90 mr-2">{activeBroadcast.presenterName}</span>
+                <span className="text-white/50 text-xs">started a live presentation</span>
+                <span className="text-[#7c5cfc] font-mono text-[10px] ml-2 border border-[#7c5cfc]/20 px-2 py-0.5 rounded-md bg-[#7c5cfc]/10">{activeBroadcast.fileName}</span>
+              </div>
+            </div>
+            <button onClick={() => {
+                livePresentation.followPresenter();
+                setIsViewingPresentation(true);
+            }} className="px-4 py-1.5 bg-[#7c5cfc] text-white font-mono text-[10px] uppercase tracking-wider font-bold rounded-lg hover:opacity-90 shadow-[0_0_15px_rgba(124,92,252,0.4)] transition-all flex items-center gap-2 cursor-pointer">
+              <Play className="w-3 h-3 fill-current" />
+              Join Presentation
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {/* ── 3. Workspace Navigation Toolbar ──────────────────────────────── */}
-      <div className="px-3 py-1.5 border-b border-t border-fouzar-border bg-fouzar-surface/60 flex items-center justify-between shrink-0">
+      <div className="px-3 py-1.5 border-b border-t border-white/[0.05] bg-[#0b0b12]/60 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-1">
           {[
             { id: 'explorer', icon: BookOpen, label: 'Explorer' },
@@ -592,10 +575,10 @@ export const GroupWorkspace: React.FC<GroupWorkspaceProps> = ({
                 key={v.id}
                 type="button"
                 onClick={() => setActiveSplitTabs((prev) => ({ ...prev, left: v.id }))}
-                className={`px-2.5 py-1 flex items-center gap-1 font-mono text-[7.5px] uppercase tracking-wider rounded-[var(--fouzar-radius-sm)] transition-colors cursor-pointer ${
+                className={`px-2.5 py-1 flex items-center gap-1 font-mono text-[7.5px] uppercase tracking-wider rounded-md transition-colors cursor-pointer ${
                   activeSplitTabs.left === v.id
-                    ? 'bg-fouzar-accent/20 text-fouzar-accent font-bold border border-fouzar-accent/30'
-                    : 'text-fouzar-text-secondary hover:text-fouzar-text-primary'
+                    ? 'bg-[#7c5cfc]/10 text-[#7c5cfc] font-bold border border-[#7c5cfc]/20'
+                    : 'text-white/40 hover:text-white/80'
                 }`}
               >
                 <Icon className="w-3 h-3" />
@@ -610,17 +593,17 @@ export const GroupWorkspace: React.FC<GroupWorkspaceProps> = ({
           <button
             type="button"
             onClick={() => setActiveSplitTabs((prev) => ({ ...prev, right: prev.right ? null : 'youtube' }))}
-            className={`px-2.5 py-1 flex items-center gap-1 font-mono text-[7.5px] uppercase tracking-wider rounded-[var(--fouzar-radius-sm)] transition-colors cursor-pointer ${
+            className={`px-2.5 py-1 flex items-center gap-1 font-mono text-[7.5px] uppercase tracking-wider rounded-md transition-colors cursor-pointer ${
               activeSplitTabs.right
                 ? 'bg-indigo-500/20 text-indigo-400 font-bold border border-indigo-500/30'
-                : 'text-fouzar-text-secondary hover:text-fouzar-text-primary'
+                : 'text-white/40 hover:text-white/80'
             }`}
           >
             <Columns className="w-3 h-3" />
             Split
           </button>
           {activeSplitTabs.right && (
-            <div className="flex items-center gap-0.5 bg-fouzar-elevated/40 border border-fouzar-border/50 rounded-full px-1 py-0.5">
+            <div className="flex items-center gap-0.5 bg-white/[0.02] border border-white/[0.05] rounded-full px-1 py-0.5">
               {[
                 { id: 'explorer', label: 'Files' },
                 { id: 'notes', label: 'Notes' },
@@ -635,7 +618,7 @@ export const GroupWorkspace: React.FC<GroupWorkspaceProps> = ({
                   className={`px-2 py-0.5 font-mono text-[7px] uppercase tracking-wider rounded-full transition-all cursor-pointer ${
                     activeSplitTabs.right === opt.id
                       ? 'bg-indigo-500/30 text-indigo-300 font-bold'
-                      : 'text-fouzar-text-tertiary hover:text-fouzar-text-primary'
+                      : 'text-white/30 hover:text-white/80'
                   }`}
                 >
                   {opt.label}
