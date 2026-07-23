@@ -633,15 +633,17 @@ export const GroupWorkspace: React.FC<GroupWorkspaceProps> = ({
       <div className="flex-1 min-h-0 p-2 flex flex-col overflow-hidden">
         {activeSplitTabs.right ? (
           <ResizablePanel direction="horizontal" initialSize={500} minSize={300}>
-            <div className="h-full w-full flex flex-col p-1 overflow-hidden">
+            <div className="flex-1 min-h-0 w-full flex flex-col p-1 overflow-hidden">
               {renderTabContent(activeSplitTabs.left)}
             </div>
-            <div className="h-full w-full flex flex-col p-1 overflow-hidden">
+            <div className="flex-1 min-h-0 w-full flex flex-col p-1 overflow-hidden">
               {renderTabContent(activeSplitTabs.right)}
             </div>
           </ResizablePanel>
         ) : (
-          renderTabContent(activeSplitTabs.left)
+          <div className="flex-1 min-h-0 w-full flex flex-col overflow-hidden">
+             {renderTabContent(activeSplitTabs.left)}
+          </div>
         )}
       </div>
     </div>

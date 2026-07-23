@@ -444,7 +444,7 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
     
     if (tab === 'notes') {
       return (
-        <section className={`flex flex-col overflow-hidden border-fouzar-border flex-1 h-full w-full ${isGreenhouse ? 'fouzar-glass m-2 rounded-[var(--fouzar-radius-lg)]' : ''}`}>
+        <section className={`flex flex-col overflow-hidden border-fouzar-border flex-1 min-h-0 w-full ${isGreenhouse ? 'fouzar-glass m-2 rounded-[var(--fouzar-radius-lg)]' : ''}`}>
           <div className="flex-1 min-h-[280px] lg:min-h-0 bg-fouzar-surface/40 backdrop-blur-xl border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-6 flex flex-col overflow-hidden">
             <div className="mb-4">
               <h3 className="font-serif text-xs font-bold uppercase tracking-wider text-fouzar-text-primary">
@@ -467,7 +467,7 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
     
     if (tab === 'lounge') {
       return (
-        <section className="flex-1 flex flex-col overflow-hidden h-full w-full">
+        <section className="flex-1 flex flex-col overflow-hidden min-h-0 w-full">
           <LiveLounge groupId={roomId} />
         </section>
       );
@@ -606,15 +606,17 @@ export const SanctuaryCanvas: React.FC<SanctuaryCanvasProps> = ({
       <div className="flex-1 flex flex-col overflow-hidden relative z-10">
         {activeSplitTabs.right ? (
           <ResizablePanel direction="horizontal" initialSize={500} minSize={300}>
-            <div className="h-full w-full flex flex-col p-1 overflow-hidden">
+            <div className="flex-1 min-h-0 w-full flex flex-col p-1 overflow-hidden">
               {renderTabContent(activeSplitTabs.left)}
             </div>
-            <div className="h-full w-full flex flex-col p-1 overflow-hidden">
+            <div className="flex-1 min-h-0 w-full flex flex-col p-1 overflow-hidden">
               {renderTabContent(activeSplitTabs.right)}
             </div>
           </ResizablePanel>
         ) : (
-          renderTabContent(activeSplitTabs.left)
+          <div className="flex-1 min-h-0 w-full flex flex-col overflow-hidden">
+            {renderTabContent(activeSplitTabs.left)}
+          </div>
         )}
       </div>
     </div>
