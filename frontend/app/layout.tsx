@@ -9,6 +9,7 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Inter, JetBrains_Mono, UnifrakturMaguntia } from "next/font/google";
 import "./globals.css";
+import "@uploadthing/react/styles.css";
 import { FouzarProvider } from "../lib/FouzarContext";
 import { ThemeProvider } from "../lib/ThemeContext";
 import { CommandPalette } from "../components/ui/CommandPalette";

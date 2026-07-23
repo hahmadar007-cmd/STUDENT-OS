@@ -799,8 +799,6 @@ export function SanctuaryContent() {
           </div>
         </main>
 
-        {/* ── Right Collaboration Panel ── */}
-        <LiveContext />
       </div>
 
       {/* ── Deep Flow Shield Indicator ── */}
