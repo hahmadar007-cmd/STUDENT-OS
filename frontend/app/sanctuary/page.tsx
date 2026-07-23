@@ -380,13 +380,9 @@ export function SanctuaryContent() {
           </select>
           {/* AI toggle */}
           <button onClick={() => {
-            if (workspaceState.personal.activeTool === 'ai') {
-              closeTool();
-            } else {
-              openTool('ai');
-            }
+            setIsAiOpen(!isAiOpen);
           }}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg font-mono text-[9px] uppercase font-bold transition-all cursor-pointer border ${workspaceState.personal.activeTool === 'ai' ? 'bg-[#7c5cfc]/15 border-[#7c5cfc]/40 text-[#7c5cfc]' : 'border-white/[0.07] text-white/30 hover:text-white/60'}`}>
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg font-mono text-[9px] uppercase font-bold transition-all cursor-pointer border ${isAiOpen ? 'bg-[#7c5cfc]/15 border-[#7c5cfc]/40 text-[#7c5cfc]' : 'border-white/[0.07] text-white/30 hover:text-white/60'}`}>
             <Bot className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">AI</span>
           </button>
@@ -824,6 +820,24 @@ export function SanctuaryContent() {
               <button onClick={() => handleEmergencyBypass(5)} className="font-mono text-[7px] text-[#f5a623] border border-[#f5a623]/30 px-2 py-0.5 rounded-lg hover:bg-[#f5a623]/10 uppercase cursor-pointer">5m</button>
               <button onClick={handleDisarmFlow} className="font-mono text-[7px] text-white/40 border border-white/10 px-2 py-0.5 rounded-lg hover:text-white uppercase cursor-pointer">Exit</button>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* AI Assistant Sidebar */}
+      <AnimatePresence>
+        {isAiOpen && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            className="fixed top-12 right-0 bottom-0 w-[400px] z-50 border-l border-white/[0.05] shadow-2xl bg-[#0b0b12]"
+          >
+            <IntegratedAiChat
+              onClose={() => setIsAiOpen(false)}
+              initialQuery={aiTriggerQuery}
+              storageKey={aiStorageKey}
+            />
           </motion.div>
         )}
       </AnimatePresence>
