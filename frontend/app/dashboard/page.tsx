@@ -711,9 +711,9 @@ export default function DashboardPage() {
   };
 
   const sidebarItems = [
-    { id: 'ai', label: 'AI Core', icon: Cpu, keyHint: 'A' },
     { id: 'circles', label: 'Study Circles', icon: Compass, keyHint: 'S' },
     { id: 'nodes', label: 'Garden Nodes', icon: Layers, keyHint: 'G' },
+    { id: 'ai', label: 'AI Core', icon: Cpu, keyHint: 'A' },
     { id: 'bridge', label: 'Campus Gateway', icon: Plug, keyHint: 'L' },
     { id: 'shield', label: 'Focus Shield', icon: Shield, keyHint: 'F' },
   ];
@@ -929,6 +929,40 @@ export default function DashboardPage() {
           </button>
         </div>
       </motion.aside>
+
+      {/* ========================================================================= */}
+      {/* TOP NAVIGATION BAR: Under 768px view (Mobile / Compact View)              */}
+      {/* ========================================================================= */}
+      <nav className="md:hidden w-full h-14 bg-fouzar-bg border-b border-fouzar-border px-6 py-2 flex items-center justify-between z-30 shrink-0 select-none">
+        {sidebarItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = activeNav === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => handleNavClick(item.id)}
+              className={`relative flex flex-col items-center justify-center p-2 transition-colors cursor-pointer ${
+                isActive ? 'text-fouzar-accent' : 'text-fouzar-text-secondary'
+              }`}
+            >
+              <Icon className="w-5 h-5" />
+              {isActive && (
+                <div className="absolute bottom-[-8px] left-2 right-2 h-[2px] bg-fouzar-accent" />
+              )}
+            </button>
+          );
+        })}
+        
+        {/* Mobile profile link */}
+        <button
+          type="button"
+          onClick={() => router.push('/profile')}
+          title="My Profile & Settings"
+          className="w-7 h-7 rounded-[var(--fouzar-radius-sm)] border border-fouzar-border-strong bg-fouzar-card flex items-center justify-center font-mono text-[9px] font-bold text-fouzar-text-primary shrink-0 cursor-pointer hover:border-[#7c5cfc] hover:text-[#7c5cfc] transition-all shadow-sm"
+        >
+          {user ? user.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2) : 'AM'}
+        </button>
+      </nav>
 
       {/* ========================================================================= */}
       {/* 2. LEFT MAIN PANEL: Content columns                                       */}
@@ -1410,10 +1444,6 @@ export default function DashboardPage() {
             </AnimatePresence>
             <div className="flex flex-col gap-12 pb-24 w-full relative">
               
-              <div id="ai-engines-section" className="w-full h-[560px] shrink-0">
-                <FascaAiCore />
-              </div>
-
               <div id="mindmap-section" className="w-full h-[600px] shrink-0 border border-fouzar-border-strong rounded-[6px] overflow-hidden relative shadow-lg bg-fouzar-surface/40">
                 <StudyNodesGraph nodesData={gardenNodes} />
               </div>
@@ -1422,46 +1452,16 @@ export default function DashboardPage() {
                 <CourseFeedPanel onOpenConnect={() => setIsLmsOpen(true)} />
               </div>
 
+              <div id="ai-engines-section" className="w-full h-[600px] shrink-0">
+                <FascaAiCore />
+              </div>
+
             </div>
           </>
         )}
 
       </main>
       </ResizablePanel>
-
-      {/* ========================================================================= */}
-      {/* 4. BOTTOM NAVIGATION BAR: Under 768px view                                */}
-      {/* ========================================================================= */}
-      <nav className="md:hidden w-full h-14 bg-fouzar-bg border-t border-fouzar-border px-6 py-2 flex items-center justify-between z-30 shrink-0 select-none">
-        {sidebarItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = activeNav === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => handleNavClick(item.id)}
-              className={`relative flex flex-col items-center justify-center p-2 transition-colors cursor-pointer ${
-                isActive ? 'text-fouzar-accent' : 'text-fouzar-text-secondary'
-              }`}
-            >
-              <Icon className="w-5 h-5" />
-              {isActive && (
-                <div className="absolute top-[-8px] left-2 right-2 h-[2px] bg-fouzar-accent" />
-              )}
-            </button>
-          );
-        })}
-        
-        {/* Mobile profile link */}
-        <button
-          type="button"
-          onClick={() => router.push('/profile')}
-          title="My Profile & Settings"
-          className="w-7 h-7 rounded-[var(--fouzar-radius-sm)] border border-fouzar-border-strong bg-fouzar-card flex items-center justify-center font-mono text-[9px] font-bold text-fouzar-text-primary shrink-0 cursor-pointer hover:border-[#7c5cfc] hover:text-[#7c5cfc] transition-all shadow-sm"
-        >
-          {user ? user.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2) : 'AM'}
-        </button>
-      </nav>
 
       {/* Side Panels */}
       <LmsBridgePanel isOpen={isLmsOpen} onClose={handleCloseLms} />
