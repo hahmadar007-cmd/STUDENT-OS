@@ -1453,9 +1453,14 @@ export default function DashboardPage() {
         })}
         
         {/* Mobile profile link */}
-        <div className="w-6 h-6 rounded-none border border-fouzar-border-strong bg-fouzar-card flex items-center justify-center font-mono text-[8px] font-bold text-fouzar-text-primary shrink-0">
+        <button
+          type="button"
+          onClick={() => router.push('/profile')}
+          title="My Profile & Settings"
+          className="w-7 h-7 rounded-[var(--fouzar-radius-sm)] border border-fouzar-border-strong bg-fouzar-card flex items-center justify-center font-mono text-[9px] font-bold text-fouzar-text-primary shrink-0 cursor-pointer hover:border-[#7c5cfc] hover:text-[#7c5cfc] transition-all shadow-sm"
+        >
           {user ? user.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2) : 'AM'}
-        </div>
+        </button>
       </nav>
 
       {/* Side Panels */}

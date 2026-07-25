@@ -112,9 +112,13 @@ export const NavRail: React.FC<NavRailProps> = ({
             <Flame className="w-4 h-4" />
           </button>
 
-          <div className="w-8 h-8 rounded-[var(--fouzar-radius-sm)] bg-fouzar-elevated border border-fouzar-border flex items-center justify-center font-mono text-[9px] font-bold">
+          <Link
+            href="/profile"
+            title="My Profile"
+            className="w-8 h-8 rounded-[var(--fouzar-radius-sm)] bg-fouzar-elevated border border-fouzar-border flex items-center justify-center font-mono text-[9px] font-bold hover:border-fouzar-accent hover:text-fouzar-accent transition-colors cursor-pointer"
+          >
             {user?.avatarInitials ?? 'FZ'}
-          </div>
+          </Link>
 
           <button
             type="button"
@@ -154,6 +158,16 @@ export const NavRail: React.FC<NavRailProps> = ({
           <Flame className="w-5 h-5" />
           <span className="font-mono text-[7px] uppercase tracking-wider">Flow</span>
         </button>
+        <Link
+          href="/profile"
+          title="My Profile"
+          className="flex flex-col items-center gap-0.5 py-1 px-3 text-fouzar-text-secondary hover:text-fouzar-accent"
+        >
+          <div className="w-5 h-5 rounded-[var(--fouzar-radius-sm)] border border-fouzar-border flex items-center justify-center font-mono text-[7px] font-bold bg-fouzar-elevated">
+            {user?.avatarInitials ?? 'FZ'}
+          </div>
+          <span className="font-mono text-[7px] uppercase tracking-wider">Profile</span>
+        </Link>
       </nav>
     </>
   );
