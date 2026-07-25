@@ -428,7 +428,8 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
       </div>
 
       <div className="flex-1 overflow-y-auto scrollbar-none">
-        <AnimatePresence mode=          {activeTab === 'circles' && (
+        <AnimatePresence mode="wait">
+          {activeTab === 'circles' && (
             <motion.div
               key="circles"
               initial={{ opacity: 0, x: -8 }}
@@ -680,13 +681,14 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
                     </div>
                   )}
                 </div>
-              </div>           {addError && (
-                  <p className="text-[8px] font-mono text-fouzar-signal uppercase">{addError}</p>
-                )}
-                {addSuccess && (
-                  <p className="text-[8px] font-mono text-fouzar-accent uppercase">{addSuccess}</p>
-                )}
               </div>
+
+              {addError && (
+                <p className="text-[8px] font-mono text-fouzar-signal uppercase">{addError}</p>
+              )}
+              {addSuccess && (
+                <p className="text-[8px] font-mono text-fouzar-accent uppercase">{addSuccess}</p>
+              )}
 
               {/* Instant group node */}
               {roomId && !roomId.startsWith('personal-') ? (
