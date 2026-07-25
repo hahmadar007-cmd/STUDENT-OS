@@ -252,7 +252,7 @@ export const StudyNodesGraph: React.FC<StudyNodesGraphProps> = ({ nodesData }) =
   }, [searchQuery, nodesData, accentColor]); // Update dependencies since we calculate filteredGroups inline
 
   return (
-    <div ref={containerRef} className="w-full relative bg-fouzar-surface/40 border border-fouzar-border-strong rounded-[6px] overflow-hidden min-h-[60vh]">
+    <div ref={containerRef} className="w-full relative bg-[#060609] border border-fouzar-border-strong rounded-[6px] overflow-hidden min-h-[60vh]">
       
       {/* Search Input Bar */}
       <div className="absolute top-3 left-3 right-3 z-20 flex items-center bg-fouzar-card/90 border border-fouzar-border-strong px-2.5 py-1.5 rounded-[4px] max-w-[200px]">

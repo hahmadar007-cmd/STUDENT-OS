@@ -779,12 +779,12 @@ export default function DashboardPage() {
       {/* --- Ambient Premium Background --- */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         {/* Glow Meshes */}
-        <div className={`absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full blur-[120px] opacity-[0.07] transition-colors duration-1000 ${
+        <div className={`absolute top-[-30%] left-[15%] w-[70%] h-[70%] rounded-full blur-[180px] opacity-[0.03] transition-colors duration-1000 ${
           accentColor === 'signal' ? 'bg-[#ff2d55]' : 
           accentColor === 'amber' ? 'bg-[#f5a623]' : 
           accentColor === 'ice' ? 'bg-[#06b6d4]' : 'bg-[#7c5cfc]'
         }`} />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-[#10b981] blur-[100px] opacity-[0.05]" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-[#10b981] blur-[140px] opacity-[0.02]" />
         {/* Subtle Grain Overlay */}
         <div className="absolute inset-0 opacity-[0.015] mix-blend-overlay pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }}></div>
       </div>
@@ -1444,7 +1444,7 @@ export default function DashboardPage() {
             </AnimatePresence>
             <div className="flex flex-col gap-12 pb-24 w-full relative">
               
-              <div id="mindmap-section" className="w-full h-[600px] shrink-0 border border-fouzar-border-strong rounded-[6px] overflow-hidden relative shadow-lg bg-fouzar-surface/40">
+              <div id="mindmap-section" className="w-full h-[600px] shrink-0 border border-fouzar-border-strong rounded-[6px] overflow-hidden relative shadow-lg bg-[#060609]">
                 <StudyNodesGraph nodesData={gardenNodes} />
               </div>
 
