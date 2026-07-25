@@ -1,19 +1,22 @@
 'use client';
 
-import React from 'react';
-import { useParams } from 'next/navigation';
-import { WorkspaceProvider } from '../../../lib/workspace/WorkspaceContext';
-// We need to import the SanctuaryContent. 
-// Since it's inside app/sanctuary/page.tsx, let's export it from there so we can reuse it!
-import { SanctuaryContent } from '../../sanctuary/page';
+import React, { useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 
 export default function GroupWorkspacePage() {
   const params = useParams();
+  const router = useRouter();
   const groupId = (params.id as string) || 'group-1';
 
+  useEffect(() => {
+    if (groupId) {
+      router.replace(`/room/${groupId}`);
+    }
+  }, [groupId, router]);
+
   return (
-    <WorkspaceProvider initialRoomId={groupId}>
-      <SanctuaryContent />
-    </WorkspaceProvider>
+    <div className="h-screen w-screen bg-[#060609] flex items-center justify-center font-mono text-xs text-[#7c5cfc]">
+      Connecting to Group Workspace...
+    </div>
   );
 }
