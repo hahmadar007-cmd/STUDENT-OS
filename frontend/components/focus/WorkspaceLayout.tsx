@@ -208,12 +208,14 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
           mobilePanel === 'canvas' ? 'flex' : 'hidden md:flex'
         } flex-col relative`}
       >
-        {isSocialMinimized && !isGroupRoom && (
+        {isSocialMinimized && (
           <button
+            type="button"
             onClick={() => setIsSocialMinimized(false)}
-            className="absolute top-3 right-4 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full bg-fouzar-surface/90 border border-fouzar-border text-[10px] font-mono font-medium hover:bg-fouzar-surface-hover shadow-lg backdrop-blur text-fouzar-text-primary uppercase tracking-wider"
+            title="Expand Hub Panel"
+            className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2 rounded-full bg-[#0b0b12]/90 border border-[#7c5cfc]/40 text-[#7c5cfc] font-mono text-[10px] uppercase font-bold tracking-wider hover:bg-[#7c5cfc]/20 transition-all shadow-[0_0_20px_rgba(124,92,252,0.4)] backdrop-blur-xl cursor-pointer"
           >
-            <MessageSquare className="w-3.5 h-3.5" />
+            <MessageSquare className="w-4 h-4" />
             <span>Show Hub</span>
           </button>
         )}
