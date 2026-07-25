@@ -208,7 +208,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
           mobilePanel === 'canvas' ? 'flex' : 'hidden md:flex'
         } flex-col relative`}
       >
-        {isSocialMinimized && (
+        {isSocialMinimized && !isGroupRoom && (
           <button
             onClick={() => setIsSocialMinimized(false)}
             className="absolute top-3 right-4 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full bg-fouzar-surface/90 border border-fouzar-border text-[10px] font-mono font-medium hover:bg-fouzar-surface-hover shadow-lg backdrop-blur text-fouzar-text-primary uppercase tracking-wider"
@@ -230,6 +230,8 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
             onLeave={onLeave}
             activeDoc={activeDoc}
             setActiveDoc={setActiveDoc}
+            isHubOpen={!isSocialMinimized}
+            onToggleHub={() => setIsSocialMinimized(!isSocialMinimized)}
           />
         ) : (
           <SanctuaryCanvas

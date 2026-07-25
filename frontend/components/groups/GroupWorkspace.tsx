@@ -23,6 +23,8 @@ import {
   Video,
   Minimize2,
   Maximize2,
+  Bot,
+  MessageSquare,
 } from 'lucide-react';
 import { useFouzar } from '../../lib/FouzarContext';
 import { useLivePresentation } from '../../hooks/useLivePresentation';
@@ -33,6 +35,7 @@ import { DocumentViewer } from '../documents/DocumentViewer';
 import { MediaHubStandalone } from '../sanctuary/MediaHubStandalone';
 import { LiveLounge } from './LiveLounge';
 import { ResizablePanel } from '../ui/ResizablePanel';
+import { IntegratedAiChat } from '../ai/IntegratedAiChat';
 
 interface ConnectedMember {
   id: string;
@@ -54,6 +57,8 @@ interface GroupWorkspaceProps {
   onLeave?: () => void;
   activeDoc?: any | null;
   setActiveDoc?: (doc: any | null) => void;
+  isHubOpen?: boolean;
+  onToggleHub?: () => void;
 }
 
 export const GroupWorkspace: React.FC<GroupWorkspaceProps> = ({
@@ -69,6 +74,8 @@ export const GroupWorkspace: React.FC<GroupWorkspaceProps> = ({
   onLeave,
   activeDoc,
   setActiveDoc,
+  isHubOpen = true,
+  onToggleHub,
 }) => {
   const { mode, user, closeDoc, activeFolderId, setActiveDocText, setAiTriggerQuery } = useFouzar();
   const isGreenhouse = mode === 'greenhouse';
@@ -409,8 +416,30 @@ export const GroupWorkspace: React.FC<GroupWorkspaceProps> = ({
 
     if (tab === 'lounge') {
       return (
-        <div className="flex-1 min-h-0 flex flex-col overflow-hidden m-1">
-          <LiveLounge groupId={roomId} />
+        <div className="flex-1 min-h-0 bg-fouzar-surface/40 backdrop-blur-xl border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-4 flex flex-col overflow-hidden m-1">
+          <LiveLounge roomId={roomId} />
+        </div>
+      );
+    }
+
+    if (tab === 'ai') {
+      return (
+        <div className="flex-1 min-h-0 bg-fouzar-surface/40 backdrop-blur-xl border border-fouzar-border rounded-[var(--fouzar-radius-lg)] p-4 flex flex-col overflow-hidden m-1">
+          <div className="flex items-center gap-2 mb-3 pb-2 border-b border-fouzar-border shrink-0">
+            <div className="p-1 rounded bg-[#7c5cfc]/20 border border-[#7c5cfc]/40 text-[#7c5cfc]">
+              <Bot className="w-4 h-4" />
+            </div>
+            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-fouzar-text-primary">
+              Robot AI Copilot
+            </span>
+          </div>
+          <div className="flex-1 min-h-0">
+            <IntegratedAiChat
+              contextLabel={`Group: ${groupName}`}
+              slideId={currentSlide?.toString() || '1'}
+              storageKey={`fouzar-group-ai-${roomId}`}
+            />
+          </div>
         </div>
       );
     }
@@ -452,6 +481,21 @@ export const GroupWorkspace: React.FC<GroupWorkspaceProps> = ({
 
         {/* Action Controls */}
         <div className="flex items-center gap-2 shrink-0">
+          {onToggleHub && (
+            <button
+              type="button"
+              onClick={onToggleHub}
+              className={`px-2.5 py-1 font-mono text-[8px] uppercase tracking-wider border rounded-[var(--fouzar-radius-md)] transition-all flex items-center gap-1.5 cursor-pointer ${
+                isHubOpen
+                  ? 'border-fouzar-border text-fouzar-text-secondary hover:text-fouzar-text-primary bg-white/5'
+                  : 'border-[#7c5cfc]/50 text-[#7c5cfc] bg-[#7c5cfc]/15 hover:bg-[#7c5cfc]/25 font-bold shadow-[0_0_12px_rgba(124,92,252,0.3)]'
+              }`}
+            >
+              <MessageSquare className="w-3 h-3" />
+              {isHubOpen ? 'Hide Hub' : 'Show Hub'}
+            </button>
+          )}
+
           {setIsLeader && (
             <button
               type="button"
@@ -568,6 +612,7 @@ export const GroupWorkspace: React.FC<GroupWorkspaceProps> = ({
             { id: 'notes', icon: FileText, label: 'Notes' },
             { id: 'web', icon: Globe, label: 'Web AI Hub' },
             { id: 'lounge', icon: Video, label: 'Live Lounge' },
+            { id: 'ai', icon: Bot, label: 'Robot AI' },
           ].map((v) => {
             const Icon = v.icon;
             return (
