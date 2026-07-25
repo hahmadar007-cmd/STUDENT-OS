@@ -612,22 +612,24 @@ export const GroupWorkspace: React.FC<GroupWorkspaceProps> = ({
             { id: 'notes', icon: FileText, label: 'Notes' },
             { id: 'web', icon: Globe, label: 'Web AI Hub' },
             { id: 'lounge', icon: Video, label: 'Live Lounge' },
-            { id: 'ai', icon: Bot, label: 'Robot AI' },
+            { id: 'ai', icon: Bot, label: '' },
           ].map((v) => {
             const Icon = v.icon;
+            const isRobot = v.id === 'ai';
             return (
               <button
                 key={v.id}
                 type="button"
                 onClick={() => setActiveSplitTabs((prev) => ({ ...prev, left: v.id }))}
-                className={`px-2.5 py-1 flex items-center gap-1 font-mono text-[7.5px] uppercase tracking-wider rounded-md transition-colors cursor-pointer ${
+                title={isRobot ? 'Robot AI Copilot' : v.label}
+                className={`px-2.5 py-1 flex items-center gap-1 font-mono text-[7.5px] uppercase tracking-wider rounded-md transition-all cursor-pointer ${
                   activeSplitTabs.left === v.id
-                    ? 'bg-[#7c5cfc]/10 text-[#7c5cfc] font-bold border border-[#7c5cfc]/20'
+                    ? 'bg-[#7c5cfc]/15 text-[#7c5cfc] font-bold border border-[#7c5cfc]/30 shadow-[0_0_8px_rgba(124,92,252,0.3)]'
                     : 'text-white/40 hover:text-white/80'
                 }`}
               >
-                <Icon className="w-3 h-3" />
-                {v.label}
+                <Icon className={`w-3.5 h-3.5 ${isRobot ? 'text-[#7c5cfc]' : ''}`} />
+                {v.label ? <span>{v.label}</span> : null}
               </button>
             );
           })}

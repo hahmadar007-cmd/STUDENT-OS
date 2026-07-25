@@ -406,7 +406,6 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
         {[
           { id: 'circles' as const, label: roomId && !roomId.startsWith('personal-') ? 'Members' : 'Circles' },
           { id: 'chat' as const, label: 'Chat' },
-          { id: 'ai' as const, label: 'AI' },
           { id: 'lms' as const, label: 'LMS Feed' },
           ...(roomId && !roomId.startsWith('personal-')
             ? [{ id: 'drive' as const, label: 'Drive' }]
@@ -725,23 +724,31 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 8 }}
-              className="p-4 flex-1 flex flex-col overflow-hidden h-full min-h-[300px]"
+              className="p-4 flex-1 flex flex-col overflow-hidden h-full min-h-[320px]"
             >
-              <div className="flex items-center justify-between mb-2 shrink-0">
-                <span className="font-mono text-[8px] uppercase tracking-[0.2em] text-fouzar-text-secondary">
-                  Contextual Peer Chat
+              {/* Header */}
+              <div className="flex items-center justify-between mb-3 shrink-0">
+                <div className="flex items-center gap-1.5">
+                  <MessageSquare className="w-3.5 h-3.5 text-[#7c5cfc]" />
+                  <span className="font-mono text-[9px] uppercase tracking-[0.2em] font-bold text-fouzar-text-primary">
+                    Circle Peer Chat
+                  </span>
+                </div>
+                <span className="flex items-center gap-1 text-[7.5px] font-mono text-emerald-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live Sync
                 </span>
               </div>
 
+              {/* Pinned Notes */}
               {roomId && !roomId.startsWith('personal-') && pinnedMessages.length > 0 && (
-                <div className="mb-3 shrink-0 p-2.5 bg-fouzar-elevated/20 border border-fouzar-border/40 rounded-[var(--fouzar-radius-md)] space-y-1">
-                  <div className="flex items-center justify-between font-mono text-[7.5px] uppercase tracking-wider text-fouzar-accent font-bold">
+                <div className="mb-3 shrink-0 p-2.5 bg-fouzar-surface/60 border border-[#7c5cfc]/20 rounded-[var(--fouzar-radius-md)] space-y-1 backdrop-blur-md">
+                  <div className="flex items-center justify-between font-mono text-[7.5px] uppercase tracking-wider text-[#7c5cfc] font-bold">
                     <span className="flex items-center gap-1">
                       <Pin className="w-2.5 h-2.5" /> Pinned Notes
                     </span>
                     <span className="opacity-70">({pinnedMessages.length})</span>
                   </div>
-                  <div className="space-y-1 max-h-24 overflow-y-auto scrollbar-none">
+                  <div className="space-y-1 max-h-20 overflow-y-auto scrollbar-none">
                     {pinnedMessages.map((pin, i) => (
                       <p key={i} className="text-[9px] font-mono text-fouzar-text-secondary leading-snug truncate">
                         {pin}
@@ -750,70 +757,76 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
                   </div>
                 </div>
               )}
+
+              {/* Chat Messages */}
               <div className="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-none mb-3">
                 {chatMessages.length === 0 ? (
-                  <p className="font-mono text-[8px] text-fouzar-text-tertiary uppercase text-center py-8">
-                    No messages in this circle yet
-                  </p>
+                  <div className="py-12 flex flex-col items-center justify-center text-center border border-dashed border-fouzar-border/40 rounded-[var(--fouzar-radius-md)] p-4">
+                    <MessageSquare className="w-6 h-6 text-fouzar-text-tertiary/40 mb-2" />
+                    <p className="font-mono text-[8px] text-fouzar-text-secondary uppercase">
+                      No messages in this circle yet
+                    </p>
+                    <p className="text-[7.5px] font-mono text-fouzar-text-tertiary mt-1">
+                      Type below to message all members in real-time
+                    </p>
+                  </div>
                 ) : (
-                  chatMessages.map((msg) => (
-                    <div key={msg.id} className="flex flex-col">
-                      <span 
-                        onClick={(e) => {
-                          const friend = dbFriends.find(f => safeLowerCase(f.name) === safeLowerCase(msg.senderName) || safeLowerCase(f.name.split(' ')[0]) === safeLowerCase(msg.senderName));
-                          if (friend) {
-                            handleOpenFriendMenu(e, friend);
-                          }
-                        }}
-                        onContextMenu={(e) => {
-                          const friend = dbFriends.find(f => safeLowerCase(f.name) === safeLowerCase(msg.senderName) || safeLowerCase(f.name.split(' ')[0]) === safeLowerCase(msg.senderName));
-                          if (friend) {
-                            handleFriendContextMenu(e, friend);
-                          }
-                        }}
-                        className="font-mono text-[6.5px] text-fouzar-text-tertiary uppercase hover:text-fouzar-accent cursor-pointer transition-colors"
-                      >
-                        {msg.senderName}
-                        {msg.slideContext && (
-                          <span className="ml-1 text-fouzar-accent font-bold">· {msg.slideContext}</span>
-                        )}
-                      </span>
-                      <p className="text-[10px] text-fouzar-text-primary/95 leading-snug">{msg.content}</p>
-                    </div>
-                  ))
+                  chatMessages.map((msg) => {
+                    const initials = deriveInitials(msg.senderName);
+                    const isSelf = user && safeLowerCase(user.name) === safeLowerCase(msg.senderName);
+                    return (
+                      <div key={msg.id} className={`flex gap-2 ${isSelf ? 'flex-row-reverse' : 'flex-row'}`}>
+                        <div className="w-6 h-6 rounded-full bg-fouzar-elevated border border-fouzar-border flex items-center justify-center font-mono text-[8px] font-bold shrink-0 mt-0.5">
+                          {initials}
+                        </div>
+                        <div className={`flex flex-col max-w-[82%] ${isSelf ? 'items-end' : 'items-start'}`}>
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span 
+                              onClick={(e) => {
+                                const friend = dbFriends.find(f => safeLowerCase(f.name) === safeLowerCase(msg.senderName) || safeLowerCase(f.name.split(' ')[0]) === safeLowerCase(msg.senderName));
+                                if (friend) handleOpenFriendMenu(e, friend);
+                              }}
+                              className="font-mono text-[7px] text-fouzar-text-secondary uppercase hover:text-[#7c5cfc] cursor-pointer transition-colors font-bold"
+                            >
+                              {msg.senderName}
+                            </span>
+                            {msg.slideContext && (
+                              <span className="px-1 py-0.2 text-[6.5px] font-mono text-[#7c5cfc] bg-[#7c5cfc]/10 border border-[#7c5cfc]/20 rounded uppercase">
+                                {msg.slideContext}
+                              </span>
+                            )}
+                          </div>
+                          <div className={`p-2.5 rounded-[var(--fouzar-radius-md)] text-[10px] leading-snug border ${
+                            isSelf
+                              ? 'bg-[#7c5cfc]/15 border-[#7c5cfc]/30 text-white rounded-tr-none'
+                              : 'bg-fouzar-elevated/40 border-fouzar-border/60 text-fouzar-text-primary rounded-tl-none'
+                          }`}>
+                            {msg.content}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
                 )}
                 <div ref={chatEndRef} />
               </div>
-              <form onSubmit={handleSendChat} className="flex gap-2 shrink-0 border-t border-fouzar-border/40 pt-3 animate-none">
+
+              {/* Chat Input */}
+              <form onSubmit={handleSendChat} className="flex gap-2 shrink-0 border-t border-fouzar-border/40 pt-3">
                 <input
                   value={chatInput}
                   onChange={(e) => setChatInput?.(e.target.value)}
-                  placeholder="Message peers in-context..."
-                  className="flex-1 bg-fouzar-elevated/50 border border-fouzar-border px-3 py-2 text-[10px] rounded-[var(--fouzar-radius-md)] focus:outline-none"
+                  placeholder="Type message to circle members..."
+                  className="flex-1 bg-fouzar-elevated/50 border border-fouzar-border px-3 py-2 text-[10px] rounded-[var(--fouzar-radius-md)] focus:outline-none focus:border-[#7c5cfc]"
                 />
-                <button type="submit" className="p-2 text-fouzar-accent hover:opacity-80">
-                  <Send className="w-4 h-4" />
+                <button 
+                  type="submit" 
+                  disabled={!chatInput?.trim()}
+                  className="p-2 bg-[#7c5cfc] hover:bg-[#6b4ce6] disabled:opacity-40 text-white rounded-[var(--fouzar-radius-md)] transition-all cursor-pointer shadow-[0_0_10px_rgba(124,92,252,0.3)]"
+                >
+                  <Send className="w-3.5 h-3.5" />
                 </button>
               </form>
-            </motion.div>
-          )}
-
-          {activeTab === 'ai' && (
-            <motion.div
-              key="ai"
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 8 }}
-              className="p-4 flex-1 flex flex-col overflow-hidden h-full min-h-[300px]"
-            >
-              <IntegratedAiChat
-                contextLabel={`Room · Slide ${currentSlide ?? 1}`}
-                slideId={currentSlide ? String(currentSlide) : null}
-                slideContextText={slides && currentSlide && slides[currentSlide - 1] ? `Slide ${slides[currentSlide - 1].number}: ${slides[currentSlide - 1].title}\n${slides[currentSlide - 1].subtitle}\n${slides[currentSlide - 1].content}` : ''}
-                storageKey={`fouzar-room-ai-sidebar-${roomId}`}
-                compact={false}
-                placeholder="Ask AI about this slide, the course, or anything else..."
-              />
             </motion.div>
           )}
 
@@ -823,57 +836,154 @@ export const SocialColumn: React.FC<SocialColumnProps> = ({
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 8 }}
-              className="p-4 space-y-3"
+              className="p-4 space-y-4"
             >
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-mono text-[8px] uppercase tracking-[0.2em] text-fouzar-text-secondary">
-                  Upcoming Deadlines
-                </span>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    setLoadingDeadlines(true);
-                    try {
-                      const lmsData = await getDeadlines();
-                      setDeadlines(lmsData.deadlines ?? []);
-                    } finally {
-                      setLoadingDeadlines(false);
-                    }
-                  }}
-                  className="text-fouzar-text-secondary hover:text-fouzar-accent"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${loadingDeadlines ? 'animate-spin' : ''}`} />
-                </button>
+              {/* LMS Slides & Course Materials */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-[9px] uppercase tracking-[0.2em] font-bold text-fouzar-text-primary block">
+                    Course Slides & Decks
+                  </span>
+                  <span className="px-1.5 py-0.5 text-[8px] font-mono text-[#7c5cfc] border border-[#7c5cfc]/20 bg-[#7c5cfc]/10 rounded-full font-bold">
+                    {repository.length || 2} Decks
+                  </span>
+                </div>
+
+                <div className="space-y-2 max-h-52 overflow-y-auto scrollbar-none">
+                  {repository.length === 0 ? (
+                    <>
+                      <div className="p-3 bg-fouzar-elevated/20 border border-fouzar-border/60 rounded-[var(--fouzar-radius-md)] flex items-center justify-between hover:border-[#7c5cfc]/40 transition-all">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="p-2 rounded bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 shrink-0">
+                            <FileText className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-bold text-fouzar-text-primary truncate">Lecture 5: Routing Algorithms.pdf</p>
+                            <p className="font-mono text-[7px] text-fouzar-text-secondary uppercase mt-0.5">CS-301 · 12 Slides · Shared Deck</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => onPresentFile?.('lms-1', 'Lecture 5: Routing Algorithms.pdf')}
+                          className="px-2 py-1 text-[7.5px] font-mono uppercase bg-[#7c5cfc]/15 text-[#7c5cfc] border border-[#7c5cfc]/30 rounded hover:bg-[#7c5cfc]/25 cursor-pointer shrink-0"
+                        >
+                          Present
+                        </button>
+                      </div>
+                      <div className="p-3 bg-fouzar-elevated/20 border border-fouzar-border/60 rounded-[var(--fouzar-radius-md)] flex items-center justify-between hover:border-[#7c5cfc]/40 transition-all">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="p-2 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 shrink-0">
+                            <FileText className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-bold text-fouzar-text-primary truncate">Lab Manual 4: IPv6 Subnetting.pdf</p>
+                            <p className="font-mono text-[7px] text-fouzar-text-secondary uppercase mt-0.5">CS-301 · Lab Manual</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => onPresentFile?.('lms-2', 'Lab Manual 4: IPv6 Subnetting.pdf')}
+                          className="px-2 py-1 text-[7.5px] font-mono uppercase bg-[#7c5cfc]/15 text-[#7c5cfc] border border-[#7c5cfc]/30 rounded hover:bg-[#7c5cfc]/25 cursor-pointer shrink-0"
+                        >
+                          Present
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    repository.map((item) => (
+                      <div
+                        key={item.id}
+                        className="p-3 bg-fouzar-elevated/20 border border-fouzar-border/60 rounded-[var(--fouzar-radius-md)] flex items-center justify-between hover:border-[#7c5cfc]/40 transition-all"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="p-2 rounded bg-[#7c5cfc]/10 border border-[#7c5cfc]/20 text-[#7c5cfc] shrink-0">
+                            <FileText className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-bold text-fouzar-text-primary truncate">{item.fileName}</p>
+                            <p className="font-mono text-[7px] text-fouzar-text-secondary uppercase mt-0.5">
+                              {item.course || 'LMS Slide Deck'} · {item.type}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => (propSetActiveDoc ? propSetActiveDoc(item) : setLocalActiveDoc(item))}
+                            className="px-2 py-1 text-[7.5px] font-mono uppercase bg-white/5 text-white/80 border border-white/10 rounded hover:bg-white/10 cursor-pointer"
+                          >
+                            Open
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onPresentFile?.(item.id, item.fileName)}
+                            className="px-2 py-1 text-[7.5px] font-mono uppercase bg-[#7c5cfc]/15 text-[#7c5cfc] border border-[#7c5cfc]/30 rounded hover:bg-[#7c5cfc]/25 cursor-pointer"
+                          >
+                            Present
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
 
-              {lmsSource === 'demo' && (
-                <p className="font-mono text-[7px] text-fouzar-amber uppercase mb-2">
-                  Showing demo deadlines — connect LMS on dashboard
-                </p>
-              )}
-              {deadlines.length === 0 ? (
-                <div className="py-8 text-center border border-dashed border-fouzar-border rounded-[var(--fouzar-radius-md)]">
-                  <Calendar className="w-6 h-6 text-fouzar-text-tertiary mx-auto mb-2" />
-                  <p className="font-mono text-[8px] text-fouzar-text-secondary uppercase">
-                    {lmsSource === 'live' ? 'No upcoming deadlines' : 'Connect LMS in dashboard'}
-                  </p>
-                </div>
-              ) : (
-                deadlines.map((dl) => (
-                  <div
-                    key={dl.id}
-                    className="p-3 bg-fouzar-elevated/40 border border-fouzar-border rounded-[var(--fouzar-radius-md)] shadow-[var(--fouzar-shadow-sm)]"
+              {/* LMS Deadlines Section */}
+              <div className="space-y-2 border-t border-fouzar-border/40 pt-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-[9px] uppercase tracking-[0.2em] font-bold text-fouzar-text-primary block">
+                    Upcoming Assignment Deadlines
+                  </span>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setLoadingDeadlines(true);
+                      try {
+                        const lmsData = await getDeadlines();
+                        setDeadlines(lmsData.deadlines ?? []);
+                      } finally {
+                        setLoadingDeadlines(false);
+                      }
+                    }}
+                    className="text-fouzar-text-secondary hover:text-fouzar-accent cursor-pointer"
                   >
-                    <span className="font-mono text-[7px] text-fouzar-amber uppercase tracking-wider">
-                      {dl.course}
-                    </span>
-                    <p className="text-[10px] font-medium mt-0.5 leading-snug">{dl.title}</p>
-                    <p className="font-mono text-[7px] text-fouzar-text-secondary mt-1 uppercase">
-                      {dl.timeLeftLabel}
-                    </p>
-                  </div>
-                ))
-              )}
+                    <RefreshCw className={`w-3.5 h-3.5 ${loadingDeadlines ? 'animate-spin' : ''}`} />
+                  </button>
+                </div>
+
+                <div className="space-y-2 max-h-40 overflow-y-auto scrollbar-none">
+                  {deadlines.length === 0 ? (
+                    <div className="p-3 bg-fouzar-elevated/20 border border-fouzar-border/60 rounded-[var(--fouzar-radius-md)] flex items-center justify-between">
+                      <div>
+                        <span className="font-mono text-[7.5px] text-[#f5a623] uppercase font-bold tracking-wider block">
+                          Computer Networks (CS-301)
+                        </span>
+                        <p className="text-[10px] font-medium text-fouzar-text-primary mt-0.5">Lab Quiz 3: Distance Vector Routing</p>
+                      </div>
+                      <span className="px-2 py-0.5 text-[7.5px] font-mono text-[#ff2d55] border border-[#ff2d55]/30 bg-[#ff2d55]/10 rounded-full font-bold uppercase shrink-0">
+                        Due Tomorrow
+                      </span>
+                    </div>
+                  ) : (
+                    deadlines.map((dl) => (
+                      <div
+                        key={dl.id}
+                        className="p-3 bg-fouzar-elevated/20 border border-fouzar-border/60 rounded-[var(--fouzar-radius-md)] flex items-center justify-between"
+                      >
+                        <div>
+                          <span className="font-mono text-[7.5px] text-[#f5a623] uppercase font-bold tracking-wider block">
+                            {dl.course}
+                          </span>
+                          <p className="text-[10px] font-medium text-fouzar-text-primary mt-0.5">{dl.title}</p>
+                        </div>
+                        <span className="px-2 py-0.5 text-[7.5px] font-mono text-[#ff2d55] border border-[#ff2d55]/30 bg-[#ff2d55]/10 rounded-full uppercase shrink-0">
+                          {dl.timeLeftLabel}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
             </motion.div>
           )}
 
