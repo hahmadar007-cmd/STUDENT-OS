@@ -711,9 +711,9 @@ export default function DashboardPage() {
   };
 
   const sidebarItems = [
+    { id: 'ai', label: 'AI Core', icon: Cpu, keyHint: 'A' },
     { id: 'circles', label: 'Study Circles', icon: Compass, keyHint: 'S' },
     { id: 'nodes', label: 'Garden Nodes', icon: Layers, keyHint: 'G' },
-    { id: 'ai', label: 'AI Core', icon: Cpu, keyHint: 'A' },
     { id: 'bridge', label: 'Campus Gateway', icon: Plug, keyHint: 'L' },
     { id: 'shield', label: 'Focus Shield', icon: Shield, keyHint: 'F' },
   ];
@@ -1410,16 +1410,16 @@ export default function DashboardPage() {
             </AnimatePresence>
             <div className="flex flex-col gap-12 pb-24 w-full relative">
               
+              <div id="ai-engines-section" className="w-full h-[560px] shrink-0">
+                <FascaAiCore />
+              </div>
+
               <div id="mindmap-section" className="w-full h-[600px] shrink-0 border border-fouzar-border-strong rounded-[6px] overflow-hidden relative shadow-lg bg-fouzar-surface/40">
                 <StudyNodesGraph nodesData={gardenNodes} />
               </div>
 
               <div id="courses-section" className="w-full h-[600px] shrink-0 relative">
                 <CourseFeedPanel onOpenConnect={() => setIsLmsOpen(true)} />
-              </div>
-
-              <div id="ai-engines-section" className="w-full h-[600px] shrink-0">
-                <FascaAiCore />
               </div>
 
             </div>
